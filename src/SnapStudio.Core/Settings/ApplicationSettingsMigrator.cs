@@ -11,6 +11,9 @@ public sealed class ApplicationSettingsMigrator : ISettingsMigrator
 
         string storageRoot = UseFallbackIfBlank(settings.StorageRoot, defaultSettings.StorageRoot);
         string captureHotkey = UseFallbackIfBlank(settings.CaptureHotkey, defaultSettings.CaptureHotkey);
+        ApplicationStorageBackend storageBackend = ResolveStorageBackend(
+            settings.StorageBackend,
+            defaultSettings.StorageBackend);
         Dictionary<string, bool> featureFlags = MergeFeatureFlags(
             settings.FeatureFlags,
             defaultSettings.FeatureFlags);
@@ -18,6 +21,7 @@ public sealed class ApplicationSettingsMigrator : ISettingsMigrator
         bool wasChanged = settings.SchemaVersion != ApplicationSettings.CurrentSchemaVersion
             || !string.Equals(settings.StorageRoot, storageRoot, StringComparison.Ordinal)
             || !string.Equals(settings.CaptureHotkey, captureHotkey, StringComparison.Ordinal)
+            || settings.StorageBackend != storageBackend
             || !FeatureFlagsEqual(settings.FeatureFlags, featureFlags);
 
         ApplicationSettings migrated = settings with
@@ -25,6 +29,7 @@ public sealed class ApplicationSettingsMigrator : ISettingsMigrator
             SchemaVersion = ApplicationSettings.CurrentSchemaVersion,
             StorageRoot = storageRoot,
             CaptureHotkey = captureHotkey,
+            StorageBackend = storageBackend,
             FeatureFlags = featureFlags
         };
 
@@ -36,6 +41,15 @@ public sealed class ApplicationSettingsMigrator : ISettingsMigrator
         return string.IsNullOrWhiteSpace(value)
             ? fallback
             : value;
+    }
+
+    private static ApplicationStorageBackend ResolveStorageBackend(
+        ApplicationStorageBackend value,
+        ApplicationStorageBackend fallback)
+    {
+        return Enum.IsDefined(value)
+            ? value
+            : fallback;
     }
 
     private static Dictionary<string, bool> MergeFeatureFlags(

@@ -11,14 +11,69 @@
     mc:Ignorable="d">
 
     <Page.Resources>
-        <Style x:Key="ToolIconButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="40" />
-            <Setter Property="Height" Value="40" />
-            <Setter Property="MinWidth" Value="40" />
-            <Setter Property="MinHeight" Value="40" />
-            <Setter Property="Padding" Value="0" />
+        <SolidColorBrush x:Key="SnapBackgroundBrush" Color="#111111" />
+        <SolidColorBrush x:Key="SnapSurfaceBrush" Color="#171717" />
+        <SolidColorBrush x:Key="SnapPanelBrush" Color="#1E1E1E" />
+        <SolidColorBrush x:Key="SnapPanelAltBrush" Color="#242424" />
+        <SolidColorBrush x:Key="SnapStrokeBrush" Color="#333333" />
+        <SolidColorBrush x:Key="SnapMutedBrush" Color="#A5ACB8" />
+        <SolidColorBrush x:Key="SnapAccentBrush" Color="#E8872E" />
+        <SolidColorBrush x:Key="SnapAccentMutedBrush" Color="#3A2B1F" />
+        <SolidColorBrush x:Key="SnapPrimaryBrush" Color="#5F86E8" />
+
+        <Style x:Key="TopCommandButtonStyle" TargetType="Button">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="PrimaryTopCommandButtonStyle" TargetType="Button" BasedOn="{StaticResource TopCommandButtonStyle}">
+            <Setter Property="Background" Value="{StaticResource SnapAccentBrush}" />
+            <Setter Property="Foreground" Value="#111111" />
+        </Style>
+
+        <Style x:Key="ExportTopCommandButtonStyle" TargetType="Button" BasedOn="{StaticResource TopCommandButtonStyle}">
+            <Setter Property="Background" Value="{StaticResource SnapPrimaryBrush}" />
+            <Setter Property="Foreground" Value="#111111" />
+        </Style>
+
+        <Style x:Key="ToolIconButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="MinWidth" Value="36" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{StaticResource SnapStrokeBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="EditorToolButtonStyle" TargetType="Button" BasedOn="{StaticResource ToolIconButtonStyle}">
+            <Setter Property="Width" Value="44" />
+            <Setter Property="Height" Value="44" />
+            <Setter Property="MinWidth" Value="44" />
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style x:Key="SwatchButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="MinWidth" Value="30" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderBrush" Value="{StaticResource SnapStrokeBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="7" />
         </Style>
     </Page.Resources>
 
@@ -76,190 +131,238 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <CommandBar
+        <Border
             Grid.Row="0"
-            DefaultLabelPosition="Right"
-            IsOpen="False">
-            <AppBarButton
-                AccessKey="C"
-                AutomationProperties.AcceleratorKey="Ctrl+R"
-                AutomationProperties.HelpText="Open capture mode menu. Press Ctrl+R to start a region capture."
-                AutomationProperties.Name="Capture"
-                Icon="Camera"
-                Label="Capture">
-                <AppBarButton.Flyout>
-                    <MenuFlyout>
-                        <MenuFlyoutItem
-                            AccessKey="R"
-                            AutomationProperties.AcceleratorKey="Ctrl+R"
-                            AutomationProperties.HelpText="Capture a selected screen region."
-                            AutomationProperties.Name="Capture region"
-                            Click="CaptureRegionButton_Click"
-                            Text="Region">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Crop" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem
-                            AccessKey="P"
-                            AutomationProperties.HelpText="Capture using the Windows graphics capture picker."
-                            AutomationProperties.Name="Capture with picker"
-                            Click="CapturePickerButton_Click"
-                            Text="Picker">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Camera" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem
-                            AccessKey="D"
-                            AutomationProperties.HelpText="Capture a display."
-                            AutomationProperties.Name="Capture display"
-                            Click="CaptureDisplayButton_Click"
-                            Text="Display">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="View" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem
-                            AccessKey="F"
-                            AutomationProperties.HelpText="Capture the full screen."
-                            AutomationProperties.Name="Capture full screen"
-                            Click="CaptureFullScreenButton_Click"
-                            Text="Full Screen">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="FullScreen" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem
-                            AccessKey="W"
-                            AutomationProperties.HelpText="Capture a window."
-                            AutomationProperties.Name="Capture window"
-                            Click="CaptureWindowButton_Click"
-                            Text="Window">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Switch" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem
-                            AccessKey="S"
-                            AutomationProperties.HelpText="Capture the first detected scrollable target and preserve partial output when scrolling cannot complete."
-                            AutomationProperties.Name="Capture scrolling target"
-                            Click="CaptureScrollingButton_Click"
-                            IsEnabled="{x:Bind ViewModel.CanCaptureScrolling, Mode=OneWay}"
-                            Text="Scrolling"
-                            Visibility="{x:Bind ViewModel.ScrollingCaptureControlsVisibility, Mode=OneWay}">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="View" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem
-                            AccessKey="V"
-                            AutomationProperties.HelpText="Start or stop recording a selected window or display."
-                            AutomationProperties.Name="{x:Bind ViewModel.ScreenRecordingAutomationName, Mode=OneWay}"
-                            Click="ToggleScreenRecordingButton_Click"
-                            IsEnabled="{x:Bind ViewModel.CanToggleScreenRecording, Mode=OneWay}"
-                            Text="{x:Bind ViewModel.ScreenRecordingCommandText, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.ScreenRecordingControlsVisibility, Mode=OneWay}">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Camera" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                    </MenuFlyout>
-                </AppBarButton.Flyout>
-            </AppBarButton>
-            <AppBarButton
-                AccessKey="O"
-                AutomationProperties.AcceleratorKey="Ctrl+O"
-                AutomationProperties.HelpText="Open an image file into the workspace."
-                AutomationProperties.Name="Open image"
-                Click="OpenButton_Click"
-                Icon="OpenFile"
-                IsEnabled="{x:Bind ViewModel.CanOpenImageFile, Mode=OneWay}"
-                Label="Open" />
-            <AppBarButton
-                AccessKey="Y"
-                AutomationProperties.AcceleratorKey="Ctrl+Shift+C"
-                AutomationProperties.HelpText="Copy the current edited capture to the clipboard."
-                AutomationProperties.Name="Copy current capture"
-                Click="CopyButton_Click"
-                Icon="Copy"
-                Label="Copy" />
-            <AppBarButton
-                AccessKey="P"
-                AutomationProperties.HelpText="Pin the current capture in a separate window."
-                AutomationProperties.Name="Pin current capture"
-                Click="PinButton_Click"
-                IsEnabled="{x:Bind ViewModel.CanPinCurrentDocument, Mode=OneWay}"
-                Label="Pin">
-                <AppBarButton.Icon>
-                    <SymbolIcon Symbol="Pin" />
-                </AppBarButton.Icon>
-            </AppBarButton>
-            <AppBarButton
-                AccessKey="E"
-                AutomationProperties.HelpText="Open export format options."
-                AutomationProperties.Name="Export"
-                Icon="Save"
-                Label="Export">
-                <AppBarButton.Flyout>
-                    <MenuFlyout>
-                        <MenuFlyoutItem
-                            AccessKey="P"
-                            AutomationProperties.HelpText="Export the current capture as a PNG image."
-                            AutomationProperties.Name="Export PNG"
-                            Click="ExportPngButton_Click"
-                            Text="PNG">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Save" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem
-                            AccessKey="J"
-                            AutomationProperties.HelpText="Export the current capture as a JPEG image."
-                            AutomationProperties.Name="Export JPEG"
-                            Click="ExportJpegButton_Click"
-                            Text="JPEG">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Pictures" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem
-                            AccessKey="D"
-                            AutomationProperties.HelpText="Export the current capture as a PDF document."
-                            AutomationProperties.Name="Export PDF"
-                            Click="ExportPdfButton_Click"
-                            Text="PDF">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Document" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                    </MenuFlyout>
-                </AppBarButton.Flyout>
-            </AppBarButton>
-            <AppBarButton
-                AccessKey="S"
-                AutomationProperties.HelpText="Open setup and application settings."
-                AutomationProperties.Name="Settings"
-                Click="SettingsButton_Click"
-                Icon="Setting"
-                Label="Settings" />
-        </CommandBar>
+            Padding="20,10"
+            Background="{StaticResource SnapPanelBrush}"
+            BorderBrush="{StaticResource SnapStrokeBrush}"
+            BorderThickness="0,0,0,1">
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="1">
+                <Button
+                    AccessKey="C"
+                    AutomationProperties.AcceleratorKey="Ctrl+R"
+                    AutomationProperties.HelpText="Open capture mode menu. Press Ctrl+R to start a region capture."
+                    AutomationProperties.Name="Capture"
+                    Style="{StaticResource PrimaryTopCommandButtonStyle}">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem
+                                AccessKey="R"
+                                AutomationProperties.AcceleratorKey="Ctrl+R"
+                                AutomationProperties.HelpText="Capture a selected screen region."
+                                AutomationProperties.Name="Capture region"
+                                Click="CaptureRegionButton_Click"
+                                Text="Region">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Crop" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                AccessKey="P"
+                                AutomationProperties.HelpText="Capture using the Windows graphics capture picker."
+                                AutomationProperties.Name="Capture with picker"
+                                Click="CapturePickerButton_Click"
+                                Text="Picker">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Camera" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                AccessKey="D"
+                                AutomationProperties.HelpText="Capture a display."
+                                AutomationProperties.Name="Capture display"
+                                Click="CaptureDisplayButton_Click"
+                                Text="Display">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="View" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                AccessKey="F"
+                                AutomationProperties.HelpText="Capture the full screen."
+                                AutomationProperties.Name="Capture full screen"
+                                Click="CaptureFullScreenButton_Click"
+                                Text="Full Screen">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="FullScreen" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                AccessKey="W"
+                                AutomationProperties.HelpText="Capture a window."
+                                AutomationProperties.Name="Capture window"
+                                Click="CaptureWindowButton_Click"
+                                Text="Window">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Switch" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                AccessKey="S"
+                                AutomationProperties.HelpText="Capture the first detected scrollable target and preserve partial output when scrolling cannot complete."
+                                AutomationProperties.Name="Capture scrolling target"
+                                Click="CaptureScrollingButton_Click"
+                                IsEnabled="{x:Bind ViewModel.CanCaptureScrolling, Mode=OneWay}"
+                                Text="Scrolling"
+                                Visibility="{x:Bind ViewModel.ScrollingCaptureControlsVisibility, Mode=OneWay}">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="View" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem
+                                AccessKey="V"
+                                AutomationProperties.HelpText="Start or stop recording a selected window or display."
+                                AutomationProperties.Name="{x:Bind ViewModel.ScreenRecordingAutomationName, Mode=OneWay}"
+                                Click="ToggleScreenRecordingButton_Click"
+                                IsEnabled="{x:Bind ViewModel.CanToggleScreenRecording, Mode=OneWay}"
+                                Text="{x:Bind ViewModel.ScreenRecordingCommandText, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.ScreenRecordingControlsVisibility, Mode=OneWay}">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Camera" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <SymbolIcon Symbol="Camera" />
+                        <TextBlock FontWeight="SemiBold" Text="Capture" />
+                        <FontIcon FontSize="12" Glyph="&#xE70D;" />
+                    </StackPanel>
+                </Button>
+
+                <Button
+                    Grid.Column="1"
+                    AccessKey="O"
+                    AutomationProperties.AcceleratorKey="Ctrl+O"
+                    AutomationProperties.HelpText="Open an image file into the workspace."
+                    AutomationProperties.Name="Open image"
+                    Click="OpenButton_Click"
+                    IsEnabled="{x:Bind ViewModel.CanOpenImageFile, Mode=OneWay}"
+                    Style="{StaticResource TopCommandButtonStyle}"
+                    ToolTipService.ToolTip="Open">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <SymbolIcon Symbol="OpenFile" />
+                        <TextBlock Text="Open" />
+                    </StackPanel>
+                </Button>
+
+                <Button
+                    Grid.Column="2"
+                    AccessKey="Y"
+                    AutomationProperties.AcceleratorKey="Ctrl+Shift+C"
+                    AutomationProperties.HelpText="Copy the current edited capture to the clipboard."
+                    AutomationProperties.Name="Copy current capture"
+                    Click="CopyButton_Click"
+                    Style="{StaticResource TopCommandButtonStyle}"
+                    ToolTipService.ToolTip="Copy">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <SymbolIcon Symbol="Copy" />
+                        <TextBlock Text="Copy" />
+                    </StackPanel>
+                </Button>
+
+                <Button
+                    Grid.Column="3"
+                    AccessKey="P"
+                    AutomationProperties.HelpText="Pin the current capture in a separate window."
+                    AutomationProperties.Name="Pin current capture"
+                    Click="PinButton_Click"
+                    IsEnabled="{x:Bind ViewModel.CanPinCurrentDocument, Mode=OneWay}"
+                    Style="{StaticResource TopCommandButtonStyle}"
+                    ToolTipService.ToolTip="Pin">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <SymbolIcon Symbol="Pin" />
+                        <TextBlock Text="Pin" />
+                    </StackPanel>
+                </Button>
+
+                <Button
+                    Grid.Column="5"
+                    AccessKey="E"
+                    AutomationProperties.HelpText="Open export format options."
+                    AutomationProperties.Name="Export"
+                    Style="{StaticResource ExportTopCommandButtonStyle}">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem
+                                AccessKey="P"
+                                AutomationProperties.HelpText="Export the current capture as a PNG image."
+                                AutomationProperties.Name="Export PNG"
+                                Click="ExportPngButton_Click"
+                                Text="PNG">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Save" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                AccessKey="J"
+                                AutomationProperties.HelpText="Export the current capture as a JPEG image."
+                                AutomationProperties.Name="Export JPEG"
+                                Click="ExportJpegButton_Click"
+                                Text="JPEG">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Pictures" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem
+                                AccessKey="D"
+                                AutomationProperties.HelpText="Export the current capture as a PDF document."
+                                AutomationProperties.Name="Export PDF"
+                                Click="ExportPdfButton_Click"
+                                Text="PDF">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Document" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <SymbolIcon Symbol="Share" />
+                        <TextBlock FontWeight="SemiBold" Text="Export" />
+                    </StackPanel>
+                </Button>
+
+                <Button
+                    Grid.Column="6"
+                    AccessKey="S"
+                    AutomationProperties.HelpText="Open setup and application settings."
+                    AutomationProperties.Name="Settings"
+                    Click="SettingsButton_Click"
+                    Style="{StaticResource ToolIconButtonStyle}"
+                    ToolTipService.ToolTip="Settings">
+                    <SymbolIcon Symbol="Setting" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <Grid
+            Grid.Row="1"
+            Background="{StaticResource SnapBackgroundBrush}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="226" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="238" />
             </Grid.ColumnDefinitions>
 
             <Grid
                 Grid.Column="0"
                 Padding="16"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                Background="{StaticResource SnapPanelBrush}"
+                BorderBrush="{StaticResource SnapStrokeBrush}"
                 BorderThickness="0,0,1,0"
-                RowSpacing="12">
+                RowSpacing="14">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -275,31 +378,17 @@
                     Grid.Row="1"
                     AutomationProperties.HelpText="Filter the capture history list by title, source, date, or file name."
                     AutomationProperties.Name="Search capture history"
-                    PlaceholderText="Search captures"
+                    PlaceholderText="Search"
                     TextChanged="HistorySearch_TextChanged" />
 
-                <ComboBox
-                    Grid.Row="2"
-                    AutomationProperties.HelpText="Filter the capture history list by source."
-                    AutomationProperties.Name="History source filter"
-                    Header="Source"
-                    SelectedIndex="{x:Bind ViewModel.HistoryFilterIndex, Mode=OneWay}"
-                    SelectionChanged="HistoryFilter_SelectionChanged">
-                    <ComboBoxItem Content="All" />
-                    <ComboBoxItem Content="Captures" />
-                    <ComboBoxItem Content="Imports" />
-                    <ComboBoxItem Content="Scrolling" />
-                    <ComboBoxItem Content="Duplicates" />
-                </ComboBox>
-
                 <StackPanel
-                    Grid.Row="3"
+                    Grid.Row="2"
                     Spacing="8">
                     <TextBox
                         AutomationProperties.HelpText="Edit the selected capture title."
                         AutomationProperties.Name="Current capture title"
-                        Header="Title"
                         IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
+                        PlaceholderText="Capture title"
                         Text="{x:Bind ViewModel.WorkspaceTitleText, Mode=OneWay}"
                         TextChanged="WorkspaceTitle_TextChanged" />
                     <Grid ColumnSpacing="4">
@@ -370,125 +459,75 @@
                             <SymbolIcon Symbol="Delete" />
                         </Button>
                     </Grid>
-                    <Grid
-                        Margin="0,4,0,0"
-                        AutomationProperties.Name="Selected capture properties"
-                        ColumnSpacing="12"
-                        RowSpacing="3">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock
-                            Grid.ColumnSpan="2"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Text="Properties" />
-                        <TextBlock
-                            Grid.Row="1"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Width" />
-                        <TextBlock
-                            Grid.Row="1"
-                            Grid.Column="1"
-                            AutomationProperties.Name="Selected capture width"
-                            FontSize="12"
-                            Text="{x:Bind ViewModel.CurrentDocumentWidthLabel, Mode=OneWay}"
-                            TextTrimming="CharacterEllipsis" />
-                        <TextBlock
-                            Grid.Row="2"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Height" />
-                        <TextBlock
-                            Grid.Row="2"
-                            Grid.Column="1"
-                            AutomationProperties.Name="Selected capture height"
-                            FontSize="12"
-                            Text="{x:Bind ViewModel.CurrentDocumentHeightLabel, Mode=OneWay}"
-                            TextTrimming="CharacterEllipsis" />
-                        <TextBlock
-                            Grid.Row="3"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Size" />
-                        <TextBlock
-                            Grid.Row="3"
-                            Grid.Column="1"
-                            AutomationProperties.Name="Selected capture file size"
-                            FontSize="12"
-                            Text="{x:Bind ViewModel.CurrentDocumentFileSizeLabel, Mode=OneWay}"
-                            TextTrimming="CharacterEllipsis" />
-                    </Grid>
                 </StackPanel>
 
                 <ListView
-                    Grid.Row="4"
+                    Grid.Row="3"
                     AutomationProperties.HelpText="Select a capture to open it in the editor."
                     AutomationProperties.Name="Capture history"
                     ItemsSource="{x:Bind ViewModel.RecentDocuments}"
                     SelectionChanged="RecentDocuments_SelectionChanged"
                     SelectionMode="Single">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0,0,0,10" />
+                            <Setter Property="MinHeight" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="items:DocumentSummaryItem">
-                            <Grid Padding="0,8" ColumnSpacing="10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="56" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                            <Border
+                                Padding="12"
+                                Background="{StaticResource SnapSurfaceBrush}"
+                                BorderBrush="{StaticResource SnapStrokeBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="46" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
 
-                                <Border
-                                    Width="56"
-                                    Height="42"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Top"
-                                    Background="{ThemeResource LayerFillColorDefaultBrush}"
-                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="4">
-                                    <Grid>
-                                        <Image
-                                            Source="{x:Bind ThumbnailImageSource}"
-                                            Stretch="UniformToFill"
-                                            Visibility="{x:Bind ThumbnailVisibility}" />
-                                        <SymbolIcon
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Symbol="Pictures"
-                                            Visibility="{x:Bind ThumbnailFallbackVisibility}" />
+                                    <Border
+                                        Width="46"
+                                        Height="46"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Background="{StaticResource SnapPanelAltBrush}"
+                                        CornerRadius="5">
+                                        <Grid>
+                                            <Image
+                                                Source="{x:Bind ThumbnailImageSource}"
+                                                Stretch="UniformToFill"
+                                                Visibility="{x:Bind ThumbnailVisibility}" />
+                                            <SymbolIcon
+                                                Foreground="{StaticResource SnapMutedBrush}"
+                                                Symbol="Pictures"
+                                                Visibility="{x:Bind ThumbnailFallbackVisibility}" />
+                                        </Grid>
+                                    </Border>
+
+                                    <Grid Grid.Column="1" RowSpacing="2">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind Title}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            FontSize="12"
+                                            Foreground="{StaticResource SnapMutedBrush}"
+                                            Text="{x:Bind Detail}"
+                                            TextTrimming="CharacterEllipsis" />
                                     </Grid>
-                                </Border>
-
-                                <Grid Grid.Column="1" RowSpacing="2">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind Title}"
-                                        TextTrimming="CharacterEllipsis" />
-                                    <TextBlock
-                                        Grid.Row="1"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{x:Bind ModifiedLabel}" />
-                                    <TextBlock
-                                        Grid.Row="2"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{x:Bind Detail}" />
                                 </Grid>
-                            </Grid>
+                            </Border>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
@@ -496,97 +535,183 @@
 
             <Grid
                 Grid.Column="1"
-                Padding="24"
-                Background="{ThemeResource LayerFillColorDefaultBrush}">
-                    <Grid RowSpacing="12">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                Background="{StaticResource SnapSurfaceBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="64" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="48" />
+                    </Grid.RowDefinitions>
 
                     <InfoBar
+                        Margin="16,12,16,0"
                         IsClosable="True"
                         IsOpen="{x:Bind ViewModel.CaptureNoticeIsOpen, Mode=OneWay}"
                         Message="{x:Bind ViewModel.CaptureNoticeMessage, Mode=OneWay}"
                         Severity="{x:Bind ViewModel.CaptureNoticeSeverity, Mode=OneWay}"
                         Title="{x:Bind ViewModel.CaptureNoticeTitle, Mode=OneWay}" />
 
-                    <StackPanel
+                    <Border
                         Grid.Row="1"
-                        Orientation="Horizontal"
-                        Spacing="4">
-                        <Button
-                            AccessKey="F"
-                            AutomationProperties.AcceleratorKey="Ctrl+1"
-                            AutomationProperties.HelpText="Fit the current capture to the editor canvas."
-                            AutomationProperties.Name="Fit canvas"
-                            Click="FitCanvasButton_Click"
-                            IsEnabled="{x:Bind ViewModel.CanFitCanvas, Mode=OneWay}"
-                            Style="{StaticResource ToolIconButtonStyle}"
-                            ToolTipService.ToolTip="Fit">
-                            <SymbolIcon Symbol="FullScreen" />
-                        </Button>
-                        <Button
-                            AccessKey="-"
-                            AutomationProperties.AcceleratorKey="Ctrl+Minus"
-                            AutomationProperties.HelpText="Zoom out of the current capture."
-                            AutomationProperties.Name="Zoom out"
-                            Click="ZoomOutButton_Click"
-                            IsEnabled="{x:Bind ViewModel.CanZoomOut, Mode=OneWay}"
-                            Style="{StaticResource ToolIconButtonStyle}"
-                            ToolTipService.ToolTip="Zoom out">
-                            <FontIcon Glyph="-" />
-                        </Button>
-                        <Button
-                            AccessKey="1"
-                            AutomationProperties.AcceleratorKey="Ctrl+0"
-                            AutomationProperties.HelpText="Show the current capture at actual size."
-                            AutomationProperties.Name="Actual size"
-                            Click="ActualSizeButton_Click"
-                            IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
-                            MinWidth="52"
-                            ToolTipService.ToolTip="Actual size">
-                            <TextBlock
-                                FontSize="12"
-                                Text="100%" />
-                        </Button>
-                        <Button
-                            AccessKey="+"
-                            AutomationProperties.AcceleratorKey="Ctrl+Plus"
-                            AutomationProperties.HelpText="Zoom in on the current capture."
-                            AutomationProperties.Name="Zoom in"
-                            Click="ZoomInButton_Click"
-                            IsEnabled="{x:Bind ViewModel.CanZoomIn, Mode=OneWay}"
-                            Style="{StaticResource ToolIconButtonStyle}"
-                            ToolTipService.ToolTip="Zoom in">
-                            <FontIcon Glyph="+" />
-                        </Button>
-                        <TextBlock
-                            MinWidth="52"
-                            VerticalAlignment="Center"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="{x:Bind ViewModel.CanvasZoomLabel, Mode=OneWay}" />
-                        <StackPanel
-                            Margin="16,0,0,0"
-                            VerticalAlignment="Center"
-                            AutomationProperties.Name="Recording active indicator"
-                            Orientation="Horizontal"
-                            Spacing="6"
-                            Visibility="{x:Bind ViewModel.ScreenRecordingIndicatorVisibility, Mode=OneWay}">
-                            <Ellipse
-                                Width="8"
-                                Height="8"
-                                Fill="#FFD13438" />
-                            <TextBlock
+                        Padding="14,10"
+                        Background="{StaticResource SnapPanelBrush}"
+                        BorderBrush="{StaticResource SnapStrokeBrush}"
+                        BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <ScrollViewer
+                                HorizontalScrollBarVisibility="Hidden"
+                                HorizontalScrollMode="Enabled"
+                                VerticalScrollBarVisibility="Disabled"
+                                VerticalScrollMode="Disabled">
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <Button
+                                        AutomationProperties.HelpText="Use pointer selection on the canvas."
+                                        AutomationProperties.Name="Select annotations"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        ToolTipService.ToolTip="Select">
+                                        <FontIcon Foreground="{StaticResource SnapAccentBrush}" Glyph="&#xE8B7;" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.HelpText="Select the rectangle annotation tool."
+                                        AutomationProperties.Name="Rectangle tool"
+                                        Click="AnnotationToolButton_Click"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        Tag="0"
+                                        ToolTipService.ToolTip="Rectangle">
+                                        <TextBlock FontSize="24" Text="&#x25A1;" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.HelpText="Select the ellipse annotation tool."
+                                        AutomationProperties.Name="Ellipse tool"
+                                        Click="AnnotationToolButton_Click"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        Tag="1"
+                                        ToolTipService.ToolTip="Ellipse">
+                                        <FontIcon Glyph="&#xEA3A;" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.HelpText="Select the arrow annotation tool."
+                                        AutomationProperties.Name="Arrow tool"
+                                        Click="AnnotationToolButton_Click"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        Tag="3"
+                                        ToolTipService.ToolTip="Arrow">
+                                        <FontIcon Glyph="&#xE8AD;" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.HelpText="Select the text annotation tool."
+                                        AutomationProperties.Name="Text tool"
+                                        Click="AnnotationToolButton_Click"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        Tag="4"
+                                        ToolTipService.ToolTip="Text">
+                                        <TextBlock FontSize="22" FontWeight="SemiBold" Text="A" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.HelpText="Select the highlight annotation tool."
+                                        AutomationProperties.Name="Highlight tool"
+                                        Click="AnnotationToolButton_Click"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        Tag="5"
+                                        ToolTipService.ToolTip="Highlight">
+                                        <SymbolIcon Symbol="Edit" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.HelpText="Select the blur annotation tool."
+                                        AutomationProperties.Name="Blur tool"
+                                        Click="AnnotationToolButton_Click"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        Tag="6"
+                                        ToolTipService.ToolTip="Blur">
+                                        <FontIcon Glyph="&#xE9D2;" />
+                                    </Button>
+                                    <Button
+                                        AccessKey="C"
+                                        AutomationProperties.HelpText="Crop the current capture to the selected annotation bounds."
+                                        AutomationProperties.Name="Crop to selected annotation"
+                                        Click="CropButton_Click"
+                                        IsEnabled="{x:Bind ViewModel.CanCropToSelection, Mode=OneWay}"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        ToolTipService.ToolTip="Crop">
+                                        <SymbolIcon Symbol="Crop" />
+                                    </Button>
+                                    <Rectangle
+                                        Width="1"
+                                        Height="28"
+                                        Margin="4,0"
+                                        VerticalAlignment="Center"
+                                        Fill="{StaticResource SnapStrokeBrush}" />
+                                    <Button
+                                        AccessKey="A"
+                                        AutomationProperties.AcceleratorKey="Ctrl+Enter"
+                                        AutomationProperties.HelpText="Add the selected annotation tool to the current capture."
+                                        AutomationProperties.Name="Add selected annotation tool"
+                                        Click="AddAnnotationButton_Click"
+                                        IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        ToolTipService.ToolTip="Add selected tool">
+                                        <SymbolIcon Symbol="Add" />
+                                    </Button>
+                                    <Button
+                                        AccessKey="D"
+                                        AutomationProperties.AcceleratorKey="Ctrl+Delete"
+                                        AutomationProperties.HelpText="Delete the selected annotation."
+                                        AutomationProperties.Name="Delete selected annotation"
+                                        Click="DeleteAnnotationButton_Click"
+                                        IsEnabled="{x:Bind ViewModel.CanDeleteSelectedAnnotation, Mode=OneWay}"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        ToolTipService.ToolTip="Delete selected annotation">
+                                        <SymbolIcon Symbol="Delete" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.AcceleratorKey="Ctrl+Z"
+                                        AutomationProperties.Name="{x:Bind ViewModel.UndoToolTip, Mode=OneWay}"
+                                        Click="UndoButton_Click"
+                                        IsEnabled="{x:Bind ViewModel.CanUndo, Mode=OneWay}"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        ToolTipService.ToolTip="{x:Bind ViewModel.UndoToolTip, Mode=OneWay}">
+                                        <SymbolIcon Symbol="Undo" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.AcceleratorKey="Ctrl+Y"
+                                        AutomationProperties.Name="{x:Bind ViewModel.RedoToolTip, Mode=OneWay}"
+                                        Click="RedoButton_Click"
+                                        IsEnabled="{x:Bind ViewModel.CanRedo, Mode=OneWay}"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        ToolTipService.ToolTip="{x:Bind ViewModel.RedoToolTip, Mode=OneWay}">
+                                        <SymbolIcon Symbol="Redo" />
+                                    </Button>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <StackPanel
+                                Grid.Column="1"
+                                HorizontalAlignment="Right"
                                 VerticalAlignment="Center"
-                                FontSize="12"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                Text="{x:Bind ViewModel.ScreenRecordingIndicatorText, Mode=OneWay}" />
-                        </StackPanel>
-                    </StackPanel>
+                                AutomationProperties.Name="Recording active indicator"
+                                Orientation="Horizontal"
+                                Spacing="6"
+                                Visibility="{x:Bind ViewModel.ScreenRecordingIndicatorVisibility, Mode=OneWay}">
+                                <Ellipse
+                                    Width="8"
+                                    Height="8"
+                                    Fill="#FFD13438" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="{x:Bind ViewModel.ScreenRecordingIndicatorText, Mode=OneWay}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
 
                     <Border
                         Grid.Row="2"
@@ -594,10 +719,7 @@
                         AutomationProperties.Name="Editor canvas"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="4">
+                        Background="{StaticResource SnapBackgroundBrush}">
                         <Grid>
                             <ScrollViewer
                                 x:Name="CanvasScrollViewer"
@@ -655,8 +777,88 @@
                                     Text="{x:Bind ViewModel.CurrentDocumentTitle, Mode=OneWay}" />
                                 <TextBlock
                                     HorizontalAlignment="Center"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Foreground="{StaticResource SnapMutedBrush}"
                                     Text="{x:Bind ViewModel.CurrentDocumentDetail, Mode=OneWay}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border
+                        Grid.Row="3"
+                        Padding="16,8"
+                        Background="{StaticResource SnapPanelBrush}"
+                        BorderBrush="{StaticResource SnapStrokeBrush}"
+                        BorderThickness="0,1,0,0">
+                        <Grid>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="{x:Bind ViewModel.CurrentDocumentSizeLabel, Mode=OneWay}" />
+
+                            <StackPanel
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal"
+                                Spacing="4">
+                                <Button
+                                    AccessKey="F"
+                                    AutomationProperties.AcceleratorKey="Ctrl+1"
+                                    AutomationProperties.HelpText="Fit the current capture to the editor canvas."
+                                    AutomationProperties.Name="Fit canvas"
+                                    Click="FitCanvasButton_Click"
+                                    IsEnabled="{x:Bind ViewModel.CanFitCanvas, Mode=OneWay}"
+                                    Style="{StaticResource ToolIconButtonStyle}"
+                                    ToolTipService.ToolTip="Fit">
+                                    <SymbolIcon Symbol="FullScreen" />
+                                </Button>
+                                <Button
+                                    AccessKey="-"
+                                    AutomationProperties.AcceleratorKey="Ctrl+Minus"
+                                    AutomationProperties.HelpText="Zoom out of the current capture."
+                                    AutomationProperties.Name="Zoom out"
+                                    Click="ZoomOutButton_Click"
+                                    IsEnabled="{x:Bind ViewModel.CanZoomOut, Mode=OneWay}"
+                                    Style="{StaticResource ToolIconButtonStyle}"
+                                    ToolTipService.ToolTip="Zoom out">
+                                    <FontIcon Glyph="-" />
+                                </Button>
+                                <Button
+                                    AccessKey="1"
+                                    AutomationProperties.AcceleratorKey="Ctrl+0"
+                                    AutomationProperties.HelpText="Show the current capture at actual size."
+                                    AutomationProperties.Name="Actual size"
+                                    Click="ActualSizeButton_Click"
+                                    IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
+                                    MinWidth="64"
+                                    ToolTipService.ToolTip="Actual size">
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="100%" />
+                                </Button>
+                                <Button
+                                    AccessKey="+"
+                                    AutomationProperties.AcceleratorKey="Ctrl+Plus"
+                                    AutomationProperties.HelpText="Zoom in on the current capture."
+                                    AutomationProperties.Name="Zoom in"
+                                    Click="ZoomInButton_Click"
+                                    IsEnabled="{x:Bind ViewModel.CanZoomIn, Mode=OneWay}"
+                                    Style="{StaticResource ToolIconButtonStyle}"
+                                    ToolTipService.ToolTip="Zoom in">
+                                    <FontIcon Glyph="+" />
+                                </Button>
+                                <Border
+                                    MinWidth="62"
+                                    Padding="10,0"
+                                    Background="{StaticResource SnapSurfaceBrush}"
+                                    BorderBrush="{StaticResource SnapStrokeBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{StaticResource SnapMutedBrush}"
+                                        Text="{x:Bind ViewModel.CanvasZoomLabel, Mode=OneWay}" />
+                                </Border>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -665,260 +867,284 @@
 
             <Grid
                 Grid.Column="2"
-                Padding="12"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1,0,0,0"
-                RowSpacing="8">
+                Padding="18"
+                Background="{StaticResource SnapPanelBrush}"
+                BorderBrush="{StaticResource SnapStrokeBrush}"
+                BorderThickness="1,0,0,0">
                 <ScrollViewer
                     AutomationProperties.HelpText="Scroll through the right-side capture and editor controls."
                     AutomationProperties.Name="Right controls scroll area"
                     HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="0,0,18,0" Spacing="8">
-                        <TextBlock
-                            FontSize="16"
-                            FontWeight="SemiBold"
-                            Text="Capture" />
+                    <StackPanel Margin="0,0,12,0" Spacing="18">
+                        <StackPanel Spacing="10">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon
+                                    FontSize="16"
+                                    Foreground="{StaticResource SnapAccentBrush}"
+                                    Glyph="&#xE9F5;" />
+                                <TextBlock
+                                    FontSize="20"
+                                    FontWeight="SemiBold"
+                                    Text="{x:Bind ViewModel.ActiveAnnotationToolLabel, Mode=OneWay}" />
+                            </StackPanel>
+
+                            <ComboBox
+                                AutomationProperties.HelpText="Choose a common annotation preset for new annotations."
+                                AutomationProperties.Name="Annotation preset"
+                                Header="Preset"
+                                SelectedIndex="{x:Bind ViewModel.AnnotationPresetIndex, Mode=OneWay}"
+                                SelectionChanged="AnnotationPreset_SelectionChanged">
+                                <ComboBoxItem Content="Custom" />
+                                <ComboBoxItem Content="Standard box" />
+                                <ComboBoxItem Content="Emphasis box" />
+                                <ComboBoxItem Content="Pointer arrow" />
+                                <ComboBoxItem Content="Text label" />
+                                <ComboBoxItem Content="Highlighter" />
+                                <ComboBoxItem Content="Blur region" />
+                            </ComboBox>
+
+                            <ComboBox
+                                AutomationProperties.HelpText="Choose the annotation tool used for new annotations."
+                                AutomationProperties.Name="Annotation tool"
+                                Header="Tool"
+                                SelectedIndex="{x:Bind ViewModel.AnnotationToolIndex, Mode=OneWay}"
+                                SelectionChanged="AnnotationTool_SelectionChanged">
+                                <ComboBoxItem Content="Rectangle" />
+                                <ComboBoxItem Content="Ellipse" />
+                                <ComboBoxItem Content="Line" />
+                                <ComboBoxItem Content="Arrow" />
+                                <ComboBoxItem Content="Text" />
+                                <ComboBoxItem Content="Highlight" />
+                                <ComboBoxItem Content="Blur" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Spacing="8">
+                            <TextBlock
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="Color" />
+                            <StackPanel
+                                AutomationProperties.HelpText="Choose the annotation stroke color."
+                                AutomationProperties.Name="Annotation color"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                                <Button
+                                    Background="#C84E40"
+                                    Click="AnnotationStrokeButton_Click"
+                                    Style="{StaticResource SwatchButtonStyle}"
+                                    Tag="2"
+                                    ToolTipService.ToolTip="Red" />
+                                <Button
+                                    Background="#5F86E8"
+                                    Click="AnnotationStrokeButton_Click"
+                                    Style="{StaticResource SwatchButtonStyle}"
+                                    Tag="1"
+                                    ToolTipService.ToolTip="Blue" />
+                                <Button
+                                    Background="#808080"
+                                    Click="AnnotationStrokeButton_Click"
+                                    Style="{StaticResource SwatchButtonStyle}"
+                                    Tag="4"
+                                    ToolTipService.ToolTip="Gray" />
+                                <Button
+                                    Background="#E6AE23"
+                                    Click="AnnotationStrokeButton_Click"
+                                    Style="{StaticResource SwatchButtonStyle}"
+                                    Tag="3"
+                                    ToolTipService.ToolTip="Yellow" />
+                                <Button
+                                    Background="#1F1F1F"
+                                    Click="AnnotationStrokeButton_Click"
+                                    Style="{StaticResource SwatchButtonStyle}"
+                                    Tag="0"
+                                    ToolTipService.ToolTip="Black" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Slider
+                            AutomationProperties.HelpText="Set annotation stroke thickness."
+                            AutomationProperties.Name="Annotation size"
+                            Header="Stroke width"
+                            Maximum="12"
+                            Minimum="1"
+                            Value="{x:Bind ViewModel.AnnotationStrokeThickness, Mode=OneWay}"
+                            ValueChanged="AnnotationStrokeSize_ValueChanged" />
+
+                        <Slider
+                            AutomationProperties.HelpText="Set annotation opacity."
+                            AutomationProperties.Name="Annotation opacity"
+                            Header="Opacity"
+                            Maximum="1"
+                            Minimum="0.1"
+                            StepFrequency="0.05"
+                            Value="{x:Bind ViewModel.AnnotationOpacity, Mode=OneWay}"
+                            ValueChanged="AnnotationOpacity_ValueChanged" />
+
+                        <TextBox
+                            AutomationProperties.HelpText="Edit the selected text annotation."
+                            AutomationProperties.Name="Annotation text"
+                            Header="Text"
+                            LostFocus="AnnotationText_LostFocus"
+                            Text="{x:Bind ViewModel.AnnotationText, Mode=OneWay}" />
+
+                        <Rectangle
+                            Height="1"
+                            Fill="{StaticResource SnapStrokeBrush}" />
+
+                        <StackPanel
+                            AutomationProperties.Name="Selected capture properties"
+                            Spacing="10">
+                            <TextBlock
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="Image size" />
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="4">
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{StaticResource SnapMutedBrush}"
+                                        Text="W" />
+                                    <TextBlock
+                                        AutomationProperties.Name="Selected capture width"
+                                        FontSize="12"
+                                        Foreground="{StaticResource SnapMutedBrush}"
+                                        Text="{x:Bind ViewModel.CurrentDocumentWidthLabel, Mode=OneWay}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <NumberBox
+                                        AutomationProperties.HelpText="Set the resized capture width using the selected resize unit."
+                                        AutomationProperties.Name="Resize width"
+                                        Maximum="{x:Bind ViewModel.ResizeMaximumValue, Mode=OneWay}"
+                                        Minimum="1"
+                                        SmallChange="{x:Bind ViewModel.ResizeStepFrequency, Mode=OneWay}"
+                                        SpinButtonPlacementMode="Hidden"
+                                        Value="{x:Bind ViewModel.ResizeWidth, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{StaticResource SnapMutedBrush}"
+                                        Text="H" />
+                                    <TextBlock
+                                        AutomationProperties.Name="Selected capture height"
+                                        FontSize="12"
+                                        Foreground="{StaticResource SnapMutedBrush}"
+                                        Text="{x:Bind ViewModel.CurrentDocumentHeightLabel, Mode=OneWay}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <NumberBox
+                                        AutomationProperties.HelpText="Set the resized capture height using the selected resize unit."
+                                        AutomationProperties.Name="Resize height"
+                                        Maximum="{x:Bind ViewModel.ResizeMaximumValue, Mode=OneWay}"
+                                        Minimum="1"
+                                        SmallChange="{x:Bind ViewModel.ResizeStepFrequency, Mode=OneWay}"
+                                        SpinButtonPlacementMode="Hidden"
+                                        Value="{x:Bind ViewModel.ResizeHeight, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock
+                                AutomationProperties.Name="Selected capture file size"
+                                FontSize="12"
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="{x:Bind ViewModel.CurrentDocumentFileSizeLabel, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+
+                        <ComboBox
+                            AutomationProperties.HelpText="Choose whether resize width and height are entered as pixels or percentages."
+                            AutomationProperties.Name="Resize unit"
+                            Header="Resize by"
+                            SelectedIndex="{x:Bind ViewModel.ResizeUnitIndex, Mode=TwoWay}">
+                            <ComboBoxItem Content="Pixels" />
+                            <ComboBoxItem Content="Percent" />
+                        </ComboBox>
 
                         <ToggleSwitch
-                            Grid.Row="1"
-                            AutomationProperties.HelpText="Include the mouse cursor in new captures."
-                            AutomationProperties.Name="Include cursor"
-                            Header="Cursor"
-                            IsOn="{x:Bind ViewModel.IncludeCursor, Mode=TwoWay}" />
+                            AutomationProperties.HelpText="Keep the resized capture width and height proportional to the selected image."
+                            AutomationProperties.Name="Lock resize aspect ratio"
+                            Header="Aspect ratio"
+                            IsOn="{x:Bind ViewModel.ResizeAspectRatioIsLocked, Mode=TwoWay}"
+                            OffContent="Free"
+                            OnContent="Locked" />
 
-                        <ComboBox
-                            Grid.Row="2"
-                            AutomationProperties.HelpText="Choose a delay before each new capture starts."
-                            AutomationProperties.Name="Capture delay"
-                            Header="Delay"
-                            SelectedIndex="{x:Bind ViewModel.CaptureDelayIndex, Mode=TwoWay}">
-                            <ComboBoxItem Content="None" />
-                            <ComboBoxItem Content="3 seconds" />
-                            <ComboBoxItem Content="5 seconds" />
-                        </ComboBox>
-
-                        <ComboBox
-                            Grid.Row="3"
-                            AutomationProperties.HelpText="Choose the global capture hotkey."
-                            AutomationProperties.Name="Capture hotkey"
-                            Header="Hotkey"
-                            SelectedIndex="{x:Bind ViewModel.CaptureHotkeyIndex, Mode=OneWay}"
-                            SelectionChanged="CaptureHotkey_SelectionChanged">
-                            <ComboBoxItem Content="PrintScreen" />
-                            <ComboBoxItem Content="Ctrl+Shift+S" />
-                            <ComboBoxItem Content="Ctrl+Alt+S" />
-                        </ComboBox>
-
-                        <ComboBox
-                            Grid.Row="4"
-                            AutomationProperties.HelpText="Choose the audio source for new screen recordings."
-                            AutomationProperties.Name="Recording audio"
-                            Header="Recording audio"
-                            IsEnabled="{x:Bind ViewModel.CanChangeScreenRecordingAudioMode, Mode=OneWay}"
-                            SelectedIndex="{x:Bind ViewModel.ScreenRecordingAudioModeIndex, Mode=OneWay}"
-                            SelectionChanged="ScreenRecordingAudioMode_SelectionChanged"
-                            Visibility="{x:Bind ViewModel.ScreenRecordingControlsVisibility, Mode=OneWay}">
-                            <ComboBoxItem Content="None" />
-                            <ComboBoxItem Content="Microphone" />
-                            <ComboBoxItem Content="System audio" />
-                        </ComboBox>
-
-                        <TextBlock
-                            Grid.Row="5"
-                            FontSize="16"
-                            FontWeight="SemiBold"
-                            Text="Tools" />
-
-                        <StackPanel Grid.Row="6" Orientation="Horizontal" Spacing="4">
-                            <Button
-                                AutomationProperties.AcceleratorKey="Ctrl+Z"
-                                AutomationProperties.Name="{x:Bind ViewModel.UndoToolTip, Mode=OneWay}"
-                                Click="UndoButton_Click"
-                                IsEnabled="{x:Bind ViewModel.CanUndo, Mode=OneWay}"
-                                Style="{StaticResource ToolIconButtonStyle}"
-                                ToolTipService.ToolTip="{x:Bind ViewModel.UndoToolTip, Mode=OneWay}">
-                                <SymbolIcon Symbol="Undo" />
-                            </Button>
-                            <Button
-                                AutomationProperties.AcceleratorKey="Ctrl+Y"
-                                AutomationProperties.Name="{x:Bind ViewModel.RedoToolTip, Mode=OneWay}"
-                                Click="RedoButton_Click"
-                                IsEnabled="{x:Bind ViewModel.CanRedo, Mode=OneWay}"
-                                Style="{StaticResource ToolIconButtonStyle}"
-                                ToolTipService.ToolTip="{x:Bind ViewModel.RedoToolTip, Mode=OneWay}">
-                                <SymbolIcon Symbol="Redo" />
-                            </Button>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="7" Orientation="Horizontal" Spacing="4">
-                            <Button
-                                AccessKey="A"
-                                AutomationProperties.AcceleratorKey="Ctrl+Enter"
-                                AutomationProperties.HelpText="Add the selected annotation tool to the current capture."
-                                AutomationProperties.Name="Add selected annotation tool"
-                                Click="AddAnnotationButton_Click"
-                                IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
-                                Style="{StaticResource ToolIconButtonStyle}"
-                                ToolTipService.ToolTip="Add selected tool">
-                                <SymbolIcon Symbol="Add" />
-                            </Button>
-                            <Button
-                                AccessKey="D"
-                                AutomationProperties.AcceleratorKey="Ctrl+Delete"
-                                AutomationProperties.HelpText="Delete the selected annotation."
-                                AutomationProperties.Name="Delete selected annotation"
-                                Click="DeleteAnnotationButton_Click"
-                                IsEnabled="{x:Bind ViewModel.CanDeleteSelectedAnnotation, Mode=OneWay}"
-                                Style="{StaticResource ToolIconButtonStyle}"
-                                ToolTipService.ToolTip="Delete selected annotation">
-                                <SymbolIcon Symbol="Delete" />
-                            </Button>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="8" Spacing="8">
-                    <ComboBox
-                        AutomationProperties.HelpText="Choose a common annotation preset for new annotations."
-                        AutomationProperties.Name="Annotation preset"
-                        Header="Preset"
-                        SelectedIndex="{x:Bind ViewModel.AnnotationPresetIndex, Mode=OneWay}"
-                        SelectionChanged="AnnotationPreset_SelectionChanged">
-                        <ComboBoxItem Content="Custom" />
-                        <ComboBoxItem Content="Standard box" />
-                        <ComboBoxItem Content="Emphasis box" />
-                        <ComboBoxItem Content="Pointer arrow" />
-                        <ComboBoxItem Content="Text label" />
-                        <ComboBoxItem Content="Highlighter" />
-                        <ComboBoxItem Content="Blur region" />
-                    </ComboBox>
-                    <ComboBox
-                        AutomationProperties.HelpText="Choose the annotation tool used for new annotations."
-                        AutomationProperties.Name="Annotation tool"
-                        Header="Tool"
-                        SelectedIndex="{x:Bind ViewModel.AnnotationToolIndex, Mode=OneWay}"
-                        SelectionChanged="AnnotationTool_SelectionChanged">
-                        <ComboBoxItem Content="Rectangle" />
-                        <ComboBoxItem Content="Ellipse" />
-                        <ComboBoxItem Content="Line" />
-                        <ComboBoxItem Content="Arrow" />
-                        <ComboBoxItem Content="Text" />
-                        <ComboBoxItem Content="Highlight" />
-                        <ComboBoxItem Content="Blur" />
-                    </ComboBox>
-                    <ComboBox
-                        AutomationProperties.HelpText="Choose the annotation stroke color."
-                        AutomationProperties.Name="Annotation color"
-                        Header="Color"
-                        SelectedIndex="{x:Bind ViewModel.AnnotationStrokeIndex, Mode=OneWay}"
-                        SelectionChanged="AnnotationStroke_SelectionChanged">
-                        <ComboBoxItem Content="Black" />
-                        <ComboBoxItem Content="Blue" />
-                        <ComboBoxItem Content="Red" />
-                        <ComboBoxItem Content="Yellow" />
-                        <ComboBoxItem Content="Gray" />
-                    </ComboBox>
-                    <Slider
-                        AutomationProperties.HelpText="Set annotation stroke thickness."
-                        AutomationProperties.Name="Annotation size"
-                        Header="Size"
-                        Maximum="12"
-                        Minimum="1"
-                        Value="{x:Bind ViewModel.AnnotationStrokeThickness, Mode=OneWay}"
-                        ValueChanged="AnnotationStrokeSize_ValueChanged" />
-                    <Slider
-                        AutomationProperties.HelpText="Set annotation opacity."
-                        AutomationProperties.Name="Annotation opacity"
-                        Header="Opacity"
-                        Maximum="1"
-                        Minimum="0.1"
-                        StepFrequency="0.05"
-                        Value="{x:Bind ViewModel.AnnotationOpacity, Mode=OneWay}"
-                        ValueChanged="AnnotationOpacity_ValueChanged" />
-                    <TextBox
-                        AutomationProperties.HelpText="Edit the selected text annotation."
-                        AutomationProperties.Name="Annotation text"
-                        Header="Text"
-                        LostFocus="AnnotationText_LostFocus"
-                        Text="{x:Bind ViewModel.AnnotationText, Mode=OneWay}" />
-                    <Button
-                        AccessKey="T"
-                        AutomationProperties.HelpText="Extract text from the selected annotation bounds, or from the full capture when no annotation is selected, and copy it to the clipboard."
-                        AutomationProperties.Name="Copy recognized text"
-                        Click="CopyRecognizedTextButton_Click"
-                        IsEnabled="{x:Bind ViewModel.CanCopyRecognizedText, Mode=OneWay}"
-                        ToolTipService.ToolTip="Copy recognized text"
-                        Visibility="{x:Bind ViewModel.OcrControlsVisibility, Mode=OneWay}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <SymbolIcon Symbol="Copy" />
-                            <TextBlock Text="Copy Text" />
-                        </StackPanel>
-                    </Button>
-                    <Button
-                        AccessKey="C"
-                        AutomationProperties.HelpText="Crop the current capture to the selected annotation bounds."
-                        AutomationProperties.Name="Crop to selected annotation"
-                        Click="CropButton_Click"
-                        IsEnabled="{x:Bind ViewModel.CanCropToSelection, Mode=OneWay}"
-                        ToolTipService.ToolTip="Crop to selected annotation">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <SymbolIcon Symbol="Crop" />
-                            <TextBlock Text="Crop" />
-                        </StackPanel>
-                    </Button>
-                    <ComboBox
-                        AutomationProperties.HelpText="Choose whether resize width and height are entered as pixels or percentages."
-                        AutomationProperties.Name="Resize unit"
-                        Header="Resize by"
-                        SelectedIndex="{x:Bind ViewModel.ResizeUnitIndex, Mode=TwoWay}">
-                        <ComboBoxItem Content="Pixels" />
-                        <ComboBoxItem Content="Percent" />
-                    </ComboBox>
-                    <Grid RowSpacing="6">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <NumberBox
-                            AutomationProperties.HelpText="Set the resized capture width using the selected resize unit."
-                            AutomationProperties.Name="Resize width"
-                            Header="{x:Bind ViewModel.ResizeWidthHeader, Mode=OneWay}"
-                            Maximum="{x:Bind ViewModel.ResizeMaximumValue, Mode=OneWay}"
-                            MinWidth="128"
-                            Minimum="1"
-                            SmallChange="{x:Bind ViewModel.ResizeStepFrequency, Mode=OneWay}"
-                            SpinButtonPlacementMode="Hidden"
-                            Value="{x:Bind ViewModel.ResizeWidth, Mode=TwoWay}" />
-                        <NumberBox
-                            Grid.Row="1"
-                            AutomationProperties.HelpText="Set the resized capture height using the selected resize unit."
-                            AutomationProperties.Name="Resize height"
-                            Header="{x:Bind ViewModel.ResizeHeightHeader, Mode=OneWay}"
-                            Maximum="{x:Bind ViewModel.ResizeMaximumValue, Mode=OneWay}"
-                            MinWidth="128"
-                            Minimum="1"
-                            SmallChange="{x:Bind ViewModel.ResizeStepFrequency, Mode=OneWay}"
-                            SpinButtonPlacementMode="Hidden"
-                            Value="{x:Bind ViewModel.ResizeHeight, Mode=TwoWay}" />
-                    </Grid>
-                    <ToggleSwitch
-                        AutomationProperties.HelpText="Keep the resized capture width and height proportional to the selected image."
-                        AutomationProperties.Name="Lock resize aspect ratio"
-                        Header="Aspect ratio"
-                        IsOn="{x:Bind ViewModel.ResizeAspectRatioIsLocked, Mode=TwoWay}"
-                        OffContent="Free"
-                        OnContent="Locked" />
-                    <Button
-                        AccessKey="R"
-                        AutomationProperties.HelpText="Resize the current capture to the specified dimensions."
-                        AutomationProperties.Name="Resize document"
-                        Click="ResizeButton_Click"
-                        IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
-                        ToolTipService.ToolTip="Resize document">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xE8B9;" />
-                            <TextBlock Text="Resize" />
-                        </StackPanel>
+                        <Button
+                            AccessKey="R"
+                            AutomationProperties.HelpText="Resize the current capture to the specified dimensions."
+                            AutomationProperties.Name="Resize document"
+                            Click="ResizeButton_Click"
+                            IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
+                            ToolTipService.ToolTip="Resize document">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE8B9;" />
+                                <TextBlock Text="Resize" />
+                            </StackPanel>
                         </Button>
+
+                        <Button
+                            AccessKey="T"
+                            AutomationProperties.HelpText="Extract text from the selected annotation bounds, or from the full capture when no annotation is selected, and copy it to the clipboard."
+                            AutomationProperties.Name="Copy recognized text"
+                            Click="CopyRecognizedTextButton_Click"
+                            IsEnabled="{x:Bind ViewModel.CanCopyRecognizedText, Mode=OneWay}"
+                            ToolTipService.ToolTip="Copy recognized text"
+                            Visibility="{x:Bind ViewModel.OcrControlsVisibility, Mode=OneWay}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <SymbolIcon Symbol="Copy" />
+                                <TextBlock Text="Copy Text" />
+                            </StackPanel>
+                        </Button>
+
+                        <Rectangle
+                            Height="1"
+                            Fill="{StaticResource SnapStrokeBrush}" />
+
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                Text="Capture" />
+
+                            <ToggleSwitch
+                                AutomationProperties.HelpText="Include the mouse cursor in new captures."
+                                AutomationProperties.Name="Include cursor"
+                                Header="Cursor"
+                                IsOn="{x:Bind ViewModel.IncludeCursor, Mode=TwoWay}" />
+
+                            <ComboBox
+                                AutomationProperties.HelpText="Choose a delay before each new capture starts."
+                                AutomationProperties.Name="Capture delay"
+                                Header="Delay"
+                                SelectedIndex="{x:Bind ViewModel.CaptureDelayIndex, Mode=TwoWay}">
+                                <ComboBoxItem Content="None" />
+                                <ComboBoxItem Content="3 seconds" />
+                                <ComboBoxItem Content="5 seconds" />
+                            </ComboBox>
+
+                            <ComboBox
+                                AutomationProperties.HelpText="Choose the global capture hotkey."
+                                AutomationProperties.Name="Capture hotkey"
+                                Header="Hotkey"
+                                SelectedIndex="{x:Bind ViewModel.CaptureHotkeyIndex, Mode=OneWay}"
+                                SelectionChanged="CaptureHotkey_SelectionChanged">
+                                <ComboBoxItem Content="PrintScreen" />
+                                <ComboBoxItem Content="Ctrl+Shift+S" />
+                                <ComboBoxItem Content="Ctrl+Alt+S" />
+                            </ComboBox>
+
+                            <ComboBox
+                                AutomationProperties.HelpText="Choose the audio source for new screen recordings."
+                                AutomationProperties.Name="Recording audio"
+                                Header="Recording audio"
+                                IsEnabled="{x:Bind ViewModel.CanChangeScreenRecordingAudioMode, Mode=OneWay}"
+                                SelectedIndex="{x:Bind ViewModel.ScreenRecordingAudioModeIndex, Mode=OneWay}"
+                                SelectionChanged="ScreenRecordingAudioMode_SelectionChanged"
+                                Visibility="{x:Bind ViewModel.ScreenRecordingControlsVisibility, Mode=OneWay}">
+                                <ComboBoxItem Content="None" />
+                                <ComboBoxItem Content="Microphone" />
+                                <ComboBoxItem Content="System audio" />
+                            </ComboBox>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -1023,6 +1249,15 @@
                                         FontSize="16"
                                         FontWeight="SemiBold"
                                         Text="Storage" />
+                                    <ComboBox
+                                        AutomationProperties.HelpText="Choose whether editable document data is stored in folders or a local CSharpDB database."
+                                        AutomationProperties.Name="Settings storage backend"
+                                        Header="Storage backend"
+                                        SelectedIndex="{x:Bind ViewModel.FirstRunStorageBackendIndex, Mode=OneWay}"
+                                        SelectionChanged="FirstRunStorageBackend_SelectionChanged">
+                                        <ComboBoxItem Content="File system" />
+                                        <ComboBoxItem Content="Database" />
+                                    </ComboBox>
                                     <TextBox
                                         AutomationProperties.HelpText="Current storage location for local captures."
                                         AutomationProperties.Name="Settings storage location"

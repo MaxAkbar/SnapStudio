@@ -27,7 +27,7 @@ The product is not automation-first like ShareX, and it is not cloud-first. Netw
 Implementation should follow SOLID principles and keep platform concerns isolated.
 
 - Single responsibility: capture, rendering, document storage, editor commands, settings, diagnostics, packaging, and Windows interop stay in separate services or projects.
-- Open/closed: new capture targets, export formats, OCR providers, recording engines, and scrolling strategies should be added behind existing interfaces where practical.
+- Open/closed: new capture targets, export formats, OCR providers, recording engines, scrolling strategies, and storage backends should be added behind existing interfaces where practical.
 - Liskov substitution: platform fallback implementations must behave predictably through the same contracts as full Windows implementations.
 - Interface segregation: UI code should depend on focused app-facing services rather than large platform adapters.
 - Dependency inversion: core workflows depend on contracts; Windows APIs live in `SnapStudio.Platform.Windows`, storage lives in `SnapStudio.Storage`, rendering lives in `SnapStudio.Rendering`, and UI composition lives in `SnapStudio.App`.
@@ -43,7 +43,7 @@ Implemented foundations:
 - .NET solution with app, capture host, core contracts, platform adapters, storage, rendering, IPC, and tests.
 - WinUI app shell with capture, editor, history, settings, and status surfaces.
 - Local settings store, import/export settings, feature flags, diagnostics, and crash recovery journal.
-- Document repository with source image, editable annotations, thumbnails, metadata, and recent history.
+- Document repository with selectable file-system or CSharpDB-backed editable document records, source images, thumbnails, metadata, and recent history.
 - Named-pipe editor message infrastructure for host/editor separation.
 
 Implemented capture and workspace:
@@ -108,6 +108,7 @@ Scope:
 - Verify capture and editor workflows on small, normal, and high-DPI displays.
 - Fix data-loss, thumbnail, or document reopen issues immediately.
 - Keep settings fully UI-controlled wherever practical.
+- Keep storage backend selection in Settings and apply backend changes through startup composition.
 - Keep logs redacted and local.
 
 Exit criteria:

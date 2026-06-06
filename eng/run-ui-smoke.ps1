@@ -229,6 +229,7 @@ try {
         [void](Assert-ElementByName -Root $window -Name "Settings include cursor")
         [void](Assert-ElementByName -Root $window -Name "Settings copy captures to clipboard")
         [void](Assert-ElementByName -Root $window -Name "Settings storage location")
+        [void](Assert-ElementByName -Root $window -Name "Settings storage backend")
         [void](Assert-ElementByName -Root $window -Name "Choose storage location")
         [void](Assert-ElementByName -Root $window -Name "Enable still capture")
         [void](Assert-ElementByName -Root $window -Name "Enable OCR")

@@ -8,15 +8,20 @@ SnapStudio is designed as a local-first screen capture, image editor, and featur
 
 Screen captures and imported images are stored locally under `%LOCALAPPDATA%\SnapStudio\Documents` unless the user chooses another storage location in Settings.
 
+SnapStudio supports two local document storage backends:
+
+- File system: editable document metadata is stored in per-capture JSON sidecars.
+- Database: editable document metadata is stored in a local CSharpDB database file named `snapstudio-documents.db` under the configured storage root.
+
 Each saved capture or imported image can include:
 
 - The source image file.
-- A JSON sidecar with editable annotation metadata.
+- Editable annotation metadata in either the JSON sidecar or the local CSharpDB database, depending on the selected backend.
 - Cached thumbnails.
 - Local document metadata such as title, created time, modified time, source type, annotation count, and source dimensions.
 - Optional OCR cache files when `V1.Ocr` is enabled.
 
-Deleting a capture from SnapStudio deletes the local document folder for that capture.
+Deleting a capture from SnapStudio removes the local editable document record for the active backend. Moving a capture to the recycle bin also removes the source image when no other document references it.
 
 ## Clipboard, Export, And External Apps
 
@@ -36,6 +41,7 @@ Settings are stored locally in `%LOCALAPPDATA%\SnapStudio\settings.json`.
 Settings can include:
 
 - Storage location.
+- Document storage backend.
 - Capture hotkey.
 - Cursor capture preference.
 - Clipboard preference.
@@ -44,7 +50,7 @@ Settings can include:
 
 Settings migration preserves user choices and updates the local schema version when the app changes its settings format.
 
-Settings can be exported to or imported from a user-selected `.json` file. Exported settings are controlled by the destination folder or app after export. Imported storage-root and feature-flag changes may require restart because capture, OCR, scrolling, and recording services are composed at startup.
+Settings can be exported to or imported from a user-selected `.json` file. Exported settings are controlled by the destination folder or app after export. Imported storage-root, storage-backend, and feature-flag changes may require restart because capture, OCR, scrolling, recording, and document-storage services are composed at startup.
 
 ## Diagnostics And Recovery Logs
 
@@ -84,6 +90,7 @@ Any future networked feature should require an updated privacy review and user-f
 Users can:
 
 - Choose the local storage location.
+- Choose the local document storage backend.
 - Import and export local settings.
 - Delete captures from the workspace.
 - Delete `%LOCALAPPDATA%\SnapStudio` to remove local app data.

@@ -74,8 +74,8 @@ public sealed record AppServices(
             .GetResult();
         string storageRoot = settings.StorageRoot;
 
-        var documentRepository = new FileSystemDocumentRepository(storageRoot);
-        var documentCatalog = new FileSystemDocumentCatalog(storageRoot);
+        (IDocumentRepository documentRepository, IDocumentCatalog documentCatalog) =
+            CreateDocumentStorage(settings);
         var diagnosticLog = new FileDiagnosticLog(Path.Combine(appDataRoot, "Logs", "snapstudio.jsonl"));
         crashRecoveryJournal ??= CreateCrashRecoveryJournal(appDataRoot);
         recoverySessionId = string.IsNullOrWhiteSpace(recoverySessionId)
@@ -194,6 +194,27 @@ public sealed record AppServices(
         ArgumentException.ThrowIfNullOrWhiteSpace(appDataRoot);
 
         return new FileCrashRecoveryJournal(Path.Combine(appDataRoot, "Logs", "recovery.jsonl"));
+    }
+
+    private static (IDocumentRepository Repository, IDocumentCatalog Catalog) CreateDocumentStorage(
+        ApplicationSettings settings)
+    {
+        return settings.StorageBackend switch
+        {
+            ApplicationStorageBackend.Database => CreateDatabaseDocumentStorage(settings.StorageRoot),
+            _ => (
+                new FileSystemDocumentRepository(settings.StorageRoot),
+                new FileSystemDocumentCatalog(settings.StorageRoot))
+        };
+    }
+
+    private static (IDocumentRepository Repository, IDocumentCatalog Catalog) CreateDatabaseDocumentStorage(
+        string storageRoot)
+    {
+        var store = new CSharpDbDocumentStore(storageRoot);
+        return (
+            new CSharpDbDocumentRepository(store),
+            new CSharpDbDocumentCatalog(store));
     }
 
     private static ICaptureTargetSelector CreateCaptureTargetSelector(

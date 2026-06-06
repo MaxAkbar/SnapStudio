@@ -69,6 +69,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private const double ResizeMaximumPercent = 1000;
     private const int ResizeUnitPixelsIndex = 0;
     private const int ResizeUnitPercentIndex = 1;
+    private const int StorageBackendFileSystemIndex = 0;
+    private const int StorageBackendDatabaseIndex = 1;
 
     private static readonly string[] CaptureHotkeyOptions =
     [
@@ -127,6 +129,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private int _firstRunCaptureHotkeyIndex;
     private bool _firstRunIncludeCursor = true;
     private bool _firstRunSetupIsOpen;
+    private int _firstRunStorageBackendIndex;
     private string _firstRunStorageRoot = string.Empty;
     private bool _settingsSurfaceIsFirstRun;
     private bool _settingsStillCaptureEnabled = true;
@@ -167,6 +170,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private string _historySearchText = string.Empty;
     private bool _includeCursor = true;
     private string _statusText = "Ready";
+    private ApplicationStorageBackend _storageBackend = ApplicationStorageBackend.FileSystem;
     private string _storageRoot = string.Empty;
     private string _workspaceTitleText = string.Empty;
 
@@ -283,6 +287,14 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     public string CanvasZoomLabel => _canvasViewport.HasSource
         ? $"{_canvasViewport.Zoom * 100:0}%"
         : "0%";
+
+    public string CurrentDocumentSizeLabel => _currentDocument is null
+        ? "-"
+        : string.Format(
+            CultureInfo.InvariantCulture,
+            "{0} x {1} px",
+            _currentDocument.SourceImage.Width,
+            _currentDocument.SourceImage.Height);
 
     public bool CanFitCanvas => _canvasViewport.HasSource;
 
@@ -625,6 +637,21 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
     }
 
+    public int FirstRunStorageBackendIndex
+    {
+        get => _firstRunStorageBackendIndex;
+        private set
+        {
+            if (_firstRunStorageBackendIndex == value)
+            {
+                return;
+            }
+
+            _firstRunStorageBackendIndex = value;
+            OnPropertyChanged(nameof(FirstRunStorageBackendIndex));
+        }
+    }
+
     public bool FirstRunIncludeCursor
     {
         get => _firstRunIncludeCursor;
@@ -914,6 +941,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             _annotationToolIndex = Math.Clamp(value, 0, 6);
             OnPropertyChanged(nameof(AnnotationToolIndex));
             OnPropertyChanged(nameof(ActiveAnnotationKind));
+            OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
         }
     }
 
@@ -926,6 +954,17 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         5 => AnnotationKind.Highlight,
         6 => AnnotationKind.Blur,
         _ => AnnotationKind.Rectangle
+    };
+
+    public string ActiveAnnotationToolLabel => ActiveAnnotationKind switch
+    {
+        AnnotationKind.Ellipse => "Ellipse",
+        AnnotationKind.Line => "Line",
+        AnnotationKind.Arrow => "Arrow",
+        AnnotationKind.Text => "Text",
+        AnnotationKind.Highlight => "Highlighter",
+        AnnotationKind.Blur => "Blur",
+        _ => "Rectangle"
     };
 
     public int AnnotationStrokeIndex
@@ -1316,6 +1355,21 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
     }
 
+    public ApplicationStorageBackend StorageBackend
+    {
+        get => _storageBackend;
+        private set
+        {
+            if (_storageBackend == value)
+            {
+                return;
+            }
+
+            _storageBackend = value;
+            OnPropertyChanged(nameof(StorageBackend));
+        }
+    }
+
     public string StatusText
     {
         get => _statusText;
@@ -1351,6 +1405,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         IncludeCursor = settings.IncludeCursorByDefault;
         CopyCapturesToClipboard = settings.CopyCapturesToClipboard;
         StorageRoot = settings.StorageRoot;
+        StorageBackend = settings.StorageBackend;
         InitializeFirstRunSetup(settings);
         await _documentWorkspaceBootstrapper
             .EnsureInitializedAsync(cancellationToken)
@@ -1382,6 +1437,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                     new Dictionary<string, string>
                     {
                         ["storageRoot"] = settings.StorageRoot,
+                        ["storageBackend"] = settings.StorageBackend.ToString(),
                         ["stillCaptureEnabled"] = stillCaptureEnabled.ToString()
                     }),
                 cancellationToken)
@@ -1419,6 +1475,17 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
 
         FirstRunCaptureHotkeyIndex = hotkeyIndex;
+    }
+
+    public void UpdateFirstRunStorageBackend(int storageBackendIndex)
+    {
+        if (storageBackendIndex is not StorageBackendFileSystemIndex
+            and not StorageBackendDatabaseIndex)
+        {
+            return;
+        }
+
+        FirstRunStorageBackendIndex = storageBackendIndex;
     }
 
     public void UpdateScreenRecordingAudioMode(int audioModeIndex)
@@ -1484,10 +1551,12 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         string storageRoot = string.IsNullOrWhiteSpace(FirstRunStorageRoot)
             ? settings.StorageRoot
             : FirstRunStorageRoot;
+        ApplicationStorageBackend storageBackend = ResolveStorageBackend(FirstRunStorageBackendIndex);
         bool storageRootChanged = !string.Equals(
             storageRoot,
             StorageRoot,
             StringComparison.OrdinalIgnoreCase);
+        bool storageBackendChanged = storageBackend != StorageBackend;
         Dictionary<string, bool> updatedFeatureFlags = CreateSettingsFeatureFlags(settings.FeatureFlags);
         bool featureFlagsChanged = FeatureFlagsDiffer(settings.FeatureFlags, updatedFeatureFlags);
         bool isFirstRun = SettingsSurfaceIsFirstRun;
@@ -1498,6 +1567,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             IncludeCursorByDefault = FirstRunIncludeCursor,
             CopyCapturesToClipboard = FirstRunCopyCapturesToClipboard,
             FirstRunCompleted = true,
+            StorageBackend = storageBackend,
             FeatureFlags = updatedFeatureFlags
         };
 
@@ -1509,7 +1579,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         CopyCapturesToClipboard = FirstRunCopyCapturesToClipboard;
         FirstRunSetupIsOpen = false;
 
-        if (storageRootChanged || featureFlagsChanged)
+        if (storageRootChanged || storageBackendChanged || featureFlagsChanged)
         {
             StatusText = isFirstRun
                 ? "Setup saved. Restart SnapStudio to apply storage or feature gate changes."
@@ -1670,6 +1740,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                 currentSettings.StorageRoot,
                 importedSettings.StorageRoot,
                 StringComparison.OrdinalIgnoreCase)
+            || currentSettings.StorageBackend != importedSettings.StorageBackend
             || FeatureFlagsDiffer(currentSettings.FeatureFlags, importedSettings.FeatureFlags);
 
         if (restartRecommended)
@@ -3422,6 +3493,20 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         return index >= 0 ? index : 0;
     }
 
+    private static int ResolveStorageBackendIndex(ApplicationStorageBackend storageBackend)
+    {
+        return storageBackend == ApplicationStorageBackend.Database
+            ? StorageBackendDatabaseIndex
+            : StorageBackendFileSystemIndex;
+    }
+
+    private static ApplicationStorageBackend ResolveStorageBackend(int storageBackendIndex)
+    {
+        return storageBackendIndex == StorageBackendDatabaseIndex
+            ? ApplicationStorageBackend.Database
+            : ApplicationStorageBackend.FileSystem;
+    }
+
     private void HotkeyService_HotkeyPressed(object? sender, HotkeyPressedEvent e)
     {
         if (!string.Equals(e.Name, "Capture", StringComparison.OrdinalIgnoreCase))
@@ -3726,10 +3811,12 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private static ApplicationSettings NormalizeImportedSettings(ApplicationSettings settings)
     {
         int hotkeyIndex = ResolveCaptureHotkeyIndex(settings.CaptureHotkey);
+        int storageBackendIndex = ResolveStorageBackendIndex(settings.StorageBackend);
 
         return settings with
         {
-            CaptureHotkey = CaptureHotkeyOptions[hotkeyIndex]
+            CaptureHotkey = CaptureHotkeyOptions[hotkeyIndex],
+            StorageBackend = ResolveStorageBackend(storageBackendIndex)
         };
     }
 
@@ -3890,6 +3977,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         IncludeCursor = settings.IncludeCursorByDefault;
         CopyCapturesToClipboard = settings.CopyCapturesToClipboard;
         FirstRunStorageRoot = settings.StorageRoot;
+        FirstRunStorageBackendIndex = ResolveStorageBackendIndex(settings.StorageBackend);
         FirstRunCaptureHotkeyIndex = CaptureHotkeyIndex;
         FirstRunIncludeCursor = settings.IncludeCursorByDefault;
         FirstRunCopyCapturesToClipboard = settings.CopyCapturesToClipboard;
@@ -4026,6 +4114,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private void InitializeFirstRunSetup(ApplicationSettings settings)
     {
         FirstRunStorageRoot = settings.StorageRoot;
+        FirstRunStorageBackendIndex = ResolveStorageBackendIndex(settings.StorageBackend);
         FirstRunCaptureHotkeyIndex = ResolveCaptureHotkeyIndex(settings.CaptureHotkey);
         FirstRunIncludeCursor = settings.IncludeCursorByDefault;
         FirstRunCopyCapturesToClipboard = settings.CopyCapturesToClipboard;
@@ -5178,6 +5267,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             CurrentDocumentWidthLabel = "-";
             CurrentDocumentHeightLabel = "-";
             CurrentDocumentFileSizeLabel = "-";
+            OnPropertyChanged(nameof(CurrentDocumentSizeLabel));
             return;
         }
 
@@ -5190,6 +5280,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             "{0} px",
             document.SourceImage.Height);
         CurrentDocumentFileSizeLabel = CreateImageFileSizeLabel(document.SourceImage.Path);
+        OnPropertyChanged(nameof(CurrentDocumentSizeLabel));
     }
 
     private static string CreateImageFileSizeLabel(string imagePath)

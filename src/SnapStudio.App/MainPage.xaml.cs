@@ -327,6 +327,22 @@ public sealed partial class MainPage : Page
         }
     }
 
+    private void FirstRunStorageBackend_SelectionChanged(
+        object sender,
+        SelectionChangedEventArgs e)
+    {
+        if (_isUpdatingBindings)
+        {
+            return;
+        }
+
+        if (sender is ComboBox { SelectedIndex: >= 0 } comboBox)
+        {
+            ViewModel.UpdateFirstRunStorageBackend(comboBox.SelectedIndex);
+            UpdateBindingsFromViewModel();
+        }
+    }
+
     private async void ChooseFirstRunStorageRootButton_Click(
         object sender,
         Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -580,6 +596,20 @@ public sealed partial class MainPage : Page
         }
     }
 
+    private void AnnotationToolButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (sender is not Button button
+            || button.Tag is not string tag
+            || !int.TryParse(tag, out int toolIndex))
+        {
+            return;
+        }
+
+        ViewModel.UpdateAnnotationTool(toolIndex);
+        UpdateBindingsFromViewModel();
+        RefreshAnnotationCanvas();
+    }
+
     private void AnnotationPreset_SelectionChanged(
         object sender,
         SelectionChangedEventArgs e)
@@ -614,6 +644,20 @@ public sealed partial class MainPage : Page
             UpdateBindingsFromViewModel();
             RefreshAnnotationCanvas();
         }
+    }
+
+    private async void AnnotationStrokeButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (sender is not Button button
+            || button.Tag is not string tag
+            || !int.TryParse(tag, out int strokeIndex))
+        {
+            return;
+        }
+
+        await ViewModel.UpdateAnnotationStrokeAsync(strokeIndex, CancellationToken.None);
+        UpdateBindingsFromViewModel();
+        RefreshAnnotationCanvas();
     }
 
     private async void AnnotationStrokeSize_ValueChanged(

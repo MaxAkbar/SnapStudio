@@ -1,4 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace SnapStudio.Core.Settings;
+
+[JsonConverter(typeof(JsonStringEnumConverter<ApplicationStorageBackend>))]
+public enum ApplicationStorageBackend
+{
+    FileSystem,
+    Database
+}
 
 public sealed record ApplicationSettings(
     int SchemaVersion,
@@ -7,12 +16,21 @@ public sealed record ApplicationSettings(
     bool IncludeCursorByDefault,
     bool CopyCapturesToClipboard,
     bool FirstRunCompleted,
+    ApplicationStorageBackend StorageBackend,
     Dictionary<string, bool> FeatureFlags)
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     public ApplicationSettings()
-        : this(CurrentSchemaVersion, string.Empty, "PrintScreen", true, false, false, [])
+        : this(
+            CurrentSchemaVersion,
+            string.Empty,
+            "PrintScreen",
+            true,
+            false,
+            false,
+            ApplicationStorageBackend.FileSystem,
+            [])
     {
     }
 
@@ -23,6 +41,7 @@ public sealed record ApplicationSettings(
         true,
         false,
         false,
+        ApplicationStorageBackend.FileSystem,
         new Dictionary<string, bool>
         {
             ["Capture.WgcStill"] = true,

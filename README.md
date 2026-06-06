@@ -18,7 +18,7 @@ SnapStudio is in active development. The current codebase includes the main capt
 - Crop and resize, including pixel or percentage resize with optional aspect-ratio lock.
 - Export to PNG, JPEG, PDF, and source image.
 - Optional OCR, scrolling capture, and screen recording lanes behind feature flags and readiness gates.
-- Local settings, local diagnostics, crash recovery journal, and MSIX packaging support.
+- Local settings, selectable file-system or CSharpDB document storage, local diagnostics, crash recovery journal, and MSIX packaging support.
 
 ## Architecture
 
@@ -27,7 +27,7 @@ The project is structured around clear boundaries:
 - `SnapStudio.App`: WinUI app shell and composition root.
 - `SnapStudio.Core`: contracts, models, workflows, editor commands, settings, diagnostics, and domain logic.
 - `SnapStudio.Platform.Windows`: Windows capture, OCR, clipboard, hotkey, recording, scrolling, and shell adapters.
-- `SnapStudio.Storage`: local document, settings, diagnostics, OCR cache, and thumbnail persistence.
+- `SnapStudio.Storage`: file-system and CSharpDB document storage, settings, diagnostics, OCR cache, and thumbnail persistence.
 - `SnapStudio.Rendering`: document rendering and raster edits.
 - `SnapStudio.Ipc`: editor message serialization and named-pipe transport.
 - `SnapStudio.CaptureHost`: capture host boundary.
@@ -63,6 +63,17 @@ dotnet test SnapStudio.sln --configuration Debug -p:Platform=x64
 Open `SnapStudio.sln` in Visual Studio, select the `x64` platform, and run `SnapStudio.App`.
 
 More setup notes are in [docs/development-setup.md](docs/development-setup.md).
+
+## Local Storage
+
+SnapStudio stores data under `%LOCALAPPDATA%\SnapStudio\Documents` by default, or under the storage folder chosen in Settings.
+
+The Settings window lets you choose the document storage backend:
+
+- `File system`: editable document metadata is saved as per-capture JSON sidecars.
+- `Database`: editable document metadata is saved in a local CSharpDB database file named `snapstudio-documents.db`.
+
+Source images, thumbnails, OCR cache files, recordings, diagnostics, and exports remain local files under the configured storage root. Changing the storage location, backend, or feature gates is saved immediately and takes effect after restarting SnapStudio.
 
 ## Validation
 

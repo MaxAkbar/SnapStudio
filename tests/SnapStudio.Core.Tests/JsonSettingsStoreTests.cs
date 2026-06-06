@@ -28,6 +28,7 @@ public sealed class JsonSettingsStoreTests
         Assert.False(loaded.IncludeCursorByDefault);
         Assert.True(loaded.CopyCapturesToClipboard);
         Assert.True(loaded.FirstRunCompleted);
+        Assert.Equal(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
         Assert.True(loaded.FeatureFlags["Capture.WgcStill"]);
     }
 
@@ -64,6 +65,7 @@ public sealed class JsonSettingsStoreTests
         Assert.False(loaded.IncludeCursorByDefault);
         Assert.True(loaded.CopyCapturesToClipboard);
         Assert.True(loaded.FirstRunCompleted);
+        Assert.Equal(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
         Assert.False(loaded.FeatureFlags["Editor.BlurTool"]);
         Assert.True(loaded.FeatureFlags["Custom.Experimental"]);
         Assert.True(loaded.FeatureFlags["Capture.WgcStill"]);
@@ -98,6 +100,7 @@ public sealed class JsonSettingsStoreTests
         Assert.Equal(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
         Assert.Equal(defaultStorageRoot, loaded.StorageRoot);
         Assert.Equal(defaults.CaptureHotkey, loaded.CaptureHotkey);
+        Assert.Equal(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
         Assert.True(loaded.FeatureFlags["Capture.WgcStill"]);
         Assert.False(loaded.FeatureFlags["V1.Ocr"]);
     }
@@ -124,7 +127,37 @@ public sealed class JsonSettingsStoreTests
 
         Assert.Equal(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
         Assert.False(loaded.FeatureFlags["Capture.WgcStill"]);
+        Assert.Equal(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
         Assert.True(loaded.FeatureFlags["Custom.Flag"]);
         Assert.True(loaded.FeatureFlags.ContainsKey("Editor.BlurTool"));
+    }
+
+    [Fact]
+    public async Task LoadAsync_PreservesDatabaseStorageBackend()
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        string settingsPath = Path.Combine(workspace.Path, "settings.json");
+        string defaultStorageRoot = Path.Combine(workspace.Path, "Documents");
+        ApplicationSettings defaults = ApplicationSettings.CreateDefault(defaultStorageRoot);
+        await File.WriteAllTextAsync(
+            settingsPath,
+            """
+            {
+              "schemaVersion": 3,
+              "storageRoot": "D:\\Captures",
+              "storageBackend": "Database",
+              "captureHotkey": "PrintScreen",
+              "includeCursorByDefault": true,
+              "copyCapturesToClipboard": false,
+              "firstRunCompleted": true,
+              "featureFlags": {}
+            }
+            """);
+        var store = new JsonSettingsStore(settingsPath, defaults);
+
+        ApplicationSettings loaded = await store.LoadAsync(CancellationToken.None);
+
+        Assert.Equal(ApplicationStorageBackend.Database, loaded.StorageBackend);
+        Assert.Equal(@"D:\Captures", loaded.StorageRoot);
     }
 }

@@ -16,6 +16,7 @@ public sealed class JsonSettingsImportExportServiceTests
         {
             SchemaVersion = 1,
             CaptureHotkey = "Ctrl+Shift+S",
+            StorageBackend = ApplicationStorageBackend.Database,
             FirstRunCompleted = true
         };
         string exportPath = Path.Combine(workspace.Path, "SnapStudio-settings.json");
@@ -32,6 +33,12 @@ public sealed class JsonSettingsImportExportServiceTests
         Assert.True(result.Succeeded);
         Assert.Equal(ApplicationSettings.CurrentSchemaVersion, exported?.SchemaVersion);
         Assert.Equal("Ctrl+Shift+S", exported?.CaptureHotkey);
+        Assert.Equal(ApplicationStorageBackend.Database, exported?.StorageBackend);
+        Assert.Contains(
+            """
+              "storageBackend": "Database"
+            """,
+            json);
     }
 
     [Fact]
@@ -68,6 +75,7 @@ public sealed class JsonSettingsImportExportServiceTests
         Assert.Equal("Ctrl+Alt+S", result.Settings?.CaptureHotkey);
         Assert.False(result.Settings?.IncludeCursorByDefault);
         Assert.True(result.Settings?.CopyCapturesToClipboard);
+        Assert.Equal(ApplicationStorageBackend.FileSystem, result.Settings?.StorageBackend);
         Assert.False(result.Settings?.FeatureFlags["Capture.WgcStill"]);
         Assert.True(result.Settings?.FeatureFlags["Custom.Flag"]);
         Assert.True(result.Settings?.FeatureFlags.ContainsKey("Editor.PdfExport"));

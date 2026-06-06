@@ -67,6 +67,8 @@ UI Automation smoke check:
 
 The UI smoke launches the desktop app and verifies that the main first-run/settings, capture, annotate, export, and history controls are visible to Windows UI Automation.
 
+The Settings surface includes the local document storage backend selector. `File system` keeps editable document records as JSON sidecars, while `Database` stores editable document records in `snapstudio-documents.db` through the `CSharpDB` NuGet package. Backend changes are applied after restarting the app because storage services are created during startup.
+
 Scrolling capture smoke check:
 
 ```powershell
