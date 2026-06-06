@@ -16,6 +16,7 @@ using SnapStudio.Core.Documents;
 using SnapStudio.Core.Export;
 using SnapStudio.Core.Primitives;
 using Windows.Foundation;
+using Windows.System;
 using Windows.UI;
 
 namespace SnapStudio.App;
@@ -679,6 +680,43 @@ public sealed partial class MainPage : Page
         }
     }
 
+    private async void AnnotationSizeNumber_ValueChanged(
+        object sender,
+        NumberBoxValueChangedEventArgs e)
+    {
+        if (ShouldIgnoreControlEvent()
+            || double.IsNaN(e.NewValue))
+        {
+            return;
+        }
+
+        await ViewModel.UpdateAnnotationStrokeThicknessAsync(
+            e.NewValue,
+            CancellationToken.None);
+        UpdateBindingsFromViewModel();
+        RefreshAnnotationCanvas();
+    }
+
+    private async void AnnotationCustomColor_ColorChanged(
+        ColorPicker sender,
+        ColorChangedEventArgs args)
+    {
+        if (ShouldIgnoreControlEvent())
+        {
+            return;
+        }
+
+        Color color = args.NewColor;
+        await ViewModel.UpdateAnnotationCustomColorAsync(
+            color.R,
+            color.G,
+            color.B,
+            color.A,
+            CancellationToken.None);
+        UpdateBindingsFromViewModel();
+        RefreshAnnotationCanvas();
+    }
+
     private async void AnnotationOpacity_ValueChanged(
         object sender,
         Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
@@ -809,11 +847,12 @@ public sealed partial class MainPage : Page
 
         if (_canvasDragMode == CanvasDragMode.DrawAnnotation)
         {
-            ShowDragRectanglePreview(CreateDisplayBounds(_rectangleDragStart, currentPoint));
+            Point previewPoint = CreateConstrainedShapePointIfNeeded(currentPoint, e);
+            ShowDragRectanglePreview(CreateDisplayBounds(_rectangleDragStart, previewPoint));
         }
         else
         {
-            ShowAnnotationEditPreview(currentPoint);
+            ShowAnnotationEditPreview(currentPoint, e);
         }
 
         e.Handled = true;
@@ -837,9 +876,10 @@ public sealed partial class MainPage : Page
             return;
         }
 
+        Point annotationEndPoint = CreateConstrainedShapePointIfNeeded(currentPoint, e);
         RectD displayBounds = CreateDisplayBounds(
             _rectangleDragStart,
-            currentPoint);
+            annotationEndPoint);
         EndCanvasDrag(e);
 
         bool isLinearAnnotation = IsLinearAnnotationKind(ViewModel.ActiveAnnotationKind);
@@ -1627,9 +1667,13 @@ public sealed partial class MainPage : Page
         e.Handled = true;
     }
 
-    private void ShowAnnotationEditPreview(Point currentDisplayPoint)
+    private void ShowAnnotationEditPreview(
+        Point currentDisplayPoint,
+        Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        RectD? editedSourceBounds = CreateAnnotationDragBounds(currentDisplayPoint);
+        RectD? editedSourceBounds = CreateAnnotationDragBounds(
+            currentDisplayPoint,
+            IsShiftPressed(e));
         if (editedSourceBounds is RectD sourceBounds)
         {
             ShowDragRectanglePreview(ViewModel.CreateDisplayBoundsFromSourceBounds(sourceBounds));
@@ -1640,7 +1684,9 @@ public sealed partial class MainPage : Page
         Point currentDisplayPoint,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        RectD? editedSourceBounds = CreateAnnotationDragBounds(currentDisplayPoint);
+        RectD? editedSourceBounds = CreateAnnotationDragBounds(
+            currentDisplayPoint,
+            IsShiftPressed(e));
         Guid annotationId = _annotationDragId;
         string displayName = _annotationDragHandle == AnnotationBoundsHandle.Move
             ? "Move Annotation"
@@ -1659,7 +1705,9 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private RectD? CreateAnnotationDragBounds(Point currentDisplayPoint)
+    private RectD? CreateAnnotationDragBounds(
+        Point currentDisplayPoint,
+        bool constrainRectangleOrEllipse)
     {
         PointD? currentSourcePoint = ViewModel.CreateSourcePointFromCanvasPoint(
             new PointD(currentDisplayPoint.X, currentDisplayPoint.Y));
@@ -1669,7 +1717,8 @@ public sealed partial class MainPage : Page
                 _annotationDragHandle,
                 _annotationDragOriginalSourceBounds,
                 _annotationDragStartSourcePoint,
-                sourcePoint)
+                sourcePoint,
+                constrainRectangleOrEllipse)
             : null;
     }
 
@@ -1692,6 +1741,24 @@ public sealed partial class MainPage : Page
         DragRectanglePreview.Width = Math.Max(1, displayBounds.Width);
         DragRectanglePreview.Height = Math.Max(1, displayBounds.Height);
         DragRectanglePreview.Visibility = Visibility.Visible;
+    }
+
+    private Point CreateConstrainedShapePointIfNeeded(
+        Point currentPoint,
+        Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (!IsShiftPressed(e)
+            || ViewModel.ActiveAnnotationKind is not (AnnotationKind.Rectangle or AnnotationKind.Ellipse))
+        {
+            return currentPoint;
+        }
+
+        double deltaX = currentPoint.X - _rectangleDragStart.X;
+        double deltaY = currentPoint.Y - _rectangleDragStart.Y;
+        double side = Math.Min(Math.Abs(deltaX), Math.Abs(deltaY));
+        return ClampToCanvas(new Point(
+            _rectangleDragStart.X + Math.Sign(deltaX) * side,
+            _rectangleDragStart.Y + Math.Sign(deltaY) * side));
     }
 
     private void UpdateBindingsFromViewModel()
@@ -1770,6 +1837,11 @@ public sealed partial class MainPage : Page
         double deltaY = end.Y - start.Y;
 
         return Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+    }
+
+    private static bool IsShiftPressed(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        return e.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift);
     }
 
     private static bool IsLinearAnnotationKind(AnnotationKind annotationKind)

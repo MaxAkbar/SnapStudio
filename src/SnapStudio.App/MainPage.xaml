@@ -598,6 +598,15 @@
                                         <FontIcon Glyph="&#xEA3A;" />
                                     </Button>
                                     <Button
+                                        AutomationProperties.HelpText="Select the line annotation tool."
+                                        AutomationProperties.Name="Line tool"
+                                        Click="AnnotationToolButton_Click"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        Tag="2"
+                                        ToolTipService.ToolTip="Line">
+                                        <FontIcon Glyph="&#xE738;" />
+                                    </Button>
+                                    <Button
                                         AutomationProperties.HelpText="Select the arrow annotation tool."
                                         AutomationProperties.Name="Arrow tool"
                                         Click="AnnotationToolButton_Click"
@@ -960,16 +969,52 @@
                                     Tag="0"
                                     ToolTipService.ToolTip="Black" />
                             </StackPanel>
+                            <Button
+                                AutomationProperties.HelpText="Open the custom annotation color picker."
+                                AutomationProperties.Name="Custom annotation color"
+                                ToolTipService.ToolTip="Custom color">
+                                <Button.Flyout>
+                                    <Flyout>
+                                        <ColorPicker
+                                            AutomationProperties.HelpText="Choose a custom annotation color."
+                                            AutomationProperties.Name="Custom annotation color picker"
+                                            ColorChanged="AnnotationCustomColor_ColorChanged"
+                                            IsAlphaEnabled="False" />
+                                    </Flyout>
+                                </Button.Flyout>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE790;" />
+                                    <TextBlock Text="Custom color" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
 
-                        <Slider
-                            AutomationProperties.HelpText="Set annotation stroke thickness."
-                            AutomationProperties.Name="Annotation size"
-                            Header="Stroke width"
-                            Maximum="12"
-                            Minimum="1"
-                            Value="{x:Bind ViewModel.AnnotationStrokeThickness, Mode=OneWay}"
-                            ValueChanged="AnnotationStrokeSize_ValueChanged" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="78" />
+                            </Grid.ColumnDefinitions>
+                            <Slider
+                                AutomationProperties.HelpText="Set annotation stroke thickness or text size."
+                                AutomationProperties.Name="Annotation size"
+                                Header="{x:Bind ViewModel.AnnotationSizeHeader, Mode=OneWay}"
+                                Maximum="{x:Bind ViewModel.AnnotationSizeMaximum, Mode=OneWay}"
+                                Minimum="1"
+                                StepFrequency="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
+                                Value="{x:Bind ViewModel.AnnotationStrokeThickness, Mode=OneWay}"
+                                ValueChanged="AnnotationStrokeSize_ValueChanged" />
+                            <NumberBox
+                                Grid.Column="1"
+                                AutomationProperties.HelpText="Enter a custom annotation stroke thickness or text size."
+                                AutomationProperties.Name="Annotation size value"
+                                Header="Value"
+                                Maximum="{x:Bind ViewModel.AnnotationSizeMaximum, Mode=OneWay}"
+                                Minimum="1"
+                                SmallChange="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
+                                SpinButtonPlacementMode="Hidden"
+                                Value="{x:Bind ViewModel.AnnotationStrokeThickness, Mode=OneWay}"
+                                ValueChanged="AnnotationSizeNumber_ValueChanged" />
+                        </Grid>
 
                         <Slider
                             AutomationProperties.HelpText="Set annotation opacity."
@@ -1049,6 +1094,18 @@
                                 FontSize="12"
                                 Foreground="{StaticResource SnapMutedBrush}"
                                 Text="{x:Bind ViewModel.CurrentDocumentFileSizeLabel, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                AutomationProperties.Name="Selected capture file name"
+                                FontSize="12"
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="{x:Bind ViewModel.CurrentDocumentFileNameLabel, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                AutomationProperties.Name="Selected capture file location"
+                                FontSize="12"
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="{x:Bind ViewModel.CurrentDocumentLocationLabel, Mode=OneWay}"
                                 TextTrimming="CharacterEllipsis" />
                         </StackPanel>
 
@@ -1151,12 +1208,30 @@
             </Grid>
         </Grid>
 
-        <TextBlock
+        <Grid
             Grid.Row="2"
             Padding="12,6"
-            FontSize="12"
-            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-            Text="{x:Bind ViewModel.StatusText}" />
+            Background="{StaticResource SnapPanelBrush}"
+            BorderBrush="{StaticResource SnapStrokeBrush}"
+            BorderThickness="0,1,0,0"
+            ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="{x:Bind ViewModel.StatusText}"
+                TextTrimming="CharacterEllipsis" />
+            <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Right"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="{x:Bind ViewModel.CurrentDocumentFooterLabel, Mode=OneWay}"
+                TextTrimming="CharacterEllipsis" />
+        </Grid>
 
         <Grid
             Grid.RowSpan="3"

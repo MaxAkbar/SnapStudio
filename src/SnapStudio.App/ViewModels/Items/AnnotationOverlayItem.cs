@@ -123,7 +123,7 @@ public sealed class AnnotationOverlayItem
             ToBrush(annotation.Style.Text, opacity),
             new Thickness(strokeThickness),
             strokeThickness,
-            CalculateFontSize(annotation.Style.StrokeThickness, zoom),
+            CalculateFontSize(annotation.Style.StrokeThickness, annotation.Kind, zoom),
             opacity,
             isSelected);
     }
@@ -192,8 +192,16 @@ public sealed class AnnotationOverlayItem
         return new RectD(left, top, right - left, bottom - top);
     }
 
-    private static double CalculateFontSize(double styleSize, double zoom)
+    private static double CalculateFontSize(
+        double styleSize,
+        AnnotationKind annotationKind,
+        double zoom)
     {
+        if (annotationKind == AnnotationKind.Text && styleSize > 12)
+        {
+            return Math.Max(10, styleSize * zoom);
+        }
+
         return Math.Max(10, (styleSize * 4 + 8) * zoom);
     }
 

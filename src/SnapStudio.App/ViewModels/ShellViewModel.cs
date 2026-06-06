@@ -67,6 +67,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private const double ResizeMaximumDimension = 20000;
     private const double ResizeMinimumPercent = 1;
     private const double ResizeMaximumPercent = 1000;
+    private const double AnnotationStrokeMaximum = 12;
+    private const double AnnotationTextSizeMaximum = 72;
+    private const int AnnotationStrokeCustomIndex = 5;
     private const int ResizeUnitPixelsIndex = 0;
     private const int ResizeUnitPercentIndex = 1;
     private const int StorageBackendFileSystemIndex = 0;
@@ -150,7 +153,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private DocumentId? _currentDocumentId;
     private string _currentDocumentDetail = "No document selected";
     private string _currentDocumentFileSizeLabel = "-";
+    private string _currentDocumentFileNameLabel = "-";
+    private string _currentDocumentFooterLabel = "No capture selected.";
     private string _currentDocumentHeightLabel = "-";
+    private string _currentDocumentLocationLabel = "-";
     private string _currentDocumentTitle = "Canvas";
     private string _currentDocumentWidthLabel = "-";
     private ScreenRecordingSession? _activeScreenRecordingSession;
@@ -161,6 +167,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private int _annotationStrokeIndex;
     private double _annotationStrokeThickness = 2;
     private double _annotationOpacity = 1;
+    private ColorRgba _customAnnotationColor = new(232, 135, 46, 255);
     private bool _resizeAspectRatioIsLocked = true;
     private double _resizeWidth = 1;
     private double _resizeHeight = 1;
@@ -295,6 +302,21 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             "{0} x {1} px",
             _currentDocument.SourceImage.Width,
             _currentDocument.SourceImage.Height);
+
+    public string CurrentDocumentFooterLabel
+    {
+        get => _currentDocumentFooterLabel;
+        private set
+        {
+            if (_currentDocumentFooterLabel == value)
+            {
+                return;
+            }
+
+            _currentDocumentFooterLabel = value;
+            OnPropertyChanged(nameof(CurrentDocumentFooterLabel));
+        }
+    }
 
     public bool CanFitCanvas => _canvasViewport.HasSource;
 
@@ -451,6 +473,36 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
             _currentDocumentFileSizeLabel = value;
             OnPropertyChanged(nameof(CurrentDocumentFileSizeLabel));
+        }
+    }
+
+    public string CurrentDocumentFileNameLabel
+    {
+        get => _currentDocumentFileNameLabel;
+        private set
+        {
+            if (_currentDocumentFileNameLabel == value)
+            {
+                return;
+            }
+
+            _currentDocumentFileNameLabel = value;
+            OnPropertyChanged(nameof(CurrentDocumentFileNameLabel));
+        }
+    }
+
+    public string CurrentDocumentLocationLabel
+    {
+        get => _currentDocumentLocationLabel;
+        private set
+        {
+            if (_currentDocumentLocationLabel == value)
+            {
+                return;
+            }
+
+            _currentDocumentLocationLabel = value;
+            OnPropertyChanged(nameof(CurrentDocumentLocationLabel));
         }
     }
 
@@ -942,6 +994,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             OnPropertyChanged(nameof(AnnotationToolIndex));
             OnPropertyChanged(nameof(ActiveAnnotationKind));
             OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
+            NotifyAnnotationSizeControlChanged();
         }
     }
 
@@ -967,6 +1020,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         _ => "Rectangle"
     };
 
+    private AnnotationKind ActiveOrSelectedAnnotationKind => GetSelectedAnnotation()?.Kind
+        ?? ActiveAnnotationKind;
+
     public int AnnotationStrokeIndex
     {
         get => _annotationStrokeIndex;
@@ -987,7 +1043,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         get => _annotationStrokeThickness;
         set
         {
-            double normalized = Math.Clamp(value, 1, 12);
+            double normalized = Math.Clamp(value, 1, AnnotationSizeMaximum);
             if (Math.Abs(_annotationStrokeThickness - normalized) < 0.01)
             {
                 return;
@@ -997,6 +1053,18 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             OnPropertyChanged(nameof(AnnotationStrokeThickness));
         }
     }
+
+    public string AnnotationSizeHeader => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
+        ? "Text size"
+        : "Stroke width";
+
+    public double AnnotationSizeMaximum => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
+        ? AnnotationTextSizeMaximum
+        : AnnotationStrokeMaximum;
+
+    public double AnnotationSizeStepFrequency => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
+        ? 1
+        : 0.5;
 
     public double AnnotationOpacity
     {
@@ -1172,13 +1240,27 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         int strokeIndex,
         CancellationToken cancellationToken)
     {
-        if (strokeIndex < 0 || strokeIndex > 4)
+        if (strokeIndex < 0 || strokeIndex > AnnotationStrokeCustomIndex)
         {
             return;
         }
 
         MarkAnnotationPresetCustom();
         AnnotationStrokeIndex = strokeIndex;
+        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
+            .ConfigureAwait(true);
+    }
+
+    public async Task UpdateAnnotationCustomColorAsync(
+        byte red,
+        byte green,
+        byte blue,
+        byte alpha,
+        CancellationToken cancellationToken)
+    {
+        MarkAnnotationPresetCustom();
+        _customAnnotationColor = new ColorRgba(red, green, blue, alpha);
+        AnnotationStrokeIndex = AnnotationStrokeCustomIndex;
         await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
             .ConfigureAwait(true);
     }
@@ -2874,7 +2956,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         AnnotationBoundsHandle handle,
         RectD originalSourceBounds,
         PointD dragStartSourcePoint,
-        PointD currentSourcePoint)
+        PointD currentSourcePoint,
+        bool constrainRectangleOrEllipse = false)
     {
         if (_currentDocument is null)
         {
@@ -2884,6 +2967,21 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         var sourceSize = new SizeD(
             _currentDocument.SourceImage.Width,
             _currentDocument.SourceImage.Height);
+
+        if (constrainRectangleOrEllipse
+            && handle is not (AnnotationBoundsHandle.Move
+                or AnnotationBoundsHandle.Start
+                or AnnotationBoundsHandle.End)
+            && GetSelectedAnnotation()?.Kind is AnnotationKind.Rectangle or AnnotationKind.Ellipse
+            && TryCreateSquareResizeBounds(
+                originalSourceBounds,
+                handle,
+                currentSourcePoint,
+                sourceSize,
+                out RectD squareBounds))
+        {
+            return squareBounds;
+        }
 
         if (handle is AnnotationBoundsHandle.Start or AnnotationBoundsHandle.End)
         {
@@ -4561,18 +4659,30 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
 
         MarkAnnotationPresetCustom();
-        AnnotationStrokeIndex = ResolveStrokeIndex(annotation.Style.Stroke);
+        SelectAnnotationColor(annotation.Style.Stroke);
         AnnotationStrokeThickness = annotation.Style.StrokeThickness;
         AnnotationOpacity = annotation.Style.Opacity;
         if (annotation.Kind == AnnotationKind.Text)
         {
             AnnotationText = annotation.Text ?? "Text";
-            AnnotationStrokeIndex = ResolveStrokeIndex(annotation.Style.Text);
+            SelectAnnotationColor(annotation.Style.Text);
         }
         else if (annotation.Kind == AnnotationKind.Highlight)
         {
-            AnnotationStrokeIndex = ResolveStrokeIndex(annotation.Style.Fill);
+            SelectAnnotationColor(annotation.Style.Fill);
         }
+
+        AnnotationToolIndex = annotation.Kind switch
+        {
+            AnnotationKind.Ellipse => 1,
+            AnnotationKind.Line => 2,
+            AnnotationKind.Arrow => 3,
+            AnnotationKind.Text => 4,
+            AnnotationKind.Highlight => 5,
+            AnnotationKind.Blur => 6,
+            _ => 0
+        };
+        NotifyAnnotationSizeControlChanged();
     }
 
     private AnnotationObject? GetSelectedAnnotation()
@@ -4966,6 +5076,61 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         return new RectD(left, top, Math.Max(1, right - left), Math.Max(1, bottom - top));
     }
 
+    private static bool TryCreateSquareResizeBounds(
+        RectD originalSourceBounds,
+        AnnotationBoundsHandle handle,
+        PointD currentSourcePoint,
+        SizeD sourceSize,
+        out RectD bounds)
+    {
+        bounds = default;
+        if (!IsCornerResizeHandle(handle))
+        {
+            return false;
+        }
+
+        RectD normalized = Normalize(originalSourceBounds);
+        PointD anchor = handle switch
+        {
+            AnnotationBoundsHandle.TopLeft => new PointD(normalized.Right, normalized.Bottom),
+            AnnotationBoundsHandle.TopRight => new PointD(normalized.X, normalized.Bottom),
+            AnnotationBoundsHandle.BottomRight => new PointD(normalized.X, normalized.Y),
+            AnnotationBoundsHandle.BottomLeft => new PointD(normalized.Right, normalized.Y),
+            _ => new PointD(normalized.X, normalized.Y)
+        };
+
+        double directionX = currentSourcePoint.X >= anchor.X ? 1 : -1;
+        double directionY = currentSourcePoint.Y >= anchor.Y ? 1 : -1;
+        double requestedSide = Math.Min(
+            Math.Abs(currentSourcePoint.X - anchor.X),
+            Math.Abs(currentSourcePoint.Y - anchor.Y));
+        double maximumSideX = directionX > 0
+            ? sourceSize.Width - anchor.X
+            : anchor.X;
+        double maximumSideY = directionY > 0
+            ? sourceSize.Height - anchor.Y
+            : anchor.Y;
+        double side = Math.Clamp(
+            requestedSide,
+            AnnotationBoundsEditor.MinimumSize,
+            Math.Max(AnnotationBoundsEditor.MinimumSize, Math.Min(maximumSideX, maximumSideY)));
+        double targetX = anchor.X + directionX * side;
+        double targetY = anchor.Y + directionY * side;
+        double left = Math.Min(anchor.X, targetX);
+        double top = Math.Min(anchor.Y, targetY);
+
+        bounds = new RectD(left, top, side, side);
+        return true;
+    }
+
+    private static bool IsCornerResizeHandle(AnnotationBoundsHandle handle)
+    {
+        return handle is AnnotationBoundsHandle.TopLeft
+            or AnnotationBoundsHandle.TopRight
+            or AnnotationBoundsHandle.BottomRight
+            or AnnotationBoundsHandle.BottomLeft;
+    }
+
     private static RectD Normalize(RectD bounds)
     {
         double left = Math.Min(bounds.X, bounds.Right);
@@ -5119,7 +5284,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             case 4:
                 AnnotationToolIndex = 4;
                 AnnotationStrokeIndex = 1;
-                AnnotationStrokeThickness = 2;
+                AnnotationStrokeThickness = 18;
                 AnnotationOpacity = 1;
                 break;
             case 5:
@@ -5194,12 +5359,17 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             case AnnotationKind.Text:
                 AnnotationStrokeIndex = 0;
                 AnnotationOpacity = 1;
-                AnnotationStrokeThickness = 2;
+                AnnotationStrokeThickness = Math.Max(16, AnnotationStrokeThickness);
                 break;
             default:
                 if (AnnotationStrokeIndex is 3 or 4)
                 {
                     AnnotationStrokeIndex = 0;
+                }
+
+                if (AnnotationStrokeThickness > AnnotationStrokeMaximum)
+                {
+                    AnnotationStrokeThickness = AnnotationStrokeMaximum;
                 }
 
                 AnnotationOpacity = 1;
@@ -5215,8 +5385,20 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             2 => new ColorRgba(196, 43, 28, 255),
             3 => new ColorRgba(255, 214, 10, 255),
             4 => new ColorRgba(128, 128, 128, 255),
+            AnnotationStrokeCustomIndex => _customAnnotationColor,
             _ => ColorRgba.Black
         };
+    }
+
+    private void SelectAnnotationColor(ColorRgba color)
+    {
+        int strokeIndex = ResolveStrokeIndex(color);
+        if (strokeIndex == AnnotationStrokeCustomIndex)
+        {
+            _customAnnotationColor = color;
+        }
+
+        AnnotationStrokeIndex = strokeIndex;
     }
 
     private static int ResolveStrokeIndex(ColorRgba stroke)
@@ -5241,7 +5423,16 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return 4;
         }
 
-        return 0;
+        return stroke == ColorRgba.Black
+            ? 0
+            : AnnotationStrokeCustomIndex;
+    }
+
+    private void NotifyAnnotationSizeControlChanged()
+    {
+        OnPropertyChanged(nameof(AnnotationSizeHeader));
+        OnPropertyChanged(nameof(AnnotationSizeMaximum));
+        OnPropertyChanged(nameof(AnnotationSizeStepFrequency));
     }
 
     private static string ResolveDocumentTitle(CaptureDocument document)
@@ -5267,6 +5458,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             CurrentDocumentWidthLabel = "-";
             CurrentDocumentHeightLabel = "-";
             CurrentDocumentFileSizeLabel = "-";
+            CurrentDocumentFileNameLabel = "-";
+            CurrentDocumentLocationLabel = "-";
+            CurrentDocumentFooterLabel = "No capture selected.";
             OnPropertyChanged(nameof(CurrentDocumentSizeLabel));
             return;
         }
@@ -5280,7 +5474,63 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             "{0} px",
             document.SourceImage.Height);
         CurrentDocumentFileSizeLabel = CreateImageFileSizeLabel(document.SourceImage.Path);
+        CurrentDocumentFileNameLabel = CreateImageFileNameLabel(document.SourceImage.Path);
+        CurrentDocumentLocationLabel = CreateImageLocationLabel(document.SourceImage.Path);
+        CurrentDocumentFooterLabel = CreateCurrentDocumentFooterLabel(document);
         OnPropertyChanged(nameof(CurrentDocumentSizeLabel));
+    }
+
+    private string CreateCurrentDocumentFooterLabel(CaptureDocument document)
+    {
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            "{0} | {1} | {2} | {3} | Created {4:g} | Modified {5:g}",
+            CurrentDocumentFileNameLabel,
+            CurrentDocumentLocationLabel,
+            CurrentDocumentSizeLabel,
+            CurrentDocumentFileSizeLabel,
+            document.Metadata.CreatedAtUtc.LocalDateTime,
+            document.Metadata.ModifiedAtUtc.LocalDateTime);
+    }
+
+    private static string CreateImageFileNameLabel(string imagePath)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+        {
+            return "No source file";
+        }
+
+        try
+        {
+            string fileName = Path.GetFileName(imagePath);
+            return string.IsNullOrWhiteSpace(fileName)
+                ? imagePath
+                : fileName;
+        }
+        catch (ArgumentException)
+        {
+            return imagePath;
+        }
+    }
+
+    private static string CreateImageLocationLabel(string imagePath)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+        {
+            return "No location";
+        }
+
+        try
+        {
+            string? directory = Path.GetDirectoryName(imagePath);
+            return string.IsNullOrWhiteSpace(directory)
+                ? imagePath
+                : directory;
+        }
+        catch (ArgumentException)
+        {
+            return imagePath;
+        }
     }
 
     private static string CreateImageFileSizeLabel(string imagePath)
