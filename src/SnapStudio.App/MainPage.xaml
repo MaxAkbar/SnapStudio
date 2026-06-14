@@ -3,6 +3,7 @@
     x:Class="SnapStudio.App.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:SnapStudio.App.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:items="using:SnapStudio.App.ViewModels.Items"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -347,12 +348,14 @@
         </Border>
 
         <Grid
+            x:Name="MainContentGrid"
             Grid.Row="1"
             Background="{StaticResource SnapBackgroundBrush}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="226" />
+                <ColumnDefinition x:Name="HistoryColumn" Width="226" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="238" />
+                <ColumnDefinition x:Name="RightControlsSplitterColumn" Width="10" />
+                <ColumnDefinition x:Name="RightControlsColumn" Width="280" MinWidth="52" />
             </Grid.ColumnDefinitions>
 
             <Grid
@@ -874,30 +877,82 @@
                 </Grid>
             </Grid>
 
-            <Grid
+            <controls:ResizeSplitter
+                x:Name="RightControlsSplitter"
                 Grid.Column="2"
-                Padding="18"
+                AutomationProperties.HelpText="Drag left or right to resize the right tools pane."
+                AutomationProperties.Name="Resize right tools pane"
+                PointerCanceled="RightControlsSplitter_PointerCanceled"
+                PointerMoved="RightControlsSplitter_PointerMoved"
+                PointerPressed="RightControlsSplitter_PointerPressed"
+                PointerReleased="RightControlsSplitter_PointerReleased"
+                ToolTipService.ToolTip="Drag to resize tools pane">
+                <controls:ResizeSplitter.Template>
+                    <ControlTemplate TargetType="controls:ResizeSplitter">
+                        <Grid Background="{StaticResource SnapSurfaceBrush}">
+                            <Border
+                                Width="2"
+                                Height="44"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Background="{StaticResource SnapStrokeBrush}"
+                                CornerRadius="1" />
+                        </Grid>
+                    </ControlTemplate>
+                </controls:ResizeSplitter.Template>
+            </controls:ResizeSplitter>
+
+            <Grid
+                x:Name="RightControlsPane"
+                Grid.Column="3"
                 Background="{StaticResource SnapPanelBrush}"
                 BorderBrush="{StaticResource SnapStrokeBrush}"
                 BorderThickness="1,0,0,0">
+                <Grid
+                    x:Name="RightControlsExpandedView"
+                    Padding="18">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Margin="0,0,12,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <FontIcon
+                                FontSize="16"
+                                Foreground="{StaticResource SnapAccentBrush}"
+                                Glyph="&#xE9F5;" />
+                            <TextBlock
+                                FontSize="20"
+                                FontWeight="SemiBold"
+                                Text="{x:Bind ViewModel.ActiveAnnotationToolLabel, Mode=OneWay}" />
+                        </StackPanel>
+                        <Button
+                            Grid.Column="1"
+                            AutomationProperties.HelpText="Collapse the right-side tools pane."
+                            AutomationProperties.Name="Unpin right tools pane"
+                            Click="RightControlsPanePinButton_Click"
+                            Style="{StaticResource ToolIconButtonStyle}"
+                            ToolTipService.ToolTip="Unpin tools pane">
+                            <SymbolIcon Symbol="Pin" />
+                        </Button>
+                    </Grid>
+
                 <ScrollViewer
+                    Grid.Row="1"
                     AutomationProperties.HelpText="Scroll through the right-side capture and editor controls."
                     AutomationProperties.Name="Right controls scroll area"
                     HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="0,0,12,0" Spacing="18">
                         <StackPanel Spacing="10">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon
-                                    FontSize="16"
-                                    Foreground="{StaticResource SnapAccentBrush}"
-                                    Glyph="&#xE9F5;" />
-                                <TextBlock
-                                    FontSize="20"
-                                    FontWeight="SemiBold"
-                                    Text="{x:Bind ViewModel.ActiveAnnotationToolLabel, Mode=OneWay}" />
-                            </StackPanel>
-
                             <ComboBox
                                 AutomationProperties.HelpText="Choose a common annotation preset for new annotations."
                                 AutomationProperties.Name="Annotation preset"
@@ -1205,6 +1260,23 @@
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
+                </Grid>
+
+                <Grid
+                    x:Name="RightControlsCollapsedView"
+                    Padding="8,18"
+                    Visibility="Collapsed">
+                    <Button
+                        AutomationProperties.HelpText="Expand and pin the right-side tools pane."
+                        AutomationProperties.Name="Pin right tools pane"
+                        Click="RightControlsPaneExpandButton_Click"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource ToolIconButtonStyle}"
+                        ToolTipService.ToolTip="Pin tools pane"
+                        VerticalAlignment="Top">
+                        <SymbolIcon Symbol="Pin" />
+                    </Button>
+                </Grid>
             </Grid>
         </Grid>
 

@@ -190,6 +190,8 @@ try {
         "Right controls scroll area",
         "Remove current capture from history",
         "Move current capture to recycle bin",
+        "Resize right tools pane",
+        "Unpin right tools pane",
         "Selected capture properties",
         "Selected capture width",
         "Selected capture height",
@@ -211,6 +213,20 @@ try {
     foreach ($name in $requiredNames) {
         [void](Assert-ElementByName -Root $window -Name $name)
     }
+
+    $unpinToolsPane = Assert-ElementByName -Root $window -Name "Unpin right tools pane"
+    if (-not (Invoke-Element -Element $unpinToolsPane)) {
+        throw "Unable to invoke the right tools pane unpin button."
+    }
+
+    Start-Sleep -Milliseconds 250
+    $pinToolsPane = Assert-ElementByName -Root $window -Name "Pin right tools pane"
+    if (-not (Invoke-Element -Element $pinToolsPane)) {
+        throw "Unable to invoke the right tools pane pin button."
+    }
+
+    Start-Sleep -Milliseconds 250
+    [void](Assert-ElementByName -Root $window -Name "Unpin right tools pane")
 
     [void](Assert-AnyElementByName -Root $window -Names @("Editor canvas", "Settings capture hotkey"))
 

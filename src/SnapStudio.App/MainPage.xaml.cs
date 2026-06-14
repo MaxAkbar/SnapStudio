@@ -24,6 +24,12 @@ namespace SnapStudio.App;
 public sealed partial class MainPage : Page
 {
     private const double MinimumDragDisplaySize = 4;
+    private const double RightControlsCollapsedWidth = 52;
+    private const double RightControlsExpandedDefaultWidth = 280;
+    private const double RightControlsMinimumWidth = 238;
+    private const double RightControlsMaximumWidth = 560;
+    private const double RightControlsSplitterWidth = 10;
+    private const double EditorMinimumWidth = 360;
 
     private CanvasDragMode _canvasDragMode;
     private Guid _annotationDragId;
@@ -33,6 +39,11 @@ public sealed partial class MainPage : Page
     private Point _rectangleDragStart;
     private bool _isUpdatingBindings;
     private bool _isReadyForControlEvents;
+    private bool _rightControlsPaneIsExpanded = true;
+    private bool _rightControlsSplitterIsDragging;
+    private Point _rightControlsSplitterStartPoint;
+    private double _rightControlsSplitterStartWidth;
+    private double _rightControlsExpandedWidth = RightControlsExpandedDefaultWidth;
     private ShellViewModel? _annotationOverlayViewModel;
 
     public MainPage()
@@ -535,6 +546,148 @@ public sealed partial class MainPage : Page
             Math.Max(1, e.NewSize.Width - 24),
             Math.Max(1, e.NewSize.Height - 24));
         UpdateBindingsFromViewModel();
+    }
+
+    private void RightControlsSplitter_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_rightControlsPaneIsExpanded)
+        {
+            return;
+        }
+
+        _rightControlsSplitterIsDragging = true;
+        _rightControlsSplitterStartPoint = e.GetCurrentPoint(MainContentGrid).Position;
+        _rightControlsSplitterStartWidth = RightControlsColumn.ActualWidth > 0
+            ? RightControlsColumn.ActualWidth
+            : RightControlsColumn.Width.Value;
+        RightControlsSplitter.CapturePointer(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void RightControlsSplitter_PointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_rightControlsSplitterIsDragging)
+        {
+            return;
+        }
+
+        Point currentPoint = e.GetCurrentPoint(MainContentGrid).Position;
+        ResizeRightControlsPane(_rightControlsSplitterStartWidth
+            - (currentPoint.X - _rightControlsSplitterStartPoint.X));
+        e.Handled = true;
+    }
+
+    private void RightControlsSplitter_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        EndRightControlsSplitterDrag();
+        e.Handled = true;
+    }
+
+    private void RightControlsSplitter_PointerCanceled(object sender, PointerRoutedEventArgs e)
+    {
+        EndRightControlsSplitterDrag();
+        e.Handled = true;
+    }
+
+    private void EndRightControlsSplitterDrag()
+    {
+        if (!_rightControlsSplitterIsDragging)
+        {
+            return;
+        }
+
+        _rightControlsSplitterIsDragging = false;
+        RightControlsSplitter.ReleasePointerCaptures();
+    }
+
+    private void ResizeRightControlsPane(double requestedWidth)
+    {
+        double resizedWidth = Math.Clamp(
+            requestedWidth,
+            RightControlsMinimumWidth,
+            GetRightControlsMaximumWidth());
+
+        _rightControlsExpandedWidth = resizedWidth;
+        RightControlsColumn.Width = new GridLength(resizedWidth);
+    }
+
+    private void RightControlsPanePinButton_Click(
+        object sender,
+        Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        CollapseRightControlsPane();
+    }
+
+    private void RightControlsPaneExpandButton_Click(
+        object sender,
+        Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        ExpandRightControlsPane();
+    }
+
+    private void CollapseRightControlsPane()
+    {
+        if (!_rightControlsPaneIsExpanded)
+        {
+            return;
+        }
+
+        if (RightControlsColumn.ActualWidth >= RightControlsMinimumWidth)
+        {
+            _rightControlsExpandedWidth = Math.Clamp(
+                RightControlsColumn.ActualWidth,
+                RightControlsMinimumWidth,
+                GetRightControlsMaximumWidth());
+        }
+
+        _rightControlsPaneIsExpanded = false;
+        RightControlsExpandedView.Visibility = Visibility.Collapsed;
+        RightControlsCollapsedView.Visibility = Visibility.Visible;
+        RightControlsSplitter.Visibility = Visibility.Collapsed;
+        RightControlsSplitterColumn.Width = new GridLength(0);
+        RightControlsColumn.MinWidth = RightControlsCollapsedWidth;
+        RightControlsColumn.Width = new GridLength(RightControlsCollapsedWidth);
+    }
+
+    private void ExpandRightControlsPane()
+    {
+        if (_rightControlsPaneIsExpanded)
+        {
+            return;
+        }
+
+        _rightControlsPaneIsExpanded = true;
+        RightControlsColumn.MinWidth = RightControlsMinimumWidth;
+        RightControlsSplitterColumn.Width = new GridLength(RightControlsSplitterWidth);
+        RightControlsSplitter.Visibility = Visibility.Visible;
+
+        double restoredWidth = Math.Clamp(
+            _rightControlsExpandedWidth,
+            RightControlsMinimumWidth,
+            GetRightControlsMaximumWidth());
+        RightControlsColumn.Width = new GridLength(restoredWidth);
+        RightControlsCollapsedView.Visibility = Visibility.Collapsed;
+        RightControlsExpandedView.Visibility = Visibility.Visible;
+    }
+
+    private double GetRightControlsMaximumWidth()
+    {
+        double splitterWidth = RightControlsSplitterColumn.ActualWidth > 0
+            ? RightControlsSplitterColumn.ActualWidth
+            : RightControlsSplitterWidth;
+        double availableWidth = MainContentGrid.ActualWidth
+            - HistoryColumn.ActualWidth
+            - splitterWidth
+            - EditorMinimumWidth;
+
+        if (double.IsNaN(availableWidth) || availableWidth <= 0)
+        {
+            return RightControlsMaximumWidth;
+        }
+
+        return Math.Max(
+            RightControlsMinimumWidth,
+            Math.Min(RightControlsMaximumWidth, availableWidth));
     }
 
     private void FitCanvasButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
