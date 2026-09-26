@@ -3,9 +3,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsRegionCaptureGeometryTests
 {
-    [Fact]
+    [TestMethod]
     public void CreateVirtualScreenBounds_ReturnsUnionOfMonitorBounds()
     {
         WindowsDisplayMonitor[] monitors =
@@ -16,10 +17,10 @@ public sealed class WindowsRegionCaptureGeometryTests
 
         RectD bounds = WindowsRegionCaptureGeometry.CreateVirtualScreenBounds(monitors);
 
-        Assert.Equal(new RectD(-1280, 0, 3200, 1080), bounds);
+        Assert.AreEqual(new RectD(-1280, 0, 3200, 1080), bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void SelectMonitorForRegion_ReturnsMonitorWithLargestIntersection()
     {
         WindowsDisplayMonitor[] monitors =
@@ -32,11 +33,11 @@ public sealed class WindowsRegionCaptureGeometryTests
             monitors,
             new RectD(80, 10, 90, 80));
 
-        Assert.NotNull(monitor);
-        Assert.Equal(new nint(2), monitor.Handle);
+        Assert.IsNotNull(monitor);
+        Assert.AreEqual(new nint(2), monitor.Handle);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToMonitorLocalBounds_ClampsRegionToMonitorAndConvertsOrigin()
     {
         var monitor = new WindowsDisplayMonitor(
@@ -49,10 +50,10 @@ public sealed class WindowsRegionCaptureGeometryTests
             new RectD(80, 70, 90, 40),
             monitor);
 
-        Assert.Equal(new RectD(0, 20, 70, 40), localBounds);
+        Assert.AreEqual(new RectD(0, 20, 70, 40), localBounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void SelectPrimaryMonitor_ReturnsPrimaryMonitorWhenAvailable()
     {
         WindowsDisplayMonitor[] monitors =
@@ -63,11 +64,11 @@ public sealed class WindowsRegionCaptureGeometryTests
 
         WindowsDisplayMonitor? monitor = WindowsDirectCaptureGeometry.SelectPrimaryMonitor(monitors);
 
-        Assert.NotNull(monitor);
-        Assert.Equal(new nint(2), monitor.Handle);
+        Assert.IsNotNull(monitor);
+        Assert.AreEqual(new nint(2), monitor.Handle);
     }
 
-    [Fact]
+    [TestMethod]
     public void SelectPrimaryMonitor_WhenNoPrimaryExists_ReturnsLargestMonitor()
     {
         WindowsDisplayMonitor[] monitors =
@@ -78,7 +79,7 @@ public sealed class WindowsRegionCaptureGeometryTests
 
         WindowsDisplayMonitor? monitor = WindowsDirectCaptureGeometry.SelectPrimaryMonitor(monitors);
 
-        Assert.NotNull(monitor);
-        Assert.Equal(new nint(2), monitor.Handle);
+        Assert.IsNotNull(monitor);
+        Assert.AreEqual(new nint(2), monitor.Handle);
     }
 }

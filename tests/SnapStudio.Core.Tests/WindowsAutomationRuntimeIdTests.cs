@@ -4,9 +4,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsAutomationRuntimeIdTests
 {
-    [Fact]
+    [TestMethod]
     public void TryGetRuntimeId_ReadsRuntimeIdFromMetadata()
     {
         ScrollTargetCandidate target = CreateTarget(
@@ -15,22 +16,22 @@ public sealed class WindowsAutomationRuntimeIdTests
 
         bool parsed = WindowsAutomationRuntimeId.TryGetRuntimeId(target, out int[] runtimeId);
 
-        Assert.True(parsed);
-        Assert.Equal([42, 1, 7], runtimeId);
+        Assert.IsTrue(parsed);
+        Assert.AreSequenceEqual([42, 1, 7], runtimeId);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetRuntimeId_ReadsRuntimeIdFromCandidateId()
     {
         ScrollTargetCandidate target = CreateTarget("uia:42.1.7", new Dictionary<string, string>());
 
         bool parsed = WindowsAutomationRuntimeId.TryGetRuntimeId(target, out int[] runtimeId);
 
-        Assert.True(parsed);
-        Assert.Equal([42, 1, 7], runtimeId);
+        Assert.IsTrue(parsed);
+        Assert.AreSequenceEqual([42, 1, 7], runtimeId);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetRuntimeId_WhenRuntimeIdIsInvalid_ReturnsFalse()
     {
         ScrollTargetCandidate target = CreateTarget(
@@ -39,8 +40,8 @@ public sealed class WindowsAutomationRuntimeIdTests
 
         bool parsed = WindowsAutomationRuntimeId.TryGetRuntimeId(target, out int[] runtimeId);
 
-        Assert.False(parsed);
-        Assert.Empty(runtimeId);
+        Assert.IsFalse(parsed);
+        Assert.IsEmpty(runtimeId);
     }
 
     private static ScrollTargetCandidate CreateTarget(

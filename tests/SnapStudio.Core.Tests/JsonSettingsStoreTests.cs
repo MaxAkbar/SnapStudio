@@ -3,9 +3,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class JsonSettingsStoreTests
 {
-    [Fact]
+    [TestMethod]
     public async Task SaveLoadAsync_RoundTripsSettings()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -23,16 +24,16 @@ public sealed class JsonSettingsStoreTests
         await store.SaveAsync(settings, CancellationToken.None);
         ApplicationSettings loaded = await store.LoadAsync(CancellationToken.None);
 
-        Assert.Equal(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
-        Assert.Equal("Ctrl+Shift+S", loaded.CaptureHotkey);
-        Assert.False(loaded.IncludeCursorByDefault);
-        Assert.True(loaded.CopyCapturesToClipboard);
-        Assert.True(loaded.FirstRunCompleted);
-        Assert.Equal(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
-        Assert.True(loaded.FeatureFlags["Capture.WgcStill"]);
+        Assert.AreEqual(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
+        Assert.AreEqual("Ctrl+Shift+S", loaded.CaptureHotkey);
+        Assert.IsFalse(loaded.IncludeCursorByDefault);
+        Assert.IsTrue(loaded.CopyCapturesToClipboard);
+        Assert.IsTrue(loaded.FirstRunCompleted);
+        Assert.AreEqual(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
+        Assert.IsTrue(loaded.FeatureFlags["Capture.WgcStill"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task LoadAsync_MigratesUnversionedSettingsAndPersistsCurrentSchema()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -59,16 +60,16 @@ public sealed class JsonSettingsStoreTests
         ApplicationSettings loaded = await store.LoadAsync(CancellationToken.None);
         string migratedJson = await File.ReadAllTextAsync(settingsPath);
 
-        Assert.Equal(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
-        Assert.Equal(@"D:\Captures", loaded.StorageRoot);
-        Assert.Equal("Ctrl+Alt+S", loaded.CaptureHotkey);
-        Assert.False(loaded.IncludeCursorByDefault);
-        Assert.True(loaded.CopyCapturesToClipboard);
-        Assert.True(loaded.FirstRunCompleted);
-        Assert.Equal(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
-        Assert.False(loaded.FeatureFlags["Editor.BlurTool"]);
-        Assert.True(loaded.FeatureFlags["Custom.Experimental"]);
-        Assert.True(loaded.FeatureFlags["Capture.WgcStill"]);
+        Assert.AreEqual(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
+        Assert.AreEqual(@"D:\Captures", loaded.StorageRoot);
+        Assert.AreEqual("Ctrl+Alt+S", loaded.CaptureHotkey);
+        Assert.IsFalse(loaded.IncludeCursorByDefault);
+        Assert.IsTrue(loaded.CopyCapturesToClipboard);
+        Assert.IsTrue(loaded.FirstRunCompleted);
+        Assert.AreEqual(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
+        Assert.IsFalse(loaded.FeatureFlags["Editor.BlurTool"]);
+        Assert.IsTrue(loaded.FeatureFlags["Custom.Experimental"]);
+        Assert.IsTrue(loaded.FeatureFlags["Capture.WgcStill"]);
         Assert.Contains(
             $"""
               "schemaVersion": {ApplicationSettings.CurrentSchemaVersion}
@@ -76,7 +77,7 @@ public sealed class JsonSettingsStoreTests
             migratedJson);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task LoadAsync_UsesDefaultsForMissingRequiredValues()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -97,15 +98,15 @@ public sealed class JsonSettingsStoreTests
 
         ApplicationSettings loaded = await store.LoadAsync(CancellationToken.None);
 
-        Assert.Equal(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
-        Assert.Equal(defaultStorageRoot, loaded.StorageRoot);
-        Assert.Equal(defaults.CaptureHotkey, loaded.CaptureHotkey);
-        Assert.Equal(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
-        Assert.True(loaded.FeatureFlags["Capture.WgcStill"]);
-        Assert.False(loaded.FeatureFlags["V1.Ocr"]);
+        Assert.AreEqual(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
+        Assert.AreEqual(defaultStorageRoot, loaded.StorageRoot);
+        Assert.AreEqual(defaults.CaptureHotkey, loaded.CaptureHotkey);
+        Assert.AreEqual(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
+        Assert.IsTrue(loaded.FeatureFlags["Capture.WgcStill"]);
+        Assert.IsFalse(loaded.FeatureFlags["V1.Ocr"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveAsync_NormalizesOlderSettingsBeforeWriting()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -125,14 +126,14 @@ public sealed class JsonSettingsStoreTests
         await store.SaveAsync(olderSettings, CancellationToken.None);
         ApplicationSettings loaded = await store.LoadAsync(CancellationToken.None);
 
-        Assert.Equal(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
-        Assert.False(loaded.FeatureFlags["Capture.WgcStill"]);
-        Assert.Equal(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
-        Assert.True(loaded.FeatureFlags["Custom.Flag"]);
-        Assert.True(loaded.FeatureFlags.ContainsKey("Editor.BlurTool"));
+        Assert.AreEqual(ApplicationSettings.CurrentSchemaVersion, loaded.SchemaVersion);
+        Assert.IsFalse(loaded.FeatureFlags["Capture.WgcStill"]);
+        Assert.AreEqual(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
+        Assert.IsTrue(loaded.FeatureFlags["Custom.Flag"]);
+        Assert.IsTrue(loaded.FeatureFlags.ContainsKey("Editor.BlurTool"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task LoadAsync_PreservesDatabaseStorageBackend()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -157,7 +158,7 @@ public sealed class JsonSettingsStoreTests
 
         ApplicationSettings loaded = await store.LoadAsync(CancellationToken.None);
 
-        Assert.Equal(ApplicationStorageBackend.Database, loaded.StorageBackend);
-        Assert.Equal(@"D:\Captures", loaded.StorageRoot);
+        Assert.AreEqual(ApplicationStorageBackend.Database, loaded.StorageBackend);
+        Assert.AreEqual(@"D:\Captures", loaded.StorageRoot);
     }
 }

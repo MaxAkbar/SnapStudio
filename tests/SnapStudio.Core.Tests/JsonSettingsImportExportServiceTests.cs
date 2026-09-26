@@ -4,9 +4,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class JsonSettingsImportExportServiceTests
 {
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WritesMigratedSettings()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -30,10 +31,10 @@ public sealed class JsonSettingsImportExportServiceTests
             json,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(ApplicationSettings.CurrentSchemaVersion, exported?.SchemaVersion);
-        Assert.Equal("Ctrl+Shift+S", exported?.CaptureHotkey);
-        Assert.Equal(ApplicationStorageBackend.Database, exported?.StorageBackend);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual(ApplicationSettings.CurrentSchemaVersion, exported?.SchemaVersion);
+        Assert.AreEqual("Ctrl+Shift+S", exported?.CaptureHotkey);
+        Assert.AreEqual(ApplicationStorageBackend.Database, exported?.StorageBackend);
         Assert.Contains(
             """
               "storageBackend": "Database"
@@ -41,7 +42,7 @@ public sealed class JsonSettingsImportExportServiceTests
             json);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ImportAsync_MigratesOlderSettingsAndPreservesCustomFlags()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -69,19 +70,19 @@ public sealed class JsonSettingsImportExportServiceTests
             importPath,
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(ApplicationSettings.CurrentSchemaVersion, result.Settings?.SchemaVersion);
-        Assert.Equal(@"D:\Captures", result.Settings?.StorageRoot);
-        Assert.Equal("Ctrl+Alt+S", result.Settings?.CaptureHotkey);
-        Assert.False(result.Settings?.IncludeCursorByDefault);
-        Assert.True(result.Settings?.CopyCapturesToClipboard);
-        Assert.Equal(ApplicationStorageBackend.FileSystem, result.Settings?.StorageBackend);
-        Assert.False(result.Settings?.FeatureFlags["Capture.WgcStill"]);
-        Assert.True(result.Settings?.FeatureFlags["Custom.Flag"]);
-        Assert.True(result.Settings?.FeatureFlags.ContainsKey("Editor.PdfExport"));
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual(ApplicationSettings.CurrentSchemaVersion, result.Settings?.SchemaVersion);
+        Assert.AreEqual(@"D:\Captures", result.Settings?.StorageRoot);
+        Assert.AreEqual("Ctrl+Alt+S", result.Settings?.CaptureHotkey);
+        Assert.IsFalse(result.Settings?.IncludeCursorByDefault);
+        Assert.IsTrue(result.Settings?.CopyCapturesToClipboard);
+        Assert.AreEqual(ApplicationStorageBackend.FileSystem, result.Settings?.StorageBackend);
+        Assert.IsFalse(result.Settings?.FeatureFlags["Capture.WgcStill"]);
+        Assert.IsTrue(result.Settings?.FeatureFlags["Custom.Flag"]);
+        Assert.IsTrue(result.Settings?.FeatureFlags.ContainsKey("Editor.PdfExport"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ImportAsync_WhenJsonIsInvalid_ReturnsInvalidJsonFailure()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -94,11 +95,11 @@ public sealed class JsonSettingsImportExportServiceTests
             importPath,
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(SettingsTransferFailureReason.InvalidJson, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(SettingsTransferFailureReason.InvalidJson, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WhenPathIsBlank_ReturnsInvalidPathFailure()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -110,7 +111,7 @@ public sealed class JsonSettingsImportExportServiceTests
             "",
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(SettingsTransferFailureReason.InvalidPath, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(SettingsTransferFailureReason.InvalidPath, result.Failure?.Reason);
     }
 }

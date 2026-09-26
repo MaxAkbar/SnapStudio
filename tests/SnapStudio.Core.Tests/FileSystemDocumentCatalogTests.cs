@@ -6,9 +6,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class FileSystemDocumentCatalogTests
 {
-    [Fact]
+    [TestMethod]
     public async Task GetRecentAsync_ReturnsDocumentsOrderedByModifiedDate()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -22,19 +23,19 @@ public sealed class FileSystemDocumentCatalogTests
 
         IReadOnlyList<DocumentSummary> summaries = await catalog.GetRecentAsync(10, CancellationToken.None);
 
-        Assert.Equal([newer.Id, older.Id], summaries.Select(summary => summary.Id));
-        Assert.Equal("Newer", summaries[0].Title);
-        Assert.Equal("Older", summaries[1].Title);
+        Assert.AreSequenceEqual([newer.Id, older.Id], summaries.Select(summary => summary.Id));
+        Assert.AreEqual("Newer", summaries[0].Title);
+        Assert.AreEqual("Older", summaries[1].Title);
 
         await repository.DeleteAsync(newer.Id, CancellationToken.None);
 
         summaries = await catalog.GetRecentAsync(10, CancellationToken.None);
 
-        DocumentSummary remaining = Assert.Single(summaries);
-        Assert.Equal(older.Id, remaining.Id);
+        DocumentSummary remaining = Assert.ContainsSingle(summaries);
+        Assert.AreEqual(older.Id, remaining.Id);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EnsureInitializedAsync_CreatesSeedDocumentOnlyWhenCatalogIsEmpty()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -47,13 +48,13 @@ public sealed class FileSystemDocumentCatalogTests
 
         IReadOnlyList<DocumentSummary> summaries = await catalog.GetRecentAsync(10, CancellationToken.None);
 
-        DocumentSummary summary = Assert.Single(summaries);
-        Assert.Equal("Welcome Capture", summary.Title);
-        Assert.Equal("seed://welcome", summary.SourceImagePath);
-        Assert.Equal("seed", summary.SourceKind);
+        DocumentSummary summary = Assert.ContainsSingle(summaries);
+        Assert.AreEqual("Welcome Capture", summary.Title);
+        Assert.AreEqual("seed://welcome", summary.SourceImagePath);
+        Assert.AreEqual("seed", summary.SourceKind);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRecentAsync_UsesNewestExistingThumbnailWhenExactThumbnailIsMissing()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -73,11 +74,11 @@ public sealed class FileSystemDocumentCatalogTests
             10,
             CancellationToken.None);
 
-        DocumentSummary summary = Assert.Single(summaries);
-        Assert.Equal(newerThumbnailPath, summary.ThumbnailPath);
+        DocumentSummary summary = Assert.ContainsSingle(summaries);
+        Assert.AreEqual(newerThumbnailPath, summary.ThumbnailPath);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRecentAsync_ReportsSourceKindFromDocumentMetadata()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -94,11 +95,11 @@ public sealed class FileSystemDocumentCatalogTests
             10,
             CancellationToken.None);
 
-        DocumentSummary summary = Assert.Single(summaries);
-        Assert.Equal("import", summary.SourceKind);
+        DocumentSummary summary = Assert.ContainsSingle(summaries);
+        Assert.AreEqual("import", summary.SourceKind);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRecentAsync_WhenSourceMetadataIsMissing_UsesCaptureSourceKind()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -115,11 +116,11 @@ public sealed class FileSystemDocumentCatalogTests
             10,
             CancellationToken.None);
 
-        DocumentSummary summary = Assert.Single(summaries);
-        Assert.Equal("capture", summary.SourceKind);
+        DocumentSummary summary = Assert.ContainsSingle(summaries);
+        Assert.AreEqual("capture", summary.SourceKind);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRecentAsync_WhenDocumentIsDuplicate_ReportsDuplicateSourceKind()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -139,10 +140,10 @@ public sealed class FileSystemDocumentCatalogTests
             10,
             CancellationToken.None);
 
-        DocumentSummary duplicateSummary = Assert.Single(
-            summaries,
-            summary => summary.Id == duplicate.Id);
-        Assert.Equal("duplicate", duplicateSummary.SourceKind);
+        DocumentSummary duplicateSummary = Assert.ContainsSingle(
+            summary => summary.Id == duplicate.Id,
+            summaries);
+        Assert.AreEqual("duplicate", duplicateSummary.SourceKind);
     }
 
     private static async Task<CaptureDocument> CreateDocumentAsync(

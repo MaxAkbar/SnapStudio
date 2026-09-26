@@ -4,9 +4,10 @@ using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class OcrTextExtractionServiceTests
 {
-    [Fact]
+    [TestMethod]
     public async Task ExtractAsync_WhenMatchingResultIsCached_ReturnsCacheWithoutCallingProvider()
     {
         var documentId = DocumentId.New();
@@ -24,13 +25,13 @@ public sealed class OcrTextExtractionServiceTests
             CreateRequest(documentId, region),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.True(result.WasFromCache);
-        Assert.Equal("Cached text", result.Result?.Text);
-        Assert.Equal(0, provider.RecognitionCallCount);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsTrue(result.WasFromCache);
+        Assert.AreEqual("Cached text", result.Result?.Text);
+        Assert.AreEqual(0, provider.RecognitionCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExtractAsync_WhenCacheMisses_SavesProviderResult()
     {
         var documentId = DocumentId.New();
@@ -44,15 +45,15 @@ public sealed class OcrTextExtractionServiceTests
             CreateRequest(documentId, region),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.False(result.WasFromCache);
-        Assert.Equal("Recognized text", result.Result?.Text);
-        Assert.Equal(1, provider.RecognitionCallCount);
-        Assert.NotNull(cache.SavedDocument);
-        Assert.Single(cache.SavedDocument.Results);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsFalse(result.WasFromCache);
+        Assert.AreEqual("Recognized text", result.Result?.Text);
+        Assert.AreEqual(1, provider.RecognitionCallCount);
+        Assert.IsNotNull(cache.SavedDocument);
+        Assert.ContainsSingle(cache.SavedDocument.Results);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExtractAsync_WhenProviderFails_ReturnsFailureWithoutSaving()
     {
         var documentId = DocumentId.New();
@@ -65,12 +66,12 @@ public sealed class OcrTextExtractionServiceTests
             CreateRequest(documentId, null),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(OcrFailureReason.ProviderUnavailable, result.Failure?.Reason);
-        Assert.Null(cache.SavedDocument);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(OcrFailureReason.ProviderUnavailable, result.Failure?.Reason);
+        Assert.IsNull(cache.SavedDocument);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task InvalidateAsync_DeletesCachedDocumentResults()
     {
         var documentId = DocumentId.New();
@@ -81,7 +82,7 @@ public sealed class OcrTextExtractionServiceTests
 
         await service.InvalidateAsync(documentId, CancellationToken.None);
 
-        Assert.Equal(documentId, cache.DeletedDocumentId);
+        Assert.AreEqual(documentId, cache.DeletedDocumentId);
     }
 
     private static OcrTextExtractionRequest CreateRequest(

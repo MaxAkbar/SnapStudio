@@ -5,39 +5,40 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsOcrProviderTests
 {
-    [Fact]
+    [TestMethod]
     public void WindowsOcrProviderFactory_WhenProcessIsPackaged_ReturnsWindowsProvider()
     {
         var factory = new WindowsOcrProviderFactory(new FakePackageIdentityService(hasPackageIdentity: true));
 
         IOcrProvider provider = factory.Create();
 
-        Assert.IsType<WindowsOcrProvider>(provider);
+        Assert.IsExactInstanceOfType<WindowsOcrProvider>(provider);
     }
 
-    [Fact]
+    [TestMethod]
     public void WindowsOcrProviderFactory_WhenProcessIsUnpackaged_ReturnsUnavailableProvider()
     {
         var factory = new WindowsOcrProviderFactory(new FakePackageIdentityService(hasPackageIdentity: false));
 
         IOcrProvider provider = factory.Create();
 
-        Assert.IsType<UnavailableOcrProvider>(provider);
+        Assert.IsExactInstanceOfType<UnavailableOcrProvider>(provider);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsOcrProvider_GetStatusAsync_ReturnsProviderStatus()
     {
         var provider = new WindowsOcrProvider();
 
         OcrProviderStatus status = await provider.GetStatusAsync(CancellationToken.None);
 
-        Assert.Equal("Windows OCR", status.ProviderName);
+        Assert.AreEqual("Windows OCR", status.ProviderName);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsOcrProvider_RecognizeAsync_WhenImageIsMissing_ReturnsImageUnavailable()
     {
         var provider = new WindowsOcrProvider();
@@ -53,8 +54,8 @@ public sealed class WindowsOcrProviderTests
                 null),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(OcrFailureReason.ImageUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(OcrFailureReason.ImageUnavailable, result.Failure?.Reason);
     }
 
     private sealed class FakePackageIdentityService(bool hasPackageIdentity)

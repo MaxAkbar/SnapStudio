@@ -6,9 +6,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class PdfDocumentExportProviderTests
 {
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WhenFormatIsPdf_WritesPdfDocument()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -21,8 +22,8 @@ public sealed class PdfDocumentExportProviderTests
             new ExportRequest(DocumentId.New(), ExportFormat.Pdf, outputPath, new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(outputPath, result.OutputPath);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual(outputPath, result.OutputPath);
 
         byte[] pdfBytes = await File.ReadAllBytesAsync(outputPath);
         string pdfText = Encoding.Latin1.GetString(pdfBytes);
@@ -33,7 +34,7 @@ public sealed class PdfDocumentExportProviderTests
         Assert.EndsWith("%%EOF\n", pdfText);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WhenRendererFails_ReturnsFailure()
     {
         var provider = new PdfDocumentExportProvider(
@@ -43,11 +44,11 @@ public sealed class PdfDocumentExportProviderTests
             new ExportRequest(DocumentId.New(), ExportFormat.Pdf, "export.pdf", new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal("render failed", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual("render failed", result.ErrorMessage);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WhenFormatDoesNotMatchProvider_ReturnsFailure()
     {
         var provider = new PdfDocumentExportProvider(
@@ -57,8 +58,8 @@ public sealed class PdfDocumentExportProviderTests
             new ExportRequest(DocumentId.New(), ExportFormat.Png, "export.png", new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("cannot export", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("cannot export", result.ErrorMessage ?? string.Empty);
     }
 
     private static byte[] CreateTinyPngBytes()

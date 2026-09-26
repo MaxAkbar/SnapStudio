@@ -3,9 +3,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class FileDiagnosticLogTests
 {
-    [Fact]
+    [TestMethod]
     public async Task WriteAsync_AppendsRedactedJsonLine()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();

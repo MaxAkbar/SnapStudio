@@ -4,9 +4,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsGraphicsCaptureScreenRecordingFrameSourceTests
 {
-    [Fact]
+    [TestMethod]
     public async Task OpenAsync_WhenCapabilityIsUnsupported_ReturnsUnsupported()
     {
         var frameSource = new WindowsGraphicsCaptureScreenRecordingFrameSource(
@@ -17,12 +18,12 @@ public sealed class WindowsGraphicsCaptureScreenRecordingFrameSourceTests
             CreateOpenRequest(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
-        Assert.Equal("WGC unavailable.", result.Failure?.Message);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.AreEqual("WGC unavailable.", result.Failure?.Message);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task OpenAsync_WhenTargetKindIsUnsupported_ReturnsUnsupported()
     {
         var frameSource = new WindowsGraphicsCaptureScreenRecordingFrameSource(
@@ -33,11 +34,11 @@ public sealed class WindowsGraphicsCaptureScreenRecordingFrameSourceTests
             CreateOpenRequest(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task OpenAsync_WhenTargetHintIsMissing_ReturnsTargetUnavailable()
     {
         var frameSource = new WindowsGraphicsCaptureScreenRecordingFrameSource(
@@ -49,11 +50,11 @@ public sealed class WindowsGraphicsCaptureScreenRecordingFrameSourceTests
             CreateOpenRequest(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.TargetUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.TargetUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StopAsync_WhenSessionIsUnknown_ReturnsSessionNotFound()
     {
         var frameSource = new WindowsGraphicsCaptureScreenRecordingFrameSource(
@@ -64,11 +65,11 @@ public sealed class WindowsGraphicsCaptureScreenRecordingFrameSourceTests
             ScreenRecordingSessionId.New(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenSessionIsUnknown_ReturnsSessionNotFound()
     {
         var frameSource = new WindowsGraphicsCaptureScreenRecordingFrameSource(
@@ -81,8 +82,8 @@ public sealed class WindowsGraphicsCaptureScreenRecordingFrameSourceTests
                 new FakeFrameSink()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
     }
 
     private static ScreenRecordingFrameSourceOpenRequest CreateOpenRequest()

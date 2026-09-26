@@ -7,9 +7,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsBoundsScrollingFrameCaptureServiceTests
 {
-    [Fact]
+    [TestMethod]
     public async Task CaptureFrameAsync_WhenBoundsAreValid_WritesFrameWithMetadata()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -21,19 +22,19 @@ public sealed class WindowsBoundsScrollingFrameCaptureServiceTests
             new ScrollingFrameCaptureRequest(target, 2, workspace.Path),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Frame);
-        Assert.Equal(2, result.Frame.Index);
-        Assert.Equal(target.Bounds, writer.Bounds);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Frame);
+        Assert.AreEqual(2, result.Frame.Index);
+        Assert.AreEqual(target.Bounds, writer.Bounds);
         Assert.StartsWith(workspace.Path, result.Frame.Image.Path, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(120, result.Frame.Image.Width);
-        Assert.Equal(80, result.Frame.Image.Height);
-        Assert.Equal("gdi-copy-from-screen", result.Frame.Metadata["captureMethod"]);
-        Assert.Equal(target.Id, result.Frame.Metadata["targetId"]);
-        Assert.True(File.Exists(result.Frame.Image.Path));
+        Assert.AreEqual(120, result.Frame.Image.Width);
+        Assert.AreEqual(80, result.Frame.Image.Height);
+        Assert.AreEqual("gdi-copy-from-screen", result.Frame.Metadata["captureMethod"]);
+        Assert.AreEqual(target.Id, result.Frame.Metadata["targetId"]);
+        Assert.IsTrue(File.Exists(result.Frame.Image.Path));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureFrameAsync_WhenBoundsAreInvalid_ReturnsInvalidRequest()
     {
         var service = new WindowsBoundsScrollingFrameCaptureService(new FakeScrollingFrameImageWriter());
@@ -45,11 +46,11 @@ public sealed class WindowsBoundsScrollingFrameCaptureServiceTests
                 Path.GetTempPath()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScrollingCaptureFailureReason.InvalidRequest, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScrollingCaptureFailureReason.InvalidRequest, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureFrameAsync_WhenWriterFails_ReturnsFrameCaptureFailure()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -62,8 +63,8 @@ public sealed class WindowsBoundsScrollingFrameCaptureServiceTests
                 workspace.Path),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScrollingCaptureFailureReason.FrameCaptureFailed, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScrollingCaptureFailureReason.FrameCaptureFailed, result.Failure?.Reason);
     }
 
     private static ScrollTargetCandidate CreateTarget(RectD bounds)

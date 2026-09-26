@@ -7,9 +7,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class SystemDrawingVerticalOverlapScrollingStitcherTests
 {
-    [Fact]
+    [TestMethod]
     public async Task StitchAsync_WhenNoFrames_ReturnsStitchFailure()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -19,11 +20,11 @@ public sealed class SystemDrawingVerticalOverlapScrollingStitcherTests
             new ScrollingStitchRequest([], workspace.Path, new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScrollingCaptureFailureReason.StitchFailed, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScrollingCaptureFailureReason.StitchFailed, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StitchAsync_WhenSingleFrame_WritesFrameAsOutput()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -38,15 +39,15 @@ public sealed class SystemDrawingVerticalOverlapScrollingStitcherTests
                 new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Image);
-        Assert.Equal(20, result.Image.Width);
-        Assert.Equal(30, result.Image.Height);
-        Assert.True(File.Exists(result.Image.Path));
-        Assert.Equal("1", result.Diagnostics["frameCount"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Image);
+        Assert.AreEqual(20, result.Image.Width);
+        Assert.AreEqual(30, result.Image.Height);
+        Assert.IsTrue(File.Exists(result.Image.Path));
+        Assert.AreEqual("1", result.Diagnostics["frameCount"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StitchAsync_WhenFramesOverlap_WritesDeduplicatedOutput()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -79,20 +80,20 @@ public sealed class SystemDrawingVerticalOverlapScrollingStitcherTests
                 }),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Image);
-        Assert.Equal(width, result.Image.Width);
-        Assert.Equal(height + height - overlap, result.Image.Height);
-        Assert.Equal(overlap.ToString(), result.Diagnostics["overlap.1.rows"]);
-        Assert.Equal("True", result.Diagnostics["overlap.1.confident"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Image);
+        Assert.AreEqual(width, result.Image.Width);
+        Assert.AreEqual(height + height - overlap, result.Image.Height);
+        Assert.AreEqual(overlap.ToString(), result.Diagnostics["overlap.1.rows"]);
+        Assert.AreEqual("True", result.Diagnostics["overlap.1.confident"]);
 
         using var output = new Bitmap(result.Image.Path);
-        Assert.Equal(FirstFrameColor(0).ToArgb(), output.GetPixel(0, 0).ToArgb());
-        Assert.Equal(Color.FromArgb(255, 200 + overlap, 30 + overlap, 80 + overlap).ToArgb(),
+        Assert.AreEqual(FirstFrameColor(0).ToArgb(), output.GetPixel(0, 0).ToArgb());
+        Assert.AreEqual(Color.FromArgb(255, 200 + overlap, 30 + overlap, 80 + overlap).ToArgb(),
             output.GetPixel(0, height).ToArgb());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StitchAsync_WhenHeaderRepeats_CropsHeaderFromLaterFrames()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -133,14 +134,14 @@ public sealed class SystemDrawingVerticalOverlapScrollingStitcherTests
                 }),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Image);
-        Assert.Equal(height + firstContentHeight - overlap, result.Image.Height);
-        Assert.Equal(header.ToString(), result.Diagnostics["sticky.1.topRows"]);
-        Assert.Equal(overlap.ToString(), result.Diagnostics["overlap.1.rows"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Image);
+        Assert.AreEqual(height + firstContentHeight - overlap, result.Image.Height);
+        Assert.AreEqual(header.ToString(), result.Diagnostics["sticky.1.topRows"]);
+        Assert.AreEqual(overlap.ToString(), result.Diagnostics["overlap.1.rows"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StitchAsync_WhenFooterRepeats_CropsFooterFromEarlierFrames()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -181,15 +182,15 @@ public sealed class SystemDrawingVerticalOverlapScrollingStitcherTests
                 }),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Image);
-        Assert.Equal(firstContentHeight + height - overlap, result.Image.Height);
-        Assert.Equal(footer.ToString(), result.Diagnostics["sticky.0.bottomRows"]);
-        Assert.Equal("0", result.Diagnostics["sticky.1.bottomRows"]);
-        Assert.Equal(overlap.ToString(), result.Diagnostics["overlap.1.rows"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Image);
+        Assert.AreEqual(firstContentHeight + height - overlap, result.Image.Height);
+        Assert.AreEqual(footer.ToString(), result.Diagnostics["sticky.0.bottomRows"]);
+        Assert.AreEqual("0", result.Diagnostics["sticky.1.bottomRows"]);
+        Assert.AreEqual(overlap.ToString(), result.Diagnostics["overlap.1.rows"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StitchAsync_WhenOverlapIsNotConfident_StacksFrames()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -209,11 +210,11 @@ public sealed class SystemDrawingVerticalOverlapScrollingStitcherTests
                 new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Image);
-        Assert.Equal(40, result.Image.Height);
-        Assert.Equal("0", result.Diagnostics["overlap.1.rows"]);
-        Assert.Equal("False", result.Diagnostics["overlap.1.confident"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Image);
+        Assert.AreEqual(40, result.Image.Height);
+        Assert.AreEqual("0", result.Diagnostics["overlap.1.rows"]);
+        Assert.AreEqual("False", result.Diagnostics["overlap.1.confident"]);
     }
 
     private static ScrollingCaptureFrame CreateCapturedFrame(

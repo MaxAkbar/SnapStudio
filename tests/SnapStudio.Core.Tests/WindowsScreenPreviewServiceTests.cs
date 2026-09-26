@@ -4,9 +4,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsScreenPreviewServiceTests
 {
-    [Fact]
+    [TestMethod]
     public async Task CapturePreviewAsync_WhenBoundsAreEmpty_ReturnsNull()
     {
         var service = new WindowsScreenPreviewService();
@@ -15,6 +16,6 @@ public sealed class WindowsScreenPreviewServiceTests
             new RectD(0, 0, 0, 100),
             CancellationToken.None);
 
-        Assert.Null(preview);
+        Assert.IsNull(preview);
     }
 }

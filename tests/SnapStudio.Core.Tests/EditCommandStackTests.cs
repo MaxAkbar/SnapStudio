@@ -4,9 +4,10 @@ using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class EditCommandStackTests
 {
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_AppliesCommandAndMakesUndoAvailable()
     {
         var document = new CaptureDocument();
@@ -22,13 +23,13 @@ public sealed class EditCommandStackTests
             new AddAnnotationCommand(annotation),
             CancellationToken.None);
 
-        Assert.Single(document.Annotations);
-        Assert.True(stack.CanUndo);
-        Assert.False(stack.CanRedo);
-        Assert.Equal("Add Rectangle", stack.UndoDisplayName);
+        Assert.ContainsSingle(document.Annotations);
+        Assert.IsTrue(stack.CanUndo);
+        Assert.IsFalse(stack.CanRedo);
+        Assert.AreEqual("Add Rectangle", stack.UndoDisplayName);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UndoRedo_RevertsAndReappliesCommand()
     {
         var document = new CaptureDocument();
@@ -47,15 +48,15 @@ public sealed class EditCommandStackTests
         bool undone = await stack.UndoAsync(document, CancellationToken.None);
         bool redone = await stack.RedoAsync(document, CancellationToken.None);
 
-        Assert.True(undone);
-        Assert.True(redone);
-        Assert.Single(document.Annotations);
-        Assert.Equal(annotation.Id, document.Annotations[0].Id);
-        Assert.True(stack.CanUndo);
-        Assert.False(stack.CanRedo);
+        Assert.IsTrue(undone);
+        Assert.IsTrue(redone);
+        Assert.ContainsSingle(document.Annotations);
+        Assert.AreEqual(annotation.Id, document.Annotations[0].Id);
+        Assert.IsTrue(stack.CanUndo);
+        Assert.IsFalse(stack.CanRedo);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_ClearsRedoHistory()
     {
         var document = new CaptureDocument();
@@ -72,12 +73,12 @@ public sealed class EditCommandStackTests
             new AddAnnotationCommand(CreateAnnotation(AnnotationKind.Text)),
             CancellationToken.None);
 
-        Assert.True(stack.CanUndo);
-        Assert.False(stack.CanRedo);
-        Assert.Equal("Add Text", stack.UndoDisplayName);
+        Assert.IsTrue(stack.CanUndo);
+        Assert.IsFalse(stack.CanRedo);
+        Assert.AreEqual("Add Text", stack.UndoDisplayName);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RemoveAnnotationCommand_UndoRedo_RemovesAndRestoresAnnotation()
     {
         var document = new CaptureDocument();
@@ -90,18 +91,18 @@ public sealed class EditCommandStackTests
             new RemoveAnnotationCommand(annotation),
             CancellationToken.None);
 
-        Assert.Empty(document.Annotations);
-        Assert.Equal("Delete Rectangle", stack.UndoDisplayName);
+        Assert.IsEmpty(document.Annotations);
+        Assert.AreEqual("Delete Rectangle", stack.UndoDisplayName);
 
         bool undone = await stack.UndoAsync(document, CancellationToken.None);
         bool redone = await stack.RedoAsync(document, CancellationToken.None);
 
-        Assert.True(undone);
-        Assert.True(redone);
-        Assert.Empty(document.Annotations);
+        Assert.IsTrue(undone);
+        Assert.IsTrue(redone);
+        Assert.IsEmpty(document.Annotations);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateAnnotationBoundsCommand_UndoRedo_UpdatesBounds()
     {
         var document = new CaptureDocument();
@@ -118,18 +119,18 @@ public sealed class EditCommandStackTests
                 "Move Rectangle"),
             CancellationToken.None);
 
-        Assert.Equal(new RectD(20, 30, 40, 50), annotation.Bounds);
-        Assert.Equal("Move Rectangle", stack.UndoDisplayName);
+        Assert.AreEqual(new RectD(20, 30, 40, 50), annotation.Bounds);
+        Assert.AreEqual("Move Rectangle", stack.UndoDisplayName);
 
         bool undone = await stack.UndoAsync(document, CancellationToken.None);
         bool redone = await stack.RedoAsync(document, CancellationToken.None);
 
-        Assert.True(undone);
-        Assert.True(redone);
-        Assert.Equal(new RectD(20, 30, 40, 50), annotation.Bounds);
+        Assert.IsTrue(undone);
+        Assert.IsTrue(redone);
+        Assert.AreEqual(new RectD(20, 30, 40, 50), annotation.Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateAnnotationStyleCommand_UndoRedo_UpdatesStyle()
     {
         var document = new CaptureDocument();
@@ -151,18 +152,18 @@ public sealed class EditCommandStackTests
                 "Style Rectangle"),
             CancellationToken.None);
 
-        Assert.Equal(nextStyle, annotation.Style);
-        Assert.Equal("Style Rectangle", stack.UndoDisplayName);
+        Assert.AreEqual(nextStyle, annotation.Style);
+        Assert.AreEqual("Style Rectangle", stack.UndoDisplayName);
 
         bool undone = await stack.UndoAsync(document, CancellationToken.None);
         bool redone = await stack.RedoAsync(document, CancellationToken.None);
 
-        Assert.True(undone);
-        Assert.True(redone);
-        Assert.Equal(nextStyle, annotation.Style);
+        Assert.IsTrue(undone);
+        Assert.IsTrue(redone);
+        Assert.AreEqual(nextStyle, annotation.Style);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateAnnotationTextCommand_UndoRedo_UpdatesText()
     {
         var document = new CaptureDocument();
@@ -180,18 +181,18 @@ public sealed class EditCommandStackTests
                 "Edit Text"),
             CancellationToken.None);
 
-        Assert.Equal("After", annotation.Text);
-        Assert.Equal("Edit Text", stack.UndoDisplayName);
+        Assert.AreEqual("After", annotation.Text);
+        Assert.AreEqual("Edit Text", stack.UndoDisplayName);
 
         bool undone = await stack.UndoAsync(document, CancellationToken.None);
         bool redone = await stack.RedoAsync(document, CancellationToken.None);
 
-        Assert.True(undone);
-        Assert.True(redone);
-        Assert.Equal("After", annotation.Text);
+        Assert.IsTrue(undone);
+        Assert.IsTrue(redone);
+        Assert.AreEqual("After", annotation.Text);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateDocumentRasterCommand_UndoRedo_UpdatesSourceAndAnnotations()
     {
         var document = new CaptureDocument
@@ -225,20 +226,20 @@ public sealed class EditCommandStackTests
                 "Resize Document"),
             CancellationToken.None);
 
-        Assert.Equal(afterImage, document.SourceImage);
-        Assert.Equal(new RectD(1, 2, 3, 4), document.Annotations[0].Bounds);
-        Assert.Single(document.DestructiveOperations);
+        Assert.AreEqual(afterImage, document.SourceImage);
+        Assert.AreEqual(new RectD(1, 2, 3, 4), document.Annotations[0].Bounds);
+        Assert.ContainsSingle(document.DestructiveOperations);
 
         bool undone = await stack.UndoAsync(document, CancellationToken.None);
         bool redone = await stack.RedoAsync(document, CancellationToken.None);
 
-        Assert.True(undone);
-        Assert.True(redone);
-        Assert.Equal(afterImage, document.SourceImage);
-        Assert.Equal(new RectD(1, 2, 3, 4), document.Annotations[0].Bounds);
+        Assert.IsTrue(undone);
+        Assert.IsTrue(redone);
+        Assert.AreEqual(afterImage, document.SourceImage);
+        Assert.AreEqual(new RectD(1, 2, 3, 4), document.Annotations[0].Bounds);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UndoAsync_WhenCommandFails_KeepsUndoHistory()
     {
         var document = new CaptureDocument();
@@ -246,12 +247,12 @@ public sealed class EditCommandStackTests
 
         await stack.ExecuteAsync(document, new FailingRevertCommand(), CancellationToken.None);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
             async () => await stack.UndoAsync(document, CancellationToken.None));
 
-        Assert.True(stack.CanUndo);
-        Assert.False(stack.CanRedo);
-        Assert.Equal("Failing revert", stack.UndoDisplayName);
+        Assert.IsTrue(stack.CanUndo);
+        Assert.IsFalse(stack.CanRedo);
+        Assert.AreEqual("Failing revert", stack.UndoDisplayName);
     }
 
     private static AnnotationObject CreateAnnotation(AnnotationKind kind) => new()

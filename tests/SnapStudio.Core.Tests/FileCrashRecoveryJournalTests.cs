@@ -3,9 +3,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class FileCrashRecoveryJournalTests
 {
-    [Fact]
+    [TestMethod]
     public async Task WriteAsync_AppendsRedactedRecoveryEntry()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -38,7 +39,7 @@ public sealed class FileCrashRecoveryJournalTests
         Assert.DoesNotContain("user@example.com", contents);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WriteAsync_AppendsMultipleEntries()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -60,7 +61,7 @@ public sealed class FileCrashRecoveryJournalTests
 
         string[] lines = await File.ReadAllLinesAsync(journalPath);
 
-        Assert.Equal(2, lines.Length);
+        Assert.AreEqual(2, lines.Length);
         Assert.Contains("sessionStarted", lines[0]);
         Assert.Contains("sessionClosed", lines[1]);
     }

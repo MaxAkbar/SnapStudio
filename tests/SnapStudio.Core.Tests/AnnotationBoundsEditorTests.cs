@@ -3,9 +3,10 @@ using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class AnnotationBoundsEditorTests
 {
-    [Fact]
+    [TestMethod]
     public void Move_ClampsBoundsInsideSource()
     {
         RectD moved = AnnotationBoundsEditor.Move(
@@ -14,10 +15,10 @@ public sealed class AnnotationBoundsEditorTests
             50,
             new SizeD(120, 110));
 
-        Assert.Equal(new RectD(80, 80, 40, 30), moved);
+        Assert.AreEqual(new RectD(80, 80, 40, 30), moved);
     }
 
-    [Fact]
+    [TestMethod]
     public void Move_PreservesDirectedBounds()
     {
         RectD moved = AnnotationBoundsEditor.Move(
@@ -26,10 +27,10 @@ public sealed class AnnotationBoundsEditorTests
             -20,
             new SizeD(120, 110));
 
-        Assert.Equal(new RectD(60, 70, -40, -30), moved);
+        Assert.AreEqual(new RectD(60, 70, -40, -30), moved);
     }
 
-    [Fact]
+    [TestMethod]
     public void Resize_WithBottomRightHandle_ExpandsToDragPoint()
     {
         RectD resized = AnnotationBoundsEditor.Resize(
@@ -38,10 +39,10 @@ public sealed class AnnotationBoundsEditorTests
             new PointD(100, 120),
             new SizeD(200, 200));
 
-        Assert.Equal(new RectD(20, 30, 80, 90), resized);
+        Assert.AreEqual(new RectD(20, 30, 80, 90), resized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Resize_WithTopLeftHandle_ClampsToMinimumSize()
     {
         RectD resized = AnnotationBoundsEditor.Resize(
@@ -51,10 +52,10 @@ public sealed class AnnotationBoundsEditorTests
             new SizeD(200, 200),
             minimumSize: 10);
 
-        Assert.Equal(new RectD(50, 70, 10, 10), resized);
+        Assert.AreEqual(new RectD(50, 70, 10, 10), resized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Resize_WithLeftHandle_ClampsToSource()
     {
         RectD resized = AnnotationBoundsEditor.Resize(
@@ -63,10 +64,10 @@ public sealed class AnnotationBoundsEditorTests
             new PointD(-100, 120),
             new SizeD(200, 200));
 
-        Assert.Equal(new RectD(0, 30, 60, 50), resized);
+        Assert.AreEqual(new RectD(0, 30, 60, 50), resized);
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveEndpoint_WithStartHandle_PreservesEndPoint()
     {
         RectD edited = AnnotationBoundsEditor.MoveEndpoint(
@@ -75,10 +76,10 @@ public sealed class AnnotationBoundsEditorTests
             new PointD(10, 15),
             new SizeD(200, 200));
 
-        Assert.Equal(new RectD(10, 15, 50, 65), edited);
+        Assert.AreEqual(new RectD(10, 15, 50, 65), edited);
     }
 
-    [Fact]
+    [TestMethod]
     public void MoveEndpoint_WithEndHandle_PreservesStartPoint()
     {
         RectD edited = AnnotationBoundsEditor.MoveEndpoint(
@@ -87,6 +88,6 @@ public sealed class AnnotationBoundsEditorTests
             new PointD(100, 120),
             new SizeD(200, 200));
 
-        Assert.Equal(new RectD(20, 30, 80, 90), edited);
+        Assert.AreEqual(new RectD(20, 30, 80, 90), edited);
     }
 }

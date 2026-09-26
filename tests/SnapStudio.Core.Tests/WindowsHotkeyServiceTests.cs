@@ -3,9 +3,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsHotkeyServiceTests
 {
-    [Fact]
+    [TestMethod]
     public async Task RegisterAsync_WhenGestureIsUnsupported_ReturnsFailureBeforeNativeRegistration()
     {
         var hotkeys = new WindowsHotkeyService(ownerWindowHandle: 0);
@@ -14,11 +15,11 @@ public sealed class WindowsHotkeyServiceTests
             new HotkeyRegistration("Capture", "Ctrl+UnsupportedKey"),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("UnsupportedKey", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("UnsupportedKey", result.ErrorMessage ?? string.Empty);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RegisterAsync_WhenOwnerWindowIsMissing_ReturnsFailure()
     {
         var hotkeys = new WindowsHotkeyService(ownerWindowHandle: 0);
@@ -27,7 +28,7 @@ public sealed class WindowsHotkeyServiceTests
             new HotkeyRegistration("Capture", "Ctrl+Shift+S"),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("owner window", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("owner window", result.ErrorMessage ?? string.Empty);
     }
 }

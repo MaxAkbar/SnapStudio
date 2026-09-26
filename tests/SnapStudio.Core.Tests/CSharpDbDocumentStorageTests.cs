@@ -6,9 +6,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class CSharpDbDocumentStorageTests
 {
-    [Fact]
+    [TestMethod]
     public async Task CreateSaveGetAsync_RoundTripsEditableDocument()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -33,16 +34,16 @@ public sealed class CSharpDbDocumentStorageTests
 
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
 
-        Assert.NotNull(loaded);
-        Assert.Equal(document.Id, loaded.Id);
-        Assert.Equal("source.png", loaded.SourceImage.Path);
-        Assert.Single(loaded.Annotations);
-        Assert.Equal(AnnotationKind.Rectangle, loaded.Annotations[0].Kind);
-        Assert.Equal("test", loaded.Metadata.Properties["source"]);
-        Assert.True(File.Exists(store.DatabasePath));
+        Assert.IsNotNull(loaded);
+        Assert.AreEqual(document.Id, loaded.Id);
+        Assert.AreEqual("source.png", loaded.SourceImage.Path);
+        Assert.ContainsSingle(loaded.Annotations);
+        Assert.AreEqual(AnnotationKind.Rectangle, loaded.Annotations[0].Kind);
+        Assert.AreEqual("test", loaded.Metadata.Properties["source"]);
+        Assert.IsTrue(File.Exists(store.DatabasePath));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRecentAsync_ReturnsDocumentsOrderedByModifiedDate()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -57,19 +58,19 @@ public sealed class CSharpDbDocumentStorageTests
 
         IReadOnlyList<DocumentSummary> summaries = await catalog.GetRecentAsync(10, CancellationToken.None);
 
-        Assert.Equal([newer.Id, older.Id], summaries.Select(summary => summary.Id));
-        Assert.Equal("Newer", summaries[0].Title);
-        Assert.Equal("Older", summaries[1].Title);
+        Assert.AreSequenceEqual([newer.Id, older.Id], summaries.Select(summary => summary.Id));
+        Assert.AreEqual("Newer", summaries[0].Title);
+        Assert.AreEqual("Older", summaries[1].Title);
 
         await repository.DeleteAsync(newer.Id, CancellationToken.None);
 
         summaries = await catalog.GetRecentAsync(10, CancellationToken.None);
 
-        DocumentSummary remaining = Assert.Single(summaries);
-        Assert.Equal(older.Id, remaining.Id);
+        DocumentSummary remaining = Assert.ContainsSingle(summaries);
+        Assert.AreEqual(older.Id, remaining.Id);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteAsync_RemovesDocumentRowAndKeepsSourceImage()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -90,10 +91,10 @@ public sealed class CSharpDbDocumentStorageTests
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
         bool deletedAgain = await repository.DeleteAsync(document.Id, CancellationToken.None);
 
-        Assert.True(deleted);
-        Assert.Null(loaded);
-        Assert.False(deletedAgain);
-        Assert.True(File.Exists(sourcePath));
+        Assert.IsTrue(deleted);
+        Assert.IsNull(loaded);
+        Assert.IsFalse(deletedAgain);
+        Assert.IsTrue(File.Exists(sourcePath));
     }
 
     private static async Task<CaptureDocument> CreateDocumentAsync(

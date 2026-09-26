@@ -2,9 +2,10 @@ using SnapStudio.Core.Capture;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class ArchitectureBoundaryTests
 {
-    [Fact]
+    [TestMethod]
     public void CoreAssembly_DoesNotReferencePlatformOrUiAssemblies()
     {
         string[] referencedAssemblies = typeof(CaptureRequest)
@@ -19,7 +20,7 @@ public sealed class ArchitectureBoundaryTests
         Assert.DoesNotContain("SnapStudio.Ipc", referencedAssemblies);
         Assert.DoesNotContain("SnapStudio.Rendering", referencedAssemblies);
         Assert.DoesNotContain("SnapStudio.Storage", referencedAssemblies);
-        Assert.DoesNotContain(referencedAssemblies, name => name.StartsWith("Microsoft.UI", StringComparison.Ordinal));
-        Assert.DoesNotContain(referencedAssemblies, name => name.StartsWith("Windows.", StringComparison.Ordinal));
+        Assert.DoesNotContain(name => name.StartsWith("Microsoft.UI", StringComparison.Ordinal), referencedAssemblies);
+        Assert.DoesNotContain(name => name.StartsWith("Windows.", StringComparison.Ordinal), referencedAssemblies);
     }
 }

@@ -4,9 +4,10 @@ using SnapStudio.Core.System;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class ScreenRecordingPipelineEngineTests
 {
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenAudioIsRequested_ReturnsAudioUnavailableWithoutOpeningSource()
     {
         var frameSource = new FakeFrameSource();
@@ -17,13 +18,13 @@ public sealed class ScreenRecordingPipelineEngineTests
             CreateRequest(includeMicrophoneAudio: true),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
-        Assert.Equal(0, frameSource.OpenCallCount);
-        Assert.Equal(0, writer.StartCallCount);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
+        Assert.AreEqual(0, frameSource.OpenCallCount);
+        Assert.AreEqual(0, writer.StartCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenAudioSourceFails_ReturnsAudioFailureWithoutOpeningFrameSource()
     {
         var audioFailure = new ScreenRecordingFailure(
@@ -43,14 +44,14 @@ public sealed class ScreenRecordingPipelineEngineTests
             CreateRequest(includeSystemAudio: true),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(audioFailure, result.Failure);
-        Assert.Equal(1, audioSource.OpenCallCount);
-        Assert.Equal(0, frameSource.OpenCallCount);
-        Assert.Equal(0, writer.StartCallCount);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(audioFailure, result.Failure);
+        Assert.AreEqual(1, audioSource.OpenCallCount);
+        Assert.AreEqual(0, frameSource.OpenCallCount);
+        Assert.AreEqual(0, writer.StartCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAndStopAsync_WhenAudioPipelineIsAvailable_ReportsAudioMetadataAndDiagnostics()
     {
         var audioSource = new FakeAudioSource();
@@ -66,27 +67,27 @@ public sealed class ScreenRecordingPipelineEngineTests
             CreateRequest(includeMicrophoneAudio: true),
             CancellationToken.None);
 
-        Assert.True(start.Succeeded);
-        Assert.Equal("48000", start.Session?.Metadata["audioSampleRate"]);
-        Assert.Equal("2", start.Session?.Metadata["audioChannelCount"]);
-        Assert.Equal("Pcm16", start.Session?.Metadata["audioEncoding"]);
-        Assert.Equal("fake-audio", start.Session?.Metadata["audio:adapter"]);
-        Assert.NotNull(writer.LastStartRequest?.AudioSession);
-        Assert.Equal(1, audioSource.OpenCallCount);
-        Assert.Equal(1, audioSource.StartCallCount);
+        Assert.IsTrue(start.Succeeded);
+        Assert.AreEqual("48000", start.Session?.Metadata["audioSampleRate"]);
+        Assert.AreEqual("2", start.Session?.Metadata["audioChannelCount"]);
+        Assert.AreEqual("Pcm16", start.Session?.Metadata["audioEncoding"]);
+        Assert.AreEqual("fake-audio", start.Session?.Metadata["audio:adapter"]);
+        Assert.IsNotNull(writer.LastStartRequest?.AudioSession);
+        Assert.AreEqual(1, audioSource.OpenCallCount);
+        Assert.AreEqual(1, audioSource.StartCallCount);
 
         ScreenRecordingStopResult stop = await engine.StopAsync(
             start.Session!,
             CancellationToken.None);
 
-        Assert.True(stop.Succeeded);
-        Assert.Equal(1, audioSource.StopCallCount);
-        Assert.Equal("48000", stop.Diagnostics["audioSampleRate"]);
-        Assert.Equal("2", stop.Diagnostics["audioChannelCount"]);
-        Assert.Equal("480", stop.Diagnostics["audioStop:samplesCaptured"]);
+        Assert.IsTrue(stop.Succeeded);
+        Assert.AreEqual(1, audioSource.StopCallCount);
+        Assert.AreEqual("48000", stop.Diagnostics["audioSampleRate"]);
+        Assert.AreEqual("2", stop.Diagnostics["audioChannelCount"]);
+        Assert.AreEqual("480", stop.Diagnostics["audioStop:samplesCaptured"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenFrameSourceFails_ReturnsSourceFailureWithoutStartingWriter()
     {
         var sourceFailure = new ScreenRecordingFailure(
@@ -100,12 +101,12 @@ public sealed class ScreenRecordingPipelineEngineTests
             CreateRequest(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(sourceFailure, result.Failure);
-        Assert.Equal(0, writer.StartCallCount);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(sourceFailure, result.Failure);
+        Assert.AreEqual(0, writer.StartCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenWriterFails_StopsFrameSourceAndReturnsWriterFailure()
     {
         var writerFailure = new ScreenRecordingFailure(
@@ -119,12 +120,12 @@ public sealed class ScreenRecordingPipelineEngineTests
             CreateRequest(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(writerFailure, result.Failure);
-        Assert.Equal(1, frameSource.StopCallCount);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(writerFailure, result.Failure);
+        Assert.AreEqual(1, frameSource.StopCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenFrameSourceStartFails_FinishesWriterAndStopsFrameSource()
     {
         var sourceFailure = new ScreenRecordingFailure(
@@ -139,14 +140,14 @@ public sealed class ScreenRecordingPipelineEngineTests
             CreateRequest(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(sourceFailure, result.Failure);
-        Assert.Equal(1, writer.StartCallCount);
-        Assert.Equal(1, writer.FinishCallCount);
-        Assert.Equal(1, frameSource.StopCallCount);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(sourceFailure, result.Failure);
+        Assert.AreEqual(1, writer.StartCallCount);
+        Assert.AreEqual(1, writer.FinishCallCount);
+        Assert.AreEqual(1, frameSource.StopCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenPipelineStarts_ReturnsRecordingSessionWithSourceMetadata()
     {
         var frameSource = new FakeFrameSource();
@@ -157,17 +158,17 @@ public sealed class ScreenRecordingPipelineEngineTests
             CreateRequest(),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(ScreenRecordingState.Recording, result.Session?.State);
-        Assert.Equal(new DateTimeOffset(2026, 6, 5, 12, 0, 0, TimeSpan.Zero), result.Session?.StartedAtUtc);
-        Assert.Equal("1920", result.Session?.Metadata["sourceWidth"]);
-        Assert.Equal("1080", result.Session?.Metadata["sourceHeight"]);
-        Assert.Equal("Bgra32", result.Session?.Metadata["sourcePixelFormat"]);
-        Assert.Equal("wgc", result.Session?.Metadata["source:adapter"]);
-        Assert.Equal("mp4", result.Session?.Metadata["writer:container"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingState.Recording, result.Session?.State);
+        Assert.AreEqual(new DateTimeOffset(2026, 6, 5, 12, 0, 0, TimeSpan.Zero), result.Session?.StartedAtUtc);
+        Assert.AreEqual("1920", result.Session?.Metadata["sourceWidth"]);
+        Assert.AreEqual("1080", result.Session?.Metadata["sourceHeight"]);
+        Assert.AreEqual("Bgra32", result.Session?.Metadata["sourcePixelFormat"]);
+        Assert.AreEqual("wgc", result.Session?.Metadata["source:adapter"]);
+        Assert.AreEqual("mp4", result.Session?.Metadata["writer:container"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StopAsync_WhenPipelineFinishes_ReturnsOutputAndDiagnostics()
     {
         var frameSource = new FakeFrameSource(
@@ -184,15 +185,15 @@ public sealed class ScreenRecordingPipelineEngineTests
             start.Session!,
             CancellationToken.None);
 
-        Assert.True(stop.Succeeded);
-        Assert.Equal(ScreenRecordingState.Stopped, stop.Session?.State);
-        Assert.Equal("90", stop.Diagnostics["sourceStop:framesReceived"]);
-        Assert.Equal("90", stop.Diagnostics["writerFinish:framesWritten"]);
-        Assert.Equal(1, frameSource.StopCallCount);
-        Assert.Equal(1, writer.FinishCallCount);
+        Assert.IsTrue(stop.Succeeded);
+        Assert.AreEqual(ScreenRecordingState.Stopped, stop.Session?.State);
+        Assert.AreEqual("90", stop.Diagnostics["sourceStop:framesReceived"]);
+        Assert.AreEqual("90", stop.Diagnostics["writerFinish:framesWritten"]);
+        Assert.AreEqual(1, frameSource.StopCallCount);
+        Assert.AreEqual(1, writer.FinishCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StopAsync_WhenWriterFails_ReturnsFailedSessionWithDiagnostics()
     {
         var writerFailure = new ScreenRecordingFailure(
@@ -212,14 +213,14 @@ public sealed class ScreenRecordingPipelineEngineTests
             start.Session!,
             CancellationToken.None);
 
-        Assert.False(stop.Succeeded);
-        Assert.Equal(writerFailure, stop.Failure);
-        Assert.Equal(ScreenRecordingState.Failed, stop.Session?.State);
-        Assert.Equal("OutputUnavailable", stop.Diagnostics["writerFailureReason"]);
-        Assert.Equal("8", stop.Diagnostics["writerFinish:framesWritten"]);
+        Assert.IsFalse(stop.Succeeded);
+        Assert.AreEqual(writerFailure, stop.Failure);
+        Assert.AreEqual(ScreenRecordingState.Failed, stop.Session?.State);
+        Assert.AreEqual("OutputUnavailable", stop.Diagnostics["writerFailureReason"]);
+        Assert.AreEqual("8", stop.Diagnostics["writerFinish:framesWritten"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StopAsync_WhenSessionIsUnknown_ReturnsSessionNotFound()
     {
         var engine = new ScreenRecordingPipelineEngine(
@@ -236,8 +237,8 @@ public sealed class ScreenRecordingPipelineEngineTests
 
         ScreenRecordingStopResult result = await engine.StopAsync(session, CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
     }
 
     private static ScreenRecordingStartRequest CreateRequest(

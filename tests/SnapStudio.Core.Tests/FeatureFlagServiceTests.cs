@@ -2,9 +2,10 @@ using SnapStudio.Core.Settings;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class FeatureFlagServiceTests
 {
-    [Fact]
+    [TestMethod]
     public void IsEnabled_ReturnsConfiguredValueAndDefaultsMissingFlagsToFalse()
     {
         var service = new InMemoryFeatureFlagService(new Dictionary<string, bool>
@@ -13,8 +14,8 @@ public sealed class FeatureFlagServiceTests
             ["disabled"] = false
         });
 
-        Assert.True(service.IsEnabled("enabled"));
-        Assert.False(service.IsEnabled("disabled"));
-        Assert.False(service.IsEnabled("missing"));
+        Assert.IsTrue(service.IsEnabled("enabled"));
+        Assert.IsFalse(service.IsEnabled("disabled"));
+        Assert.IsFalse(service.IsEnabled("missing"));
     }
 }

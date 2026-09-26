@@ -3,44 +3,45 @@ using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class CanvasViewportStateTests
 {
-    [Fact]
+    [TestMethod]
     public void Create_WithInvalidSource_ReturnsEmptyViewport()
     {
         CanvasViewportState viewport = CanvasViewportState.Create(0, 600);
 
-        Assert.False(viewport.HasSource);
-        Assert.Equal(0, viewport.DisplayWidth);
-        Assert.Equal(0, viewport.DisplayHeight);
+        Assert.IsFalse(viewport.HasSource);
+        Assert.AreEqual(0, viewport.DisplayWidth);
+        Assert.AreEqual(0, viewport.DisplayHeight);
     }
 
-    [Fact]
+    [TestMethod]
     public void FitTo_UsesLimitingViewportDimension()
     {
         CanvasViewportState viewport = CanvasViewportState
             .Create(1600, 900)
             .FitTo(800, 800);
 
-        Assert.Equal(0.5, viewport.Zoom, precision: 3);
-        Assert.Equal(800, viewport.DisplayWidth, precision: 3);
-        Assert.Equal(450, viewport.DisplayHeight, precision: 3);
+        Assert.AreEqual(0.5, viewport.Zoom, 0.0005);
+        Assert.AreEqual(800, viewport.DisplayWidth, 0.0005);
+        Assert.AreEqual(450, viewport.DisplayHeight, 0.0005);
     }
 
-    [Theory]
-    [InlineData(0.01, CanvasViewportState.MinimumZoom)]
-    [InlineData(100, CanvasViewportState.MaximumZoom)]
-    [InlineData(double.NaN, 1)]
+    [TestMethod]
+    [DataRow(0.01, CanvasViewportState.MinimumZoom)]
+    [DataRow(100, CanvasViewportState.MaximumZoom)]
+    [DataRow(double.NaN, 1)]
     public void WithZoom_ClampsInvalidZoom(double requestedZoom, double expectedZoom)
     {
         CanvasViewportState viewport = CanvasViewportState
             .Create(800, 600)
             .WithZoom(requestedZoom);
 
-        Assert.Equal(expectedZoom, viewport.Zoom);
+        Assert.AreEqual(expectedZoom, viewport.Zoom);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToSourceBounds_NormalizesReverseDragAndAppliesZoom()
     {
         CanvasViewportState viewport = CanvasViewportState
@@ -49,10 +50,10 @@ public sealed class CanvasViewportStateTests
 
         RectD sourceBounds = viewport.ToSourceBounds(new RectD(300, 220, -100, -80));
 
-        Assert.Equal(new RectD(100, 70, 50, 40), sourceBounds);
+        Assert.AreEqual(new RectD(100, 70, 50, 40), sourceBounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToSourceBounds_ClampsToSourceImage()
     {
         CanvasViewportState viewport = CanvasViewportState
@@ -61,10 +62,10 @@ public sealed class CanvasViewportStateTests
 
         RectD sourceBounds = viewport.ToSourceBounds(new RectD(-50, -20, 600, 500));
 
-        Assert.Equal(new RectD(0, 0, 800, 600), sourceBounds);
+        Assert.AreEqual(new RectD(0, 0, 800, 600), sourceBounds);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToSourcePoint_AppliesZoomAndClampsToSourceImage()
     {
         CanvasViewportState viewport = CanvasViewportState
@@ -73,10 +74,10 @@ public sealed class CanvasViewportStateTests
 
         PointD sourcePoint = viewport.ToSourcePoint(new PointD(1900, 100));
 
-        Assert.Equal(new PointD(800, 50), sourcePoint);
+        Assert.AreEqual(new PointD(800, 50), sourcePoint);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToDisplayBounds_NormalizesSourceBoundsAndAppliesZoom()
     {
         CanvasViewportState viewport = CanvasViewportState
@@ -85,6 +86,6 @@ public sealed class CanvasViewportStateTests
 
         RectD displayBounds = viewport.ToDisplayBounds(new RectD(300, 240, -100, -80));
 
-        Assert.Equal(new RectD(100, 80, 50, 40), displayBounds);
+        Assert.AreEqual(new RectD(100, 80, 50, 40), displayBounds);
     }
 }

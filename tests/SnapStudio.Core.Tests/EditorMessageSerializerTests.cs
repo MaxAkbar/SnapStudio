@@ -5,9 +5,10 @@ using SnapStudio.Ipc;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class EditorMessageSerializerTests
 {
-    [Fact]
+    [TestMethod]
     public void Deserialize_RoundTripsCaptureCompletedMessage()
     {
         var serializer = new EditorMessageSerializer();
@@ -19,14 +20,14 @@ public sealed class EditorMessageSerializerTests
         string json = serializer.Serialize(message);
         EditorMessage deserialized = serializer.Deserialize(json);
 
-        var completed = Assert.IsType<CaptureCompletedEditorMessage>(deserialized);
-        Assert.Equal(message.CaptureId, completed.CaptureId);
-        Assert.Equal(message.DocumentId, completed.DocumentId);
-        Assert.Equal(message.SourceImagePath, completed.SourceImagePath);
-        Assert.Equal(CaptureCompletedEditorMessage.TypeName, completed.MessageType);
+        var completed = Assert.IsExactInstanceOfType<CaptureCompletedEditorMessage>(deserialized);
+        Assert.AreEqual(message.CaptureId, completed.CaptureId);
+        Assert.AreEqual(message.DocumentId, completed.DocumentId);
+        Assert.AreEqual(message.SourceImagePath, completed.SourceImagePath);
+        Assert.AreEqual(CaptureCompletedEditorMessage.TypeName, completed.MessageType);
     }
 
-    [Fact]
+    [TestMethod]
     public void Deserialize_RoundTripsCaptureFailedMessage()
     {
         var serializer = new EditorMessageSerializer();
@@ -37,9 +38,9 @@ public sealed class EditorMessageSerializerTests
         string json = serializer.Serialize(message);
         EditorMessage deserialized = serializer.Deserialize(json);
 
-        var failed = Assert.IsType<CaptureFailedEditorMessage>(deserialized);
-        Assert.Equal(CaptureFailureReason.NotImplemented, failed.Reason);
-        Assert.Equal("Still capture is not implemented.", failed.Message);
-        Assert.Equal(CaptureFailedEditorMessage.TypeName, failed.MessageType);
+        var failed = Assert.IsExactInstanceOfType<CaptureFailedEditorMessage>(deserialized);
+        Assert.AreEqual(CaptureFailureReason.NotImplemented, failed.Reason);
+        Assert.AreEqual("Still capture is not implemented.", failed.Message);
+        Assert.AreEqual(CaptureFailedEditorMessage.TypeName, failed.MessageType);
     }
 }

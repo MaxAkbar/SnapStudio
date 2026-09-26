@@ -4,9 +4,10 @@ using SnapStudio.Core.ScrollingCapture;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class ScrollingCaptureModelsTests
 {
-    [Fact]
+    [TestMethod]
     public void Success_CreatesSuccessfulCaptureResult()
     {
         ImageAsset image = CreateImage("stitched.png");
@@ -17,16 +18,16 @@ public sealed class ScrollingCaptureModelsTests
             [frame],
             new Dictionary<string, string> { ["frames"] = "1" });
 
-        Assert.True(result.Succeeded);
-        Assert.True(result.HasOutput);
-        Assert.False(result.IsPartial);
-        Assert.Null(result.Failure);
-        Assert.Equal(image, result.Image);
-        Assert.Single(result.Frames);
-        Assert.Equal("1", result.Diagnostics["frames"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsTrue(result.HasOutput);
+        Assert.IsFalse(result.IsPartial);
+        Assert.IsNull(result.Failure);
+        Assert.AreEqual(image, result.Image);
+        Assert.ContainsSingle(result.Frames);
+        Assert.AreEqual("1", result.Diagnostics["frames"]);
     }
 
-    [Fact]
+    [TestMethod]
     public void Partial_CreatesRecoverableCaptureResultWithOutput()
     {
         ImageAsset image = CreateImage("partial.png");
@@ -39,14 +40,14 @@ public sealed class ScrollingCaptureModelsTests
             [CreateFrame(0), CreateFrame(1)],
             failure);
 
-        Assert.False(result.Succeeded);
-        Assert.True(result.HasOutput);
-        Assert.True(result.IsPartial);
-        Assert.Equal(failure, result.Failure);
-        Assert.Equal(2, result.Frames.Count);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsTrue(result.HasOutput);
+        Assert.IsTrue(result.IsPartial);
+        Assert.AreEqual(failure, result.Failure);
+        Assert.AreEqual(2, result.Frames.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Failed_CreatesFailureWithoutOutput()
     {
         ScrollingCaptureFailure failure = new(
@@ -55,14 +56,14 @@ public sealed class ScrollingCaptureModelsTests
 
         ScrollingCaptureResult result = ScrollingCaptureResult.Failed(failure);
 
-        Assert.False(result.Succeeded);
-        Assert.False(result.HasOutput);
-        Assert.False(result.IsPartial);
-        Assert.Empty(result.Frames);
-        Assert.Equal(failure, result.Failure);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsFalse(result.HasOutput);
+        Assert.IsFalse(result.IsPartial);
+        Assert.IsEmpty(result.Frames);
+        Assert.AreEqual(failure, result.Failure);
     }
 
-    [Fact]
+    [TestMethod]
     public void StitchPartial_CreatesRecoverableStitchResultWithOutput()
     {
         ImageAsset image = CreateImage("partial-stitch.png");
@@ -72,13 +73,13 @@ public sealed class ScrollingCaptureModelsTests
 
         ScrollingStitchResult result = ScrollingStitchResult.Partial(image, failure);
 
-        Assert.False(result.Succeeded);
-        Assert.True(result.HasOutput);
-        Assert.True(result.IsPartial);
-        Assert.Equal(failure, result.Failure);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsTrue(result.HasOutput);
+        Assert.IsTrue(result.IsPartial);
+        Assert.AreEqual(failure, result.Failure);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollInputResult_Success_CapturesPercentAndEndState()
     {
         ScrollInputResult result = ScrollInputResult.Success(
@@ -86,14 +87,14 @@ public sealed class ScrollingCaptureModelsTests
             verticalScrollPercent: 100,
             horizontalScrollPercent: null);
 
-        Assert.True(result.Succeeded);
-        Assert.True(result.ReachedEnd);
-        Assert.Equal(100, result.VerticalScrollPercent);
-        Assert.Null(result.HorizontalScrollPercent);
-        Assert.Null(result.Failure);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsTrue(result.ReachedEnd);
+        Assert.AreEqual(100, result.VerticalScrollPercent);
+        Assert.IsNull(result.HorizontalScrollPercent);
+        Assert.IsNull(result.Failure);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScrollInputResult_Failed_CapturesTypedFailureAndLastKnownPercent()
     {
         ScrollInputFailure failure = new(
@@ -104,10 +105,10 @@ public sealed class ScrollingCaptureModelsTests
             failure,
             verticalScrollPercent: 100);
 
-        Assert.False(result.Succeeded);
-        Assert.False(result.ReachedEnd);
-        Assert.Equal(100, result.VerticalScrollPercent);
-        Assert.Equal(failure, result.Failure);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsFalse(result.ReachedEnd);
+        Assert.AreEqual(100, result.VerticalScrollPercent);
+        Assert.AreEqual(failure, result.Failure);
     }
 
     private static ScrollingCaptureFrame CreateFrame(int index)

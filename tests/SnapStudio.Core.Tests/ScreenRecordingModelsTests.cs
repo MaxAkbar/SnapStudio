@@ -3,32 +3,33 @@ using SnapStudio.Core.ScreenRecording;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class ScreenRecordingModelsTests
 {
-    [Fact]
+    [TestMethod]
     public void StartSuccess_CapturesRecordingSession()
     {
         ScreenRecordingSession session = CreateSession(ScreenRecordingState.Recording);
 
         ScreenRecordingStartResult result = ScreenRecordingStartResult.Success(session);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(session, result.Session);
-        Assert.Null(result.Failure);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual(session, result.Session);
+        Assert.IsNull(result.Failure);
     }
 
-    [Fact]
+    [TestMethod]
     public void ControlSuccess_CapturesUpdatedSessionState()
     {
         ScreenRecordingSession session = CreateSession(ScreenRecordingState.Paused);
 
         ScreenRecordingControlResult result = ScreenRecordingControlResult.Success(session);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(ScreenRecordingState.Paused, result.Session?.State);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingState.Paused, result.Session?.State);
     }
 
-    [Fact]
+    [TestMethod]
     public void StopSuccess_CapturesOutputAndDiagnostics()
     {
         ScreenRecordingSession session = CreateSession(ScreenRecordingState.Stopped);
@@ -47,13 +48,13 @@ public sealed class ScreenRecordingModelsTests
             session,
             new Dictionary<string, string> { ["droppedFrames"] = "0" });
 
-        Assert.True(result.Succeeded);
-        Assert.True(result.HasOutput);
-        Assert.Equal(output, result.Output);
-        Assert.Equal("0", result.Diagnostics["droppedFrames"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsTrue(result.HasOutput);
+        Assert.AreEqual(output, result.Output);
+        Assert.AreEqual("0", result.Diagnostics["droppedFrames"]);
     }
 
-    [Fact]
+    [TestMethod]
     public void Failure_CapturesTypedFailureWithoutOutput()
     {
         ScreenRecordingFailure failure = new(
@@ -62,9 +63,9 @@ public sealed class ScreenRecordingModelsTests
 
         ScreenRecordingStopResult result = ScreenRecordingStopResult.Failed(failure);
 
-        Assert.False(result.Succeeded);
-        Assert.False(result.HasOutput);
-        Assert.Equal(failure, result.Failure);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsFalse(result.HasOutput);
+        Assert.AreEqual(failure, result.Failure);
     }
 
     private static ScreenRecordingSession CreateSession(ScreenRecordingState state)

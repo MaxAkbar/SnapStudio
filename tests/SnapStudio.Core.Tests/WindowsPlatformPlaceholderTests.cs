@@ -9,9 +9,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsPlatformPlaceholderTests
 {
-    [Fact]
+    [TestMethod]
     public async Task UnavailableCaptureTargetSelector_ReturnsNoSelection()
     {
         var selector = new UnavailableCaptureTargetSelector();
@@ -20,10 +21,10 @@ public sealed class WindowsPlatformPlaceholderTests
             new CaptureTargetRequest([CaptureTargetKind.FullScreen], AllowDelayedCapture: false),
             CancellationToken.None);
 
-        Assert.Null(selection);
+        Assert.IsNull(selection);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnavailableStillCaptureService_ReturnsTypedFailure()
     {
         var capture = new UnavailableStillCaptureService();
@@ -32,11 +33,11 @@ public sealed class WindowsPlatformPlaceholderTests
             new CaptureRequest(CaptureTargetKind.FullScreen, IncludeCursor: true, Delay: TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(outcome.Succeeded);
-        Assert.Equal(CaptureFailureReason.NotImplemented, outcome.Failure?.Reason);
+        Assert.IsFalse(outcome.Succeeded);
+        Assert.AreEqual(CaptureFailureReason.NotImplemented, outcome.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedClipboardService_ReturnsTypedFailure()
     {
         var clipboard = new UnsupportedClipboardService();
@@ -45,11 +46,11 @@ public sealed class WindowsPlatformPlaceholderTests
             DocumentId.New(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("deferred", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("deferred", result.ErrorMessage ?? string.Empty);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedClipboardService_ReturnsTypedFailureForText()
     {
         var clipboard = new UnsupportedClipboardService();
@@ -58,11 +59,11 @@ public sealed class WindowsPlatformPlaceholderTests
             "recognized text",
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("unavailable", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("unavailable", result.ErrorMessage ?? string.Empty);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedExportProvider_ReturnsTypedFailureForFormat()
     {
         var export = new UnsupportedExportProvider(ExportFormat.Png);
@@ -71,12 +72,12 @@ public sealed class WindowsPlatformPlaceholderTests
             new ExportRequest(DocumentId.New(), ExportFormat.Png, "capture.png", new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Null(result.OutputPath);
-        Assert.Contains("Png export", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNull(result.OutputPath);
+        Assert.Contains("Png export", result.ErrorMessage ?? string.Empty);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedHotkeyService_ReturnsTypedFailure()
     {
         var hotkeys = new UnsupportedHotkeyService();
@@ -85,11 +86,11 @@ public sealed class WindowsPlatformPlaceholderTests
             new HotkeyRegistration("Capture", "PrintScreen"),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("deferred", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("deferred", result.ErrorMessage ?? string.Empty);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnavailableOcrProvider_ReturnsUnavailableStatusAndTypedFailure()
     {
         var provider = new UnavailableOcrProvider("Packaged build required.");
@@ -103,14 +104,14 @@ public sealed class WindowsPlatformPlaceholderTests
                 "en-US"),
             CancellationToken.None);
 
-        Assert.False(status.IsAvailable);
-        Assert.Equal("Windows OCR", status.ProviderName);
-        Assert.Contains("Packaged", status.UnavailableReason);
-        Assert.False(result.Succeeded);
-        Assert.Equal(OcrFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.IsFalse(status.IsAvailable);
+        Assert.AreEqual("Windows OCR", status.ProviderName);
+        Assert.Contains("Packaged", status.UnavailableReason ?? string.Empty);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(OcrFailureReason.Unsupported, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScrollTargetDetector_ReturnsNoTargets()
     {
         var detector = new UnsupportedScrollTargetDetector();
@@ -119,10 +120,10 @@ public sealed class WindowsPlatformPlaceholderTests
             new ScrollTargetDetectionRequest(),
             CancellationToken.None);
 
-        Assert.Empty(targets);
+        Assert.IsEmpty(targets);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScrollingCaptureService_ReturnsTypedFailure()
     {
         var service = new UnsupportedScrollingCaptureService();
@@ -133,11 +134,11 @@ public sealed class WindowsPlatformPlaceholderTests
                 Path.GetTempPath()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScrollingCaptureFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScrollingCaptureFailureReason.Unsupported, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScrollInputController_ReturnsTypedFailure()
     {
         var controller = new UnsupportedScrollInputController();
@@ -148,11 +149,11 @@ public sealed class WindowsPlatformPlaceholderTests
                 ScrollInputDirection.Down),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScrollInputFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScrollInputFailureReason.Unsupported, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScrollingFrameCaptureService_ReturnsTypedFailure()
     {
         var service = new UnsupportedScrollingFrameCaptureService();
@@ -164,11 +165,11 @@ public sealed class WindowsPlatformPlaceholderTests
                 Path.GetTempPath()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScrollingCaptureFailureReason.FrameCaptureFailed, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScrollingCaptureFailureReason.FrameCaptureFailed, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScrollingStitcher_ReturnsTypedFailure()
     {
         var stitcher = new UnsupportedScrollingStitcher();
@@ -180,11 +181,11 @@ public sealed class WindowsPlatformPlaceholderTests
                 new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScrollingCaptureFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScrollingCaptureFailureReason.Unsupported, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScreenRecordingService_ReturnsTypedFailure()
     {
         var service = new UnsupportedScreenRecordingService();
@@ -195,11 +196,11 @@ public sealed class WindowsPlatformPlaceholderTests
                 Path.Combine(Path.GetTempPath(), "recording.mp4")),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScreenRecordingEngine_ReturnsTypedFailure()
     {
         var engine = new UnsupportedScreenRecordingEngine();
@@ -210,11 +211,11 @@ public sealed class WindowsPlatformPlaceholderTests
                 Path.Combine(Path.GetTempPath(), "recording.mp4")),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScreenRecordingFrameSource_ReturnsTypedFailure()
     {
         var frameSource = new UnsupportedScreenRecordingFrameSource();
@@ -227,11 +228,11 @@ public sealed class WindowsPlatformPlaceholderTests
                     Path.Combine(Path.GetTempPath(), "recording.mp4"))),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.Unsupported, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScreenRecordingAudioSource_ReturnsAudioUnavailable()
     {
         var audioSource = new UnsupportedScreenRecordingAudioSource();
@@ -245,11 +246,11 @@ public sealed class WindowsPlatformPlaceholderTests
                     IncludeMicrophoneAudio: true)),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnsupportedScreenRecordingOutputWriter_ReturnsTypedFailure()
     {
         var writer = new UnsupportedScreenRecordingOutputWriter();
@@ -269,11 +270,11 @@ public sealed class WindowsPlatformPlaceholderTests
                     new Dictionary<string, string>())),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.EncoderUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.EncoderUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsImageImportService_WhenOwnerWindowIsMissing_ReturnsUnsupported()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -281,11 +282,11 @@ public sealed class WindowsPlatformPlaceholderTests
 
         CaptureOutcome outcome = await import.ImportAsync(CancellationToken.None);
 
-        Assert.False(outcome.Succeeded);
-        Assert.Equal(CaptureFailureReason.Unsupported, outcome.Failure?.Reason);
+        Assert.IsFalse(outcome.Succeeded);
+        Assert.AreEqual(CaptureFailureReason.Unsupported, outcome.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsStorageLocationPicker_WhenOwnerWindowIsMissing_ReturnsNull()
     {
         var picker = new WindowsStorageLocationPicker(0);
@@ -294,10 +295,10 @@ public sealed class WindowsPlatformPlaceholderTests
             Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
             CancellationToken.None);
 
-        Assert.Null(selectedPath);
+        Assert.IsNull(selectedPath);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsFileTrashService_WhenFileIsMissing_ReturnsFailed()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -307,8 +308,8 @@ public sealed class WindowsPlatformPlaceholderTests
             Path.Combine(workspace.Path, "missing.png"),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.NotNull(result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.ErrorMessage);
     }
 
     private static ScrollTargetCandidate CreateScrollTarget()

@@ -2,9 +2,10 @@ using System.Xml.Linq;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class ProjectReferenceBoundaryTests
 {
-    [Fact]
+    [TestMethod]
     public void CaptureHostProject_DoesNotReferenceStorageOrApp()
     {
         XDocument project = XDocument.Load(GetRepositoryPath(
@@ -17,10 +18,10 @@ public sealed class ProjectReferenceBoundaryTests
             .Select(element => element.Attribute("Include")?.Value ?? string.Empty)
             .ToArray();
 
-        Assert.Contains(references, reference => ContainsProjectName(reference, "SnapStudio.Core"));
-        Assert.Contains(references, reference => ContainsProjectName(reference, "SnapStudio.Platform.Windows"));
-        Assert.DoesNotContain(references, reference => ContainsProjectName(reference, "SnapStudio.App"));
-        Assert.DoesNotContain(references, reference => ContainsProjectName(reference, "SnapStudio.Storage"));
+        Assert.Contains(reference => ContainsProjectName(reference, "SnapStudio.Core"), references);
+        Assert.Contains(reference => ContainsProjectName(reference, "SnapStudio.Platform.Windows"), references);
+        Assert.DoesNotContain(reference => ContainsProjectName(reference, "SnapStudio.App"), references);
+        Assert.DoesNotContain(reference => ContainsProjectName(reference, "SnapStudio.Storage"), references);
     }
 
     private static string GetRepositoryPath(params string[] pathParts)

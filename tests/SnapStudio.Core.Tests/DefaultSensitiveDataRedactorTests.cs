@@ -2,9 +2,10 @@ using SnapStudio.Core.Diagnostics;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class DefaultSensitiveDataRedactorTests
 {
-    [Fact]
+    [TestMethod]
     public void Redact_ReplacesLocalPathsEmailAddressesAndUrls()
     {
         var redactor = new DefaultSensitiveDataRedactor();
@@ -20,7 +21,7 @@ public sealed class DefaultSensitiveDataRedactorTests
         Assert.DoesNotContain("https://example.com/private/capture", redacted);
     }
 
-    [Fact]
+    [TestMethod]
     public void RedactProperties_RedactsValuesButKeepsKeys()
     {
         var redactor = new DefaultSensitiveDataRedactor();
@@ -33,8 +34,8 @@ public sealed class DefaultSensitiveDataRedactorTests
                 ["supportUrl"] = "https://example.com/users/owner@example.com/ticket"
             });
 
-        Assert.Equal("<path>", redacted["storageRoot"]);
-        Assert.Equal("<email>", redacted["owner"]);
-        Assert.Equal("<url>", redacted["supportUrl"]);
+        Assert.AreEqual("<path>", redacted["storageRoot"]);
+        Assert.AreEqual("<email>", redacted["owner"]);
+        Assert.AreEqual("<url>", redacted["supportUrl"]);
     }
 }

@@ -3,9 +3,10 @@ using SnapStudio.Ipc;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class NamedPipeEditorMessageTransportTests
 {
-    [Fact]
+    [TestMethod]
     public async Task SendAsync_ReceiveOneAsync_RoundTripsMessage()
     {
         string pipeName = $"SnapStudio.Tests.{Guid.NewGuid():N}";
@@ -21,8 +22,8 @@ public sealed class NamedPipeEditorMessageTransportTests
 
         EditorMessage received = await receiveTask.WaitAsync(timeout.Token);
 
-        Assert.True(sendResult.Succeeded, sendResult.ErrorMessage);
-        var ping = Assert.IsType<PingEditorMessage>(received);
-        Assert.Equal("transport-test", ping.Sender);
+        Assert.IsTrue(sendResult.Succeeded, sendResult.ErrorMessage);
+        var ping = Assert.IsExactInstanceOfType<PingEditorMessage>(received);
+        Assert.AreEqual("transport-test", ping.Sender);
     }
 }

@@ -8,9 +8,10 @@ using SnapStudio.Rendering;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class SystemDrawingDocumentRendererTests
 {
-    [Fact]
+    [TestMethod]
     public async Task RenderAsync_CompositesRectangleAnnotation()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -41,16 +42,16 @@ public sealed class SystemDrawingDocumentRendererTests
             new RenderRequest(document.Id, 1, null),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Image);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Image);
         using Bitmap rendered = LoadBitmap(result.Image!.Pixels);
         Color borderPixel = rendered.GetPixel(4, 4);
-        Assert.True(borderPixel.R > 120);
-        Assert.True(borderPixel.G < 90);
-        Assert.True(borderPixel.B < 90);
+        Assert.IsTrue(borderPixel.R > 120);
+        Assert.IsTrue(borderPixel.G < 90);
+        Assert.IsTrue(borderPixel.B < 90);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RenderAsync_BlursRegionAnnotation()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -81,14 +82,14 @@ public sealed class SystemDrawingDocumentRendererTests
             new RenderRequest(document.Id, 1, null),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
+        Assert.IsTrue(result.Succeeded);
         using Bitmap rendered = LoadBitmap(result.Image!.Pixels);
         Color blurredCenter = rendered.GetPixel(16, 16);
-        Assert.InRange(blurredCenter.R, 20, 235);
-        Assert.InRange(blurredCenter.B, 20, 235);
+        Assert.IsInRange((byte)20, (byte)235, blurredCenter.R);
+        Assert.IsInRange((byte)20, (byte)235, blurredCenter.B);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RenderAsync_CompositesRoundedRectangleAnnotation()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -120,19 +121,19 @@ public sealed class SystemDrawingDocumentRendererTests
             new RenderRequest(document.Id, 1, null),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
+        Assert.IsTrue(result.Succeeded);
         using Bitmap rendered = LoadBitmap(result.Image!.Pixels);
         Color roundedCornerPixel = rendered.GetPixel(4, 4);
         Color filledBodyPixel = rendered.GetPixel(12, 12);
-        Assert.True(roundedCornerPixel.R > 240);
-        Assert.True(roundedCornerPixel.G > 240);
-        Assert.True(roundedCornerPixel.B > 240);
-        Assert.True(filledBodyPixel.R > 120);
-        Assert.True(filledBodyPixel.G < 90);
-        Assert.True(filledBodyPixel.B < 90);
+        Assert.IsTrue(roundedCornerPixel.R > 240);
+        Assert.IsTrue(roundedCornerPixel.G > 240);
+        Assert.IsTrue(roundedCornerPixel.B > 240);
+        Assert.IsTrue(filledBodyPixel.R > 120);
+        Assert.IsTrue(filledBodyPixel.G < 90);
+        Assert.IsTrue(filledBodyPixel.B < 90);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RenderAsync_ScaledRenderCompositesMultipleAnnotations()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -158,19 +159,19 @@ public sealed class SystemDrawingDocumentRendererTests
             new RenderRequest(document.Id, 0.5, null),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
+        Assert.IsTrue(result.Succeeded);
         using Bitmap rendered = LoadBitmap(result.Image!.Pixels);
-        Assert.Equal(100, rendered.Width);
-        Assert.Equal(50, rendered.Height);
+        Assert.AreEqual(100, rendered.Width);
+        Assert.AreEqual(50, rendered.Height);
         Color firstAnnotationPixel = rendered.GetPixel(15, 15);
         Color secondAnnotationPixel = rendered.GetPixel(55, 15);
-        Assert.True(firstAnnotationPixel.R > 180);
-        Assert.True(firstAnnotationPixel.B < 80);
-        Assert.True(secondAnnotationPixel.B > 180);
-        Assert.True(secondAnnotationPixel.R < 80);
+        Assert.IsTrue(firstAnnotationPixel.R > 180);
+        Assert.IsTrue(firstAnnotationPixel.B < 80);
+        Assert.IsTrue(secondAnnotationPixel.B > 180);
+        Assert.IsTrue(secondAnnotationPixel.R < 80);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RasterEditor_CropsAndResizesSourceImage()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -186,17 +187,17 @@ public sealed class SystemDrawingDocumentRendererTests
             new RasterResizeRequest(sourceImage, 20, 15, workspace.Path),
             CancellationToken.None);
 
-        Assert.True(cropResult.Succeeded);
-        Assert.NotNull(cropResult.Image);
-        Assert.Equal(10, cropResult.Image!.Width);
-        Assert.Equal(12, cropResult.Image.Height);
-        Assert.True(File.Exists(cropResult.Image.Path));
+        Assert.IsTrue(cropResult.Succeeded);
+        Assert.IsNotNull(cropResult.Image);
+        Assert.AreEqual(10, cropResult.Image!.Width);
+        Assert.AreEqual(12, cropResult.Image.Height);
+        Assert.IsTrue(File.Exists(cropResult.Image.Path));
 
-        Assert.True(resizeResult.Succeeded);
-        Assert.NotNull(resizeResult.Image);
-        Assert.Equal(20, resizeResult.Image!.Width);
-        Assert.Equal(15, resizeResult.Image.Height);
-        Assert.True(File.Exists(resizeResult.Image.Path));
+        Assert.IsTrue(resizeResult.Succeeded);
+        Assert.IsNotNull(resizeResult.Image);
+        Assert.AreEqual(20, resizeResult.Image!.Width);
+        Assert.AreEqual(15, resizeResult.Image.Height);
+        Assert.IsTrue(File.Exists(resizeResult.Image.Path));
     }
 
     private static void CreateSolidImage(

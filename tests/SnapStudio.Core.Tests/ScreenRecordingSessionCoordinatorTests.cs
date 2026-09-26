@@ -4,9 +4,10 @@ using SnapStudio.Core.ScreenRecording;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class ScreenRecordingSessionCoordinatorTests
 {
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenRequestIsInvalid_ReturnsInvalidRequestWithoutStartingEngine()
     {
         var engine = new FakeScreenRecordingEngine();
@@ -16,12 +17,12 @@ public sealed class ScreenRecordingSessionCoordinatorTests
             new ScreenRecordingStartRequest(CaptureTargetKind.Display, ""),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
-        Assert.Equal(0, engine.StartCallCount);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
+        Assert.AreEqual(0, engine.StartCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenRegionBoundsAreMissing_ReturnsInvalidRequest()
     {
         var engine = new FakeScreenRecordingEngine();
@@ -31,12 +32,12 @@ public sealed class ScreenRecordingSessionCoordinatorTests
             new ScreenRecordingStartRequest(CaptureTargetKind.Region, "recording.mp4"),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
-        Assert.Equal(0, engine.StartCallCount);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
+        Assert.AreEqual(0, engine.StartCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenEngineStartsSession_StoresStatus()
     {
         var engine = new FakeScreenRecordingEngine();
@@ -50,13 +51,13 @@ public sealed class ScreenRecordingSessionCoordinatorTests
             start.Session!.Id,
             CancellationToken.None);
 
-        Assert.True(start.Succeeded);
-        Assert.True(status.Succeeded);
-        Assert.Equal(start.Session, status.Session);
-        Assert.Equal(1, engine.StartCallCount);
+        Assert.IsTrue(start.Succeeded);
+        Assert.IsTrue(status.Succeeded);
+        Assert.AreEqual(start.Session, status.Session);
+        Assert.AreEqual(1, engine.StartCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenSessionAlreadyActive_ReturnsAlreadyRecording()
     {
         var engine = new FakeScreenRecordingEngine();
@@ -69,13 +70,13 @@ public sealed class ScreenRecordingSessionCoordinatorTests
             CreateRequest("second.mp4"),
             CancellationToken.None);
 
-        Assert.True(first.Succeeded);
-        Assert.False(second.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.AlreadyRecording, second.Failure?.Reason);
-        Assert.Equal(1, engine.StartCallCount);
+        Assert.IsTrue(first.Succeeded);
+        Assert.IsFalse(second.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.AlreadyRecording, second.Failure?.Reason);
+        Assert.AreEqual(1, engine.StartCallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PauseAndResumeAsync_UpdateActiveSessionState()
     {
         var engine = new FakeScreenRecordingEngine();
@@ -92,13 +93,13 @@ public sealed class ScreenRecordingSessionCoordinatorTests
             start.Session.Id,
             CancellationToken.None);
 
-        Assert.True(pause.Succeeded);
-        Assert.Equal(ScreenRecordingState.Paused, pause.Session?.State);
-        Assert.True(resume.Succeeded);
-        Assert.Equal(ScreenRecordingState.Recording, resume.Session?.State);
+        Assert.IsTrue(pause.Succeeded);
+        Assert.AreEqual(ScreenRecordingState.Paused, pause.Session?.State);
+        Assert.IsTrue(resume.Succeeded);
+        Assert.AreEqual(ScreenRecordingState.Recording, resume.Session?.State);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PauseAsync_WhenSessionIsUnknown_ReturnsSessionNotFound()
     {
         var coordinator = new ScreenRecordingSessionCoordinator(new FakeScreenRecordingEngine());
@@ -107,11 +108,11 @@ public sealed class ScreenRecordingSessionCoordinatorTests
             ScreenRecordingSessionId.New(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StopAsync_WhenSessionIsActive_StopsEngineAndClearsStatus()
     {
         var engine = new FakeScreenRecordingEngine();
@@ -127,14 +128,14 @@ public sealed class ScreenRecordingSessionCoordinatorTests
             start.Session.Id,
             CancellationToken.None);
 
-        Assert.True(stop.Succeeded);
-        Assert.Equal(ScreenRecordingState.Stopped, stop.Session?.State);
-        Assert.Equal(ScreenRecordingState.Stopping, engine.StopSession?.State);
-        Assert.False(status.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, status.Failure?.Reason);
+        Assert.IsTrue(stop.Succeeded);
+        Assert.AreEqual(ScreenRecordingState.Stopped, stop.Session?.State);
+        Assert.AreEqual(ScreenRecordingState.Stopping, engine.StopSession?.State);
+        Assert.IsFalse(status.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, status.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StopAsync_WhenSessionIsUnknown_ReturnsSessionNotFoundWithoutStoppingEngine()
     {
         var engine = new FakeScreenRecordingEngine();
@@ -144,9 +145,9 @@ public sealed class ScreenRecordingSessionCoordinatorTests
             ScreenRecordingSessionId.New(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
-        Assert.Equal(0, engine.StopCallCount);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.AreEqual(0, engine.StopCallCount);
     }
 
     private static ScreenRecordingStartRequest CreateRequest(string outputPath = "recording.mp4")

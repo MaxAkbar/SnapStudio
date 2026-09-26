@@ -2,28 +2,29 @@ using SnapStudio.Core.Capture;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class StillCaptureCapabilityTests
 {
-    [Fact]
+    [TestMethod]
     public void Supported_CreatesSupportedCapability()
     {
         StillCaptureCapability capability = StillCaptureCapability.Supported(
             [CaptureTargetKind.FullScreen, CaptureTargetKind.Window]);
 
-        Assert.True(capability.IsSupported);
-        Assert.Null(capability.UnavailableReason);
-        Assert.Equal(
+        Assert.IsTrue(capability.IsSupported);
+        Assert.IsNull(capability.UnavailableReason);
+        Assert.AreSequenceEqual(
             [CaptureTargetKind.FullScreen, CaptureTargetKind.Window],
             capability.SupportedTargets);
     }
 
-    [Fact]
+    [TestMethod]
     public void Unsupported_CreatesUnsupportedCapability()
     {
         StillCaptureCapability capability = StillCaptureCapability.Unsupported("WGC unavailable.");
 
-        Assert.False(capability.IsSupported);
-        Assert.Empty(capability.SupportedTargets);
-        Assert.Equal("WGC unavailable.", capability.UnavailableReason);
+        Assert.IsFalse(capability.IsSupported);
+        Assert.IsEmpty(capability.SupportedTargets);
+        Assert.AreEqual("WGC unavailable.", capability.UnavailableReason);
     }
 }

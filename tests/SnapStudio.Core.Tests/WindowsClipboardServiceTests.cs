@@ -5,9 +5,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsClipboardServiceTests
 {
-    [Fact]
+    [TestMethod]
     public async Task CopyDocumentAsync_WhenDocumentIsMissing_ReturnsFailure()
     {
         var clipboard = new WindowsClipboardService(
@@ -17,11 +18,11 @@ public sealed class WindowsClipboardServiceTests
             DocumentId.New(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("could not be found", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("could not be found", result.ErrorMessage ?? string.Empty);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CopyDocumentAsync_WhenRenderFails_ReturnsFailure()
     {
         var clipboard = new WindowsClipboardService(
@@ -31,8 +32,8 @@ public sealed class WindowsClipboardServiceTests
             DocumentId.New(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("source image", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("source image", result.ErrorMessage ?? string.Empty);
     }
 
     private sealed class FakeDocumentRenderer(RenderResult result) : IDocumentRenderer

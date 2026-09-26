@@ -5,9 +5,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsWasapiScreenRecordingAudioSourceTests
 {
-    [Fact]
+    [TestMethod]
     public async Task OpenAsync_WhenNoAudioIsRequested_ReturnsInvalidRequest()
     {
         var source = new WindowsWasapiScreenRecordingAudioSource(
@@ -23,11 +24,11 @@ public sealed class WindowsWasapiScreenRecordingAudioSourceTests
                     "recording.mp4")),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task OpenAsync_WhenMicrophoneAndSystemAudioAreRequested_ReturnsAudioUnavailable()
     {
         var source = new WindowsWasapiScreenRecordingAudioSource(
@@ -45,11 +46,11 @@ public sealed class WindowsWasapiScreenRecordingAudioSourceTests
                     IncludeSystemAudio: true)),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task OpenAsync_WhenMicrophoneIsRequested_ReturnsAudioSessionMetadata()
     {
         var capture = new FakeCapture();
@@ -68,18 +69,18 @@ public sealed class WindowsWasapiScreenRecordingAudioSourceTests
                     IncludeMicrophoneAudio: true)),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.Session);
-        Assert.Equal(sessionId, result.Session.SessionId);
-        Assert.Equal(48000, result.Session.SampleRate);
-        Assert.Equal(2, result.Session.ChannelCount);
-        Assert.Equal(16, result.Session.BitsPerSample);
-        Assert.Equal("Pcm16", result.Session.Encoding);
-        Assert.Equal("WindowsWasapi", result.Session.Metadata["adapter"]);
-        Assert.Equal("Microphone", result.Session.Metadata["captureKind"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Session);
+        Assert.AreEqual(sessionId, result.Session.SessionId);
+        Assert.AreEqual(48000, result.Session.SampleRate);
+        Assert.AreEqual(2, result.Session.ChannelCount);
+        Assert.AreEqual(16, result.Session.BitsPerSample);
+        Assert.AreEqual("Pcm16", result.Session.Encoding);
+        Assert.AreEqual("WindowsWasapi", result.Session.Metadata["adapter"]);
+        Assert.AreEqual("Microphone", result.Session.Metadata["captureKind"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task OpenAsync_WhenFactoryFails_ReturnsAudioUnavailable()
     {
         var source = new WindowsWasapiScreenRecordingAudioSource(
@@ -96,11 +97,11 @@ public sealed class WindowsWasapiScreenRecordingAudioSourceTests
                     IncludeSystemAudio: true)),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenAudioDataArrives_DeliversCopiedPcmSample()
     {
         var capture = new FakeCapture();
@@ -127,17 +128,17 @@ public sealed class WindowsWasapiScreenRecordingAudioSourceTests
         buffer[0] = 42;
         CapturedAudioSample sample = await sink.WaitForSampleAsync();
 
-        Assert.True(start.Succeeded);
-        Assert.Equal(1, capture.StartRecordingCallCount);
-        Assert.Equal(sessionId, sample.SessionId);
-        Assert.Equal(1, sample.SequenceNumber);
-        Assert.Equal(TimeSpan.Zero, sample.Timestamp);
-        Assert.Equal(TimeSpan.FromMilliseconds(5), sample.Duration);
-        Assert.Equal(0, sample.AudioBytes[0]);
-        Assert.Equal("SystemAudio", sample.Metadata["captureKind"]);
+        Assert.IsTrue(start.Succeeded);
+        Assert.AreEqual(1, capture.StartRecordingCallCount);
+        Assert.AreEqual(sessionId, sample.SessionId);
+        Assert.AreEqual(1, sample.SequenceNumber);
+        Assert.AreEqual(TimeSpan.Zero, sample.Timestamp);
+        Assert.AreEqual(TimeSpan.FromMilliseconds(5), sample.Duration);
+        Assert.AreEqual(0, sample.AudioBytes[0]);
+        Assert.AreEqual("SystemAudio", sample.Metadata["captureKind"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StopAsync_WhenStarted_ReturnsDiagnosticsAndDisposesCapture()
     {
         var capture = new FakeCapture();
@@ -165,16 +166,16 @@ public sealed class WindowsWasapiScreenRecordingAudioSourceTests
             sessionId,
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(1, capture.StopRecordingCallCount);
-        Assert.True(capture.Disposed);
-        Assert.Equal("1", result.Diagnostics["samplesReceived"]);
-        Assert.Equal("1", result.Diagnostics["samplesAccepted"]);
-        Assert.Equal("960", result.Diagnostics["bytesReceived"]);
-        Assert.Equal("Microphone", result.Diagnostics["captureKind"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual(1, capture.StopRecordingCallCount);
+        Assert.IsTrue(capture.Disposed);
+        Assert.AreEqual("1", result.Diagnostics["samplesReceived"]);
+        Assert.AreEqual("1", result.Diagnostics["samplesAccepted"]);
+        Assert.AreEqual("960", result.Diagnostics["bytesReceived"]);
+        Assert.AreEqual("Microphone", result.Diagnostics["captureKind"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenSessionIsUnknown_ReturnsSessionNotFound()
     {
         var source = new WindowsWasapiScreenRecordingAudioSource(
@@ -188,11 +189,11 @@ public sealed class WindowsWasapiScreenRecordingAudioSourceTests
                 new CapturingAudioSink()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StopAsync_WhenSessionIsUnknown_ReturnsSessionNotFound()
     {
         var source = new WindowsWasapiScreenRecordingAudioSource(
@@ -204,8 +205,8 @@ public sealed class WindowsWasapiScreenRecordingAudioSourceTests
             ScreenRecordingSessionId.New(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
     }
 
     private static WindowsWasapiScreenRecordingAudioSourceOptions CreateOptions()
@@ -312,7 +313,7 @@ public sealed class WindowsWasapiScreenRecordingAudioSourceTests
                 .WhenAny(_sample.Task, Task.Delay(TimeSpan.FromSeconds(2)))
                 .ConfigureAwait(false);
 
-            Assert.Same(_sample.Task, completed);
+            Assert.AreSame(_sample.Task, completed);
             return await _sample.Task.ConfigureAwait(false);
         }
     }

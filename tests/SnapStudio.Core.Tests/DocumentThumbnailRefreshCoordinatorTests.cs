@@ -3,9 +3,10 @@ using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class DocumentThumbnailRefreshCoordinatorTests
 {
-    [Fact]
+    [TestMethod]
     public async Task RefreshAsync_SupersedesBatchesWithoutCancellingActiveRender()
     {
         var coordinator = new DocumentThumbnailRefreshCoordinator();
@@ -53,22 +54,22 @@ public sealed class DocumentThumbnailRefreshCoordinatorTests
         Task latestRefresh = coordinator.RefreshAsync(
             [latest], ResolveAsync, Publish, lifetime.Token);
 
-        Assert.Equal(lifetime.Token, renderToken);
-        Assert.True(renderToken.CanBeCanceled);
-        Assert.False(renderToken.IsCancellationRequested);
-        Assert.Equal([first.Id], rendered);
+        Assert.AreEqual(lifetime.Token, renderToken);
+        Assert.IsTrue(renderToken.CanBeCanceled);
+        Assert.IsFalse(renderToken.IsCancellationRequested);
+        Assert.AreSequenceEqual([first.Id], rendered);
 
         finishRender.SetResult();
         await Task.WhenAll(firstRefresh, skippedRefresh, latestRefresh)
             .WaitAsync(TimeSpan.FromSeconds(5));
 
-        Assert.Equal([first.Id, latest.Id], rendered);
-        Assert.Equal([latest.Id], published);
-        Assert.Equal(1, maximumActiveRenders);
-        Assert.True(firstRefresh.IsCompletedSuccessfully);
+        Assert.AreSequenceEqual([first.Id, latest.Id], rendered);
+        Assert.AreSequenceEqual([latest.Id], published);
+        Assert.AreEqual(1, maximumActiveRenders);
+        Assert.IsTrue(firstRefresh.IsCompletedSuccessfully);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RefreshAsync_EmptyLatestBatchSuppressesStalePublication()
     {
         var coordinator = new DocumentThumbnailRefreshCoordinator();
@@ -91,10 +92,10 @@ public sealed class DocumentThumbnailRefreshCoordinatorTests
         finishRender.SetResult();
         await Task.WhenAll(first, empty).WaitAsync(TimeSpan.FromSeconds(5));
 
-        Assert.Empty(published);
+        Assert.IsEmpty(published);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RefreshAsync_LifetimeCancellationReachesRenderAndCancelsQueuedWork()
     {
         var coordinator = new DocumentThumbnailRefreshCoordinator();
@@ -118,17 +119,17 @@ public sealed class DocumentThumbnailRefreshCoordinatorTests
             [CreateSummary("queued")], ResolveAsync, (_, _) => publishCount++, lifetime.Token);
         lifetime.Cancel();
 
-        OperationCanceledException firstCancellation = await Assert.ThrowsAnyAsync<OperationCanceledException>(
+        OperationCanceledException firstCancellation = await Assert.ThrowsAsync<OperationCanceledException>(
             () => first.WaitAsync(TimeSpan.FromSeconds(5)));
-        OperationCanceledException queuedCancellation = await Assert.ThrowsAnyAsync<OperationCanceledException>(
+        OperationCanceledException queuedCancellation = await Assert.ThrowsAsync<OperationCanceledException>(
             () => queued.WaitAsync(TimeSpan.FromSeconds(5)));
-        Assert.Equal(lifetime.Token, firstCancellation.CancellationToken);
-        Assert.Equal(lifetime.Token, queuedCancellation.CancellationToken);
-        Assert.Equal(1, renderCount);
-        Assert.Equal(0, publishCount);
+        Assert.AreEqual(lifetime.Token, firstCancellation.CancellationToken);
+        Assert.AreEqual(lifetime.Token, queuedCancellation.CancellationToken);
+        Assert.AreEqual(1, renderCount);
+        Assert.AreEqual(0, publishCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RefreshAsync_CancellationAfterResolverReturnsDoesNotPublish()
     {
         var coordinator = new DocumentThumbnailRefreshCoordinator();
@@ -141,13 +142,13 @@ public sealed class DocumentThumbnailRefreshCoordinatorTests
             return Task.FromResult<string?>("stale.png");
         }
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => coordinator.RefreshAsync(
+        await Assert.ThrowsAsync<OperationCanceledException>(() => coordinator.RefreshAsync(
             [CreateSummary("active")], ResolveAsync, (_, _) => publishCount++, lifetime.Token));
 
-        Assert.Equal(0, publishCount);
+        Assert.AreEqual(0, publishCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RefreshAsync_SupersededRenderFailureStillPropagatesAndReleasesGate()
     {
         var coordinator = new DocumentThumbnailRefreshCoordinator();
@@ -176,27 +177,27 @@ public sealed class DocumentThumbnailRefreshCoordinatorTests
             [CreateSummary("latest")], ResolveAsync, (_, path) => published.Add(path), CancellationToken.None);
         finishRender.SetResult();
 
-        Assert.Same(failure, await Assert.ThrowsAsync<IOException>(
+        Assert.AreSame(failure, await Assert.ThrowsExactlyAsync<IOException>(
             () => first.WaitAsync(TimeSpan.FromSeconds(5))));
         await latest.WaitAsync(TimeSpan.FromSeconds(5));
-        Assert.Equal(["latest.png"], published);
+        Assert.AreSequenceEqual(["latest.png"], published);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RefreshAsync_UnrelatedCancellationIsNotSwallowed()
     {
         var coordinator = new DocumentThumbnailRefreshCoordinator();
         using var unrelated = new CancellationTokenSource();
         unrelated.Cancel();
 
-        OperationCanceledException exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(
+        OperationCanceledException exception = await Assert.ThrowsAsync<OperationCanceledException>(
             () => coordinator.RefreshAsync(
                 [CreateSummary("active")],
                 (_, _) => Task.FromCanceled<string?>(unrelated.Token),
                 (_, _) => Assert.Fail("A cancelled render must not publish."),
                 CancellationToken.None));
 
-        Assert.Equal(unrelated.Token, exception.CancellationToken);
+        Assert.AreEqual(unrelated.Token, exception.CancellationToken);
     }
 
     private static TaskCompletionSource NewCompletion() => new(TaskCreationOptions.RunContinuationsAsynchronously);

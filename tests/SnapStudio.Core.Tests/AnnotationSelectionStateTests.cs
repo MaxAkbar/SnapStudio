@@ -3,9 +3,10 @@ using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class AnnotationSelectionStateTests
 {
-    [Fact]
+    [TestMethod]
     public void Select_WhenAnnotationExists_TracksSelection()
     {
         CaptureDocument document = CreateDocumentWithAnnotations(2);
@@ -13,11 +14,11 @@ public sealed class AnnotationSelectionStateTests
 
         bool selected = selection.Select(document, document.Annotations[1].Id);
 
-        Assert.True(selected);
-        Assert.Equal(document.Annotations[1].Id, selection.SelectedAnnotationId);
+        Assert.IsTrue(selected);
+        Assert.AreEqual(document.Annotations[1].Id, selection.SelectedAnnotationId);
     }
 
-    [Fact]
+    [TestMethod]
     public void Select_WhenAnnotationIsMissing_ClearsSelection()
     {
         CaptureDocument document = CreateDocumentWithAnnotations(1);
@@ -26,11 +27,11 @@ public sealed class AnnotationSelectionStateTests
 
         bool selected = selection.Select(document, Guid.NewGuid());
 
-        Assert.False(selected);
-        Assert.False(selection.HasSelection);
+        Assert.IsFalse(selected);
+        Assert.IsFalse(selection.HasSelection);
     }
 
-    [Fact]
+    [TestMethod]
     public void SelectNext_WrapsThroughAnnotations()
     {
         CaptureDocument document = CreateDocumentWithAnnotations(2);
@@ -40,10 +41,10 @@ public sealed class AnnotationSelectionStateTests
         selection.SelectNext(document);
         selection.SelectNext(document);
 
-        Assert.Equal(document.Annotations[0].Id, selection.SelectedAnnotationId);
+        Assert.AreEqual(document.Annotations[0].Id, selection.SelectedAnnotationId);
     }
 
-    [Fact]
+    [TestMethod]
     public void RetainExisting_ClearsRemovedAnnotation()
     {
         CaptureDocument document = CreateDocumentWithAnnotations(1);
@@ -53,7 +54,7 @@ public sealed class AnnotationSelectionStateTests
 
         selection.RetainExisting(document);
 
-        Assert.False(selection.HasSelection);
+        Assert.IsFalse(selection.HasSelection);
     }
 
     private static CaptureDocument CreateDocumentWithAnnotations(int count)

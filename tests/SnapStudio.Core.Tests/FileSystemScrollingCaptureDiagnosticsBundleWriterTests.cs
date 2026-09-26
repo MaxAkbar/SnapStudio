@@ -5,9 +5,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class FileSystemScrollingCaptureDiagnosticsBundleWriterTests
 {
-    [Fact]
+    [TestMethod]
     public async Task WriteAsync_WritesRedactedBundleJson()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -48,9 +49,9 @@ public sealed class FileSystemScrollingCaptureDiagnosticsBundleWriterTests
             new ScrollingCaptureDiagnosticsBundleRequest(captureRequest, captureResult),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.BundlePath);
-        Assert.True(File.Exists(result.BundlePath));
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.BundlePath);
+        Assert.IsTrue(File.Exists(result.BundlePath));
 
         string contents = await File.ReadAllTextAsync(result.BundlePath);
         Assert.Contains("\"schemaVersion\": 1", contents);
@@ -64,7 +65,7 @@ public sealed class FileSystemScrollingCaptureDiagnosticsBundleWriterTests
         Assert.DoesNotContain("https://example.com/private", contents);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WriteAsync_WhenOutputDirectoryIsBlank_ReturnsFailure()
     {
         var writer = new FileSystemScrollingCaptureDiagnosticsBundleWriter();
@@ -77,8 +78,8 @@ public sealed class FileSystemScrollingCaptureDiagnosticsBundleWriterTests
                     "Invalid request."))),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("output directory", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("output directory", result.ErrorMessage ?? string.Empty);
     }
 
     private static ScrollTargetCandidate CreateTarget()

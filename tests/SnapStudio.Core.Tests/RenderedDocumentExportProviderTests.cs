@@ -5,9 +5,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class RenderedDocumentExportProviderTests
 {
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WhenFormatIsPng_WritesRenderedPng()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -21,11 +22,11 @@ public sealed class RenderedDocumentExportProviderTests
             new ExportRequest(DocumentId.New(), ExportFormat.Png, outputPath, new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(renderedBytes, await File.ReadAllBytesAsync(outputPath));
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreSequenceEqual(renderedBytes, await File.ReadAllBytesAsync(outputPath));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WhenRendererFails_ReturnsFailure()
     {
         var provider = new RenderedDocumentExportProvider(
@@ -36,8 +37,8 @@ public sealed class RenderedDocumentExportProviderTests
             new ExportRequest(DocumentId.New(), ExportFormat.Png, "export.png", new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal("render failed", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual("render failed", result.ErrorMessage);
     }
 
     private static byte[] CreateTinyPngBytes()

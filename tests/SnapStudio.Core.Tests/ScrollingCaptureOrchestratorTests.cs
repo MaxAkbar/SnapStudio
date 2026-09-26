@@ -4,9 +4,10 @@ using SnapStudio.Core.ScrollingCapture;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class ScrollingCaptureOrchestratorTests
 {
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenScrollReachesEnd_StitchesCapturedFrames()
     {
         ScrollTargetCandidate target = CreateTarget();
@@ -25,15 +26,15 @@ public sealed class ScrollingCaptureOrchestratorTests
             new ScrollingCaptureRequest(target, Path.GetTempPath(), MaximumFrames: 5),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.False(result.IsPartial);
-        Assert.Equal(stitchedImage, result.Image);
-        Assert.Equal(2, result.Frames.Count);
-        Assert.Equal(1, scrollInput.CallCount);
-        Assert.Equal(1, stitcher.CallCount);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsFalse(result.IsPartial);
+        Assert.AreEqual(stitchedImage, result.Image);
+        Assert.AreEqual(2, result.Frames.Count);
+        Assert.AreEqual(1, scrollInput.CallCount);
+        Assert.AreEqual(1, stitcher.CallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenDiagnosticsWriterSucceeds_AttachesBundlePath()
     {
         ScrollTargetCandidate target = CreateTarget();
@@ -54,14 +55,14 @@ public sealed class ScrollingCaptureOrchestratorTests
             new ScrollingCaptureRequest(target, Path.GetTempPath(), MaximumFrames: 1),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal("diagnostics.json", result.Diagnostics["diagnosticsBundlePath"]);
-        Assert.NotNull(diagnosticsWriter.Request);
-        Assert.Equal(target, diagnosticsWriter.Request.CaptureRequest.Target);
-        Assert.True(diagnosticsWriter.Request.CaptureResult.Succeeded);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual("diagnostics.json", result.Diagnostics["diagnosticsBundlePath"]);
+        Assert.IsNotNull(diagnosticsWriter.Request);
+        Assert.AreEqual(target, diagnosticsWriter.Request.CaptureRequest.Target);
+        Assert.IsTrue(diagnosticsWriter.Request.CaptureResult.Succeeded);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenDiagnosticsWriterFails_PreservesCaptureResult()
     {
         var frameCapture = new FakeFrameCaptureService(
@@ -81,11 +82,11 @@ public sealed class ScrollingCaptureOrchestratorTests
             new ScrollingCaptureRequest(CreateTarget(), Path.GetTempPath(), MaximumFrames: 1),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal("Cannot write bundle.", result.Diagnostics["diagnosticsBundleError"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual("Cannot write bundle.", result.Diagnostics["diagnosticsBundleError"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenScrollFailsAfterFrame_StitchesPartialOutput()
     {
         ScrollTargetCandidate target = CreateTarget();
@@ -105,16 +106,16 @@ public sealed class ScrollingCaptureOrchestratorTests
             new ScrollingCaptureRequest(target, Path.GetTempPath(), MaximumFrames: 5),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.True(result.HasOutput);
-        Assert.True(result.IsPartial);
-        Assert.Equal(partialImage, result.Image);
-        Assert.Equal(ScrollingCaptureFailureReason.ScrollFailed, result.Failure?.Reason);
-        Assert.Single(result.Frames);
-        Assert.Equal("ScrollFailed", result.Diagnostics["failureReason"]);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsTrue(result.HasOutput);
+        Assert.IsTrue(result.IsPartial);
+        Assert.AreEqual(partialImage, result.Image);
+        Assert.AreEqual(ScrollingCaptureFailureReason.ScrollFailed, result.Failure?.Reason);
+        Assert.ContainsSingle(result.Frames);
+        Assert.AreEqual("ScrollFailed", result.Diagnostics["failureReason"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenFirstFrameFails_ReturnsFailureWithoutStitching()
     {
         ScrollTargetCandidate target = CreateTarget();
@@ -132,13 +133,13 @@ public sealed class ScrollingCaptureOrchestratorTests
             new ScrollingCaptureRequest(target, Path.GetTempPath()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.False(result.HasOutput);
-        Assert.Equal(failure, result.Failure);
-        Assert.Equal(0, stitcher.CallCount);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsFalse(result.HasOutput);
+        Assert.AreEqual(failure, result.Failure);
+        Assert.AreEqual(0, stitcher.CallCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenRequestIsInvalid_ReturnsInvalidRequest()
     {
         var orchestrator = new ScrollingCaptureOrchestrator(
@@ -151,8 +152,8 @@ public sealed class ScrollingCaptureOrchestratorTests
             new ScrollingCaptureRequest(CreateTarget(), Path.GetTempPath(), MaximumFrames: 0),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScrollingCaptureFailureReason.InvalidRequest, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScrollingCaptureFailureReason.InvalidRequest, result.Failure?.Reason);
     }
 
     private static ScrollTargetCandidate CreateTarget()

@@ -4,9 +4,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class FileSystemOcrResultCacheTests
 {
-    [Fact]
+    [TestMethod]
     public async Task GetAsync_WhenCacheIsMissing_ReturnsEmptyDocumentCache()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -17,11 +18,11 @@ public sealed class FileSystemOcrResultCacheTests
             documentId,
             CancellationToken.None);
 
-        Assert.Equal(documentId, cacheDocument.DocumentId);
-        Assert.Empty(cacheDocument.Results);
+        Assert.AreEqual(documentId, cacheDocument.DocumentId);
+        Assert.IsEmpty(cacheDocument.Results);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveAsync_RoundTripsMultipleSelectionResults()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -50,15 +51,15 @@ public sealed class FileSystemOcrResultCacheTests
             documentId,
             CancellationToken.None);
 
-        Assert.Equal(documentId, loaded.DocumentId);
-        Assert.Equal(recognizedAtUtc, loaded.UpdatedAtUtc);
-        Assert.Equal(2, loaded.Results.Count);
-        Assert.Equal("SnapStudio OCR", loaded.Results[0].Text);
-        Assert.Equal("Second region", loaded.Results[1].Text);
-        Assert.Equal(new RectD(10, 20, 300, 80), loaded.Results[0].SourceRegion);
+        Assert.AreEqual(documentId, loaded.DocumentId);
+        Assert.AreEqual(recognizedAtUtc, loaded.UpdatedAtUtc);
+        Assert.AreEqual(2, loaded.Results.Count);
+        Assert.AreEqual("SnapStudio OCR", loaded.Results[0].Text);
+        Assert.AreEqual("Second region", loaded.Results[1].Text);
+        Assert.AreEqual(new RectD(10, 20, 300, 80), loaded.Results[0].SourceRegion);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteAsync_RemovesExistingCacheFile()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -76,12 +77,12 @@ public sealed class FileSystemOcrResultCacheTests
         bool deletedAgain = await cache.DeleteAsync(documentId, CancellationToken.None);
         OcrCacheDocument loaded = await cache.GetAsync(documentId, CancellationToken.None);
 
-        Assert.True(deleted);
-        Assert.False(deletedAgain);
-        Assert.Empty(loaded.Results);
+        Assert.IsTrue(deleted);
+        Assert.IsFalse(deletedAgain);
+        Assert.IsEmpty(loaded.Results);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAsync_WhenCacheJsonIsInvalid_ReturnsEmptyDocumentCache()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -98,8 +99,8 @@ public sealed class FileSystemOcrResultCacheTests
             documentId,
             CancellationToken.None);
 
-        Assert.Equal(documentId, loaded.DocumentId);
-        Assert.Empty(loaded.Results);
+        Assert.AreEqual(documentId, loaded.DocumentId);
+        Assert.IsEmpty(loaded.Results);
     }
 
     private static OcrResult CreateResult(

@@ -4,9 +4,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsScrollTargetCandidateFactoryTests
 {
-    [Fact]
+    [TestMethod]
     public void TryCreate_WhenDescriptorIsScrollable_ReturnsCandidateWithMetadata()
     {
         var descriptor = new WindowsScrollTargetDescriptor(
@@ -27,16 +28,16 @@ public sealed class WindowsScrollTargetCandidateFactoryTests
             descriptor,
             out ScrollTargetCandidate? candidate);
 
-        Assert.True(created);
-        Assert.NotNull(candidate);
-        Assert.Equal("uia:42.1", candidate.Id);
-        Assert.Equal("Document area", candidate.DisplayName);
-        Assert.Equal(ScrollTargetKind.DocumentViewer, candidate.Kind);
-        Assert.Equal("Chrome_RenderWidgetHostHWND", candidate.Metadata["className"]);
-        Assert.Equal("True", candidate.Metadata["isVerticallyScrollable"]);
+        Assert.IsTrue(created);
+        Assert.IsNotNull(candidate);
+        Assert.AreEqual("uia:42.1", candidate.Id);
+        Assert.AreEqual("Document area", candidate.DisplayName);
+        Assert.AreEqual(ScrollTargetKind.DocumentViewer, candidate.Kind);
+        Assert.AreEqual("Chrome_RenderWidgetHostHWND", candidate.Metadata["className"]);
+        Assert.AreEqual("True", candidate.Metadata["isVerticallyScrollable"]);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCreate_WhenDescriptorIsNotScrollable_ReturnsFalse()
     {
         var descriptor = new WindowsScrollTargetDescriptor(
@@ -57,11 +58,11 @@ public sealed class WindowsScrollTargetCandidateFactoryTests
             descriptor,
             out ScrollTargetCandidate? candidate);
 
-        Assert.False(created);
-        Assert.Null(candidate);
+        Assert.IsFalse(created);
+        Assert.IsNull(candidate);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCreate_WhenBoundsAreInvalid_ReturnsFalse()
     {
         var descriptor = new WindowsScrollTargetDescriptor(
@@ -82,11 +83,11 @@ public sealed class WindowsScrollTargetCandidateFactoryTests
             descriptor,
             out ScrollTargetCandidate? candidate);
 
-        Assert.False(created);
-        Assert.Null(candidate);
+        Assert.IsFalse(created);
+        Assert.IsNull(candidate);
     }
 
-    [Fact]
+    [TestMethod]
     public void MatchesRequest_FiltersBySearchBoundsAndTargetHint()
     {
         ScrollTargetCandidate candidate = CreateCandidate(
@@ -97,13 +98,13 @@ public sealed class WindowsScrollTargetCandidateFactoryTests
                 ["className"] = "Chrome_RenderWidgetHostHWND"
             });
 
-        Assert.True(WindowsScrollTargetCandidateFactory.MatchesRequest(
+        Assert.IsTrue(WindowsScrollTargetCandidateFactory.MatchesRequest(
             candidate,
             new ScrollTargetDetectionRequest(new RectD(50, 50, 200, 200), "chrome")));
-        Assert.False(WindowsScrollTargetCandidateFactory.MatchesRequest(
+        Assert.IsFalse(WindowsScrollTargetCandidateFactory.MatchesRequest(
             candidate,
             new ScrollTargetDetectionRequest(new RectD(0, 0, 20, 20), "chrome")));
-        Assert.False(WindowsScrollTargetCandidateFactory.MatchesRequest(
+        Assert.IsFalse(WindowsScrollTargetCandidateFactory.MatchesRequest(
             candidate,
             new ScrollTargetDetectionRequest(new RectD(50, 50, 200, 200), "notepad")));
     }

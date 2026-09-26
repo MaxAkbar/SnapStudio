@@ -10,9 +10,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class FileSystemDocumentThumbnailCacheTests
 {
-    [Fact]
+    [TestMethod]
     public async Task EnsureThumbnailAsync_SupersededRefreshFinishes128PixelRenderWithoutCancellation()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -41,7 +42,7 @@ public sealed class FileSystemDocumentThumbnailCacheTests
         {
             DocumentThumbnailResult result = await cache.EnsureThumbnailAsync(
                 new DocumentThumbnailRequest(item.Id, item.ModifiedAtUtc, 128), token);
-            Assert.True(result.Succeeded, result.ErrorMessage);
+            Assert.IsTrue(result.Succeeded, result.ErrorMessage);
             return result.ThumbnailPath;
         }
 
@@ -51,23 +52,23 @@ public sealed class FileSystemDocumentThumbnailCacheTests
         Task latestRefresh = coordinator.RefreshAsync(
             [summary], ResolveAsync, (_, path) => publishedPaths.Add(path), lifetime.Token);
 
-        Assert.Equal(lifetime.Token, renderer.Token);
-        Assert.False(renderer.Token.IsCancellationRequested);
-        Assert.NotNull(renderer.Request);
-        Assert.Equal(128d / 749, renderer.Request.Scale);
-        Assert.Null(renderer.Request.Viewport);
+        Assert.AreEqual(lifetime.Token, renderer.Token);
+        Assert.IsFalse(renderer.Token.IsCancellationRequested);
+        Assert.IsNotNull(renderer.Request);
+        Assert.AreEqual(128d / 749, renderer.Request.Scale);
+        Assert.IsNull(renderer.Request.Viewport);
         renderer.Continue.SetResult();
         await Task.WhenAll(oldRefresh, latestRefresh).WaitAsync(TimeSpan.FromSeconds(5));
 
-        string thumbnailPath = Assert.Single(publishedPaths);
+        string thumbnailPath = Assert.ContainsSingle(publishedPaths);
         using Bitmap thumbnail = new(thumbnailPath);
-        Assert.Equal(128, thumbnail.Width);
-        Assert.Equal(75, thumbnail.Height);
-        Assert.Equal(1, renderer.RenderCount);
-        Assert.True(oldRefresh.IsCompletedSuccessfully);
+        Assert.AreEqual(128, thumbnail.Width);
+        Assert.AreEqual(75, thumbnail.Height);
+        Assert.AreEqual(1, renderer.RenderCount);
+        Assert.IsTrue(oldRefresh.IsCompletedSuccessfully);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EnsureThumbnailAsync_RenderCancellationPropagatesWithoutCaching()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -84,13 +85,13 @@ public sealed class FileSystemDocumentThumbnailCacheTests
         await renderer.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
         lifetime.Cancel();
 
-        OperationCanceledException exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(
+        OperationCanceledException exception = await Assert.ThrowsAsync<OperationCanceledException>(
             () => pending.WaitAsync(TimeSpan.FromSeconds(5)));
-        Assert.Equal(lifetime.Token, exception.CancellationToken);
-        Assert.Empty(Directory.EnumerateFiles(workspace.Path, "thumbnail-*.png", SearchOption.AllDirectories));
+        Assert.AreEqual(lifetime.Token, exception.CancellationToken);
+        Assert.IsEmpty(Directory.EnumerateFiles(workspace.Path, "thumbnail-*.png", SearchOption.AllDirectories));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EnsureThumbnailAsync_GeneratesScaledThumbnailAndReusesCache()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -109,19 +110,19 @@ public sealed class FileSystemDocumentThumbnailCacheTests
             new DocumentThumbnailRequest(document.Id, document.Metadata.ModifiedAtUtc, 64),
             CancellationToken.None);
 
-        Assert.True(generated.Succeeded);
-        Assert.True(generated.WasGenerated);
-        Assert.True(File.Exists(generated.ThumbnailPath));
+        Assert.IsTrue(generated.Succeeded);
+        Assert.IsTrue(generated.WasGenerated);
+        Assert.IsTrue(File.Exists(generated.ThumbnailPath));
         using Bitmap thumbnail = new(generated.ThumbnailPath!);
-        Assert.Equal(64, thumbnail.Width);
-        Assert.Equal(32, thumbnail.Height);
+        Assert.AreEqual(64, thumbnail.Width);
+        Assert.AreEqual(32, thumbnail.Height);
 
-        Assert.True(cached.Succeeded);
-        Assert.False(cached.WasGenerated);
-        Assert.Equal(generated.ThumbnailPath, cached.ThumbnailPath);
+        Assert.IsTrue(cached.Succeeded);
+        Assert.IsFalse(cached.WasGenerated);
+        Assert.AreEqual(generated.ThumbnailPath, cached.ThumbnailPath);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EnsureThumbnailAsync_RegeneratesWhenDocumentChanges()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -149,15 +150,15 @@ public sealed class FileSystemDocumentThumbnailCacheTests
             new DocumentThumbnailRequest(document.Id, document.Metadata.ModifiedAtUtc, 64),
             CancellationToken.None);
 
-        Assert.True(first.Succeeded);
-        Assert.True(regenerated.Succeeded);
-        Assert.True(regenerated.WasGenerated);
-        Assert.NotEqual(first.ThumbnailPath, regenerated.ThumbnailPath);
-        Assert.False(File.Exists(first.ThumbnailPath));
-        Assert.True(File.Exists(regenerated.ThumbnailPath));
+        Assert.IsTrue(first.Succeeded);
+        Assert.IsTrue(regenerated.Succeeded);
+        Assert.IsTrue(regenerated.WasGenerated);
+        Assert.AreNotEqual(first.ThumbnailPath, regenerated.ThumbnailPath);
+        Assert.IsFalse(File.Exists(first.ThumbnailPath));
+        Assert.IsTrue(File.Exists(regenerated.ThumbnailPath));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EnsureThumbnailAsync_RegeneratesAfterRapidAnnotationSave()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -187,17 +188,17 @@ public sealed class FileSystemDocumentThumbnailCacheTests
             new DocumentThumbnailRequest(document.Id, document.Metadata.ModifiedAtUtc, 200),
             CancellationToken.None);
 
-        Assert.True(first.Succeeded);
-        Assert.True(regenerated.Succeeded);
-        Assert.True(regenerated.WasGenerated);
-        Assert.NotEqual(first.ThumbnailPath, regenerated.ThumbnailPath);
+        Assert.IsTrue(first.Succeeded);
+        Assert.IsTrue(regenerated.Succeeded);
+        Assert.IsTrue(regenerated.WasGenerated);
+        Assert.AreNotEqual(first.ThumbnailPath, regenerated.ThumbnailPath);
         using Bitmap thumbnail = new(regenerated.ThumbnailPath!);
         Color secondAnnotationPixel = thumbnail.GetPixel(70, 20);
-        Assert.True(secondAnnotationPixel.B > 180);
-        Assert.True(secondAnnotationPixel.R < 80);
+        Assert.IsTrue(secondAnnotationPixel.B > 180);
+        Assert.IsTrue(secondAnnotationPixel.R < 80);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRecentAsync_ReturnsCachedThumbnailPath()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -218,8 +219,8 @@ public sealed class FileSystemDocumentThumbnailCacheTests
             10,
             CancellationToken.None);
 
-        DocumentSummary summary = Assert.Single(summaries);
-        Assert.Equal(generated.ThumbnailPath, summary.ThumbnailPath);
+        DocumentSummary summary = Assert.ContainsSingle(summaries);
+        Assert.AreEqual(generated.ThumbnailPath, summary.ThumbnailPath);
     }
 
     private static async Task<CaptureDocument> CreateDocumentAsync(

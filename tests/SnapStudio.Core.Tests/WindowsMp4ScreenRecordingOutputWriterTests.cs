@@ -5,9 +5,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsMp4ScreenRecordingOutputWriterTests
 {
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenOutputPathIsMissing_ReturnsInvalidRequest()
     {
         var writer = new WindowsMp4ScreenRecordingOutputWriter(new FakeEncoder(), new FakeClock());
@@ -16,11 +17,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             CreateStartRequest(outputPath: string.Empty),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenOutputPathIsNotMp4_ReturnsInvalidRequest()
     {
         var writer = new WindowsMp4ScreenRecordingOutputWriter(new FakeEncoder(), new FakeClock());
@@ -29,11 +30,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             CreateStartRequest(outputPath: Path.Combine(Path.GetTempPath(), "recording.png")),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenRequestIsValid_ReturnsWriterMetadata()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -44,14 +45,14 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             CreateStartRequest(outputPath: outputPath),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal("mp4", result.Metadata["container"]);
-        Assert.Equal("h264", result.Metadata["videoCodec"]);
-        Assert.Equal("pending", result.Metadata["encoderState"]);
-        Assert.True(Directory.Exists(Path.GetDirectoryName(outputPath)));
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual("mp4", result.Metadata["container"]);
+        Assert.AreEqual("h264", result.Metadata["videoCodec"]);
+        Assert.AreEqual("pending", result.Metadata["encoderState"]);
+        Assert.IsTrue(Directory.Exists(Path.GetDirectoryName(outputPath)));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task StartAsync_WhenAudioSessionIsProvided_ReturnsWriterMetadata()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -65,11 +66,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
                 CreateAudioSession(sessionId)),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal("pending", result.Metadata["audioState"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual("pending", result.Metadata["audioState"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FinishAsync_WhenEncoderSucceeds_ReturnsOutputAndDiagnostics()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -88,23 +89,23 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             sessionId,
             CancellationToken.None);
 
-        Assert.True(write.Succeeded);
-        Assert.True(finish.Succeeded);
-        Assert.Equal(outputPath, finish.Output?.Path);
-        Assert.Equal("1", finish.Diagnostics["framesReceived"]);
-        Assert.Equal("33", finish.Diagnostics["firstFrameTimestampMilliseconds"]);
-        Assert.Equal("33", finish.Diagnostics["lastFrameTimestampMilliseconds"]);
-        Assert.Equal("1", finish.Diagnostics["firstSequenceNumber"]);
-        Assert.Equal("1", finish.Diagnostics["lastSequenceNumber"]);
-        Assert.Equal("0", finish.Diagnostics["sequenceGapCount"]);
-        Assert.Equal("0.000", finish.Diagnostics["frameSpanMilliseconds"]);
-        Assert.Equal("0", finish.Diagnostics["positiveFrameDeltaCount"]);
-        Assert.Equal("1", finish.Diagnostics["encoder:framesReceived"]);
-        Assert.NotNull(encoder.Request);
-        Assert.Single(encoder.Request.Frames);
+        Assert.IsTrue(write.Succeeded);
+        Assert.IsTrue(finish.Succeeded);
+        Assert.AreEqual(outputPath, finish.Output?.Path);
+        Assert.AreEqual("1", finish.Diagnostics["framesReceived"]);
+        Assert.AreEqual("33", finish.Diagnostics["firstFrameTimestampMilliseconds"]);
+        Assert.AreEqual("33", finish.Diagnostics["lastFrameTimestampMilliseconds"]);
+        Assert.AreEqual("1", finish.Diagnostics["firstSequenceNumber"]);
+        Assert.AreEqual("1", finish.Diagnostics["lastSequenceNumber"]);
+        Assert.AreEqual("0", finish.Diagnostics["sequenceGapCount"]);
+        Assert.AreEqual("0.000", finish.Diagnostics["frameSpanMilliseconds"]);
+        Assert.AreEqual("0", finish.Diagnostics["positiveFrameDeltaCount"]);
+        Assert.AreEqual("1", finish.Diagnostics["encoder:framesReceived"]);
+        Assert.IsNotNull(encoder.Request);
+        Assert.ContainsSingle(encoder.Request.Frames);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FinishAsync_WhenAudioIsBuffered_DelegatesAudioSamplesAndDiagnostics()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -131,19 +132,19 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             sessionId,
             CancellationToken.None);
 
-        Assert.True(frameWrite.Succeeded);
-        Assert.True(audioWrite.Succeeded);
-        Assert.True(finish.Succeeded);
-        Assert.Equal("1", finish.Diagnostics["audioSamplesReceived"]);
-        Assert.Equal("960", finish.Diagnostics["bufferedAudioBytes"]);
-        Assert.Equal("10", finish.Diagnostics["firstAudioTimestampMilliseconds"]);
-        Assert.Equal("10", finish.Diagnostics["lastAudioTimestampMilliseconds"]);
-        Assert.NotNull(encoder.Request);
-        Assert.NotNull(encoder.Request.AudioSession);
-        Assert.Single(encoder.Request.AudioSamples!);
+        Assert.IsTrue(frameWrite.Succeeded);
+        Assert.IsTrue(audioWrite.Succeeded);
+        Assert.IsTrue(finish.Succeeded);
+        Assert.AreEqual("1", finish.Diagnostics["audioSamplesReceived"]);
+        Assert.AreEqual("960", finish.Diagnostics["bufferedAudioBytes"]);
+        Assert.AreEqual("10", finish.Diagnostics["firstAudioTimestampMilliseconds"]);
+        Assert.AreEqual("10", finish.Diagnostics["lastAudioTimestampMilliseconds"]);
+        Assert.IsNotNull(encoder.Request);
+        Assert.IsNotNull(encoder.Request.AudioSession);
+        Assert.ContainsSingle(encoder.Request.AudioSamples!);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FinishAsync_WhenFramesHaveTimingGaps_ReturnsSyncDiagnostics()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -167,21 +168,21 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             sessionId,
             CancellationToken.None);
 
-        Assert.True(finish.Succeeded);
-        Assert.Equal("10", finish.Diagnostics["firstSequenceNumber"]);
-        Assert.Equal("13", finish.Diagnostics["lastSequenceNumber"]);
-        Assert.Equal("1", finish.Diagnostics["sequenceGapCount"]);
-        Assert.Equal("150.000", finish.Diagnostics["frameSpanMilliseconds"]);
-        Assert.Equal("2", finish.Diagnostics["positiveFrameDeltaCount"]);
-        Assert.Equal("0", finish.Diagnostics["duplicateFrameTimestampCount"]);
-        Assert.Equal("0", finish.Diagnostics["nonMonotonicFrameTimestampCount"]);
-        Assert.Equal("75.000", finish.Diagnostics["averageFrameIntervalMilliseconds"]);
-        Assert.Equal("50.000", finish.Diagnostics["minimumFrameIntervalMilliseconds"]);
-        Assert.Equal("100.000", finish.Diagnostics["maximumFrameIntervalMilliseconds"]);
-        Assert.Equal("13.333", finish.Diagnostics["estimatedFrameRate"]);
+        Assert.IsTrue(finish.Succeeded);
+        Assert.AreEqual("10", finish.Diagnostics["firstSequenceNumber"]);
+        Assert.AreEqual("13", finish.Diagnostics["lastSequenceNumber"]);
+        Assert.AreEqual("1", finish.Diagnostics["sequenceGapCount"]);
+        Assert.AreEqual("150.000", finish.Diagnostics["frameSpanMilliseconds"]);
+        Assert.AreEqual("2", finish.Diagnostics["positiveFrameDeltaCount"]);
+        Assert.AreEqual("0", finish.Diagnostics["duplicateFrameTimestampCount"]);
+        Assert.AreEqual("0", finish.Diagnostics["nonMonotonicFrameTimestampCount"]);
+        Assert.AreEqual("75.000", finish.Diagnostics["averageFrameIntervalMilliseconds"]);
+        Assert.AreEqual("50.000", finish.Diagnostics["minimumFrameIntervalMilliseconds"]);
+        Assert.AreEqual("100.000", finish.Diagnostics["maximumFrameIntervalMilliseconds"]);
+        Assert.AreEqual("13.333", finish.Diagnostics["estimatedFrameRate"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FinishAsync_WhenEncoderFails_ReturnsTypedFailureWithDiagnostics()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -202,12 +203,12 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             sessionId,
             CancellationToken.None);
 
-        Assert.False(finish.Succeeded);
-        Assert.Equal(failure, finish.Failure);
-        Assert.Equal("failed", finish.Diagnostics["encoder:encoderState"]);
+        Assert.IsFalse(finish.Succeeded);
+        Assert.AreEqual(failure, finish.Failure);
+        Assert.AreEqual("failed", finish.Diagnostics["encoder:encoderState"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WriteFrameAsync_WhenFrameIsNotPixelFrame_ReturnsEncoderUnavailable()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -221,11 +222,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             new FakeFrame(sessionId, sequenceNumber: 1, TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.EncoderUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.EncoderUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WriteAudioAsync_WhenSessionHasNoAudio_ReturnsAudioUnavailable()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -239,11 +240,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             new FakePcmAudioSample(sessionId, sequenceNumber: 1, TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WriteAudioAsync_WhenSampleIsNotPcm_ReturnsEncoderUnavailable()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -260,11 +261,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             new FakeAudioSample(sessionId, sequenceNumber: 1, TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.EncoderUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.EncoderUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WriteAudioAsync_WhenAudioLimitIsReached_FailsFinishWithoutEncoding()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -295,17 +296,17 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             sessionId,
             CancellationToken.None);
 
-        Assert.True(first.Succeeded);
-        Assert.False(second.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.OutputUnavailable, second.Failure?.Reason);
-        Assert.False(finish.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.OutputUnavailable, finish.Failure?.Reason);
-        Assert.Equal("1", finish.Diagnostics["bufferedAudioSamples"]);
-        Assert.Equal("OutputUnavailable", finish.Diagnostics["bufferFailureReason"]);
-        Assert.Null(encoder.Request);
+        Assert.IsTrue(first.Succeeded);
+        Assert.IsFalse(second.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.OutputUnavailable, second.Failure?.Reason);
+        Assert.IsFalse(finish.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.OutputUnavailable, finish.Failure?.Reason);
+        Assert.AreEqual("1", finish.Diagnostics["bufferedAudioSamples"]);
+        Assert.AreEqual("OutputUnavailable", finish.Diagnostics["bufferFailureReason"]);
+        Assert.IsNull(encoder.Request);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WriteFrameAsync_WhenFrameLimitIsReached_FailsFinishWithoutEncoding()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -331,17 +332,17 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             sessionId,
             CancellationToken.None);
 
-        Assert.True(first.Succeeded);
-        Assert.False(second.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.OutputUnavailable, second.Failure?.Reason);
-        Assert.False(finish.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.OutputUnavailable, finish.Failure?.Reason);
-        Assert.Equal("1", finish.Diagnostics["bufferedFrames"]);
-        Assert.Equal("OutputUnavailable", finish.Diagnostics["bufferFailureReason"]);
-        Assert.Null(encoder.Request);
+        Assert.IsTrue(first.Succeeded);
+        Assert.IsFalse(second.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.OutputUnavailable, second.Failure?.Reason);
+        Assert.IsFalse(finish.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.OutputUnavailable, finish.Failure?.Reason);
+        Assert.AreEqual("1", finish.Diagnostics["bufferedFrames"]);
+        Assert.AreEqual("OutputUnavailable", finish.Diagnostics["bufferFailureReason"]);
+        Assert.IsNull(encoder.Request);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WriteFrameAsync_WhenSessionIsUnknown_ReturnsSessionNotFound()
     {
         var writer = new WindowsMp4ScreenRecordingOutputWriter(new FakeEncoder(), new FakeClock());
@@ -351,11 +352,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             new FakeFrame(sessionId, sequenceNumber: 1, TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FinishAsync_WhenSessionIsUnknown_ReturnsSessionNotFound()
     {
         var writer = new WindowsMp4ScreenRecordingOutputWriter(new FakeEncoder(), new FakeClock());
@@ -364,11 +365,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             ScreenRecordingSessionId.New(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WriteAudioAsync_WhenSessionIsUnknown_ReturnsSessionNotFound()
     {
         var writer = new WindowsMp4ScreenRecordingOutputWriter(new FakeEncoder(), new FakeClock());
@@ -378,11 +379,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
             new FakePcmAudioSample(sessionId, sequenceNumber: 1, TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.SessionNotFound, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsMediaTranscoderMp4Encoder_WhenNoFrames_ReturnsOutputUnavailable()
     {
         var encoder = new WindowsMediaTranscoderMp4Encoder();
@@ -398,11 +399,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
                 []),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.OutputUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.OutputUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsMediaTranscoderMp4Encoder_WhenDimensionsAreOdd_ReturnsEncoderUnavailable()
     {
         var encoder = new WindowsMediaTranscoderMp4Encoder();
@@ -427,11 +428,11 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
                 ]),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.EncoderUnavailable, result.Failure?.Reason);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.EncoderUnavailable, result.Failure?.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsMediaTranscoderMp4Encoder_WhenAudioSessionHasNoSamples_ReturnsAudioUnavailable()
     {
         ScreenRecordingSessionId sessionId = ScreenRecordingSessionId.New();
@@ -459,13 +460,13 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
                 []),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
-        Assert.Equal("0", result.Diagnostics["audioSamplesReceived"]);
-        Assert.Equal("48000", result.Diagnostics["audioSampleRate"]);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.AudioUnavailable, result.Failure?.Reason);
+        Assert.AreEqual("0", result.Diagnostics["audioSamplesReceived"]);
+        Assert.AreEqual("48000", result.Diagnostics["audioSampleRate"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsMediaTranscoderMp4Encoder_WhenAudioSampleFormatMismatchesSession_ReturnsInvalidRequest()
     {
         ScreenRecordingSessionId sessionId = ScreenRecordingSessionId.New();
@@ -495,9 +496,9 @@ public sealed class WindowsMp4ScreenRecordingOutputWriterTests
                 ]),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
-        Assert.Equal("1", result.Diagnostics["audioSamplesReceived"]);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(ScreenRecordingFailureReason.InvalidRequest, result.Failure?.Reason);
+        Assert.AreEqual("1", result.Diagnostics["audioSamplesReceived"]);
     }
 
     private static ScreenRecordingOutputWriterStartRequest CreateStartRequest(

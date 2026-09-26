@@ -6,9 +6,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class SourceImageExportProviderTests
 {
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WhenFormatIsPng_CopiesSourceImage()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -30,12 +31,12 @@ public sealed class SourceImageExportProviderTests
             new ExportRequest(document.Id, ExportFormat.Png, outputPath, new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(outputPath, result.OutputPath);
-        Assert.Equal(expected, await File.ReadAllBytesAsync(outputPath));
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual(outputPath, result.OutputPath);
+        Assert.AreSequenceEqual(expected, await File.ReadAllBytesAsync(outputPath));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WhenDocumentIsMissing_ReturnsFailure()
     {
         var provider = new SourceImageExportProvider(
@@ -50,11 +51,11 @@ public sealed class SourceImageExportProviderTests
                 new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("could not be found", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("could not be found", result.ErrorMessage ?? string.Empty);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportAsync_WhenFormatDoesNotMatchProvider_ReturnsFailure()
     {
         var provider = new SourceImageExportProvider(
@@ -69,8 +70,8 @@ public sealed class SourceImageExportProviderTests
                 new Dictionary<string, string>()),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Contains("cannot export", result.ErrorMessage);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("cannot export", result.ErrorMessage ?? string.Empty);
     }
 
     private sealed class FakeDocumentRepository(CaptureDocument? document) : IDocumentRepository

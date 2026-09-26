@@ -3,9 +3,10 @@ using SnapStudio.Platform.Windows;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class WindowsGraphicsCaptureStillCaptureServiceTests
 {
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenWgcIsUnsupported_ReturnsUnsupportedFailure()
     {
         var service = new WindowsGraphicsCaptureStillCaptureService(
@@ -15,12 +16,12 @@ public sealed class WindowsGraphicsCaptureStillCaptureServiceTests
             new CaptureRequest(CaptureTargetKind.FullScreen, IncludeCursor: true, Delay: TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(outcome.Succeeded);
-        Assert.Equal(CaptureFailureReason.Unsupported, outcome.Failure?.Reason);
-        Assert.Equal("WGC unavailable.", outcome.Failure?.Message);
+        Assert.IsFalse(outcome.Succeeded);
+        Assert.AreEqual(CaptureFailureReason.Unsupported, outcome.Failure?.Reason);
+        Assert.AreEqual("WGC unavailable.", outcome.Failure?.Message);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenTargetIsUnsupported_ReturnsUnsupportedFailure()
     {
         var service = new WindowsGraphicsCaptureStillCaptureService(
@@ -30,12 +31,12 @@ public sealed class WindowsGraphicsCaptureStillCaptureServiceTests
             new CaptureRequest(CaptureTargetKind.FullScreen, IncludeCursor: true, Delay: TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(outcome.Succeeded);
-        Assert.Equal(CaptureFailureReason.Unsupported, outcome.Failure?.Reason);
-        Assert.Contains("FullScreen", outcome.Failure?.Message);
+        Assert.IsFalse(outcome.Succeeded);
+        Assert.AreEqual(CaptureFailureReason.Unsupported, outcome.Failure?.Reason);
+        Assert.Contains("FullScreen", outcome.Failure?.Message ?? string.Empty);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenWgcIsSupportedWithoutSelectedTarget_ReturnsTargetUnavailable()
     {
         var service = new WindowsGraphicsCaptureStillCaptureService(
@@ -45,12 +46,12 @@ public sealed class WindowsGraphicsCaptureStillCaptureServiceTests
             new CaptureRequest(CaptureTargetKind.FullScreen, IncludeCursor: true, Delay: TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(outcome.Succeeded);
-        Assert.Equal(CaptureFailureReason.TargetUnavailable, outcome.Failure?.Reason);
-        Assert.Contains("target", outcome.Failure?.Message);
+        Assert.IsFalse(outcome.Succeeded);
+        Assert.AreEqual(CaptureFailureReason.TargetUnavailable, outcome.Failure?.Reason);
+        Assert.Contains("target", outcome.Failure?.Message ?? string.Empty);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WindowsGraphicsCaptureCapabilityService_ReturnsCapabilityReport()
     {
         var service = new WindowsGraphicsCaptureCapabilityService();
@@ -61,12 +62,12 @@ public sealed class WindowsGraphicsCaptureStillCaptureServiceTests
         {
             Assert.Contains(CaptureTargetKind.FullScreen, capability.SupportedTargets);
             Assert.Contains(CaptureTargetKind.Window, capability.SupportedTargets);
-            Assert.Null(capability.UnavailableReason);
+            Assert.IsNull(capability.UnavailableReason);
         }
         else
         {
-            Assert.False(string.IsNullOrWhiteSpace(capability.UnavailableReason));
-            Assert.Empty(capability.SupportedTargets);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(capability.UnavailableReason));
+            Assert.IsEmpty(capability.SupportedTargets);
         }
     }
 

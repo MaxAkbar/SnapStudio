@@ -6,9 +6,10 @@ using SnapStudio.Storage;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class FileSystemDocumentRepositoryTests
 {
-    [Fact]
+    [TestMethod]
     public async Task CreateSaveGetAsync_RoundTripsEditableDocument()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -32,15 +33,15 @@ public sealed class FileSystemDocumentRepositoryTests
 
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
 
-        Assert.NotNull(loaded);
-        Assert.Equal(document.Id, loaded.Id);
-        Assert.Equal("source.png", loaded.SourceImage.Path);
-        Assert.Single(loaded.Annotations);
-        Assert.Equal(AnnotationKind.Rectangle, loaded.Annotations[0].Kind);
-        Assert.Equal("test", loaded.Metadata.Properties["source"]);
+        Assert.IsNotNull(loaded);
+        Assert.AreEqual(document.Id, loaded.Id);
+        Assert.AreEqual("source.png", loaded.SourceImage.Path);
+        Assert.ContainsSingle(loaded.Annotations);
+        Assert.AreEqual(AnnotationKind.Rectangle, loaded.Annotations[0].Kind);
+        Assert.AreEqual("test", loaded.Metadata.Properties["source"]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteAsync_RemovesPersistedDocument()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -60,13 +61,13 @@ public sealed class FileSystemDocumentRepositoryTests
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
         bool deletedAgain = await repository.DeleteAsync(document.Id, CancellationToken.None);
 
-        Assert.True(deleted);
-        Assert.Null(loaded);
-        Assert.False(deletedAgain);
-        Assert.True(File.Exists(sourcePath));
+        Assert.IsTrue(deleted);
+        Assert.IsNull(loaded);
+        Assert.IsFalse(deletedAgain);
+        Assert.IsTrue(File.Exists(sourcePath));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveAsync_OverlappingColorChanges_PersistsLastRequestedSnapshot()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -91,13 +92,13 @@ public sealed class FileSystemDocumentRepositoryTests
         await Task.WhenAll(saves);
 
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
-        Assert.NotNull(loaded);
-        Assert.Equal(lastSavedColor, Assert.Single(loaded.Annotations).Style.Stroke);
-        Assert.Equal(lastSavedAt, loaded.Metadata.ModifiedAtUtc);
-        Assert.Empty(Directory.GetFiles(workspace.Path, "*.tmp", SearchOption.AllDirectories));
+        Assert.IsNotNull(loaded);
+        Assert.AreEqual(lastSavedColor, Assert.ContainsSingle(loaded.Annotations).Style.Stroke);
+        Assert.AreEqual(lastSavedAt, loaded.Metadata.ModifiedAtUtc);
+        Assert.IsEmpty(Directory.GetFiles(workspace.Path, "*.tmp", SearchOption.AllDirectories));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveAsync_WhenCanceled_DoesNotChangeMetadataOrPersistEdits()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -109,23 +110,23 @@ public sealed class FileSystemDocumentRepositoryTests
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        OperationCanceledException exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(
+        OperationCanceledException exception = await Assert.ThrowsAsync<OperationCanceledException>(
             () => repository.SaveAsync(document, cancellation.Token));
 
-        Assert.Equal(cancellation.Token, exception.CancellationToken);
-        Assert.Equal(savedMetadata, document.Metadata);
+        Assert.AreEqual(cancellation.Token, exception.CancellationToken);
+        Assert.AreEqual(savedMetadata, document.Metadata);
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
-        Assert.NotNull(loaded);
-        Assert.Empty(loaded.Annotations);
-        Assert.Empty(Directory.GetFiles(workspace.Path, "*.tmp", SearchOption.AllDirectories));
+        Assert.IsNotNull(loaded);
+        Assert.IsEmpty(loaded.Annotations);
+        Assert.IsEmpty(Directory.GetFiles(workspace.Path, "*.tmp", SearchOption.AllDirectories));
 
         await repository.SaveAsync(document, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(10));
         loaded = await repository.GetAsync(document.Id, CancellationToken.None);
-        Assert.NotNull(loaded);
-        Assert.Single(loaded.Annotations);
+        Assert.IsNotNull(loaded);
+        Assert.ContainsSingle(loaded.Annotations);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveAsync_WhenReplacementFails_PreservesDocumentAndAllowsNextSave()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -138,24 +139,24 @@ public sealed class FileSystemDocumentRepositoryTests
         // An external reader that does not share deletion must still report a real I/O failure.
         using (FileStream lockedDocument = File.OpenRead(documentPath))
         {
-            await Assert.ThrowsAsync<IOException>(
+            await Assert.ThrowsExactlyAsync<IOException>(
                 () => repository.SaveAsync(document, CancellationToken.None));
         }
 
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
-        Assert.NotNull(loaded);
-        Assert.Empty(loaded.Annotations);
-        Assert.Empty(Directory.GetFiles(workspace.Path, "*.tmp", SearchOption.AllDirectories));
+        Assert.IsNotNull(loaded);
+        Assert.IsEmpty(loaded.Annotations);
+        Assert.IsEmpty(Directory.GetFiles(workspace.Path, "*.tmp", SearchOption.AllDirectories));
 
         await repository.SaveAsync(document, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(10));
         loaded = await repository.GetAsync(document.Id, CancellationToken.None);
-        Assert.NotNull(loaded);
-        Assert.Single(loaded.Annotations);
+        Assert.IsNotNull(loaded);
+        Assert.ContainsSingle(loaded.Annotations);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public async Task SaveAsync_CanceledDuringWriteOrWhileQueued_CleansUpAndAllowsNextSave(bool cancelQueuedSave)
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -175,24 +176,24 @@ public sealed class FileSystemDocumentRepositoryTests
             : firstSave;
         cancellation.Cancel();
 
-        Task assertCancellation = Assert.ThrowsAnyAsync<OperationCanceledException>(() => canceledSave);
+        Task assertCancellation = Assert.ThrowsAsync<OperationCanceledException>(() => canceledSave);
         await Task.WhenAll(cancelQueuedSave ? firstSave : Task.CompletedTask, assertCancellation);
 
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
-        Assert.NotNull(loaded);
-        Assert.Empty(loaded.Annotations);
-        Assert.Equal(cancelQueuedSave, loaded.Metadata.Properties.ContainsKey("payload"));
-        Assert.Empty(Directory.GetFiles(workspace.Path, "*.tmp", SearchOption.AllDirectories));
+        Assert.IsNotNull(loaded);
+        Assert.IsEmpty(loaded.Annotations);
+        Assert.AreEqual(cancelQueuedSave, loaded.Metadata.Properties.ContainsKey("payload"));
+        Assert.IsEmpty(Directory.GetFiles(workspace.Path, "*.tmp", SearchOption.AllDirectories));
 
         await repository.SaveAsync(document, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(10));
         loaded = await repository.GetAsync(document.Id, CancellationToken.None);
-        Assert.NotNull(loaded);
-        Assert.Single(loaded.Annotations);
+        Assert.IsNotNull(loaded);
+        Assert.ContainsSingle(loaded.Annotations);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public async Task SaveAsync_WhileReadingDocument_AllowsReplacement(bool readThroughCatalog)
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -210,21 +211,21 @@ public sealed class FileSystemDocumentRepositoryTests
         await Task.WhenAll(read, repository.SaveAsync(document, CancellationToken.None));
 
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
-        Assert.NotNull(loaded);
-        Assert.Single(loaded.Annotations);
+        Assert.IsNotNull(loaded);
+        Assert.ContainsSingle(loaded.Annotations);
 
         async Task ReadDocumentAsync()
         {
             CaptureDocument? snapshot = await repository.GetAsync(document.Id, CancellationToken.None);
-            Assert.NotNull(snapshot);
-            Assert.Empty(snapshot.Annotations);
+            Assert.IsNotNull(snapshot);
+            Assert.IsEmpty(snapshot.Annotations);
         }
 
         async Task ReadCatalogAsync()
         {
-            DocumentSummary snapshot = Assert.Single(await catalog.GetRecentAsync(10, CancellationToken.None));
-            Assert.Equal(document.Id, snapshot.Id);
-            Assert.Equal(0, snapshot.AnnotationCount);
+            DocumentSummary snapshot = Assert.ContainsSingle(await catalog.GetRecentAsync(10, CancellationToken.None));
+            Assert.AreEqual(document.Id, snapshot.Id);
+            Assert.AreEqual(0, snapshot.AnnotationCount);
         }
     }
 

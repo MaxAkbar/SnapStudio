@@ -4,9 +4,10 @@ using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class CaptureDocumentWorkspaceEditorTests
 {
-    [Fact]
+    [TestMethod]
     public void SetTitle_TrimsAndStoresTitle()
     {
         var document = new CaptureDocument
@@ -16,10 +17,10 @@ public sealed class CaptureDocumentWorkspaceEditorTests
 
         CaptureDocumentWorkspaceEditor.SetTitle(document, "  Renamed  ");
 
-        Assert.Equal("Renamed", document.Metadata.Properties["title"]);
+        Assert.AreEqual("Renamed", document.Metadata.Properties["title"]);
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateDuplicate_CopiesEditableStateWithNewIdentity()
     {
         var source = new CaptureDocument
@@ -53,19 +54,19 @@ public sealed class CaptureDocumentWorkspaceEditorTests
             source,
             "Copy");
 
-        Assert.NotEqual(source.Id, duplicate.Id);
-        Assert.Equal(source.SourceImage, duplicate.SourceImage);
-        Assert.Equal("Copy", duplicate.Metadata.Properties["title"]);
-        Assert.Equal(source.Id.ToString(), duplicate.Metadata.Properties["duplicatedFromDocumentId"]);
-        Assert.Single(duplicate.Annotations);
-        Assert.Single(duplicate.DestructiveOperations);
-        Assert.Equal(default, duplicate.Metadata.CreatedAtUtc);
+        Assert.AreNotEqual(source.Id, duplicate.Id);
+        Assert.AreEqual(source.SourceImage, duplicate.SourceImage);
+        Assert.AreEqual("Copy", duplicate.Metadata.Properties["title"]);
+        Assert.AreEqual(source.Id.ToString(), duplicate.Metadata.Properties["duplicatedFromDocumentId"]);
+        Assert.ContainsSingle(duplicate.Annotations);
+        Assert.ContainsSingle(duplicate.DestructiveOperations);
+        Assert.AreEqual(default, duplicate.Metadata.CreatedAtUtc);
 
         duplicate.DestructiveOperations[0].Parameters["width"] = "20";
-        Assert.Equal("50", source.DestructiveOperations[0].Parameters["width"]);
+        Assert.AreEqual("50", source.DestructiveOperations[0].Parameters["width"]);
     }
 
-    [Fact]
+    [TestMethod]
     public void SetTitle_UsesFallbackForBlankTitle()
     {
         var document = new CaptureDocument
@@ -75,6 +76,6 @@ public sealed class CaptureDocumentWorkspaceEditorTests
 
         CaptureDocumentWorkspaceEditor.SetTitle(document, "   ");
 
-        Assert.Equal("Untitled Capture", document.Metadata.Properties["title"]);
+        Assert.AreEqual("Untitled Capture", document.Metadata.Properties["title"]);
     }
 }

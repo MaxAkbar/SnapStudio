@@ -3,9 +3,10 @@ using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class CompositeCaptureTargetSelectorTests
 {
-    [Fact]
+    [TestMethod]
     public async Task SelectTargetAsync_ReturnsFirstSelection()
     {
         var expectedSelection = new CaptureTargetSelection(
@@ -23,10 +24,10 @@ public sealed class CompositeCaptureTargetSelectorTests
             new CaptureTargetRequest([CaptureTargetKind.Window], AllowDelayedCapture: false),
             CancellationToken.None);
 
-        Assert.Equal(expectedSelection, selection);
+        Assert.AreEqual(expectedSelection, selection);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SelectTargetAsync_WhenNoSelectorsReturnSelection_ReturnsNull()
     {
         var selector = new CompositeCaptureTargetSelector(
@@ -39,7 +40,7 @@ public sealed class CompositeCaptureTargetSelectorTests
             new CaptureTargetRequest([CaptureTargetKind.Window], AllowDelayedCapture: false),
             CancellationToken.None);
 
-        Assert.Null(selection);
+        Assert.IsNull(selection);
     }
 
     private sealed class FakeSelector(CaptureTargetSelection? selection) : ICaptureTargetSelector

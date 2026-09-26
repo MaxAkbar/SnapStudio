@@ -5,9 +5,10 @@ using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Tests;
 
+[TestClass]
 public sealed class CaptureWorkflowTests
 {
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenCaptureSucceeds_PersistsDocumentAndNotifiesEditor()
     {
         var captureId = CaptureId.New();
@@ -38,25 +39,25 @@ public sealed class CaptureWorkflowTests
                 CaptureTargetSelectionMode.Picker),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.Equal(repository.CreatedDocumentId, result.DocumentId);
-        Assert.Equal(capture, repository.CreatedFromCapture);
-        Assert.Equal(CaptureTargetKind.Region, captureService.LastRequest?.TargetKind);
-        Assert.False(captureService.LastRequest?.IncludeCursor);
-        Assert.Equal(TimeSpan.FromMilliseconds(250), captureService.LastRequest?.Delay);
-        Assert.Equal("region-1", captureService.LastRequest?.TargetHint);
-        Assert.Equal(new RectD(1, 2, 30, 40), captureService.LastRequest?.Bounds);
-        Assert.Equal(CaptureTargetSelectionMode.Picker, selector.LastRequest?.SelectionMode);
-        Assert.Equal("Picker", captureService.LastRequest?.TargetMetadata?["selectionMode"]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual(repository.CreatedDocumentId, result.DocumentId);
+        Assert.AreEqual(capture, repository.CreatedFromCapture);
+        Assert.AreEqual(CaptureTargetKind.Region, captureService.LastRequest?.TargetKind);
+        Assert.IsFalse(captureService.LastRequest?.IncludeCursor);
+        Assert.AreEqual(TimeSpan.FromMilliseconds(250), captureService.LastRequest?.Delay);
+        Assert.AreEqual("region-1", captureService.LastRequest?.TargetHint);
+        Assert.AreEqual(new RectD(1, 2, 30, 40), captureService.LastRequest?.Bounds);
+        Assert.AreEqual(CaptureTargetSelectionMode.Picker, selector.LastRequest?.SelectionMode);
+        Assert.AreEqual("Picker", captureService.LastRequest?.TargetMetadata?["selectionMode"]);
 
-        var completed = Assert.IsType<CaptureCompletedEditorMessage>(
-            Assert.Single(editorMessages.Messages));
-        Assert.Equal(captureId, completed.CaptureId);
-        Assert.Equal(repository.CreatedDocumentId, completed.DocumentId);
-        Assert.Equal("capture.png", completed.SourceImagePath);
+        var completed = Assert.IsExactInstanceOfType<CaptureCompletedEditorMessage>(
+            Assert.ContainsSingle(editorMessages.Messages));
+        Assert.AreEqual(captureId, completed.CaptureId);
+        Assert.AreEqual(repository.CreatedDocumentId, completed.DocumentId);
+        Assert.AreEqual("capture.png", completed.SourceImagePath);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenSelectionIsCancelled_DoesNotCaptureOrNotify()
     {
         var selector = new FakeCaptureTargetSelector(selection: null);
@@ -70,14 +71,14 @@ public sealed class CaptureWorkflowTests
             CaptureWorkflowRequest.FullScreen(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(CaptureFailureReason.Cancelled, result.Failure?.Reason);
-        Assert.Equal(0, captureService.CallCount);
-        Assert.Null(repository.CreatedFromCapture);
-        Assert.Empty(editorMessages.Messages);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(CaptureFailureReason.Cancelled, result.Failure?.Reason);
+        Assert.AreEqual(0, captureService.CallCount);
+        Assert.IsNull(repository.CreatedFromCapture);
+        Assert.IsEmpty(editorMessages.Messages);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenTargetSelectionIsUnsupported_NotifiesFailure()
     {
         var selector = new FakeCaptureTargetSelector(
@@ -95,17 +96,17 @@ public sealed class CaptureWorkflowTests
                 Delay: TimeSpan.Zero),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(CaptureFailureReason.Unsupported, result.Failure?.Reason);
-        Assert.Equal(0, captureService.CallCount);
-        Assert.Null(repository.CreatedFromCapture);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(CaptureFailureReason.Unsupported, result.Failure?.Reason);
+        Assert.AreEqual(0, captureService.CallCount);
+        Assert.IsNull(repository.CreatedFromCapture);
 
-        var failed = Assert.IsType<CaptureFailedEditorMessage>(
-            Assert.Single(editorMessages.Messages));
-        Assert.Equal(CaptureFailureReason.Unsupported, failed.Reason);
+        var failed = Assert.IsExactInstanceOfType<CaptureFailedEditorMessage>(
+            Assert.ContainsSingle(editorMessages.Messages));
+        Assert.AreEqual(CaptureFailureReason.Unsupported, failed.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenCaptureFails_NotifiesEditorAndDoesNotPersist()
     {
         var failure = new CaptureFailure(CaptureFailureReason.PermissionDenied, "Capture permission was denied.");
@@ -120,17 +121,17 @@ public sealed class CaptureWorkflowTests
             CaptureWorkflowRequest.FullScreen(),
             CancellationToken.None);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(failure, result.Failure);
-        Assert.Null(repository.CreatedFromCapture);
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual(failure, result.Failure);
+        Assert.IsNull(repository.CreatedFromCapture);
 
-        var failed = Assert.IsType<CaptureFailedEditorMessage>(
-            Assert.Single(editorMessages.Messages));
-        Assert.Equal(CaptureFailureReason.PermissionDenied, failed.Reason);
-        Assert.Equal("Capture permission was denied.", failed.Message);
+        var failed = Assert.IsExactInstanceOfType<CaptureFailedEditorMessage>(
+            Assert.ContainsSingle(editorMessages.Messages));
+        Assert.AreEqual(CaptureFailureReason.PermissionDenied, failed.Reason);
+        Assert.AreEqual("Capture permission was denied.", failed.Message);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CaptureAsync_WhenEditorNotificationFails_StillReturnsSuccessfulCapture()
     {
         var capture = new CaptureResult(
@@ -149,9 +150,9 @@ public sealed class CaptureWorkflowTests
             CaptureWorkflowRequest.FullScreen(),
             CancellationToken.None);
 
-        Assert.True(result.Succeeded);
-        Assert.NotNull(result.DocumentId);
-        Assert.False(result.EditorNotification?.Succeeded);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.DocumentId);
+        Assert.IsFalse(result.EditorNotification?.Succeeded);
     }
 
     private sealed class FakeCaptureTargetSelector(CaptureTargetSelection? selection) : ICaptureTargetSelector
