@@ -22,11 +22,21 @@ public sealed class FileSystemDocumentRepositoryTests
             new Dictionary<string, string> { ["source"] = "test" });
 
         CaptureDocument document = await repository.CreateFromCaptureAsync(capture, CancellationToken.None);
+        var layer = new AnnotationLayer { Name = "Callouts" };
+        document.Layers.Add(layer);
         document.Annotations.Add(new AnnotationObject
         {
             Kind = AnnotationKind.Rectangle,
+            LayerId = layer.Id,
+            IsVisible = false,
             Bounds = new RectD(10, 20, 300, 200),
             Style = AnnotationStyle.Default
+        });
+        document.Annotations.Add(new AnnotationObject
+        {
+            Kind = AnnotationKind.Text,
+            LayerId = layer.Id,
+            Text = "Check this"
         });
 
         await repository.SaveAsync(document, CancellationToken.None);
@@ -36,8 +46,12 @@ public sealed class FileSystemDocumentRepositoryTests
         Assert.IsNotNull(loaded);
         Assert.AreEqual(document.Id, loaded.Id);
         Assert.AreEqual("source.png", loaded.SourceImage.Path);
-        Assert.ContainsSingle(loaded.Annotations);
+        Assert.HasCount(2, loaded.Annotations);
         Assert.AreEqual(AnnotationKind.Rectangle, loaded.Annotations[0].Kind);
+        Assert.IsFalse(loaded.Annotations[0].IsVisible);
+        Assert.AreEqual(layer.Id, Assert.ContainsSingle(loaded.Layers).Id);
+        Assert.AreEqual("Callouts", loaded.Layers[0].Name);
+        Assert.IsTrue(loaded.Annotations.All(annotation => annotation.LayerId == layer.Id));
         Assert.AreEqual("test", loaded.Metadata.Properties["source"]);
     }
 

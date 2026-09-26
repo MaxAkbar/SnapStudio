@@ -52,6 +52,87 @@ public sealed class SystemDrawingDocumentRendererTests
     }
 
     [TestMethod]
+    public async Task RenderAsync_SkipsHiddenAnnotation()
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        string sourcePath = Path.Combine(workspace.Path, "source.png");
+        CreateSolidImage(sourcePath, 32, 32, Color.White);
+        var document = new CaptureDocument
+        {
+            Id = DocumentId.New(),
+            SourceImage = new ImageAsset(sourcePath, 32, 32, ImagePixelFormat.Bgra32),
+            Annotations =
+            [
+                new AnnotationObject
+                {
+                    Kind = AnnotationKind.Rectangle,
+                    IsVisible = false,
+                    Bounds = new RectD(4, 4, 20, 20),
+                    Style = new AnnotationStyle(
+                        ColorRgba.Transparent,
+                        new ColorRgba(196, 43, 28, 255),
+                        ColorRgba.Black,
+                        1,
+                        1)
+                }
+            ]
+        };
+        var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
+
+        RenderResult result = await renderer.RenderAsync(
+            new RenderRequest(document.Id, 1, null),
+            CancellationToken.None);
+
+        Assert.IsTrue(result.Succeeded);
+        using Bitmap rendered = LoadBitmap(result.Image!.Pixels);
+        Assert.AreEqual(Color.White.ToArgb(), rendered.GetPixel(12, 12).ToArgb());
+    }
+
+    [TestMethod]
+    public async Task RenderAsync_UsesLayerOrderAndHidesEveryObjectInHiddenLayer()
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        string sourcePath = Path.Combine(workspace.Path, "source.png");
+        CreateSolidImage(sourcePath, 32, 32, Color.White);
+        var bottom = new AnnotationLayer { Name = "Bottom" };
+        var top = new AnnotationLayer { Name = "Top" };
+        AnnotationObject topRed = CreateFilledRectangle(
+            new RectD(4, 4, 20, 20), new ColorRgba(220, 0, 0, 255));
+        AnnotationObject topGreen = CreateFilledRectangle(
+            new RectD(24, 4, 6, 20), new ColorRgba(0, 220, 0, 255));
+        AnnotationObject bottomBlue = CreateFilledRectangle(
+            new RectD(4, 4, 20, 20), new ColorRgba(0, 0, 220, 255));
+        topRed.LayerId = top.Id;
+        topGreen.LayerId = top.Id;
+        bottomBlue.LayerId = bottom.Id;
+        var document = new CaptureDocument
+        {
+            Id = DocumentId.New(),
+            SourceImage = new ImageAsset(sourcePath, 32, 32, ImagePixelFormat.Bgra32),
+            Layers = [bottom, top],
+            Annotations = [topRed, topGreen, bottomBlue]
+        };
+        var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
+
+        RenderResult shown = await renderer.RenderAsync(
+            new RenderRequest(document.Id, 1, null), CancellationToken.None);
+        Assert.IsTrue(shown.Succeeded);
+        using (Bitmap bitmap = LoadBitmap(shown.Image!.Pixels))
+        {
+            Assert.IsTrue(bitmap.GetPixel(12, 12).R > 180);
+            Assert.IsTrue(bitmap.GetPixel(26, 12).G > 180);
+        }
+
+        top.IsVisible = false;
+        RenderResult hidden = await renderer.RenderAsync(
+            new RenderRequest(document.Id, 1, null), CancellationToken.None);
+        Assert.IsTrue(hidden.Succeeded);
+        using Bitmap hiddenBitmap = LoadBitmap(hidden.Image!.Pixels);
+        Assert.IsTrue(hiddenBitmap.GetPixel(12, 12).B > 180);
+        Assert.AreEqual(Color.White.ToArgb(), hiddenBitmap.GetPixel(26, 12).ToArgb());
+    }
+
+    [TestMethod]
     public async Task RenderAsync_BlursRegionAnnotation()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();

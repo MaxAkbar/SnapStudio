@@ -37,6 +37,7 @@ public sealed class CaptureDocumentWorkspaceEditorTests
                 {
                     Id = Guid.NewGuid(),
                     Kind = AnnotationKind.Rectangle,
+                    IsVisible = false,
                     Bounds = new RectD(1, 2, 3, 4)
                 }
             ],
@@ -49,6 +50,9 @@ public sealed class CaptureDocumentWorkspaceEditorTests
                     new Dictionary<string, string> { ["width"] = "50" })
             ]
         };
+        var layer = new AnnotationLayer { Name = "Notes", IsVisible = false };
+        source.Layers.Add(layer);
+        source.Annotations[0].LayerId = layer.Id;
 
         CaptureDocument duplicate = CaptureDocumentWorkspaceEditor.CreateDuplicate(
             source,
@@ -59,11 +63,17 @@ public sealed class CaptureDocumentWorkspaceEditorTests
         Assert.AreEqual("Copy", duplicate.Metadata.Properties["title"]);
         Assert.AreEqual(source.Id.ToString(), duplicate.Metadata.Properties["duplicatedFromDocumentId"]);
         Assert.ContainsSingle(duplicate.Annotations);
+        Assert.IsFalse(duplicate.Annotations[0].IsVisible);
+        Assert.AreEqual(layer.Id, duplicate.Annotations[0].LayerId);
+        Assert.AreEqual(layer.Id, Assert.ContainsSingle(duplicate.Layers).Id);
+        Assert.IsFalse(duplicate.Layers[0].IsVisible);
         Assert.ContainsSingle(duplicate.DestructiveOperations);
         Assert.AreEqual(default, duplicate.Metadata.CreatedAtUtc);
 
         duplicate.DestructiveOperations[0].Parameters["width"] = "20";
         Assert.AreEqual("50", source.DestructiveOperations[0].Parameters["width"]);
+        duplicate.Layers[0].Name = "Changed";
+        Assert.AreEqual("Notes", source.Layers[0].Name);
     }
 
     [TestMethod]

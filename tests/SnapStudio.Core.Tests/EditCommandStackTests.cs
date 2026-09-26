@@ -103,6 +103,27 @@ public sealed class EditCommandStackTests
     }
 
     [TestMethod]
+    public async Task RemoveAnnotationCommand_Undo_RestoresLayerOrder()
+    {
+        var document = new CaptureDocument();
+        var stack = new EditCommandStack();
+        AnnotationObject bottom = CreateAnnotation(AnnotationKind.Rectangle);
+        AnnotationObject top = CreateAnnotation(AnnotationKind.Text);
+        document.Annotations.Add(bottom);
+        document.Annotations.Add(top);
+
+        await stack.ExecuteAsync(
+            document,
+            new RemoveAnnotationCommand(bottom),
+            CancellationToken.None);
+        Assert.AreEqual(top.Id, Assert.ContainsSingle(document.Annotations).Id);
+
+        Assert.IsTrue(await stack.UndoAsync(document, CancellationToken.None));
+        Assert.AreEqual(bottom.Id, document.Annotations[0].Id);
+        Assert.AreEqual(top.Id, document.Annotations[1].Id);
+    }
+
+    [TestMethod]
     public async Task UpdateAnnotationBoundsCommand_UndoRedo_UpdatesBounds()
     {
         var document = new CaptureDocument();
@@ -164,6 +185,28 @@ public sealed class EditCommandStackTests
     }
 
     [TestMethod]
+    public async Task UpdateAnnotationVisibilityCommand_UndoRedo_RestoresVisibility()
+    {
+        var document = new CaptureDocument();
+        var stack = new EditCommandStack();
+        AnnotationObject annotation = CreateAnnotation(AnnotationKind.Rectangle);
+        document.Annotations.Add(annotation);
+
+        await stack.ExecuteAsync(
+            document,
+            new UpdateAnnotationVisibilityCommand(annotation.Id, true, false),
+            CancellationToken.None);
+
+        Assert.IsFalse(annotation.IsVisible);
+        Assert.AreEqual("Hide Object", stack.UndoDisplayName);
+
+        Assert.IsTrue(await stack.UndoAsync(document, CancellationToken.None));
+        Assert.IsTrue(annotation.IsVisible);
+        Assert.IsTrue(await stack.RedoAsync(document, CancellationToken.None));
+        Assert.IsFalse(annotation.IsVisible);
+    }
+
+    [TestMethod]
     public async Task UpdateAnnotationTextCommand_UndoRedo_UpdatesText()
     {
         var document = new CaptureDocument();
@@ -195,12 +238,14 @@ public sealed class EditCommandStackTests
     [TestMethod]
     public async Task UpdateDocumentRasterCommand_UndoRedo_UpdatesSourceAndAnnotations()
     {
+        AnnotationObject beforeAnnotation = CreateAnnotation(AnnotationKind.Rectangle);
+        beforeAnnotation.IsVisible = false;
         var document = new CaptureDocument
         {
             SourceImage = new ImageAsset("before.png", 100, 80, ImagePixelFormat.Bgra32),
             Annotations =
             [
-                CreateAnnotation(AnnotationKind.Rectangle)
+                beforeAnnotation
             ]
         };
         var stack = new EditCommandStack();
@@ -228,15 +273,18 @@ public sealed class EditCommandStackTests
 
         Assert.AreEqual(afterImage, document.SourceImage);
         Assert.AreEqual(new RectD(1, 2, 3, 4), document.Annotations[0].Bounds);
+        Assert.IsTrue(document.Annotations[0].IsVisible);
         Assert.ContainsSingle(document.DestructiveOperations);
 
         bool undone = await stack.UndoAsync(document, CancellationToken.None);
+        Assert.IsFalse(document.Annotations[0].IsVisible);
         bool redone = await stack.RedoAsync(document, CancellationToken.None);
 
         Assert.IsTrue(undone);
         Assert.IsTrue(redone);
         Assert.AreEqual(afterImage, document.SourceImage);
         Assert.AreEqual(new RectD(1, 2, 3, 4), document.Annotations[0].Bounds);
+        Assert.IsTrue(document.Annotations[0].IsVisible);
     }
 
     [TestMethod]
