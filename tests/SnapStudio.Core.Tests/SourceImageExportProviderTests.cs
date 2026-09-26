@@ -74,7 +74,26 @@ public sealed class SourceImageExportProviderTests
         Assert.Contains("cannot export", result.ErrorMessage ?? string.Empty);
     }
 
-    private sealed class FakeDocumentRepository(CaptureDocument? document) : IDocumentRepository
+    [TestMethod]
+    public async Task ExportAsync_WhenDocumentVersionIsUnsupported_ReturnsFailure()
+    {
+        var provider = new SourceImageExportProvider(
+            ExportFormat.Png,
+            new FakeDocumentRepository(null, new NotSupportedException("Newer document version.")));
+
+        ExportResult result = await provider.ExportAsync(
+            new ExportRequest(
+                DocumentId.New(),
+                ExportFormat.Png,
+                "export.png",
+                new Dictionary<string, string>()),
+            CancellationToken.None);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("Newer document version", result.ErrorMessage ?? string.Empty);
+    }
+
+    private sealed class FakeDocumentRepository(CaptureDocument? document, Exception? readFailure = null) : IDocumentRepository
     {
         public Task<CaptureDocument> CreateFromCaptureAsync(
             CaptureResult capture,
@@ -85,7 +104,9 @@ public sealed class SourceImageExportProviderTests
 
         public Task<CaptureDocument?> GetAsync(DocumentId id, CancellationToken cancellationToken)
         {
-            return Task.FromResult(document?.Id == id ? document : null);
+            return readFailure is null
+                ? Task.FromResult(document?.Id == id ? document : null)
+                : Task.FromException<CaptureDocument?>(readFailure);
         }
 
         public Task SaveAsync(CaptureDocument document, CancellationToken cancellationToken)

@@ -24,6 +24,11 @@ namespace SnapStudio.App;
 public sealed partial class MainPage : Page
 {
     private const double MinimumDragDisplaySize = 4;
+    private const double HistoryCollapsedWidth = 52;
+    private const double HistoryExpandedDefaultWidth = 226;
+    private const double HistoryMinimumWidth = 226;
+    private const double HistoryMaximumWidth = 560;
+    private const double HistorySplitterWidth = 10;
     private const double RightControlsCollapsedWidth = 52;
     private const double RightControlsExpandedDefaultWidth = 280;
     private const double RightControlsMinimumWidth = 238;
@@ -39,6 +44,11 @@ public sealed partial class MainPage : Page
     private Point _rectangleDragStart;
     private bool _isUpdatingBindings;
     private bool _isReadyForControlEvents;
+    private bool _historyPaneIsExpanded = true;
+    private bool _historySplitterIsDragging;
+    private Point _historySplitterStartPoint;
+    private double _historySplitterStartWidth;
+    private double _historyExpandedWidth = HistoryExpandedDefaultWidth;
     private bool _rightControlsPaneIsExpanded = true;
     private bool _rightControlsSplitterIsDragging;
     private Point _rightControlsSplitterStartPoint;
@@ -609,6 +619,146 @@ public sealed partial class MainPage : Page
         UpdateBindingsFromViewModel();
     }
 
+    private void HistorySplitter_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_historyPaneIsExpanded)
+        {
+            return;
+        }
+
+        _historySplitterIsDragging = true;
+        _historySplitterStartPoint = e.GetCurrentPoint(MainContentGrid).Position;
+        _historySplitterStartWidth = HistoryColumn.ActualWidth > 0
+            ? HistoryColumn.ActualWidth
+            : HistoryColumn.Width.Value;
+        HistorySplitter.CapturePointer(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void HistorySplitter_PointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_historySplitterIsDragging)
+        {
+            return;
+        }
+
+        Point currentPoint = e.GetCurrentPoint(MainContentGrid).Position;
+        ResizeHistoryPane(_historySplitterStartWidth
+            + (currentPoint.X - _historySplitterStartPoint.X));
+        e.Handled = true;
+    }
+
+    private void HistorySplitter_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        EndHistorySplitterDrag();
+        e.Handled = true;
+    }
+
+    private void HistorySplitter_PointerCanceled(object sender, PointerRoutedEventArgs e)
+    {
+        EndHistorySplitterDrag();
+        e.Handled = true;
+    }
+
+    private void EndHistorySplitterDrag()
+    {
+        if (!_historySplitterIsDragging)
+        {
+            return;
+        }
+
+        _historySplitterIsDragging = false;
+        HistorySplitter.ReleasePointerCaptures();
+    }
+
+    private void ResizeHistoryPane(double requestedWidth)
+    {
+        double resizedWidth = Math.Clamp(
+            requestedWidth,
+            HistoryMinimumWidth,
+            GetHistoryMaximumWidth());
+
+        _historyExpandedWidth = resizedWidth;
+        HistoryColumn.Width = new GridLength(resizedWidth);
+    }
+
+    private void HistoryPanePinButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        CollapseHistoryPane();
+    }
+
+    private void HistoryPaneExpandButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        ExpandHistoryPane();
+    }
+
+    private void CollapseHistoryPane()
+    {
+        if (!_historyPaneIsExpanded)
+        {
+            return;
+        }
+
+        EndHistorySplitterDrag();
+        if (HistoryColumn.ActualWidth >= HistoryMinimumWidth)
+        {
+            _historyExpandedWidth = Math.Clamp(
+                HistoryColumn.ActualWidth,
+                HistoryMinimumWidth,
+                GetHistoryMaximumWidth());
+        }
+
+        _historyPaneIsExpanded = false;
+        HistoryExpandedView.Visibility = Visibility.Collapsed;
+        HistoryCollapsedView.Visibility = Visibility.Visible;
+        HistorySplitter.Visibility = Visibility.Collapsed;
+        HistorySplitterColumn.Width = new GridLength(0);
+        HistoryColumn.MinWidth = HistoryCollapsedWidth;
+        HistoryColumn.Width = new GridLength(HistoryCollapsedWidth);
+    }
+
+    private void ExpandHistoryPane()
+    {
+        if (_historyPaneIsExpanded)
+        {
+            return;
+        }
+
+        _historyPaneIsExpanded = true;
+        HistoryColumn.MinWidth = HistoryMinimumWidth;
+        HistorySplitterColumn.Width = new GridLength(HistorySplitterWidth);
+        HistorySplitter.Visibility = Visibility.Visible;
+
+        double restoredWidth = Math.Clamp(
+            _historyExpandedWidth,
+            HistoryMinimumWidth,
+            GetHistoryMaximumWidth());
+        HistoryColumn.Width = new GridLength(restoredWidth);
+        HistoryCollapsedView.Visibility = Visibility.Collapsed;
+        HistoryExpandedView.Visibility = Visibility.Visible;
+    }
+
+    private double GetHistoryMaximumWidth()
+    {
+        double rightWidth = RightControlsColumn.ActualWidth > 0
+            ? RightControlsColumn.ActualWidth
+            : RightControlsColumn.Width.Value;
+        double availableWidth = MainContentGrid.ActualWidth
+            - rightWidth
+            - HistorySplitterColumn.Width.Value
+            - RightControlsSplitterColumn.Width.Value
+            - EditorMinimumWidth;
+
+        if (double.IsNaN(availableWidth) || availableWidth <= 0)
+        {
+            return HistoryMaximumWidth;
+        }
+
+        return Math.Max(
+            HistoryMinimumWidth,
+            Math.Min(HistoryMaximumWidth, availableWidth));
+    }
+
     private void RightControlsSplitter_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         if (!_rightControlsPaneIsExpanded)
@@ -733,12 +883,13 @@ public sealed partial class MainPage : Page
 
     private double GetRightControlsMaximumWidth()
     {
-        double splitterWidth = RightControlsSplitterColumn.ActualWidth > 0
-            ? RightControlsSplitterColumn.ActualWidth
-            : RightControlsSplitterWidth;
+        double historyWidth = HistoryColumn.ActualWidth > 0
+            ? HistoryColumn.ActualWidth
+            : HistoryColumn.Width.Value;
         double availableWidth = MainContentGrid.ActualWidth
-            - HistoryColumn.ActualWidth
-            - splitterWidth
+            - historyWidth
+            - HistorySplitterColumn.Width.Value
+            - RightControlsSplitterColumn.Width.Value
             - EditorMinimumWidth;
 
         if (double.IsNaN(availableWidth) || availableWidth <= 0)
@@ -779,6 +930,38 @@ public sealed partial class MainPage : Page
     private async void AddLayerButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         await ViewModel.AddLayerAsync(CancellationToken.None);
+        UpdateBindingsFromViewModel();
+    }
+
+    private async void DeleteLayerButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (!ViewModel.TryGetActiveLayerForRemoval(
+            out Guid layerId,
+            out string layerName,
+            out int objectCount))
+        {
+            return;
+        }
+
+        if (objectCount > 0)
+        {
+            var confirmation = new ContentDialog
+            {
+                XamlRoot = this.XamlRoot,
+                Title = $"Delete {layerName}?",
+                Content = $"This layer contains {objectCount} object{(objectCount == 1 ? string.Empty : "s")}. "
+                    + "Deleting the layer also removes its objects. You can undo this action.",
+                PrimaryButtonText = "Delete layer",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close
+            };
+            if (await confirmation.ShowAsync() != ContentDialogResult.Primary)
+            {
+                return;
+            }
+        }
+
+        await ViewModel.DeleteLayerAsync(layerId, CancellationToken.None);
         UpdateBindingsFromViewModel();
     }
 

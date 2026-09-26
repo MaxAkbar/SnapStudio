@@ -93,6 +93,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private readonly ICrashRecoveryJournal? _crashRecoveryJournal;
     private readonly IDiagnosticLog? _diagnosticLog;
     private readonly IEditCommandStack? _editCommandStack;
+    private readonly DocumentAnnotationEditor? _annotationEditor;
     private readonly ICaptureWorkflow? _captureWorkflow;
     private readonly IImageImportService? _imageImportService;
     private readonly IClipboardService? _clipboardService;
@@ -117,8 +118,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private readonly IWorkspaceShellService? _workspaceShellService;
     private readonly string _recoverySessionId = string.Empty;
     private readonly AnnotationSelectionState _annotationSelection = new();
-    private readonly HashSet<Guid> _collapsedLayerIds = [];
-    private Guid? _activeLayerId;
+    private readonly AnnotationLayerWorkspace _layerWorkspace = new();
     private readonly List<DocumentSummaryItem> _allRecentDocuments = [];
     private readonly DocumentThumbnailRefreshCoordinator _recentThumbnailRefresh = new();
     private readonly CancellationTokenSource _recentThumbnailRefreshCancellation = new();
@@ -229,6 +229,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         _documentThumbnailCache = documentThumbnailCache;
         _documentWorkspaceBootstrapper = documentWorkspaceBootstrapper;
         _editCommandStack = editCommandStack;
+        _annotationEditor = new DocumentAnnotationEditor(editCommandStack);
         _documentRenderer = documentRenderer;
         _documentRasterEditor = documentRasterEditor;
         _captureTargetSelector = captureTargetSelector;
@@ -267,11 +268,15 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public ObservableCollection<DocumentSummaryItem> RecentDocuments { get; } = [];
 
-    public ObservableCollection<AnnotationOverlayItem> AnnotationOverlays { get; } = [];
+    public ObservableCollection<AnnotationOverlayItem> AnnotationOverlays => _layerWorkspace.Overlays;
 
-    public ObservableCollection<AnnotationLayerItem> AnnotationLayers { get; } = [];
+    public ObservableCollection<AnnotationLayerItem> AnnotationLayers => _layerWorkspace.Layers;
 
     public string AnnotationLayerCount => AnnotationLayers.Count.ToString(CultureInfo.InvariantCulture);
+
+    public bool CanDeleteActiveLayer => _currentDocument is { Layers.Count: > 1 }
+        && _layerWorkspace.ActiveLayerId is Guid activeLayerId
+        && _currentDocument.Layers.Any(layer => layer.Id == activeLayerId);
 
     public Visibility AnnotationLayersEmptyVisibility => AnnotationLayers.Count == 0
         ? Visibility.Visible
@@ -1356,7 +1361,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         if (_currentDocument is null
             || _documentRepository is null
-            || _editCommandStack is null
+            || _annotationEditor is null
             || _annotationSelection.SelectedAnnotationId is not Guid selectedId)
         {
             return;
@@ -1378,13 +1383,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
-        string? before = annotation.Text;
-        await _editCommandStack
-            .ExecuteAsync(
-                _currentDocument,
-                new UpdateAnnotationTextCommand(annotation.Id, before, AnnotationText),
-                cancellationToken)
-            .ConfigureAwait(true);
+        await _annotationEditor.SetTextAsync(
+            _currentDocument,
+            annotation,
+            AnnotationText,
+            cancellationToken).ConfigureAwait(true);
 
         _annotationSelection.Select(_currentDocument, annotation.Id);
         await SaveCurrentDocumentAsync("Edit Text complete.", cancellationToken)
@@ -3075,7 +3078,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         string displayName,
         CancellationToken cancellationToken)
     {
-        if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
+        if (_currentDocument is null || _documentRepository is null || _annotationEditor is null)
         {
             return;
         }
@@ -3100,12 +3103,12 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
-        await _editCommandStack
-            .ExecuteAsync(
-                _currentDocument,
-                new UpdateAnnotationBoundsCommand(annotationId, before, after, displayName),
-                cancellationToken)
-            .ConfigureAwait(true);
+        await _annotationEditor.SetBoundsAsync(
+            _currentDocument,
+            annotation,
+            after,
+            displayName,
+            cancellationToken).ConfigureAwait(true);
 
         _annotationSelection.Select(_currentDocument, annotationId);
         await SaveCurrentDocumentAsync($"{displayName} complete.", cancellationToken)
@@ -3117,7 +3120,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         RectD? sourceBounds,
         CancellationToken cancellationToken)
     {
-        if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
+        if (_currentDocument is null || _documentRepository is null || _annotationEditor is null)
         {
             ShowCaptureNotice(
                 "No document",
@@ -3130,30 +3133,16 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             ? CreateAnnotation(_currentDocument, annotationKind, bounds)
             : CreateCenteredAnnotation(_currentDocument, annotationKind);
 
-        AnnotationLayer? activeLayer = _currentDocument.Layers
-            .FirstOrDefault(layer => layer.Id == _activeLayerId);
-        if (activeLayer is null)
-        {
-            DocumentLayers.EnsureInitialized(_currentDocument);
-            activeLayer = _currentDocument.Layers[^1];
-            _activeLayerId = activeLayer.Id;
-        }
-
-        if (!activeLayer.IsVisible)
+        if (!_layerWorkspace.TryAssignActiveLayer(_currentDocument, annotation))
         {
             StatusText = "Show the selected layer before adding an object.";
             return;
         }
 
-        annotation.LayerId = activeLayer.Id;
-        _collapsedLayerIds.Remove(activeLayer.Id);
-
-        await _editCommandStack
-            .ExecuteAsync(
-                _currentDocument,
-                new AddAnnotationCommand(annotation),
-                cancellationToken)
-            .ConfigureAwait(true);
+        await _annotationEditor.AddAsync(
+            _currentDocument,
+            annotation,
+            cancellationToken).ConfigureAwait(true);
 
         _annotationSelection.Select(_currentDocument, annotation.Id);
         await SaveCurrentDocumentAsync($"{annotationKind} added.", cancellationToken)
@@ -3169,11 +3158,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         if (_annotationSelection.Select(_currentDocument, annotationId))
         {
-            _activeLayerId = GetSelectedAnnotation()?.LayerId;
-            if (_activeLayerId is Guid layerId)
-            {
-                _collapsedLayerIds.Remove(layerId);
-            }
+            _layerWorkspace.SelectAnnotation(GetSelectedAnnotation());
             SyncStyleControlsFromSelectedAnnotation();
             RefreshAnnotationOverlays();
             NotifyEditorStateChanged();
@@ -3199,7 +3184,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     {
         if (_currentDocument is null
             || _documentRepository is null
-            || _editCommandStack is null
+            || _annotationEditor is null
             || _annotationSelection.SelectedAnnotationId is not Guid selectedId)
         {
             return;
@@ -3215,12 +3200,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
-        await _editCommandStack
-            .ExecuteAsync(
-                _currentDocument,
-                new RemoveAnnotationCommand(annotation),
-                cancellationToken)
-            .ConfigureAwait(true);
+        await _annotationEditor.RemoveAsync(
+            _currentDocument,
+            annotation,
+            cancellationToken).ConfigureAwait(true);
 
         _annotationSelection.Clear();
         await SaveCurrentDocumentAsync("Annotation deleted.", cancellationToken).ConfigureAwait(true);
@@ -3228,12 +3211,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public void SelectLayer(Guid layerId)
     {
-        if (_currentDocument?.Layers.All(layer => layer.Id != layerId) != false)
+        if (!_layerWorkspace.SelectLayer(_currentDocument, layerId))
         {
             return;
         }
 
-        _activeLayerId = layerId;
         _annotationSelection.Clear();
         ApplyAnnotationToolDefaultsWhenUnselected();
         RefreshAnnotationOverlays();
@@ -3243,19 +3225,33 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public void SetLayerExpanded(Guid layerId, bool isExpanded)
     {
-        if (_currentDocument?.Layers.Any(layer => layer.Id == layerId) != true)
+        _layerWorkspace.SetExpanded(_currentDocument, layerId, isExpanded);
+    }
+
+    public bool TryGetActiveLayerForRemoval(
+        out Guid layerId,
+        out string layerName,
+        out int objectCount)
+    {
+        layerId = Guid.Empty;
+        layerName = string.Empty;
+        objectCount = 0;
+        if (!CanDeleteActiveLayer || _currentDocument is null)
         {
-            return;
+            return false;
         }
 
-        if (isExpanded)
+        AnnotationLayer? layer = _currentDocument.Layers
+            .FirstOrDefault(candidate => candidate.Id == _layerWorkspace.ActiveLayerId);
+        if (layer is null)
         {
-            _collapsedLayerIds.Remove(layerId);
+            return false;
         }
-        else
-        {
-            _collapsedLayerIds.Add(layerId);
-        }
+
+        layerId = layer.Id;
+        layerName = layer.Name;
+        objectCount = _currentDocument.Annotations.Count(annotation => annotation.LayerId == layer.Id);
+        return true;
     }
 
     public async Task AddLayerAsync(CancellationToken cancellationToken)
@@ -3265,20 +3261,43 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
-        int number = 1;
-        while (_currentDocument.Layers.Any(layer => layer.Name == $"Layer {number}"))
-        {
-            number++;
-        }
-
-        var layer = new AnnotationLayer { Name = $"Layer {number}" };
-        await _editCommandStack.ExecuteAsync(
+        AnnotationLayer layer = await _layerWorkspace.AddLayerAsync(
             _currentDocument,
-            new AddAnnotationLayerCommand(layer),
+            _editCommandStack,
             cancellationToken).ConfigureAwait(true);
-        _activeLayerId = layer.Id;
         _annotationSelection.Clear();
         await SaveCurrentDocumentAsync($"{layer.Name} added.", cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task DeleteLayerAsync(Guid layerId, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
+        {
+            return;
+        }
+
+        int objectCount = _currentDocument.Annotations.Count(annotation => annotation.LayerId == layerId);
+        bool hadSelection = _annotationSelection.HasSelection;
+        bool removed = await _layerWorkspace.RemoveLayerAsync(
+            _currentDocument,
+            layerId,
+            _editCommandStack,
+            cancellationToken).ConfigureAwait(true);
+        if (!removed)
+        {
+            return;
+        }
+
+        _annotationSelection.RetainExisting(_currentDocument);
+        if (hadSelection && !_annotationSelection.HasSelection)
+        {
+            ApplyAnnotationToolDefaultsWhenUnselected();
+        }
+
+        string status = objectCount == 0
+            ? "Layer deleted."
+            : $"Layer and {objectCount} object{(objectCount == 1 ? string.Empty : "s")} deleted.";
+        await SaveCurrentDocumentAsync(status, cancellationToken).ConfigureAwait(true);
     }
 
     public async Task MoveSelectedAnnotationToLayerAsync(
@@ -3288,25 +3307,22 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         if (_currentDocument is null
             || _documentRepository is null
             || _editCommandStack is null
-            || _annotationSelection.SelectedAnnotationId is not Guid annotationId)
+            || !_annotationSelection.HasSelection)
         {
             return;
         }
 
-        AnnotationLayer? layer = _currentDocument.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
-        AnnotationObject? annotation = GetSelectedAnnotation();
-        if (layer is null || annotation?.LayerId is not Guid beforeLayerId
-            || beforeLayerId == layerId || !layer.IsVisible)
-        {
-            return;
-        }
-
-        await _editCommandStack.ExecuteAsync(
+        AnnotationLayer? layer = await _layerWorkspace.MoveAnnotationAsync(
             _currentDocument,
-            new UpdateAnnotationLayerCommand(annotationId, beforeLayerId, layerId),
+            GetSelectedAnnotation(),
+            layerId,
+            _editCommandStack,
             cancellationToken).ConfigureAwait(true);
-        _activeLayerId = layerId;
-        _collapsedLayerIds.Remove(layerId);
+        if (layer is null)
+        {
+            return;
+        }
+
         await SaveCurrentDocumentAsync($"Object moved to {layer.Name}.", cancellationToken).ConfigureAwait(true);
     }
 
@@ -3317,24 +3333,23 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
-        AnnotationLayer? layer = _currentDocument.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
-        if (layer is null)
+        bool? nextVisibility = await _layerWorkspace.ToggleVisibilityAsync(
+            _currentDocument,
+            layerId,
+            _editCommandStack,
+            cancellationToken).ConfigureAwait(true);
+        if (nextVisibility is null)
         {
             return;
         }
 
-        bool nextVisibility = !layer.IsVisible;
-        await _editCommandStack.ExecuteAsync(
-            _currentDocument,
-            new UpdateLayerVisibilityCommand(layerId, layer.IsVisible, nextVisibility),
-            cancellationToken).ConfigureAwait(true);
-        if (!nextVisibility && GetSelectedAnnotation()?.LayerId == layerId)
+        if (nextVisibility == false && GetSelectedAnnotation()?.LayerId == layerId)
         {
             _annotationSelection.Clear();
         }
 
         await SaveCurrentDocumentAsync(
-            nextVisibility ? "Layer shown." : "Layer hidden.",
+            nextVisibility == true ? "Layer shown." : "Layer hidden.",
             cancellationToken).ConfigureAwait(true);
     }
 
@@ -3344,7 +3359,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     {
         if (_currentDocument is null
             || _documentRepository is null
-            || _editCommandStack is null)
+            || _annotationEditor is null)
         {
             return;
         }
@@ -3357,15 +3372,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
 
         bool nextVisibility = !annotation.IsVisible;
-        await _editCommandStack
-            .ExecuteAsync(
-                _currentDocument,
-                new UpdateAnnotationVisibilityCommand(
-                    annotationId,
-                    annotation.IsVisible,
-                    nextVisibility),
-                cancellationToken)
-            .ConfigureAwait(true);
+        await _annotationEditor.SetVisibilityAsync(
+            _currentDocument,
+            annotation,
+            nextVisibility,
+            cancellationToken).ConfigureAwait(true);
         await SaveCurrentDocumentAsync(
                 nextVisibility ? "Object shown." : "Object hidden.",
                 cancellationToken)
@@ -3548,10 +3559,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         {
             bool sourceImageChanged = beforeImage != _currentDocument.SourceImage;
             _annotationSelection.RetainExisting(_currentDocument);
-            _activeLayerId = GetSelectedAnnotation()?.LayerId
-                ?? (_currentDocument.Layers.Any(layer => layer.Id == _activeLayerId)
-                    ? _activeLayerId
-                    : _currentDocument.Layers.LastOrDefault()?.Id);
+            _layerWorkspace.RetainActiveLayer(_currentDocument, GetSelectedAnnotation());
             SyncStyleControlsFromSelectedAnnotation();
             RefreshCanvasAfterRasterEdit();
             await SaveCurrentDocumentAsync("Undo complete.", cancellationToken).ConfigureAwait(true);
@@ -3578,10 +3586,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         {
             bool sourceImageChanged = beforeImage != _currentDocument.SourceImage;
             _annotationSelection.RetainExisting(_currentDocument);
-            _activeLayerId = GetSelectedAnnotation()?.LayerId
-                ?? (_currentDocument.Layers.Any(layer => layer.Id == _activeLayerId)
-                    ? _activeLayerId
-                    : _currentDocument.Layers.LastOrDefault()?.Id);
+            _layerWorkspace.RetainActiveLayer(_currentDocument, GetSelectedAnnotation());
             SyncStyleControlsFromSelectedAnnotation();
             RefreshCanvasAfterRasterEdit();
             await SaveCurrentDocumentAsync("Redo complete.", cancellationToken).ConfigureAwait(true);
@@ -4638,9 +4643,26 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
-        CaptureDocument? document = await _documentRepository
-            .GetAsync(documentId, cancellationToken)
-            .ConfigureAwait(true);
+        CaptureDocument? document;
+        try
+        {
+            document = await _documentRepository
+                .GetAsync(documentId, cancellationToken)
+                .ConfigureAwait(true);
+            if (document is not null)
+            {
+                DocumentLayers.EnsureInitialized(document);
+            }
+        }
+        catch (Exception exception) when (exception is NotSupportedException or InvalidDataException)
+        {
+            string message = exception is NotSupportedException
+                ? "This document was created by a newer version of SnapStudio. Update the app to open it."
+                : "This document has invalid layer data and could not be opened.";
+            StatusText = message;
+            ShowCaptureNotice("Open failed", message, InfoBarSeverity.Error);
+            return;
+        }
 
         if (document is null)
         {
@@ -4649,8 +4671,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
 
         _currentDocument = document;
-        DocumentLayers.EnsureInitialized(document);
-        _activeLayerId = document.Layers[^1].Id;
+        _layerWorkspace.OpenDocument(document);
         _currentDocumentId = document.Id;
         _editCommandStack?.Clear();
         _annotationSelection.Clear();
@@ -4763,7 +4784,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
 
         _currentDocument = null;
-        _activeLayerId = null;
+        _layerWorkspace.ClearDocument();
         _currentDocumentId = null;
         _editCommandStack?.Clear();
         _annotationSelection.Clear();
@@ -4816,7 +4837,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     {
         if (_currentDocument is null
             || _documentRepository is null
-            || _editCommandStack is null
+            || _annotationEditor is null
             || _annotationSelection.SelectedAnnotationId is not Guid selectedId)
         {
             return;
@@ -4840,12 +4861,12 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
-        await _editCommandStack
-            .ExecuteAsync(
-                _currentDocument,
-                new UpdateAnnotationStyleCommand(annotation.Id, before, after, displayName),
-                cancellationToken)
-            .ConfigureAwait(true);
+        await _annotationEditor.SetStyleAsync(
+            _currentDocument,
+            annotation,
+            after,
+            displayName,
+            cancellationToken).ConfigureAwait(true);
 
         _annotationSelection.Select(_currentDocument, annotation.Id);
         await SaveCurrentDocumentAsync($"{displayName} complete.", cancellationToken)
@@ -4866,53 +4887,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     private void RefreshAnnotationOverlays()
     {
-        AnnotationOverlays.Clear();
-        AnnotationLayers.Clear();
-
-        if (_currentDocument is null || !_canvasViewport.HasSource)
-        {
-            OnPropertyChanged(nameof(AnnotationLayerCount));
-            OnPropertyChanged(nameof(AnnotationLayersEmptyVisibility));
-            OnPropertyChanged(nameof(AnnotationLayersEmptyMessage));
-            return;
-        }
-
-        var itemsByLayer = new Dictionary<Guid, List<AnnotationOverlayItem>>();
-        foreach (AnnotationObject annotation in DocumentLayers.InPaintOrder(_currentDocument))
-        {
-            AnnotationOverlayItem item = AnnotationOverlayItem.FromAnnotation(
-                annotation,
-                _canvasViewport.Zoom,
-                _annotationSelection.SelectedAnnotationId);
-            if (DocumentLayers.IsEffectivelyVisible(_currentDocument, annotation))
-            {
-                AnnotationOverlays.Add(item);
-            }
-
-            if (annotation.LayerId is Guid layerId)
-            {
-                if (!itemsByLayer.TryGetValue(layerId, out List<AnnotationOverlayItem>? items))
-                {
-                    items = [];
-                    itemsByLayer[layerId] = items;
-                }
-
-                items.Insert(0, item);
-            }
-        }
-
-        foreach (AnnotationLayer layer in _currentDocument.Layers.AsEnumerable().Reverse())
-        {
-            itemsByLayer.TryGetValue(layer.Id, out List<AnnotationOverlayItem>? items);
-            AnnotationLayers.Add(new AnnotationLayerItem(
-                layer,
-                items ?? [],
-                _activeLayerId == layer.Id,
-                _annotationSelection.SelectedAnnotationId is Guid annotationId
-                    && _currentDocument.Annotations.Any(annotation => annotation.Id == annotationId
-                        && annotation.LayerId != layer.Id),
-                !_collapsedLayerIds.Contains(layer.Id)));
-        }
+        _layerWorkspace.Refresh(
+            _currentDocument,
+            _canvasViewport.Zoom,
+            _annotationSelection.SelectedAnnotationId,
+            _canvasViewport.HasSource);
 
         OnPropertyChanged(nameof(AnnotationLayerCount));
         OnPropertyChanged(nameof(AnnotationLayersEmptyVisibility));
@@ -4958,6 +4937,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     {
         OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanRedo));
+        OnPropertyChanged(nameof(CanDeleteActiveLayer));
         OnPropertyChanged(nameof(UndoToolTip));
         OnPropertyChanged(nameof(RedoToolTip));
         OnPropertyChanged(nameof(HasSelectedAnnotation));

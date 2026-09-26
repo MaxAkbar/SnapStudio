@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Text.Json;
 using SnapStudio.Core.Capture;
 using SnapStudio.Core.Documents;
 using SnapStudio.Core.Primitives;
@@ -13,6 +14,31 @@ namespace SnapStudio.Core.Tests;
 [TestClass]
 public sealed class FileSystemDocumentThumbnailCacheTests
 {
+    [TestMethod]
+    public async Task EnsureThumbnailAsync_UnsupportedDocumentReturnsFailure()
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        var repository = new FileSystemDocumentRepository(workspace.Path);
+        CaptureDocument document = await CreateDocumentAsync(repository, workspace.Path, new MutableClock(DateTimeOffset.UtcNow));
+        string documentPath = Path.Combine(
+            workspace.Path, document.Id.ToString(), "document.snapstudio.json");
+        document.SchemaVersion = CaptureDocument.CurrentSchemaVersion + 1;
+        await File.WriteAllTextAsync(documentPath, JsonSerializer.Serialize(
+            document, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+        var cache = new FileSystemDocumentThumbnailCache(
+            workspace.Path,
+            repository,
+            new SystemDrawingDocumentRenderer(repository));
+
+        DocumentThumbnailResult result = await cache.EnsureThumbnailAsync(
+            new DocumentThumbnailRequest(document.Id, document.Metadata.ModifiedAtUtc, 64),
+            CancellationToken.None);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.ErrorMessage);
+        Assert.IsTrue(result.ErrorMessage.Contains("newer", StringComparison.Ordinal));
+    }
+
     [TestMethod]
     public async Task EnsureThumbnailAsync_SupersededRefreshFinishes128PixelRenderWithoutCancellation()
     {
@@ -28,7 +54,9 @@ public sealed class FileSystemDocumentThumbnailCacheTests
                 new ImageAsset(sourcePath, 749, 440, ImagePixelFormat.Bgra32),
                 new Dictionary<string, string>()),
             lifetime.Token);
-        document.Annotations.Add(CreateFilledRectangle(new RectD(40, 40, 200, 160), ColorRgba.Black));
+        AnnotationObject annotation = CreateFilledRectangle(new RectD(40, 40, 200, 160), ColorRgba.Black);
+        annotation.LayerId = document.Layers[0].Id;
+        document.Annotations.Add(annotation);
         await repository.SaveAsync(document, lifetime.Token);
         var renderer = new PausingRenderer(new SystemDrawingDocumentRenderer(repository));
         var cache = new FileSystemDocumentThumbnailCache(workspace.Path, repository, renderer);
@@ -142,6 +170,7 @@ public sealed class FileSystemDocumentThumbnailCacheTests
         document.Annotations.Add(new AnnotationObject
         {
             Kind = AnnotationKind.Rectangle,
+            LayerId = document.Layers[0].Id,
             Bounds = new RectD(10, 10, 40, 30)
         });
         await repository.SaveAsync(document, CancellationToken.None);
@@ -170,18 +199,22 @@ public sealed class FileSystemDocumentThumbnailCacheTests
             repository,
             new SystemDrawingDocumentRenderer(repository));
 
-        document.Annotations.Add(CreateFilledRectangle(
+        AnnotationObject firstAnnotation = CreateFilledRectangle(
             new RectD(10, 10, 30, 30),
-            new ColorRgba(220, 0, 0, 255)));
+            new ColorRgba(220, 0, 0, 255));
+        firstAnnotation.LayerId = document.Layers[0].Id;
+        document.Annotations.Add(firstAnnotation);
         await repository.SaveAsync(document, CancellationToken.None);
 
         DocumentThumbnailResult first = await cache.EnsureThumbnailAsync(
             new DocumentThumbnailRequest(document.Id, document.Metadata.ModifiedAtUtc, 200),
             CancellationToken.None);
 
-        document.Annotations.Add(CreateFilledRectangle(
+        AnnotationObject secondAnnotation = CreateFilledRectangle(
             new RectD(60, 10, 30, 30),
-            new ColorRgba(0, 0, 220, 255)));
+            new ColorRgba(0, 0, 220, 255));
+        secondAnnotation.LayerId = document.Layers[0].Id;
+        document.Annotations.Add(secondAnnotation);
         await repository.SaveAsync(document, CancellationToken.None);
 
         DocumentThumbnailResult regenerated = await cache.EnsureThumbnailAsync(

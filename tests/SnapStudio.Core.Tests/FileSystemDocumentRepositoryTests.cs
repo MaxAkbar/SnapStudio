@@ -1,3 +1,4 @@
+using System.Text.Json;
 using SnapStudio.Core.Capture;
 using SnapStudio.Core.Documents;
 using SnapStudio.Core.Primitives;
@@ -9,6 +10,71 @@ namespace SnapStudio.Core.Tests;
 [TestClass]
 public sealed class FileSystemDocumentRepositoryTests
 {
+    [TestMethod]
+    public async Task GetAsync_MigratesLegacyDocumentAndKeepsLayerIdAfterSave()
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        var repository = new FileSystemDocumentRepository(workspace.Path);
+        var document = new CaptureDocument();
+        document.Annotations.Add(new AnnotationObject { Kind = AnnotationKind.Rectangle });
+        string documentDirectory = Path.Combine(workspace.Path, document.Id.ToString());
+        Directory.CreateDirectory(documentDirectory);
+        string documentPath = Path.Combine(documentDirectory, "document.snapstudio.json");
+        document.SchemaVersion = 1;
+        document.Layers = [];
+        await File.WriteAllTextAsync(documentPath, JsonSerializer.Serialize(
+            document, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+
+        CaptureDocument? migrated = await repository.GetAsync(document.Id, CancellationToken.None);
+
+        Assert.IsNotNull(migrated);
+        Assert.AreEqual(CaptureDocument.CurrentSchemaVersion, migrated.SchemaVersion);
+        Guid layerId = Assert.ContainsSingle(migrated.Layers).Id;
+        Assert.AreEqual(layerId, Assert.ContainsSingle(migrated.Annotations).LayerId);
+
+        await repository.SaveAsync(migrated, CancellationToken.None);
+        CaptureDocument? reloaded = await repository.GetAsync(document.Id, CancellationToken.None);
+        Assert.IsNotNull(reloaded);
+        Assert.AreEqual(layerId, Assert.ContainsSingle(reloaded.Layers).Id);
+        Assert.AreEqual(layerId, Assert.ContainsSingle(reloaded.Annotations).LayerId);
+
+        reloaded.Annotations[0].LayerId = Guid.NewGuid();
+        await Assert.ThrowsExactlyAsync<InvalidDataException>(
+            () => repository.SaveAsync(reloaded, CancellationToken.None));
+        Assert.AreEqual(layerId, Assert.ContainsSingle((await repository.GetAsync(document.Id, CancellationToken.None))!.Annotations).LayerId);
+    }
+
+    [TestMethod]
+    public async Task GetAndSaveAsync_RejectFutureVersionWithoutChangingStoredDocument()
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        var repository = new FileSystemDocumentRepository(workspace.Path);
+        var document = new CaptureDocument();
+        await repository.SaveAsync(document, CancellationToken.None);
+        string documentPath = Path.Combine(
+            workspace.Path, document.Id.ToString(), "document.snapstudio.json");
+        document.SchemaVersion = CaptureDocument.CurrentSchemaVersion + 1;
+        string futureJson = JsonSerializer.Serialize(
+            document, new JsonSerializerOptions(JsonSerializerDefaults.Web))
+            .Replace("\"schemaVersion\"", "\"SCHEMAVERSION\"", StringComparison.Ordinal);
+        await File.WriteAllTextAsync(documentPath, futureJson);
+
+        await Assert.ThrowsExactlyAsync<NotSupportedException>(
+            () => repository.GetAsync(document.Id, CancellationToken.None));
+        await Assert.ThrowsExactlyAsync<NotSupportedException>(
+            () => repository.SaveAsync(document, CancellationToken.None));
+        await Assert.ThrowsExactlyAsync<NotSupportedException>(
+            () => repository.SaveAsync(new CaptureDocument { Id = document.Id }, CancellationToken.None));
+
+        Assert.AreEqual(futureJson, await File.ReadAllTextAsync(documentPath));
+
+        string ambiguousJson = futureJson[..^1] + ",\"schemaVersion\":2}";
+        await File.WriteAllTextAsync(documentPath, ambiguousJson);
+        await Assert.ThrowsExactlyAsync<InvalidDataException>(
+            () => repository.SaveAsync(new CaptureDocument { Id = document.Id }, CancellationToken.None));
+        Assert.AreEqual(ambiguousJson, await File.ReadAllTextAsync(documentPath));
+    }
+
     [TestMethod]
     public async Task CreateSaveGetAsync_RoundTripsEditableDocument()
     {
@@ -23,7 +89,7 @@ public sealed class FileSystemDocumentRepositoryTests
 
         CaptureDocument document = await repository.CreateFromCaptureAsync(capture, CancellationToken.None);
         var layer = new AnnotationLayer { Name = "Callouts" };
-        document.Layers.Add(layer);
+        document.Layers = [layer];
         document.Annotations.Add(new AnnotationObject
         {
             Kind = AnnotationKind.Rectangle,
@@ -86,8 +152,13 @@ public sealed class FileSystemDocumentRepositoryTests
     {
         using var workspace = TemporaryWorkspace.Create();
         var repository = new FileSystemDocumentRepository(workspace.Path);
-        var rectangle = new AnnotationObject { Kind = AnnotationKind.Rectangle };
-        var document = new CaptureDocument { Annotations = [rectangle] };
+        var document = new CaptureDocument();
+        var rectangle = new AnnotationObject
+        {
+            Kind = AnnotationKind.Rectangle,
+            LayerId = document.Layers[0].Id
+        };
+        document.Annotations.Add(rectangle);
         await repository.SaveAsync(document, CancellationToken.None);
 
         // Keep the first write busy while the subsequent picker events request saves.
@@ -120,7 +191,7 @@ public sealed class FileSystemDocumentRepositoryTests
         var document = new CaptureDocument();
         await repository.SaveAsync(document, CancellationToken.None);
         DocumentMetadata savedMetadata = document.Metadata;
-        document.Annotations.Add(new AnnotationObject { Kind = AnnotationKind.Rectangle });
+        AddRectangle(document);
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
@@ -147,7 +218,7 @@ public sealed class FileSystemDocumentRepositoryTests
         var repository = new FileSystemDocumentRepository(workspace.Path);
         var document = new CaptureDocument();
         await repository.SaveAsync(document, CancellationToken.None);
-        document.Annotations.Add(new AnnotationObject { Kind = AnnotationKind.Rectangle });
+        AddRectangle(document);
         string documentPath = Path.Combine(workspace.Path, document.Id.ToString(), "document.snapstudio.json");
 
         // An external reader that does not share deletion must still report a real I/O failure.
@@ -184,7 +255,7 @@ public sealed class FileSystemDocumentRepositoryTests
             document,
             cancelQueuedSave ? CancellationToken.None : cancellation.Token);
         document.Metadata.Properties.Remove("payload");
-        document.Annotations.Add(new AnnotationObject { Kind = AnnotationKind.Rectangle });
+        AddRectangle(document);
         Task canceledSave = cancelQueuedSave
             ? repository.SaveAsync(document, cancellation.Token)
             : firstSave;
@@ -221,7 +292,7 @@ public sealed class FileSystemDocumentRepositoryTests
             ? ReadCatalogAsync()
             : ReadDocumentAsync();
         document.Metadata.Properties.Remove("payload");
-        document.Annotations.Add(new AnnotationObject { Kind = AnnotationKind.Rectangle });
+        AddRectangle(document);
         await Task.WhenAll(read, repository.SaveAsync(document, CancellationToken.None));
 
         CaptureDocument? loaded = await repository.GetAsync(document.Id, CancellationToken.None);
@@ -246,5 +317,14 @@ public sealed class FileSystemDocumentRepositoryTests
     private sealed class FixedClock(DateTimeOffset utcNow) : IClock
     {
         public DateTimeOffset UtcNow { get; } = utcNow;
+    }
+
+    private static void AddRectangle(CaptureDocument document)
+    {
+        document.Annotations.Add(new AnnotationObject
+        {
+            Kind = AnnotationKind.Rectangle,
+            LayerId = document.Layers[0].Id
+        });
     }
 }

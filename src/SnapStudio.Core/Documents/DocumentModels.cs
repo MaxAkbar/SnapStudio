@@ -36,7 +36,7 @@ public sealed class CaptureDocument
 
     public List<AnnotationObject> Annotations { get; set; } = [];
 
-    public List<AnnotationLayer> Layers { get; set; } = [];
+    public List<AnnotationLayer> Layers { get; set; } = [new AnnotationLayer()];
 
     public List<DestructiveEditOperation> DestructiveOperations { get; set; } = [];
 

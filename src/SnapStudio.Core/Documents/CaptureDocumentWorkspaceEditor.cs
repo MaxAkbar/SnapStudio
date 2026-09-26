@@ -28,6 +28,7 @@ public static class CaptureDocumentWorkspaceEditor
         string title)
     {
         ArgumentNullException.ThrowIfNull(source);
+        DocumentLayers.ValidateForSave(source);
 
         var properties = new Dictionary<string, string>(source.Metadata.Properties)
         {

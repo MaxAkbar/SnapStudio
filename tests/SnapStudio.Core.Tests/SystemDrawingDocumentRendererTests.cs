@@ -12,6 +12,25 @@ namespace SnapStudio.Core.Tests;
 public sealed class SystemDrawingDocumentRendererTests
 {
     [TestMethod]
+    public async Task RenderAsync_RejectsOrphanedAnnotation()
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        string sourcePath = Path.Combine(workspace.Path, "source.png");
+        CreateSolidImage(sourcePath, 32, 32, Color.White);
+        var document = new CaptureDocument
+        {
+            SourceImage = new ImageAsset(sourcePath, 32, 32, ImagePixelFormat.Bgra32),
+            Annotations = [new AnnotationObject { LayerId = Guid.NewGuid() }]
+        };
+        var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
+
+        RenderResult result = await renderer.RenderAsync(
+            new RenderRequest(document.Id, 1, null), CancellationToken.None);
+
+        Assert.IsFalse(result.Succeeded);
+    }
+
+    [TestMethod]
     public async Task RenderAsync_CompositesRectangleAnnotation()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
@@ -36,6 +55,7 @@ public sealed class SystemDrawingDocumentRendererTests
                 }
             ]
         };
+        AssignDefaultLayer(document);
         var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
 
         RenderResult result = await renderer.RenderAsync(
@@ -77,6 +97,7 @@ public sealed class SystemDrawingDocumentRendererTests
                 }
             ]
         };
+        AssignDefaultLayer(document);
         var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
 
         RenderResult result = await renderer.RenderAsync(
@@ -157,6 +178,7 @@ public sealed class SystemDrawingDocumentRendererTests
                 }
             ]
         };
+        AssignDefaultLayer(document);
         var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
 
         RenderResult result = await renderer.RenderAsync(
@@ -196,6 +218,7 @@ public sealed class SystemDrawingDocumentRendererTests
                 }
             ]
         };
+        AssignDefaultLayer(document);
         var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
 
         RenderResult result = await renderer.RenderAsync(
@@ -234,6 +257,7 @@ public sealed class SystemDrawingDocumentRendererTests
                     new ColorRgba(0, 0, 220, 255))
             ]
         };
+        AssignDefaultLayer(document);
         var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
 
         RenderResult result = await renderer.RenderAsync(
@@ -308,6 +332,14 @@ public sealed class SystemDrawingDocumentRendererTests
                 1,
                 1)
         };
+    }
+
+    private static void AssignDefaultLayer(CaptureDocument document)
+    {
+        foreach (AnnotationObject annotation in document.Annotations)
+        {
+            annotation.LayerId = document.Layers[0].Id;
+        }
     }
 
     private static void CreateSplitImage(string path, int width, int height)

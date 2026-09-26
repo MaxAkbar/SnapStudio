@@ -6,6 +6,16 @@ namespace SnapStudio.Core.Tests;
 public sealed class DocumentLayersTests
 {
     [TestMethod]
+    public void NewDocument_StartsWithValidDefaultLayer()
+    {
+        var document = new CaptureDocument();
+
+        Assert.ContainsSingle(document.Layers);
+        Assert.AreNotEqual(Guid.Empty, document.Layers[0].Id);
+        DocumentLayers.ValidateForSave(document);
+    }
+
+    [TestMethod]
     public void EnsureInitialized_MigratesLegacyAnnotationsIntoOneLayer()
     {
         var first = new AnnotationObject { Kind = AnnotationKind.Rectangle };
@@ -23,6 +33,21 @@ public sealed class DocumentLayersTests
         Assert.AreEqual(layer.Id, first.LayerId);
         Assert.AreEqual(layer.Id, second.LayerId);
         Assert.AreEqual(CaptureDocument.CurrentSchemaVersion, document.SchemaVersion);
+    }
+
+    [TestMethod]
+    public void EnsureInitialized_MigratesEarlierLayerlessVersionTwoDocument()
+    {
+        var document = new CaptureDocument
+        {
+            Layers = [],
+            Annotations = [new AnnotationObject { Kind = AnnotationKind.Text }]
+        };
+
+        DocumentLayers.EnsureInitialized(document);
+
+        Guid layerId = Assert.ContainsSingle(document.Layers).Id;
+        Assert.AreEqual(layerId, Assert.ContainsSingle(document.Annotations).LayerId);
     }
 
     [TestMethod]
@@ -44,6 +69,61 @@ public sealed class DocumentLayersTests
             DocumentLayers.InPaintOrder(document).Select(annotation => annotation.Id));
         Assert.IsFalse(DocumentLayers.IsEffectivelyVisible(document, topObject));
         Assert.IsTrue(DocumentLayers.IsEffectivelyVisible(document, bottomFirst));
+    }
+
+    [TestMethod]
+    public void EnsureInitialized_RejectsFutureVersionWithoutDowngrading()
+    {
+        var document = new CaptureDocument
+        {
+            SchemaVersion = CaptureDocument.CurrentSchemaVersion + 1
+        };
+        Guid originalLayerId = document.Layers[0].Id;
+
+        Assert.ThrowsExactly<NotSupportedException>(() => DocumentLayers.EnsureInitialized(document));
+
+        Assert.AreEqual(CaptureDocument.CurrentSchemaVersion + 1, document.SchemaVersion);
+        Assert.AreEqual(originalLayerId, Assert.ContainsSingle(document.Layers).Id);
+    }
+
+    [TestMethod]
+    public void EnsureInitialized_DoesNotRepairCurrentVersionOrphan()
+    {
+        var orphan = new AnnotationObject { LayerId = Guid.NewGuid() };
+        var document = new CaptureDocument { Annotations = [orphan] };
+
+        Assert.ThrowsExactly<InvalidDataException>(() => DocumentLayers.EnsureInitialized(document));
+
+        Assert.AreEqual(orphan.LayerId, document.Annotations[0].LayerId);
+        Assert.IsFalse(DocumentLayers.IsEffectivelyVisible(document, orphan));
+    }
+
+    [TestMethod]
+    public void ValidateForSave_RejectsDuplicateLayerAndAnnotationIds()
+    {
+        var document = new CaptureDocument();
+        Guid layerId = document.Layers[0].Id;
+        document.Layers.Add(new AnnotationLayer { Id = layerId });
+
+        Assert.ThrowsExactly<InvalidDataException>(() => DocumentLayers.ValidateForSave(document));
+
+        document.Layers.RemoveAt(1);
+        Guid annotationId = Guid.NewGuid();
+        document.Annotations.Add(new AnnotationObject { Id = annotationId, LayerId = layerId });
+        document.Annotations.Add(new AnnotationObject { Id = annotationId, LayerId = layerId });
+
+        Assert.ThrowsExactly<InvalidDataException>(() => DocumentLayers.ValidateForSave(document));
+    }
+
+    [TestMethod]
+    public void ValidateForSave_RejectsUnassignedAnnotationWithoutChangingIt()
+    {
+        var annotation = new AnnotationObject();
+        var document = new CaptureDocument { Annotations = [annotation] };
+
+        Assert.ThrowsExactly<InvalidDataException>(() => DocumentLayers.ValidateForSave(document));
+
+        Assert.IsNull(annotation.LayerId);
     }
 
     [TestMethod]

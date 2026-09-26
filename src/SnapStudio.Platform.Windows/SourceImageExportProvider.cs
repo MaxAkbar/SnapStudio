@@ -38,9 +38,17 @@ public sealed class SourceImageExportProvider : IExportProvider
             return ExportResult.Failed($"{Format} export is not implemented.");
         }
 
-        CaptureDocument? document = await _documentRepository
-            .GetAsync(request.DocumentId, cancellationToken)
-            .ConfigureAwait(false);
+        CaptureDocument? document;
+        try
+        {
+            document = await _documentRepository
+                .GetAsync(request.DocumentId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is InvalidDataException or NotSupportedException)
+        {
+            return ExportResult.Failed(exception.Message);
+        }
 
         if (document is null)
         {

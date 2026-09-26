@@ -42,9 +42,17 @@ public sealed class FileSystemDocumentThumbnailCache : IDocumentThumbnailCache
             return DocumentThumbnailResult.Success(thumbnailPath, wasGenerated: false);
         }
 
-        CaptureDocument? document = await _documentRepository
-            .GetAsync(request.DocumentId, cancellationToken)
-            .ConfigureAwait(false);
+        CaptureDocument? document;
+        try
+        {
+            document = await _documentRepository
+                .GetAsync(request.DocumentId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is InvalidDataException or NotSupportedException)
+        {
+            return DocumentThumbnailResult.Failed(exception.Message);
+        }
 
         if (document is null)
         {

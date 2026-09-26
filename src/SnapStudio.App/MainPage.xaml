@@ -373,19 +373,20 @@
             Grid.Row="1"
             Background="{StaticResource SnapBackgroundBrush}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="HistoryColumn" Width="226" />
+                <ColumnDefinition x:Name="HistoryColumn" Width="226" MinWidth="52" />
+                <ColumnDefinition x:Name="HistorySplitterColumn" Width="10" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition x:Name="RightControlsSplitterColumn" Width="10" />
                 <ColumnDefinition x:Name="RightControlsColumn" Width="280" MinWidth="52" />
             </Grid.ColumnDefinitions>
 
             <Grid
+                x:Name="HistoryPane"
                 Grid.Column="0"
-                Padding="12"
                 Background="{StaticResource SnapPanelBrush}"
                 BorderBrush="{StaticResource SnapStrokeBrush}"
-                BorderThickness="0,0,1,0"
-                RowSpacing="8">
+                BorderThickness="0,0,1,0">
+                <Grid x:Name="HistoryExpandedView" Padding="12" RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" MinHeight="56" MaxHeight="260" />
@@ -397,9 +398,11 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Grid ColumnSpacing="8">
+                <Grid ColumnSpacing="4">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
@@ -426,6 +429,25 @@
                         Style="{StaticResource ToolIconButtonStyle}"
                         ToolTipService.ToolTip="Add layer">
                         <SymbolIcon Symbol="Add" />
+                    </Button>
+                    <Button
+                        Grid.Column="3"
+                        AutomationProperties.HelpText="Delete the selected layer and its objects. At least one layer must remain."
+                        AutomationProperties.Name="Delete selected layer"
+                        Click="DeleteLayerButton_Click"
+                        IsEnabled="{x:Bind ViewModel.CanDeleteActiveLayer, Mode=OneWay}"
+                        Style="{StaticResource ToolIconButtonStyle}"
+                        ToolTipService.ToolTip="Delete selected layer">
+                        <SymbolIcon Symbol="Delete" />
+                    </Button>
+                    <Button
+                        Grid.Column="4"
+                        AutomationProperties.HelpText="Collapse the layers and recent captures pane."
+                        AutomationProperties.Name="Unpin layers and captures pane"
+                        Click="HistoryPanePinButton_Click"
+                        Style="{StaticResource ToolIconButtonStyle}"
+                        ToolTipService.ToolTip="Unpin layers and captures pane">
+                        <SymbolIcon Symbol="Pin" />
                     </Button>
                 </Grid>
 
@@ -764,10 +786,52 @@
                         <TextBlock Text="Settings" />
                     </StackPanel>
                 </Button>
+                </Grid>
+
+                <Grid
+                    x:Name="HistoryCollapsedView"
+                    Padding="8,18"
+                    Visibility="Collapsed">
+                    <Button
+                        AutomationProperties.HelpText="Expand and pin the layers and recent captures pane."
+                        AutomationProperties.Name="Pin layers and captures pane"
+                        Click="HistoryPaneExpandButton_Click"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource ToolIconButtonStyle}"
+                        ToolTipService.ToolTip="Pin layers and captures pane"
+                        VerticalAlignment="Top">
+                        <SymbolIcon Symbol="Pin" />
+                    </Button>
+                </Grid>
             </Grid>
 
-            <Grid
+            <controls:ResizeSplitter
+                x:Name="HistorySplitter"
                 Grid.Column="1"
+                AutomationProperties.HelpText="Drag left or right to resize the layers and recent captures pane."
+                AutomationProperties.Name="Resize layers and captures pane"
+                PointerCanceled="HistorySplitter_PointerCanceled"
+                PointerMoved="HistorySplitter_PointerMoved"
+                PointerPressed="HistorySplitter_PointerPressed"
+                PointerReleased="HistorySplitter_PointerReleased"
+                ToolTipService.ToolTip="Drag to resize layers and captures pane">
+                <controls:ResizeSplitter.Template>
+                    <ControlTemplate TargetType="controls:ResizeSplitter">
+                        <Grid Background="{StaticResource SnapSurfaceBrush}">
+                            <Border
+                                Width="2"
+                                Height="44"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Background="{StaticResource SnapStrokeBrush}"
+                                CornerRadius="1" />
+                        </Grid>
+                    </ControlTemplate>
+                </controls:ResizeSplitter.Template>
+            </controls:ResizeSplitter>
+
+            <Grid
+                Grid.Column="2"
                 Background="{StaticResource SnapSurfaceBrush}">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -1099,7 +1163,7 @@
                                     IsEnabled="{x:Bind ViewModel.CanZoomOut, Mode=OneWay}"
                                     Style="{StaticResource ToolIconButtonStyle}"
                                     ToolTipService.ToolTip="Zoom out">
-                                    <FontIcon Glyph="-" />
+                                    <SymbolIcon Symbol="Remove" />
                                 </Button>
                                 <Button
                                     AccessKey="1"
@@ -1124,7 +1188,7 @@
                                     IsEnabled="{x:Bind ViewModel.CanZoomIn, Mode=OneWay}"
                                     Style="{StaticResource ToolIconButtonStyle}"
                                     ToolTipService.ToolTip="Zoom in">
-                                    <FontIcon Glyph="+" />
+                                    <SymbolIcon Symbol="Add" />
                                 </Button>
                                 <Border
                                     MinWidth="62"
@@ -1147,7 +1211,7 @@
 
             <controls:ResizeSplitter
                 x:Name="RightControlsSplitter"
-                Grid.Column="2"
+                Grid.Column="3"
                 AutomationProperties.HelpText="Drag left or right to resize the right tools pane."
                 AutomationProperties.Name="Resize right tools pane"
                 PointerCanceled="RightControlsSplitter_PointerCanceled"
@@ -1172,7 +1236,7 @@
 
             <Grid
                 x:Name="RightControlsPane"
-                Grid.Column="3"
+                Grid.Column="4"
                 Background="{StaticResource SnapPanelBrush}"
                 BorderBrush="{StaticResource SnapStrokeBrush}"
                 BorderThickness="1,0,0,0">

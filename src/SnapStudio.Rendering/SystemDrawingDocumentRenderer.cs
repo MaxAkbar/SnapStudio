@@ -26,13 +26,30 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        CaptureDocument? document = await _documentRepository
-            .GetAsync(request.DocumentId, cancellationToken)
-            .ConfigureAwait(false);
+        CaptureDocument? document;
+        try
+        {
+            document = await _documentRepository
+                .GetAsync(request.DocumentId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is InvalidDataException or NotSupportedException)
+        {
+            return RenderResult.Failed(exception.Message);
+        }
 
         if (document is null)
         {
             return RenderResult.Failed("The selected document could not be found.");
+        }
+
+        try
+        {
+            DocumentLayers.ValidateForSave(document);
+        }
+        catch (Exception exception) when (exception is InvalidDataException or NotSupportedException)
+        {
+            return RenderResult.Failed(exception.Message);
         }
 
         if (!File.Exists(document.SourceImage.Path))

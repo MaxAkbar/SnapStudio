@@ -127,7 +127,13 @@ public sealed class CSharpDbDocumentStore
         string documentJson = reader.GetString(0);
         try
         {
-            return JsonSerializer.Deserialize<CaptureDocument>(documentJson, JsonOptions);
+            CaptureDocument? document = JsonSerializer.Deserialize<CaptureDocument>(documentJson, JsonOptions);
+            if (document is not null)
+            {
+                DocumentLayers.EnsureInitialized(document);
+            }
+
+            return document;
         }
         catch (JsonException)
         {
@@ -140,16 +146,23 @@ public sealed class CSharpDbDocumentStore
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(document);
+        cancellationToken.ThrowIfCancellationRequested();
+        DocumentLayers.ValidateForSave(document);
 
         await EnsureSchemaAsync(cancellationToken).ConfigureAwait(false);
 
         await using CSharpDbConnection connection = CreateConnection();
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-        bool isExistingDocument = await DocumentExistsAsync(
+        string? storedDocumentJson = await GetStoredDocumentJsonAsync(
             connection,
             document.Id,
             cancellationToken).ConfigureAwait(false);
+        bool isExistingDocument = storedDocumentJson is not null;
+        if (storedDocumentJson is not null)
+        {
+            StoredDocumentVersionGuard.EnsureWritable(storedDocumentJson);
+        }
         DateTimeOffset now = _clock.UtcNow;
         DateTimeOffset createdAt = document.Metadata.CreatedAtUtc == default
             ? now
@@ -352,6 +365,18 @@ public sealed class CSharpDbDocumentStore
 
         object? result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         return Convert.ToInt64(result, CultureInfo.InvariantCulture) > 0;
+    }
+
+    private static async Task<string?> GetStoredDocumentJsonAsync(
+        DbConnection connection,
+        DocumentId id,
+        CancellationToken cancellationToken)
+    {
+        await using DbCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT document_json FROM documents WHERE id = @id";
+        AddParameter(command, "@id", id.ToString());
+
+        return await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as string;
     }
 
     private static async Task ExecuteNonQueryAsync(

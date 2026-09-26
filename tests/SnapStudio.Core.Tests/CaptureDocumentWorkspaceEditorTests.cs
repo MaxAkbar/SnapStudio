@@ -51,7 +51,7 @@ public sealed class CaptureDocumentWorkspaceEditorTests
             ]
         };
         var layer = new AnnotationLayer { Name = "Notes", IsVisible = false };
-        source.Layers.Add(layer);
+        source.Layers = [layer];
         source.Annotations[0].LayerId = layer.Id;
 
         CaptureDocument duplicate = CaptureDocumentWorkspaceEditor.CreateDuplicate(

@@ -64,15 +64,22 @@ public sealed class FileSystemDocumentRepository : IDocumentRepository
             FileShare.Read | FileShare.Delete,
             bufferSize: 4096,
             useAsync: true);
-        return await JsonSerializer
+        CaptureDocument? document = await JsonSerializer
             .DeserializeAsync<CaptureDocument>(stream, JsonOptions, cancellationToken)
             .ConfigureAwait(false);
+        if (document is not null)
+        {
+            DocumentLayers.EnsureInitialized(document);
+        }
+
+        return document;
     }
 
     public async Task SaveAsync(CaptureDocument document, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(document);
         cancellationToken.ThrowIfCancellationRequested();
+        DocumentLayers.ValidateForSave(document);
 
         string documentDirectory = GetDocumentDirectory(document.Id);
         string documentPath = GetDocumentPath(document.Id);
@@ -101,6 +108,12 @@ public sealed class FileSystemDocumentRepository : IDocumentRepository
         {
             cancellationToken.ThrowIfCancellationRequested();
             Directory.CreateDirectory(documentDirectory);
+            if (File.Exists(documentPath))
+            {
+                await EnsureStoredDocumentWritableAsync(documentPath, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             await File
                 .WriteAllTextAsync(temporaryPath, json, cancellationToken)
                 .ConfigureAwait(false);
@@ -152,6 +165,22 @@ public sealed class FileSystemDocumentRepository : IDocumentRepository
     }
 
     private string GetDocumentDirectory(DocumentId id) => Path.Combine(_rootPath, id.ToString());
+
+    private static async Task EnsureStoredDocumentWritableAsync(
+        string documentPath,
+        CancellationToken cancellationToken)
+    {
+        await using var stream = new FileStream(
+            documentPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read | FileShare.Delete,
+            bufferSize: 4096,
+            useAsync: true);
+        using var reader = new StreamReader(stream);
+        StoredDocumentVersionGuard.EnsureWritable(
+            await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false));
+    }
 
     private string GetDocumentPath(DocumentId id) => Path.Combine(
         GetDocumentDirectory(id),
