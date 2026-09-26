@@ -74,9 +74,14 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             {
                 ConfigureGraphics(graphics);
 
-                foreach (AnnotationObject annotation in document.Annotations)
+                foreach (AnnotationObject annotation in DocumentLayers.InPaintOrder(document))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+                    if (!DocumentLayers.IsEffectivelyVisible(document, annotation))
+                    {
+                        continue;
+                    }
+
                     DrawAnnotation(
                         graphics,
                         outputBitmap,
@@ -180,6 +185,8 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
         {
             Id = annotation.Id,
             Kind = annotation.Kind,
+            LayerId = annotation.LayerId,
+            IsVisible = annotation.IsVisible,
             Bounds = new RectD(
                 (annotation.Bounds.X - viewport.X) * scale,
                 (annotation.Bounds.Y - viewport.Y) * scale,

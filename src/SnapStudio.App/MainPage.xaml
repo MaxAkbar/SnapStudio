@@ -9,18 +9,19 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     AutomationProperties.Name="SnapStudio workspace"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    RequestedTheme="Dark"
     mc:Ignorable="d">
 
     <Page.Resources>
-        <SolidColorBrush x:Key="SnapBackgroundBrush" Color="#111111" />
-        <SolidColorBrush x:Key="SnapSurfaceBrush" Color="#171717" />
-        <SolidColorBrush x:Key="SnapPanelBrush" Color="#1E1E1E" />
-        <SolidColorBrush x:Key="SnapPanelAltBrush" Color="#242424" />
-        <SolidColorBrush x:Key="SnapStrokeBrush" Color="#333333" />
-        <SolidColorBrush x:Key="SnapMutedBrush" Color="#A5ACB8" />
-        <SolidColorBrush x:Key="SnapAccentBrush" Color="#E8872E" />
-        <SolidColorBrush x:Key="SnapAccentMutedBrush" Color="#3A2B1F" />
-        <SolidColorBrush x:Key="SnapPrimaryBrush" Color="#5F86E8" />
+        <SolidColorBrush x:Key="SnapBackgroundBrush" Color="#12161B" />
+        <SolidColorBrush x:Key="SnapSurfaceBrush" Color="#151A20" />
+        <SolidColorBrush x:Key="SnapPanelBrush" Color="#1B2027" />
+        <SolidColorBrush x:Key="SnapPanelAltBrush" Color="#252D37" />
+        <SolidColorBrush x:Key="SnapStrokeBrush" Color="#303B47" />
+        <SolidColorBrush x:Key="SnapMutedBrush" Color="#9BAEC3" />
+        <SolidColorBrush x:Key="SnapAccentBrush" Color="#4CC2FF" />
+        <SolidColorBrush x:Key="SnapAccentMutedBrush" Color="#1C3442" />
+        <SolidColorBrush x:Key="SnapPrimaryBrush" Color="#0879D0" />
 
         <Style x:Key="TopCommandButtonStyle" TargetType="Button">
             <Setter Property="MinWidth" Value="0" />
@@ -35,13 +36,13 @@
         </Style>
 
         <Style x:Key="PrimaryTopCommandButtonStyle" TargetType="Button" BasedOn="{StaticResource TopCommandButtonStyle}">
-            <Setter Property="Background" Value="{StaticResource SnapAccentBrush}" />
-            <Setter Property="Foreground" Value="#111111" />
+            <Setter Property="Background" Value="{StaticResource SnapPanelAltBrush}" />
+            <Setter Property="Foreground" Value="White" />
         </Style>
 
         <Style x:Key="ExportTopCommandButtonStyle" TargetType="Button" BasedOn="{StaticResource TopCommandButtonStyle}">
             <Setter Property="Background" Value="{StaticResource SnapPrimaryBrush}" />
-            <Setter Property="Foreground" Value="#111111" />
+            <Setter Property="Foreground" Value="White" />
         </Style>
 
         <Style x:Key="ToolIconButtonStyle" TargetType="Button">
@@ -134,7 +135,7 @@
 
         <Border
             Grid.Row="0"
-            Padding="20,10"
+            Padding="16,10"
             Background="{StaticResource SnapPanelBrush}"
             BorderBrush="{StaticResource SnapStrokeBrush}"
             BorderThickness="0,0,0,1">
@@ -237,7 +238,7 @@
                     </Button.Flyout>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <SymbolIcon Symbol="Camera" />
-                        <TextBlock FontWeight="SemiBold" Text="Capture" />
+                        <TextBlock FontWeight="SemiBold" Text="New capture" />
                         <FontIcon FontSize="12" Glyph="&#xE70D;" />
                     </StackPanel>
                 </Button>
@@ -287,6 +288,26 @@
                         <TextBlock Text="Pin" />
                     </StackPanel>
                 </Button>
+
+                <Border
+                    Grid.Column="4"
+                    MaxWidth="270"
+                    Padding="12,7"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource SnapSurfaceBrush}"
+                    BorderBrush="{StaticResource SnapStrokeBrush}"
+                    BorderThickness="1"
+                    CornerRadius="7">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <SymbolIcon Symbol="Pictures" Foreground="{StaticResource SnapMutedBrush}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Text="{x:Bind ViewModel.CurrentDocumentTitle, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
 
                 <Button
                     Grid.Column="5"
@@ -360,33 +381,229 @@
 
             <Grid
                 Grid.Column="0"
-                Padding="16"
+                Padding="12"
                 Background="{StaticResource SnapPanelBrush}"
                 BorderBrush="{StaticResource SnapStrokeBrush}"
                 BorderThickness="0,0,1,0"
-                RowSpacing="14">
+                RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" MinHeight="56" MaxHeight="260" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" MinHeight="80" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Text="Layers" />
+                    <Border
+                        Grid.Column="1"
+                        Padding="6,2"
+                        VerticalAlignment="Center"
+                        Background="{StaticResource SnapPanelAltBrush}"
+                        CornerRadius="4">
+                        <TextBlock
+                            FontSize="11"
+                            Text="{x:Bind ViewModel.AnnotationLayerCount, Mode=OneWay}" />
+                    </Border>
+                    <Button
+                        Grid.Column="2"
+                        AutomationProperties.Name="Add annotation layer"
+                        Click="AddLayerButton_Click"
+                        IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
+                        Style="{StaticResource ToolIconButtonStyle}"
+                        ToolTipService.ToolTip="Add layer">
+                        <SymbolIcon Symbol="Add" />
+                    </Button>
+                </Grid>
+
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ListView
+                        AutomationProperties.Name="Annotation layers"
+                        ItemsSource="{x:Bind ViewModel.AnnotationLayers}"
+                        MaxHeight="220"
+                        SelectionMode="None">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0,0,0,2" />
+                                <Setter Property="MinHeight" Value="0" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="items:AnnotationLayerItem">
+                                <Expander
+                                    AutomationProperties.Name="{x:Bind TreeAutomationName}"
+                                    Collapsed="AnnotationLayer_Collapsed"
+                                    Expanding="AnnotationLayer_Expanding"
+                                    IsExpanded="{x:Bind IsExpanded}">
+                                    <Expander.Header>
+                                    <Grid ColumnSpacing="3">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button
+                                            AutomationProperties.Name="{x:Bind SelectionAutomationName}"
+                                            Background="{x:Bind BackgroundBrush}"
+                                            BorderBrush="{StaticResource SnapStrokeBrush}"
+                                            BorderThickness="1"
+                                            Click="AnnotationLayer_Click"
+                                            CornerRadius="6"
+                                            HorizontalContentAlignment="Stretch"
+                                            MinHeight="32"
+                                            Padding="5,2">
+                                            <Grid ColumnSpacing="5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="18" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <SymbolIcon Symbol="Folder" Foreground="{StaticResource SnapAccentBrush}" />
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock FontSize="11" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock FontSize="9" Foreground="{StaticResource SnapMutedBrush}" Text="{x:Bind ObjectCount}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Button>
+                                        <Button
+                                            Grid.Column="1"
+                                            AutomationProperties.Name="{x:Bind MoveAutomationName}"
+                                            Click="MoveSelectedObjectToLayer_Click"
+                                            FontSize="10"
+                                            IsEnabled="{x:Bind CanMoveSelectedHere}"
+                                            MinWidth="36"
+                                            Padding="3,0"
+                                            ToolTipService.ToolTip="{x:Bind MoveAutomationName}"
+                                            Visibility="{x:Bind MoveVisibility}">
+                                            <TextBlock Text="Move" />
+                                        </Button>
+                                        <Button
+                                            Grid.Column="2"
+                                            AutomationProperties.Name="{x:Bind VisibilityAutomationName}"
+                                            Background="{StaticResource SnapPanelAltBrush}"
+                                            BorderBrush="{StaticResource SnapStrokeBrush}"
+                                            BorderThickness="1"
+                                            Click="AnnotationLayerVisibility_Click"
+                                            CornerRadius="6"
+                                            FontSize="11"
+                                            MinWidth="40"
+                                            Padding="5,0"
+                                            ToolTipService.ToolTip="{x:Bind VisibilityAutomationName}">
+                                            <TextBlock Text="{x:Bind VisibilityText}" />
+                                        </Button>
+                                    </Grid>
+                                    </Expander.Header>
+                                    <ItemsControl ItemsSource="{x:Bind Objects}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="items:AnnotationOverlayItem">
+                                                <Grid ColumnSpacing="4" Margin="16,0,0,2">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Button
+                                                        AutomationProperties.Name="{x:Bind ObjectAutomationName}"
+                                                        Background="{x:Bind LayerBackgroundBrush}"
+                                                        BorderBrush="{StaticResource SnapStrokeBrush}"
+                                                        BorderThickness="1"
+                                                        Click="AnnotationObject_Click"
+                                                        CornerRadius="6"
+                                                        HorizontalContentAlignment="Stretch"
+                                                        MinHeight="32"
+                                                        Padding="7,3">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <TextBlock Foreground="{StaticResource SnapAccentBrush}" Text="{x:Bind LayerGlyph}" />
+                                                            <TextBlock FontSize="11" Text="{x:Bind LayerLabel}" TextTrimming="CharacterEllipsis" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button
+                                                        Grid.Column="1"
+                                                        AutomationProperties.Name="{x:Bind ObjectVisibilityAutomationName}"
+                                                        Click="AnnotationObjectVisibility_Click"
+                                                        FontSize="10"
+                                                        MinWidth="38"
+                                                        Padding="4,0">
+                                                        <TextBlock Text="{x:Bind LayerVisibilityText}" />
+                                                    </Button>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Expander>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <TextBlock
+                        MaxWidth="185"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{StaticResource SnapMutedBrush}"
+                        Text="{x:Bind ViewModel.AnnotationLayersEmptyMessage, Mode=OneWay}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind ViewModel.AnnotationLayersEmptyVisibility, Mode=OneWay}" />
+                    <Border
+                        Grid.Row="1"
+                        Padding="8,6"
+                        Background="{StaticResource SnapSurfaceBrush}"
+                        CornerRadius="6"
+                        Visibility="{x:Bind ViewModel.CanvasImageVisibility, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <SymbolIcon Symbol="Pictures" Foreground="{StaticResource SnapMutedBrush}" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="Background" />
+                            <FontIcon Glyph="&#xE72E;" FontSize="12" Foreground="{StaticResource SnapMutedBrush}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border
+                    Grid.Row="2"
+                    Margin="0,2"
+                    BorderBrush="{StaticResource SnapStrokeBrush}"
+                    BorderThickness="0,1,0,0" />
+
                 <TextBlock
-                    FontSize="20"
+                    Grid.Row="3"
+                    FontSize="12"
                     FontWeight="SemiBold"
-                    Text="History" />
+                    Foreground="{StaticResource SnapMutedBrush}"
+                    Text="RECENT CAPTURES" />
 
                 <AutoSuggestBox
-                    Grid.Row="1"
+                    Grid.Row="4"
                     AutomationProperties.HelpText="Filter the capture history list by title, source, date, or file name."
                     AutomationProperties.Name="Search capture history"
                     PlaceholderText="Search"
                     TextChanged="HistorySearch_TextChanged" />
 
-                <StackPanel
-                    Grid.Row="2"
-                    Spacing="8">
+                <Expander
+                    Grid.Row="5"
+                    Header="Manage capture"
+                    IsExpanded="True">
+                    <StackPanel Spacing="8">
                     <TextBox
                         AutomationProperties.HelpText="Edit the selected capture title."
                         AutomationProperties.Name="Current capture title"
@@ -462,10 +679,11 @@
                             <SymbolIcon Symbol="Delete" />
                         </Button>
                     </Grid>
-                </StackPanel>
+                    </StackPanel>
+                </Expander>
 
                 <ListView
-                    Grid.Row="3"
+                    Grid.Row="6"
                     AutomationProperties.HelpText="Select a capture to open it in the editor."
                     AutomationProperties.Name="Capture history"
                     ItemsSource="{x:Bind ViewModel.RecentDocuments}"
@@ -534,6 +752,18 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
+
+                <Button
+                    Grid.Row="7"
+                    AutomationProperties.Name="Settings"
+                    Click="SettingsButton_Click"
+                    HorizontalAlignment="Stretch"
+                    Style="{StaticResource TopCommandButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <SymbolIcon Symbol="Setting" />
+                        <TextBlock Text="Settings" />
+                    </StackPanel>
+                </Button>
             </Grid>
 
             <Grid
@@ -543,6 +773,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="64" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="48" />
                     </Grid.RowDefinitions>
@@ -732,8 +963,38 @@
                         </Grid>
                     </Border>
 
-                    <Border
+                    <Grid
                         Grid.Row="2"
+                        Padding="14,8"
+                        ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="{x:Bind ViewModel.CurrentDocumentTitle, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="/" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{StaticResource SnapMutedBrush}"
+                                Text="{x:Bind ViewModel.CurrentDocumentSizeLabel, Mode=OneWay}" />
+                        </StackPanel>
+                        <TextBlock
+                            Grid.Column="1"
+                            FontSize="11"
+                            Foreground="{StaticResource SnapMutedBrush}"
+                            Text="Only on your device" />
+                    </Grid>
+
+                    <Border
+                        Grid.Row="3"
                         AutomationProperties.HelpText="Shows the current capture and its annotations."
                         AutomationProperties.Name="Editor canvas"
                         HorizontalAlignment="Stretch"
@@ -803,7 +1064,7 @@
                     </Border>
 
                     <Border
-                        Grid.Row="3"
+                        Grid.Row="4"
                         Padding="16,8"
                         Background="{StaticResource SnapPanelBrush}"
                         BorderBrush="{StaticResource SnapStrokeBrush}"
@@ -930,15 +1191,14 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel
                             VerticalAlignment="Center"
-                            Orientation="Horizontal"
-                            Spacing="8">
-                            <FontIcon
-                                FontSize="16"
-                                Foreground="{StaticResource SnapAccentBrush}"
-                                Glyph="&#xE9F5;" />
+                            Spacing="2">
                             <TextBlock
-                                FontSize="20"
+                                FontSize="16"
                                 FontWeight="SemiBold"
+                                Text="Properties" />
+                            <TextBlock
+                                FontSize="12"
+                                Foreground="{StaticResource SnapMutedBrush}"
                                 Text="{x:Bind ViewModel.ActiveAnnotationToolLabel, Mode=OneWay}" />
                         </StackPanel>
                         <Button
@@ -1001,35 +1261,35 @@
                                 Orientation="Horizontal"
                                 Spacing="8">
                                 <Button
-                                    Background="#C84E40"
-                                    Click="AnnotationStrokeButton_Click"
-                                    Style="{StaticResource SwatchButtonStyle}"
-                                    Tag="2"
-                                    ToolTipService.ToolTip="Red" />
-                                <Button
-                                    Background="#5F86E8"
-                                    Click="AnnotationStrokeButton_Click"
-                                    Style="{StaticResource SwatchButtonStyle}"
-                                    Tag="1"
-                                    ToolTipService.ToolTip="Blue" />
-                                <Button
-                                    Background="#808080"
-                                    Click="AnnotationStrokeButton_Click"
-                                    Style="{StaticResource SwatchButtonStyle}"
-                                    Tag="4"
-                                    ToolTipService.ToolTip="Gray" />
-                                <Button
-                                    Background="#E6AE23"
-                                    Click="AnnotationStrokeButton_Click"
-                                    Style="{StaticResource SwatchButtonStyle}"
-                                    Tag="3"
-                                    ToolTipService.ToolTip="Yellow" />
-                                <Button
-                                    Background="#1F1F1F"
+                                    Background="#4CC2FF"
                                     Click="AnnotationStrokeButton_Click"
                                     Style="{StaticResource SwatchButtonStyle}"
                                     Tag="0"
-                                    ToolTipService.ToolTip="Black" />
+                                    ToolTipService.ToolTip="Sky blue" />
+                                <Button
+                                    Background="#FFFFFF"
+                                    Click="AnnotationStrokeButton_Click"
+                                    Style="{StaticResource SwatchButtonStyle}"
+                                    Tag="1"
+                                    ToolTipService.ToolTip="White" />
+                                <Button
+                                    Background="#FFB85C"
+                                    Click="AnnotationStrokeButton_Click"
+                                    Style="{StaticResource SwatchButtonStyle}"
+                                    Tag="2"
+                                    ToolTipService.ToolTip="Amber" />
+                                <Button
+                                    Background="#FF747D"
+                                    Click="AnnotationStrokeButton_Click"
+                                    Style="{StaticResource SwatchButtonStyle}"
+                                    Tag="3"
+                                    ToolTipService.ToolTip="Coral" />
+                                <Button
+                                    Background="#94DCB1"
+                                    Click="AnnotationStrokeButton_Click"
+                                    Style="{StaticResource SwatchButtonStyle}"
+                                    Tag="4"
+                                    ToolTipService.ToolTip="Mint" />
                             </StackPanel>
                             <Button
                                 AutomationProperties.HelpText="Open the custom annotation color picker."

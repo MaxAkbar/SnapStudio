@@ -3,6 +3,7 @@ namespace SnapStudio.Core.Documents;
 public sealed class RemoveAnnotationCommand : IEditCommand
 {
     private readonly AnnotationObject _annotation;
+    private int _originalIndex = -1;
 
     public RemoveAnnotationCommand(AnnotationObject annotation)
     {
@@ -18,7 +19,12 @@ public sealed class RemoveAnnotationCommand : IEditCommand
         ArgumentNullException.ThrowIfNull(document);
         cancellationToken.ThrowIfCancellationRequested();
 
-        document.Annotations.RemoveAll(annotation => annotation.Id == _annotation.Id);
+        int index = document.Annotations.FindIndex(annotation => annotation.Id == _annotation.Id);
+        if (index >= 0)
+        {
+            _originalIndex = index;
+            document.Annotations.RemoveAt(index);
+        }
 
         return ValueTask.CompletedTask;
     }
@@ -30,7 +36,10 @@ public sealed class RemoveAnnotationCommand : IEditCommand
 
         if (document.Annotations.All(annotation => annotation.Id != _annotation.Id))
         {
-            document.Annotations.Add(_annotation);
+            int index = _originalIndex < 0
+                ? document.Annotations.Count
+                : Math.Min(_originalIndex, document.Annotations.Count);
+            document.Annotations.Insert(index, _annotation);
         }
 
         return ValueTask.CompletedTask;

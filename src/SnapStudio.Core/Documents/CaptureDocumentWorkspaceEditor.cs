@@ -41,6 +41,12 @@ public static class CaptureDocumentWorkspaceEditor
             SourceImage = source.SourceImage,
             Metadata = new DocumentMetadata(default, default, properties),
             Annotations = CloneAnnotations(source.Annotations),
+            Layers = source.Layers.Select(layer => new AnnotationLayer
+            {
+                Id = layer.Id,
+                Name = layer.Name,
+                IsVisible = layer.IsVisible
+            }).ToList(),
             DestructiveOperations = CloneDestructiveOperations(source.DestructiveOperations),
             ExportSettings = source.ExportSettings
         };
@@ -61,6 +67,8 @@ public static class CaptureDocumentWorkspaceEditor
             {
                 Id = annotation.Id,
                 Kind = annotation.Kind,
+                LayerId = annotation.LayerId,
+                IsVisible = annotation.IsVisible,
                 Bounds = annotation.Bounds,
                 Text = annotation.Text,
                 Style = annotation.Style

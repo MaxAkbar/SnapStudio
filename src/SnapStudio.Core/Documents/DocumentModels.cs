@@ -24,7 +24,7 @@ public enum DestructiveOperationKind
 
 public sealed class CaptureDocument
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     public DocumentId Id { get; set; } = DocumentId.New();
 
@@ -35,6 +35,8 @@ public sealed class CaptureDocument
     public DocumentMetadata Metadata { get; set; } = DocumentMetadata.Empty;
 
     public List<AnnotationObject> Annotations { get; set; } = [];
+
+    public List<AnnotationLayer> Layers { get; set; } = [];
 
     public List<DestructiveEditOperation> DestructiveOperations { get; set; } = [];
 
@@ -55,11 +57,24 @@ public sealed class AnnotationObject
 
     public AnnotationKind Kind { get; set; }
 
+    public Guid? LayerId { get; set; }
+
+    public bool IsVisible { get; set; } = true;
+
     public RectD Bounds { get; set; }
 
     public string? Text { get; set; }
 
     public AnnotationStyle Style { get; set; } = AnnotationStyle.Default;
+}
+
+public sealed class AnnotationLayer
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    public string Name { get; set; } = "Layer 1";
+
+    public bool IsVisible { get; set; } = true;
 }
 
 public sealed record AnnotationStyle(

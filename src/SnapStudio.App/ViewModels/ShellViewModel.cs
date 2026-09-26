@@ -117,6 +117,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private readonly IWorkspaceShellService? _workspaceShellService;
     private readonly string _recoverySessionId = string.Empty;
     private readonly AnnotationSelectionState _annotationSelection = new();
+    private readonly HashSet<Guid> _collapsedLayerIds = [];
+    private Guid? _activeLayerId;
     private readonly List<DocumentSummaryItem> _allRecentDocuments = [];
     private readonly DocumentThumbnailRefreshCoordinator _recentThumbnailRefresh = new();
     private readonly CancellationTokenSource _recentThumbnailRefreshCancellation = new();
@@ -172,7 +174,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private double _annotationStrokeThickness = 2;
     private double _annotationCornerRadius = AnnotationCornerRadiusDefault;
     private double _annotationOpacity = 1;
-    private ColorRgba _customAnnotationColor = new(232, 135, 46, 255);
+    private ColorRgba _customAnnotationColor = new(76, 194, 255, 255);
     private bool _resizeAspectRatioIsLocked = true;
     private double _resizeWidth = 1;
     private double _resizeHeight = 1;
@@ -266,6 +268,18 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     public ObservableCollection<DocumentSummaryItem> RecentDocuments { get; } = [];
 
     public ObservableCollection<AnnotationOverlayItem> AnnotationOverlays { get; } = [];
+
+    public ObservableCollection<AnnotationLayerItem> AnnotationLayers { get; } = [];
+
+    public string AnnotationLayerCount => AnnotationLayers.Count.ToString(CultureInfo.InvariantCulture);
+
+    public Visibility AnnotationLayersEmptyVisibility => AnnotationLayers.Count == 0
+        ? Visibility.Visible
+        : Visibility.Collapsed;
+
+    public string AnnotationLayersEmptyMessage => HasCurrentDocument
+        ? "Add a layer to organize objects."
+        : "Open or capture an image to see layers.";
 
     public BitmapImage? CanvasImageSource
     {
@@ -3116,6 +3130,24 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             ? CreateAnnotation(_currentDocument, annotationKind, bounds)
             : CreateCenteredAnnotation(_currentDocument, annotationKind);
 
+        AnnotationLayer? activeLayer = _currentDocument.Layers
+            .FirstOrDefault(layer => layer.Id == _activeLayerId);
+        if (activeLayer is null)
+        {
+            DocumentLayers.EnsureInitialized(_currentDocument);
+            activeLayer = _currentDocument.Layers[^1];
+            _activeLayerId = activeLayer.Id;
+        }
+
+        if (!activeLayer.IsVisible)
+        {
+            StatusText = "Show the selected layer before adding an object.";
+            return;
+        }
+
+        annotation.LayerId = activeLayer.Id;
+        _collapsedLayerIds.Remove(activeLayer.Id);
+
         await _editCommandStack
             .ExecuteAsync(
                 _currentDocument,
@@ -3137,6 +3169,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         if (_annotationSelection.Select(_currentDocument, annotationId))
         {
+            _activeLayerId = GetSelectedAnnotation()?.LayerId;
+            if (_activeLayerId is Guid layerId)
+            {
+                _collapsedLayerIds.Remove(layerId);
+            }
             SyncStyleControlsFromSelectedAnnotation();
             RefreshAnnotationOverlays();
             NotifyEditorStateChanged();
@@ -3187,6 +3224,152 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         _annotationSelection.Clear();
         await SaveCurrentDocumentAsync("Annotation deleted.", cancellationToken).ConfigureAwait(true);
+    }
+
+    public void SelectLayer(Guid layerId)
+    {
+        if (_currentDocument?.Layers.All(layer => layer.Id != layerId) != false)
+        {
+            return;
+        }
+
+        _activeLayerId = layerId;
+        _annotationSelection.Clear();
+        ApplyAnnotationToolDefaultsWhenUnselected();
+        RefreshAnnotationOverlays();
+        NotifyEditorStateChanged();
+        StatusText = "Layer selected. New objects will be added here.";
+    }
+
+    public void SetLayerExpanded(Guid layerId, bool isExpanded)
+    {
+        if (_currentDocument?.Layers.Any(layer => layer.Id == layerId) != true)
+        {
+            return;
+        }
+
+        if (isExpanded)
+        {
+            _collapsedLayerIds.Remove(layerId);
+        }
+        else
+        {
+            _collapsedLayerIds.Add(layerId);
+        }
+    }
+
+    public async Task AddLayerAsync(CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
+        {
+            return;
+        }
+
+        int number = 1;
+        while (_currentDocument.Layers.Any(layer => layer.Name == $"Layer {number}"))
+        {
+            number++;
+        }
+
+        var layer = new AnnotationLayer { Name = $"Layer {number}" };
+        await _editCommandStack.ExecuteAsync(
+            _currentDocument,
+            new AddAnnotationLayerCommand(layer),
+            cancellationToken).ConfigureAwait(true);
+        _activeLayerId = layer.Id;
+        _annotationSelection.Clear();
+        await SaveCurrentDocumentAsync($"{layer.Name} added.", cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task MoveSelectedAnnotationToLayerAsync(
+        Guid layerId,
+        CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null
+            || _documentRepository is null
+            || _editCommandStack is null
+            || _annotationSelection.SelectedAnnotationId is not Guid annotationId)
+        {
+            return;
+        }
+
+        AnnotationLayer? layer = _currentDocument.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
+        AnnotationObject? annotation = GetSelectedAnnotation();
+        if (layer is null || annotation?.LayerId is not Guid beforeLayerId
+            || beforeLayerId == layerId || !layer.IsVisible)
+        {
+            return;
+        }
+
+        await _editCommandStack.ExecuteAsync(
+            _currentDocument,
+            new UpdateAnnotationLayerCommand(annotationId, beforeLayerId, layerId),
+            cancellationToken).ConfigureAwait(true);
+        _activeLayerId = layerId;
+        _collapsedLayerIds.Remove(layerId);
+        await SaveCurrentDocumentAsync($"Object moved to {layer.Name}.", cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task ToggleLayerVisibilityAsync(Guid layerId, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
+        {
+            return;
+        }
+
+        AnnotationLayer? layer = _currentDocument.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
+        if (layer is null)
+        {
+            return;
+        }
+
+        bool nextVisibility = !layer.IsVisible;
+        await _editCommandStack.ExecuteAsync(
+            _currentDocument,
+            new UpdateLayerVisibilityCommand(layerId, layer.IsVisible, nextVisibility),
+            cancellationToken).ConfigureAwait(true);
+        if (!nextVisibility && GetSelectedAnnotation()?.LayerId == layerId)
+        {
+            _annotationSelection.Clear();
+        }
+
+        await SaveCurrentDocumentAsync(
+            nextVisibility ? "Layer shown." : "Layer hidden.",
+            cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task ToggleAnnotationVisibilityAsync(
+        Guid annotationId,
+        CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null
+            || _documentRepository is null
+            || _editCommandStack is null)
+        {
+            return;
+        }
+
+        AnnotationObject? annotation = _currentDocument.Annotations
+            .FirstOrDefault(candidate => candidate.Id == annotationId);
+        if (annotation is null)
+        {
+            return;
+        }
+
+        bool nextVisibility = !annotation.IsVisible;
+        await _editCommandStack
+            .ExecuteAsync(
+                _currentDocument,
+                new UpdateAnnotationVisibilityCommand(
+                    annotationId,
+                    annotation.IsVisible,
+                    nextVisibility),
+                cancellationToken)
+            .ConfigureAwait(true);
+        await SaveCurrentDocumentAsync(
+                nextVisibility ? "Object shown." : "Object hidden.",
+                cancellationToken)
+            .ConfigureAwait(true);
     }
 
     public async Task CropToSelectedAnnotationAsync(CancellationToken cancellationToken)
@@ -3365,6 +3548,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         {
             bool sourceImageChanged = beforeImage != _currentDocument.SourceImage;
             _annotationSelection.RetainExisting(_currentDocument);
+            _activeLayerId = GetSelectedAnnotation()?.LayerId
+                ?? (_currentDocument.Layers.Any(layer => layer.Id == _activeLayerId)
+                    ? _activeLayerId
+                    : _currentDocument.Layers.LastOrDefault()?.Id);
             SyncStyleControlsFromSelectedAnnotation();
             RefreshCanvasAfterRasterEdit();
             await SaveCurrentDocumentAsync("Undo complete.", cancellationToken).ConfigureAwait(true);
@@ -3391,6 +3578,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         {
             bool sourceImageChanged = beforeImage != _currentDocument.SourceImage;
             _annotationSelection.RetainExisting(_currentDocument);
+            _activeLayerId = GetSelectedAnnotation()?.LayerId
+                ?? (_currentDocument.Layers.Any(layer => layer.Id == _activeLayerId)
+                    ? _activeLayerId
+                    : _currentDocument.Layers.LastOrDefault()?.Id);
             SyncStyleControlsFromSelectedAnnotation();
             RefreshCanvasAfterRasterEdit();
             await SaveCurrentDocumentAsync("Redo complete.", cancellationToken).ConfigureAwait(true);
@@ -4458,6 +4649,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
 
         _currentDocument = document;
+        DocumentLayers.EnsureInitialized(document);
+        _activeLayerId = document.Layers[^1].Id;
         _currentDocumentId = document.Id;
         _editCommandStack?.Clear();
         _annotationSelection.Clear();
@@ -4570,6 +4763,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
 
         _currentDocument = null;
+        _activeLayerId = null;
         _currentDocumentId = null;
         _editCommandStack?.Clear();
         _annotationSelection.Clear();
@@ -4673,19 +4867,56 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private void RefreshAnnotationOverlays()
     {
         AnnotationOverlays.Clear();
+        AnnotationLayers.Clear();
 
         if (_currentDocument is null || !_canvasViewport.HasSource)
         {
+            OnPropertyChanged(nameof(AnnotationLayerCount));
+            OnPropertyChanged(nameof(AnnotationLayersEmptyVisibility));
+            OnPropertyChanged(nameof(AnnotationLayersEmptyMessage));
             return;
         }
 
-        foreach (AnnotationObject annotation in _currentDocument.Annotations)
+        var itemsByLayer = new Dictionary<Guid, List<AnnotationOverlayItem>>();
+        foreach (AnnotationObject annotation in DocumentLayers.InPaintOrder(_currentDocument))
         {
-            AnnotationOverlays.Add(AnnotationOverlayItem.FromAnnotation(
+            AnnotationOverlayItem item = AnnotationOverlayItem.FromAnnotation(
                 annotation,
                 _canvasViewport.Zoom,
-                _annotationSelection.SelectedAnnotationId));
+                _annotationSelection.SelectedAnnotationId);
+            if (DocumentLayers.IsEffectivelyVisible(_currentDocument, annotation))
+            {
+                AnnotationOverlays.Add(item);
+            }
+
+            if (annotation.LayerId is Guid layerId)
+            {
+                if (!itemsByLayer.TryGetValue(layerId, out List<AnnotationOverlayItem>? items))
+                {
+                    items = [];
+                    itemsByLayer[layerId] = items;
+                }
+
+                items.Insert(0, item);
+            }
         }
+
+        foreach (AnnotationLayer layer in _currentDocument.Layers.AsEnumerable().Reverse())
+        {
+            itemsByLayer.TryGetValue(layer.Id, out List<AnnotationOverlayItem>? items);
+            AnnotationLayers.Add(new AnnotationLayerItem(
+                layer,
+                items ?? [],
+                _activeLayerId == layer.Id,
+                _annotationSelection.SelectedAnnotationId is Guid annotationId
+                    && _currentDocument.Annotations.Any(annotation => annotation.Id == annotationId
+                        && annotation.LayerId != layer.Id),
+                !_collapsedLayerIds.Contains(layer.Id)));
+        }
+
+        OnPropertyChanged(nameof(AnnotationLayerCount));
+        OnPropertyChanged(nameof(AnnotationLayersEmptyVisibility));
+        OnPropertyChanged(nameof(AnnotationLayersEmptyMessage));
     }
 
     private void NotifyViewportChanged()
@@ -5088,6 +5319,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         {
             Id = annotation.Id,
             Kind = annotation.Kind,
+            LayerId = annotation.LayerId,
+            IsVisible = annotation.IsVisible,
             Bounds = bounds,
             Text = annotation.Text,
             Style = annotation.Style
@@ -5370,7 +5603,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                 break;
             case 3:
                 AnnotationToolIndex = 3;
-                AnnotationStrokeIndex = 2;
+                AnnotationStrokeIndex = 0;
                 AnnotationStrokeThickness = 4;
                 AnnotationOpacity = 1;
                 break;
@@ -5382,7 +5615,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                 break;
             case 5:
                 AnnotationToolIndex = 5;
-                AnnotationStrokeIndex = 3;
+                AnnotationStrokeIndex = 2;
                 AnnotationStrokeThickness = 1;
                 AnnotationOpacity = 0.35;
                 break;
@@ -5428,7 +5661,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         return annotationKind switch
         {
-            AnnotationKind.Highlight => new ColorRgba(255, 214, 10, 255),
+            AnnotationKind.Highlight => new ColorRgba(255, 184, 92, 255),
             _ => selectedColor
         };
     }
@@ -5443,7 +5676,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         switch (ActiveAnnotationKind)
         {
             case AnnotationKind.Highlight:
-                AnnotationStrokeIndex = 3;
+                AnnotationStrokeIndex = 2;
                 AnnotationOpacity = 0.35;
                 break;
             case AnnotationKind.Blur:
@@ -5474,12 +5707,12 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     {
         return AnnotationStrokeIndex switch
         {
-            1 => new ColorRgba(0, 95, 184, 255),
-            2 => new ColorRgba(196, 43, 28, 255),
-            3 => new ColorRgba(255, 214, 10, 255),
-            4 => new ColorRgba(128, 128, 128, 255),
+            1 => ColorRgba.White,
+            2 => new ColorRgba(255, 184, 92, 255),
+            3 => new ColorRgba(255, 116, 125, 255),
+            4 => new ColorRgba(148, 220, 177, 255),
             AnnotationStrokeCustomIndex => _customAnnotationColor,
-            _ => ColorRgba.Black
+            _ => new ColorRgba(76, 194, 255, 255)
         };
     }
 
@@ -5496,27 +5729,27 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     private static int ResolveStrokeIndex(ColorRgba stroke)
     {
-        if (stroke == new ColorRgba(0, 95, 184, 255))
+        if (stroke == ColorRgba.White)
         {
             return 1;
         }
 
-        if (stroke == new ColorRgba(196, 43, 28, 255))
+        if (stroke == new ColorRgba(255, 184, 92, 255))
         {
             return 2;
         }
 
-        if (stroke == new ColorRgba(255, 214, 10, 255))
+        if (stroke == new ColorRgba(255, 116, 125, 255))
         {
             return 3;
         }
 
-        if (stroke == new ColorRgba(128, 128, 128, 255))
+        if (stroke == new ColorRgba(148, 220, 177, 255))
         {
             return 4;
         }
 
-        return stroke == ColorRgba.Black
+        return stroke == new ColorRgba(76, 194, 255, 255)
             ? 0
             : AnnotationStrokeCustomIndex;
     }

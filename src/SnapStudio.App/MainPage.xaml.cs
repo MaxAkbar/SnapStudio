@@ -439,6 +439,67 @@ public sealed partial class MainPage : Page
         }
     }
 
+    private void AnnotationLayer_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: AnnotationLayerItem item })
+        {
+            ViewModel.SelectLayer(item.Id);
+            UpdateBindingsFromViewModel();
+        }
+    }
+
+    private void AnnotationLayer_Expanding(Expander sender, ExpanderExpandingEventArgs e)
+    {
+        if (sender.DataContext is AnnotationLayerItem item)
+        {
+            ViewModel.SetLayerExpanded(item.Id, true);
+        }
+    }
+
+    private void AnnotationLayer_Collapsed(Expander sender, ExpanderCollapsedEventArgs e)
+    {
+        if (sender.DataContext is AnnotationLayerItem item)
+        {
+            ViewModel.SetLayerExpanded(item.Id, false);
+        }
+    }
+
+    private async void AnnotationLayerVisibility_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: AnnotationLayerItem item })
+        {
+            await ViewModel.ToggleLayerVisibilityAsync(item.Id, CancellationToken.None);
+            UpdateBindingsFromViewModel();
+        }
+    }
+
+    private void AnnotationObject_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: AnnotationOverlayItem item })
+        {
+            ViewModel.SelectAnnotation(item.Id);
+            UpdateBindingsFromViewModel();
+        }
+    }
+
+    private async void AnnotationObjectVisibility_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: AnnotationOverlayItem item })
+        {
+            await ViewModel.ToggleAnnotationVisibilityAsync(item.Id, CancellationToken.None);
+            UpdateBindingsFromViewModel();
+        }
+    }
+
+    private async void MoveSelectedObjectToLayer_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: AnnotationLayerItem item })
+        {
+            await ViewModel.MoveSelectedAnnotationToLayerAsync(item.Id, CancellationToken.None);
+            UpdateBindingsFromViewModel();
+        }
+    }
+
     private void WorkspaceTitle_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (_isUpdatingBindings)
@@ -713,6 +774,12 @@ public sealed partial class MainPage : Page
     private async void AddAnnotationButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         await AddActiveAnnotationAndUpdateAsync(CancellationToken.None);
+    }
+
+    private async void AddLayerButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        await ViewModel.AddLayerAsync(CancellationToken.None);
+        UpdateBindingsFromViewModel();
     }
 
     private async void DeleteAnnotationButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

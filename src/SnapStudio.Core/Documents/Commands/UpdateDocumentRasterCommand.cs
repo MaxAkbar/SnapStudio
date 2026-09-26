@@ -70,6 +70,8 @@ public sealed class UpdateDocumentRasterCommand : IEditCommand
             {
                 Id = annotation.Id,
                 Kind = annotation.Kind,
+                LayerId = annotation.LayerId,
+                IsVisible = annotation.IsVisible,
                 Bounds = annotation.Bounds,
                 Text = annotation.Text,
                 Style = annotation.Style

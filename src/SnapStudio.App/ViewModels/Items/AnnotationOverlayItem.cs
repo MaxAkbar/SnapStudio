@@ -28,6 +28,7 @@ public sealed class AnnotationOverlayItem
         double cornerRadius,
         double fontSize,
         double opacity,
+        bool isVisible,
         bool isSelected)
     {
         Kind = kind;
@@ -49,6 +50,7 @@ public sealed class AnnotationOverlayItem
         CornerRadius = cornerRadius;
         FontSize = fontSize;
         Opacity = opacity;
+        IsVisible = isVisible;
         IsSelected = isSelected;
     }
 
@@ -90,7 +92,37 @@ public sealed class AnnotationOverlayItem
 
     public double Opacity { get; }
 
+    public bool IsVisible { get; }
+
     public bool IsSelected { get; }
+
+    public string LayerLabel => Kind == AnnotationKind.Text
+        ? Text
+        : Kind == AnnotationKind.Highlight ? "Highlighter" : Kind.ToString();
+
+    public string LayerGlyph => Kind switch
+    {
+        AnnotationKind.Arrow => "↗",
+        AnnotationKind.Line => "╱",
+        AnnotationKind.Rectangle => "□",
+        AnnotationKind.Ellipse => "○",
+        AnnotationKind.Text => "T",
+        AnnotationKind.Highlight => "▤",
+        AnnotationKind.Blur => "◌",
+        _ => "•"
+    };
+
+    public Brush LayerBackgroundBrush => IsSelected
+        ? new SolidColorBrush(Color.FromArgb(255, 30, 48, 61))
+        : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+
+    public string ObjectAutomationName => $"Select {LayerLabel} object";
+
+    public string LayerVisibilityText => IsVisible ? "Hide" : "Show";
+
+    public string ObjectVisibilityAutomationName => IsVisible
+        ? $"Hide {LayerLabel} object"
+        : $"Show {LayerLabel} object";
 
     public Visibility SelectionVisibility => IsSelected
         ? Visibility.Visible
@@ -130,6 +162,7 @@ public sealed class AnnotationOverlayItem
             Math.Max(0, annotation.Style.CornerRadius * zoom),
             CalculateFontSize(annotation.Style.StrokeThickness, annotation.Kind, zoom),
             opacity,
+            annotation.IsVisible,
             isSelected);
     }
 

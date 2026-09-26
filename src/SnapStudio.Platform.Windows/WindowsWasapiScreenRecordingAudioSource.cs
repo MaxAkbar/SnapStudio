@@ -69,6 +69,9 @@ public interface IWindowsWasapiAudioCaptureFactory
     IWindowsWasapiAudioCapture CreateCapture(WindowsWasapiScreenRecordingAudioCaptureKind kind);
 }
 
+// NAudio 3.1 still supports these event-based capture types. Keep this compatibility
+// adapter on them until a recorder migration can be validated with real audio devices.
+#pragma warning disable CS0618
 public sealed class WindowsWasapiAudioCaptureFactory : IWindowsWasapiAudioCaptureFactory
 {
     private readonly WindowsWasapiScreenRecordingAudioSourceOptions _options;
@@ -219,6 +222,7 @@ public sealed class WindowsWasapiAudioCaptureFactory : IWindowsWasapiAudioCaptur
         }
     }
 }
+#pragma warning restore CS0618
 
 public sealed class WindowsWasapiScreenRecordingAudioSource : IScreenRecordingAudioSource
 {
