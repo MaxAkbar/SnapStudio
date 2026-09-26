@@ -5,7 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CSharpDB" Version="3.7.0" />
+    <PackageReference Include="CSharpDB" Version="4.6.4" />
   </ItemGroup>
 
   <PropertyGroup>

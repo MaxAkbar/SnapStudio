@@ -64,7 +64,13 @@ public sealed class FileSystemDocumentCatalog : IDocumentCatalog
     {
         try
         {
-            await using var stream = File.OpenRead(documentPath);
+            await using var stream = new FileStream(
+                documentPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read | FileShare.Delete,
+                bufferSize: 4096,
+                useAsync: true);
             return await JsonSerializer
                 .DeserializeAsync<CaptureDocument>(stream, JsonOptions, cancellationToken)
                 .ConfigureAwait(false);

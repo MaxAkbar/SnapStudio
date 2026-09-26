@@ -69,7 +69,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private const double ResizeMaximumPercent = 1000;
     private const double AnnotationStrokeMaximum = 12;
     private const double AnnotationTextSizeMaximum = 72;
+    private const double AnnotationCornerRadiusDefault = 8;
     private const int AnnotationStrokeCustomIndex = 5;
+    private const int AnnotationCornerStyleEdgesIndex = 0;
+    private const int AnnotationCornerStyleRoundedIndex = 1;
     private const int ResizeUnitPixelsIndex = 0;
     private const int ResizeUnitPercentIndex = 1;
     private const int StorageBackendFileSystemIndex = 0;
@@ -115,10 +118,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private readonly string _recoverySessionId = string.Empty;
     private readonly AnnotationSelectionState _annotationSelection = new();
     private readonly List<DocumentSummaryItem> _allRecentDocuments = [];
+    private readonly DocumentThumbnailRefreshCoordinator _recentThumbnailRefresh = new();
+    private readonly CancellationTokenSource _recentThumbnailRefreshCancellation = new();
     private CancellationTokenSource? _messageLoopCancellation;
-    private CancellationTokenSource? _recentThumbnailRefreshCancellation;
     private Task? _messageLoopTask;
-    private int _recentThumbnailRefreshVersion;
+    private bool _disposed;
     private CanvasViewportState _canvasViewport = CanvasViewportState.Empty;
     private BitmapImage? _canvasImageSource;
     private InfoBarSeverity _captureNoticeSeverity = InfoBarSeverity.Informational;
@@ -166,6 +170,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private int _annotationToolIndex;
     private int _annotationStrokeIndex;
     private double _annotationStrokeThickness = 2;
+    private double _annotationCornerRadius = AnnotationCornerRadiusDefault;
     private double _annotationOpacity = 1;
     private ColorRgba _customAnnotationColor = new(232, 135, 46, 255);
     private bool _resizeAspectRatioIsLocked = true;
@@ -994,7 +999,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             OnPropertyChanged(nameof(AnnotationToolIndex));
             OnPropertyChanged(nameof(ActiveAnnotationKind));
             OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
-            NotifyAnnotationSizeControlChanged();
+            NotifyAnnotationStyleControlsChanged();
         }
     }
 
@@ -1065,6 +1070,33 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     public double AnnotationSizeStepFrequency => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
         ? 1
         : 0.5;
+
+    public Visibility AnnotationCornerStyleControlsVisibility => ActiveOrSelectedAnnotationKind == AnnotationKind.Rectangle
+        ? Visibility.Visible
+        : Visibility.Collapsed;
+
+    public int AnnotationCornerStyleIndex => AnnotationCornerRadius > 0
+        ? AnnotationCornerStyleRoundedIndex
+        : AnnotationCornerStyleEdgesIndex;
+
+    public double AnnotationCornerRadius
+    {
+        get => _annotationCornerRadius;
+        set
+        {
+            double normalized = double.IsFinite(value)
+                ? Math.Max(0, Math.Round(value))
+                : 0;
+            if (Math.Abs(_annotationCornerRadius - normalized) < 0.01)
+            {
+                return;
+            }
+
+            _annotationCornerRadius = normalized;
+            OnPropertyChanged(nameof(AnnotationCornerRadius));
+            OnPropertyChanged(nameof(AnnotationCornerStyleIndex));
+        }
+    }
 
     public double AnnotationOpacity
     {
@@ -1271,6 +1303,23 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     {
         MarkAnnotationPresetCustom();
         AnnotationStrokeThickness = strokeThickness;
+        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
+            .ConfigureAwait(true);
+    }
+
+    public async Task UpdateAnnotationCornerStyleAsync(
+        int cornerStyleIndex,
+        CancellationToken cancellationToken)
+    {
+        if (cornerStyleIndex is not (AnnotationCornerStyleEdgesIndex or AnnotationCornerStyleRoundedIndex))
+        {
+            return;
+        }
+
+        MarkAnnotationPresetCustom();
+        AnnotationCornerRadius = cornerStyleIndex == AnnotationCornerStyleRoundedIndex
+            ? AnnotationCornerRadiusDefault
+            : 0;
         await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
             .ConfigureAwait(true);
     }
@@ -2573,6 +2622,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return false;
         }
 
+        RemoveRecentDocument(currentDocumentId);
         await ClearCurrentDocumentAsync(cancellationToken).ConfigureAwait(true);
         await RefreshRecentDocumentsAsync(cancellationToken).ConfigureAwait(true);
         await OpenMostRecentDocumentAsync(cancellationToken).ConfigureAwait(true);
@@ -3429,10 +3479,16 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
         _messageLoopCancellation?.Cancel();
         _messageLoopCancellation?.Dispose();
-        _recentThumbnailRefreshCancellation?.Cancel();
-        _recentThumbnailRefreshCancellation = null;
+        _recentThumbnailRefreshCancellation.Cancel();
+        _recentThumbnailRefreshCancellation.Dispose();
 
         if (_hotkeyService is not null)
         {
@@ -3650,59 +3706,43 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     private void QueueRecentThumbnailRefresh(IReadOnlyList<DocumentSummary> summaries)
     {
-        _recentThumbnailRefreshCancellation?.Cancel();
-
-        if (_documentThumbnailCache is null || summaries.Count == 0)
+        if (_documentThumbnailCache is null || _disposed)
         {
             return;
         }
 
-        var refreshCancellation = new CancellationTokenSource();
-        _recentThumbnailRefreshCancellation = refreshCancellation;
-        int refreshVersion = ++_recentThumbnailRefreshVersion;
+        // A newer list supersedes pending work, not an in-flight cache render.
+        // Only disposal cancels the token passed through the cache to the renderer.
         _ = RefreshRecentDocumentThumbnailsAsync(
             summaries.ToArray(),
-            refreshVersion,
-            refreshCancellation);
+            _recentThumbnailRefreshCancellation.Token);
     }
 
     private async Task RefreshRecentDocumentThumbnailsAsync(
         IReadOnlyList<DocumentSummary> summaries,
-        int refreshVersion,
-        CancellationTokenSource cancellationSource)
+        CancellationToken cancellationToken)
     {
-        CancellationToken cancellationToken = cancellationSource.Token;
         try
         {
-            foreach (DocumentSummary summary in summaries)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (refreshVersion != _recentThumbnailRefreshVersion)
-                {
-                    return;
-                }
-
-                string? thumbnailPath = await ResolveThumbnailPathAsync(summary, cancellationToken)
-                    .ConfigureAwait(true);
-                if (!string.IsNullOrWhiteSpace(thumbnailPath))
-                {
-                    UpdateRecentDocumentThumbnail(summary, thumbnailPath);
-                }
-
-                await Task.Yield();
-            }
+            await _recentThumbnailRefresh
+                .RefreshAsync(
+                    summaries,
+                    ResolveThumbnailPathAsync,
+                    UpdateRecentDocumentThumbnail,
+                    cancellationToken)
+                .ConfigureAwait(true);
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException exception) when (
+            cancellationToken.IsCancellationRequested
+            && exception.CancellationToken == cancellationToken)
         {
+            // Expected shutdown; superseding a refresh never cancels this token.
         }
-        finally
+        catch (Exception exception)
         {
-            if (ReferenceEquals(_recentThumbnailRefreshCancellation, cancellationSource))
-            {
-                _recentThumbnailRefreshCancellation = null;
-            }
-
-            cancellationSource.Dispose();
+            SetStatus($"Thumbnail refresh failed: {exception.Message}");
+            await LogThumbnailFailureAsync(null, exception.Message, exception.GetType().Name)
+                .ConfigureAwait(true);
         }
     }
 
@@ -3732,12 +3772,46 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             or ArgumentException
             or InvalidOperationException)
         {
+            await LogThumbnailFailureAsync(summary.Id, exception.Message, exception.GetType().Name)
+                .ConfigureAwait(true);
             return summary.ThumbnailPath;
+        }
+
+        if (!result.Succeeded)
+        {
+            await LogThumbnailFailureAsync(
+                    summary.Id,
+                    result.ErrorMessage ?? "The thumbnail could not be generated.")
+                .ConfigureAwait(true);
         }
 
         return result.Succeeded
             ? result.ThumbnailPath
             : summary.ThumbnailPath;
+    }
+
+    private Task LogThumbnailFailureAsync(
+        DocumentId? documentId,
+        string message,
+        string? exceptionType = null)
+    {
+        if (_diagnosticLog is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _diagnosticLog.WriteAsync(
+            DiagnosticEvent.Create(
+                DiagnosticSeverity.Warning,
+                "SnapStudio.App.Thumbnails",
+                "Thumbnail refresh failed.",
+                new Dictionary<string, string>
+                {
+                    ["documentId"] = documentId?.ToString() ?? string.Empty,
+                    ["error"] = message,
+                    ["exceptionType"] = exceptionType ?? string.Empty
+                }),
+            CancellationToken.None);
     }
 
     private void UpdateRecentDocumentThumbnail(
@@ -3760,6 +3834,17 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         _allRecentDocuments[index] = DocumentSummaryItem.FromSummary(summary, thumbnailPath);
         ApplyRecentDocumentFilter();
+    }
+
+    private void RemoveRecentDocument(DocumentId documentId)
+    {
+        string id = documentId.ToString();
+        int removedCount = _allRecentDocuments.RemoveAll(
+            document => string.Equals(document.Id, id, StringComparison.OrdinalIgnoreCase));
+        if (removedCount > 0)
+        {
+            ApplyRecentDocumentFilter();
+        }
     }
 
     private void ApplyRecentDocumentFilter()
@@ -4661,6 +4746,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         MarkAnnotationPresetCustom();
         SelectAnnotationColor(annotation.Style.Stroke);
         AnnotationStrokeThickness = annotation.Style.StrokeThickness;
+        AnnotationCornerRadius = annotation.Style.CornerRadius;
         AnnotationOpacity = annotation.Style.Opacity;
         if (annotation.Kind == AnnotationKind.Text)
         {
@@ -4682,7 +4768,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             AnnotationKind.Blur => 6,
             _ => 0
         };
-        NotifyAnnotationSizeControlChanged();
+        NotifyAnnotationStyleControlsChanged();
     }
 
     private AnnotationObject? GetSelectedAnnotation()
@@ -5159,6 +5245,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             && first.Fill == second.Fill
             && first.Text == second.Text
             && Math.Abs(first.StrokeThickness - second.StrokeThickness) < tolerance
+            && Math.Abs(first.CornerRadius - second.CornerRadius) < tolerance
             && Math.Abs(first.Opacity - second.Opacity) < tolerance;
     }
 
@@ -5206,7 +5293,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                 ColorRgba.Transparent,
                 ColorRgba.Black,
                 AnnotationStrokeThickness,
-                opacity)
+                opacity,
+                annotationKind == AnnotationKind.Rectangle ? AnnotationCornerRadius : 0)
         };
     }
 
@@ -5239,7 +5327,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             {
                 Stroke = color,
                 StrokeThickness = AnnotationStrokeThickness,
-                Opacity = AnnotationOpacity
+                Opacity = AnnotationOpacity,
+                CornerRadius = annotationKind == AnnotationKind.Rectangle
+                    ? AnnotationCornerRadius
+                    : before.CornerRadius
             }
         };
     }
@@ -5267,12 +5358,14 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                 AnnotationToolIndex = 0;
                 AnnotationStrokeIndex = 0;
                 AnnotationStrokeThickness = 3;
+                AnnotationCornerRadius = 0;
                 AnnotationOpacity = 1;
                 break;
             case 2:
                 AnnotationToolIndex = 0;
                 AnnotationStrokeIndex = 2;
                 AnnotationStrokeThickness = 4;
+                AnnotationCornerRadius = 14;
                 AnnotationOpacity = 1;
                 break;
             case 3:
@@ -5428,11 +5521,13 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             : AnnotationStrokeCustomIndex;
     }
 
-    private void NotifyAnnotationSizeControlChanged()
+    private void NotifyAnnotationStyleControlsChanged()
     {
         OnPropertyChanged(nameof(AnnotationSizeHeader));
         OnPropertyChanged(nameof(AnnotationSizeMaximum));
         OnPropertyChanged(nameof(AnnotationSizeStepFrequency));
+        OnPropertyChanged(nameof(AnnotationCornerStyleControlsVisibility));
+        OnPropertyChanged(nameof(AnnotationCornerStyleIndex));
     }
 
     private static string ResolveDocumentTitle(CaptureDocument document)

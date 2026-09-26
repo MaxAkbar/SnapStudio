@@ -188,7 +188,8 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             Text = annotation.Text,
             Style = annotation.Style with
             {
-                StrokeThickness = Math.Max(1, annotation.Style.StrokeThickness * scale)
+                StrokeThickness = Math.Max(1, annotation.Style.StrokeThickness * scale),
+                CornerRadius = Math.Max(0, annotation.Style.CornerRadius * scale)
             }
         };
     }
@@ -229,16 +230,51 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
         RectangleF rectangle = ToRectangleF(annotation.Bounds);
         using Brush fill = CreateBrush(annotation.Style.Fill, annotation.Style.Opacity);
         using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity);
+        using GraphicsPath? roundedPath = CreateRoundedRectanglePath(rectangle, annotation.Style.CornerRadius);
 
         if (annotation.Style.Fill.A > 0)
         {
-            graphics.FillRectangle(fill, rectangle);
+            if (roundedPath is null)
+            {
+                graphics.FillRectangle(fill, rectangle);
+            }
+            else
+            {
+                graphics.FillPath(fill, roundedPath);
+            }
         }
 
         if (annotation.Style.Stroke.A > 0 && annotation.Style.StrokeThickness > 0)
         {
-            graphics.DrawRectangle(pen, rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
+            if (roundedPath is null)
+            {
+                graphics.DrawRectangle(pen, rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
+            }
+            else
+            {
+                graphics.DrawPath(pen, roundedPath);
+            }
         }
+    }
+
+    private static GraphicsPath? CreateRoundedRectanglePath(RectangleF rectangle, double cornerRadius)
+    {
+        float radius = (float)Math.Min(
+            Math.Max(0, cornerRadius),
+            Math.Min(rectangle.Width, rectangle.Height) / 2);
+        if (radius <= 0.01f)
+        {
+            return null;
+        }
+
+        float diameter = radius * 2;
+        var path = new GraphicsPath();
+        path.AddArc(rectangle.X, rectangle.Y, diameter, diameter, 180, 90);
+        path.AddArc(rectangle.Right - diameter, rectangle.Y, diameter, diameter, 270, 90);
+        path.AddArc(rectangle.Right - diameter, rectangle.Bottom - diameter, diameter, diameter, 0, 90);
+        path.AddArc(rectangle.X, rectangle.Bottom - diameter, diameter, diameter, 90, 90);
+        path.CloseFigure();
+        return path;
     }
 
     private static void DrawEllipse(Graphics graphics, AnnotationObject annotation)

@@ -67,7 +67,8 @@ public sealed record AnnotationStyle(
     ColorRgba Fill,
     ColorRgba Text,
     double StrokeThickness,
-    double Opacity)
+    double Opacity,
+    double CornerRadius = 0)
 {
     public static AnnotationStyle Default => new(
         ColorRgba.Black,

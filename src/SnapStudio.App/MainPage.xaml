@@ -580,9 +580,10 @@
                                         AutomationProperties.Name="Select annotations"
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         ToolTipService.ToolTip="Select">
-                                        <FontIcon Foreground="{StaticResource SnapAccentBrush}" Glyph="&#xE8B7;" />
+                                        <FontIcon Glyph="&#xE8B7;" />
                                     </Button>
                                     <Button
+                                        x:Name="RectangleToolButton"
                                         AutomationProperties.HelpText="Select the rectangle annotation tool."
                                         AutomationProperties.Name="Rectangle tool"
                                         Click="AnnotationToolButton_Click"
@@ -592,6 +593,7 @@
                                         <TextBlock FontSize="24" Text="&#x25A1;" />
                                     </Button>
                                     <Button
+                                        x:Name="EllipseToolButton"
                                         AutomationProperties.HelpText="Select the ellipse annotation tool."
                                         AutomationProperties.Name="Ellipse tool"
                                         Click="AnnotationToolButton_Click"
@@ -601,6 +603,7 @@
                                         <FontIcon Glyph="&#xEA3A;" />
                                     </Button>
                                     <Button
+                                        x:Name="LineToolButton"
                                         AutomationProperties.HelpText="Select the line annotation tool."
                                         AutomationProperties.Name="Line tool"
                                         Click="AnnotationToolButton_Click"
@@ -610,6 +613,7 @@
                                         <FontIcon Glyph="&#xE738;" />
                                     </Button>
                                     <Button
+                                        x:Name="ArrowToolButton"
                                         AutomationProperties.HelpText="Select the arrow annotation tool."
                                         AutomationProperties.Name="Arrow tool"
                                         Click="AnnotationToolButton_Click"
@@ -619,6 +623,7 @@
                                         <FontIcon Glyph="&#xE8AD;" />
                                     </Button>
                                     <Button
+                                        x:Name="TextToolButton"
                                         AutomationProperties.HelpText="Select the text annotation tool."
                                         AutomationProperties.Name="Text tool"
                                         Click="AnnotationToolButton_Click"
@@ -628,6 +633,7 @@
                                         <TextBlock FontSize="22" FontWeight="SemiBold" Text="A" />
                                     </Button>
                                     <Button
+                                        x:Name="HighlightToolButton"
                                         AutomationProperties.HelpText="Select the highlight annotation tool."
                                         AutomationProperties.Name="Highlight tool"
                                         Click="AnnotationToolButton_Click"
@@ -637,6 +643,7 @@
                                         <SymbolIcon Symbol="Edit" />
                                     </Button>
                                     <Button
+                                        x:Name="BlurToolButton"
                                         AutomationProperties.HelpText="Select the blur annotation tool."
                                         AutomationProperties.Name="Blur tool"
                                         Click="AnnotationToolButton_Click"
@@ -1070,6 +1077,17 @@
                                 Value="{x:Bind ViewModel.AnnotationStrokeThickness, Mode=OneWay}"
                                 ValueChanged="AnnotationSizeNumber_ValueChanged" />
                         </Grid>
+
+                        <ComboBox
+                            AutomationProperties.HelpText="Choose whether rectangle annotations use sharp or rounded corners."
+                            AutomationProperties.Name="Rectangle corner style"
+                            Header="Corners"
+                            SelectedIndex="{x:Bind ViewModel.AnnotationCornerStyleIndex, Mode=OneWay}"
+                            SelectionChanged="AnnotationCornerStyle_SelectionChanged"
+                            Visibility="{x:Bind ViewModel.AnnotationCornerStyleControlsVisibility, Mode=OneWay}">
+                            <ComboBoxItem Content="Edges" />
+                            <ComboBoxItem Content="Rounded" />
+                        </ComboBox>
 
                         <Slider
                             AutomationProperties.HelpText="Set annotation opacity."

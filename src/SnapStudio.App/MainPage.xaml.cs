@@ -850,6 +850,25 @@ public sealed partial class MainPage : Page
         RefreshAnnotationCanvas();
     }
 
+    private async void AnnotationCornerStyle_SelectionChanged(
+        object sender,
+        SelectionChangedEventArgs e)
+    {
+        if (ShouldIgnoreControlEvent())
+        {
+            return;
+        }
+
+        if (sender is ComboBox { SelectedIndex: >= 0 } comboBox)
+        {
+            await ViewModel.UpdateAnnotationCornerStyleAsync(
+                comboBox.SelectedIndex,
+                CancellationToken.None);
+            UpdateBindingsFromViewModel();
+            RefreshAnnotationCanvas();
+        }
+    }
+
     private async void AnnotationCustomColor_ColorChanged(
         ColorPicker sender,
         ColorChangedEventArgs args)
@@ -1284,6 +1303,7 @@ public sealed partial class MainPage : Page
             Background = item.FillBrush,
             BorderBrush = item.StrokeBrush,
             BorderThickness = item.StrokeThickness,
+            CornerRadius = new CornerRadius(item.CornerRadius),
             DataContext = item
         };
         body.PointerPressed += AnnotationBody_PointerPressed;
@@ -1925,6 +1945,30 @@ public sealed partial class MainPage : Page
         {
             _isUpdatingBindings = false;
         }
+
+        UpdateAnnotationToolbarSelection();
+    }
+
+    private void UpdateAnnotationToolbarSelection()
+    {
+        UpdateAnnotationToolButton(RectangleToolButton, 0);
+        UpdateAnnotationToolButton(EllipseToolButton, 1);
+        UpdateAnnotationToolButton(LineToolButton, 2);
+        UpdateAnnotationToolButton(ArrowToolButton, 3);
+        UpdateAnnotationToolButton(TextToolButton, 4);
+        UpdateAnnotationToolButton(HighlightToolButton, 5);
+        UpdateAnnotationToolButton(BlurToolButton, 6);
+    }
+
+    private void UpdateAnnotationToolButton(Button button, int toolIndex)
+    {
+        bool isActive = ViewModel.AnnotationToolIndex == toolIndex;
+        button.Background = isActive
+            ? (Brush)Resources["SnapAccentMutedBrush"]
+            : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+        button.BorderBrush = isActive
+            ? (Brush)Resources["SnapAccentBrush"]
+            : (Brush)Resources["SnapStrokeBrush"];
     }
 
     private bool ShouldIgnoreControlEvent()

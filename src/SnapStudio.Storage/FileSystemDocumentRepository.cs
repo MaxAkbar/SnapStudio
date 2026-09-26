@@ -15,6 +15,7 @@ public sealed class FileSystemDocumentRepository : IDocumentRepository
 
     private readonly IClock _clock;
     private readonly string _rootPath;
+    private readonly SemaphoreSlim _saveGate = new(1, 1);
 
     public FileSystemDocumentRepository(string rootPath, IClock? clock = null)
     {
@@ -56,7 +57,13 @@ public sealed class FileSystemDocumentRepository : IDocumentRepository
             return null;
         }
 
-        await using var stream = File.OpenRead(documentPath);
+        await using var stream = new FileStream(
+            documentPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read | FileShare.Delete,
+            bufferSize: 4096,
+            useAsync: true);
         return await JsonSerializer
             .DeserializeAsync<CaptureDocument>(stream, JsonOptions, cancellationToken)
             .ConfigureAwait(false);
@@ -65,10 +72,9 @@ public sealed class FileSystemDocumentRepository : IDocumentRepository
     public async Task SaveAsync(CaptureDocument document, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(document);
+        cancellationToken.ThrowIfCancellationRequested();
 
         string documentDirectory = GetDocumentDirectory(document.Id);
-        Directory.CreateDirectory(documentDirectory);
-
         string documentPath = GetDocumentPath(document.Id);
         bool isExistingDocument = File.Exists(documentPath);
         var now = _clock.UtcNow;
@@ -85,14 +91,49 @@ public sealed class FileSystemDocumentRepository : IDocumentRepository
             ModifiedAtUtc = modifiedAt
         };
 
-        string temporaryPath = $"{documentPath}.tmp";
+        // Capture the edit before yielding: the color picker can mutate the same document
+        // while an earlier save is writing. Commit these snapshots one at a time.
         string json = JsonSerializer.Serialize(document, JsonOptions);
+        string temporaryPath = $"{documentPath}.{Guid.NewGuid():N}.tmp";
 
-        await File
-            .WriteAllTextAsync(temporaryPath, json, cancellationToken)
-            .ConfigureAwait(false);
+        await _saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Directory.CreateDirectory(documentDirectory);
+            await File
+                .WriteAllTextAsync(temporaryPath, json, cancellationToken)
+                .ConfigureAwait(false);
 
-        File.Move(temporaryPath, documentPath, overwrite: true);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (File.Exists(documentPath))
+            {
+                // ReplaceFile supports readers that share deletion; MoveFileEx cannot
+                // overwrite an open destination on Windows, even with that sharing mode.
+                File.Replace(temporaryPath, documentPath, destinationBackupFileName: null);
+            }
+            else
+            {
+                File.Move(temporaryPath, documentPath);
+            }
+        }
+        catch
+        {
+            try
+            {
+                File.Delete(temporaryPath);
+            }
+            catch (Exception cleanupException) when (cleanupException is IOException or UnauthorizedAccessException)
+            {
+                // Best-effort cleanup must not hide the original save or cancellation failure.
+            }
+
+            throw;
+        }
+        finally
+        {
+            _saveGate.Release();
+        }
     }
 
     public Task<bool> DeleteAsync(DocumentId id, CancellationToken cancellationToken)

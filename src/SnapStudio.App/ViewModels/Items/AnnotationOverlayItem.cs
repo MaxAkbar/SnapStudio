@@ -25,6 +25,7 @@ public sealed class AnnotationOverlayItem
         Brush textBrush,
         Thickness strokeThickness,
         double strokeThicknessValue,
+        double cornerRadius,
         double fontSize,
         double opacity,
         bool isSelected)
@@ -45,6 +46,7 @@ public sealed class AnnotationOverlayItem
         TextBrush = textBrush;
         StrokeThickness = strokeThickness;
         StrokeThicknessValue = strokeThicknessValue;
+        CornerRadius = cornerRadius;
         FontSize = fontSize;
         Opacity = opacity;
         IsSelected = isSelected;
@@ -81,6 +83,8 @@ public sealed class AnnotationOverlayItem
     public Thickness StrokeThickness { get; }
 
     public double StrokeThicknessValue { get; }
+
+    public double CornerRadius { get; }
 
     public double FontSize { get; }
 
@@ -123,6 +127,7 @@ public sealed class AnnotationOverlayItem
             ToBrush(annotation.Style.Text, opacity),
             new Thickness(strokeThickness),
             strokeThickness,
+            Math.Max(0, annotation.Style.CornerRadius * zoom),
             CalculateFontSize(annotation.Style.StrokeThickness, annotation.Kind, zoom),
             opacity,
             isSelected);

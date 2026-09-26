@@ -89,6 +89,50 @@ public sealed class SystemDrawingDocumentRendererTests
     }
 
     [Fact]
+    public async Task RenderAsync_CompositesRoundedRectangleAnnotation()
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        string sourcePath = Path.Combine(workspace.Path, "source.png");
+        CreateSolidImage(sourcePath, 32, 32, Color.White);
+        var document = new CaptureDocument
+        {
+            Id = DocumentId.New(),
+            SourceImage = new ImageAsset(sourcePath, 32, 32, ImagePixelFormat.Bgra32),
+            Annotations =
+            [
+                new AnnotationObject
+                {
+                    Kind = AnnotationKind.Rectangle,
+                    Bounds = new RectD(4, 4, 20, 20),
+                    Style = new AnnotationStyle(
+                        ColorRgba.Transparent,
+                        new ColorRgba(196, 43, 28, 255),
+                        ColorRgba.Black,
+                        1,
+                        1,
+                        8)
+                }
+            ]
+        };
+        var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
+
+        RenderResult result = await renderer.RenderAsync(
+            new RenderRequest(document.Id, 1, null),
+            CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        using Bitmap rendered = LoadBitmap(result.Image!.Pixels);
+        Color roundedCornerPixel = rendered.GetPixel(4, 4);
+        Color filledBodyPixel = rendered.GetPixel(12, 12);
+        Assert.True(roundedCornerPixel.R > 240);
+        Assert.True(roundedCornerPixel.G > 240);
+        Assert.True(roundedCornerPixel.B > 240);
+        Assert.True(filledBodyPixel.R > 120);
+        Assert.True(filledBodyPixel.G < 90);
+        Assert.True(filledBodyPixel.B < 90);
+    }
+
+    [Fact]
     public async Task RenderAsync_ScaledRenderCompositesMultipleAnnotations()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
