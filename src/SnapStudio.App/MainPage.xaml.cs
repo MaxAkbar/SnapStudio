@@ -947,7 +947,7 @@ public sealed partial class MainPage : Page
         {
             var confirmation = new ContentDialog
             {
-                XamlRoot = this.XamlRoot,
+                XamlRoot = XamlRoot,
                 Title = $"Delete {layerName}?",
                 Content = $"This layer contains {objectCount} object{(objectCount == 1 ? string.Empty : "s")}. "
                     + "Deleting the layer also removes its objects. You can undo this action.",

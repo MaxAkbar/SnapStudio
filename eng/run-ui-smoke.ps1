@@ -8,6 +8,8 @@ param(
 
     [int]$TimeoutSeconds = 45,
 
+    [string]$AppExecutablePath,
+
     [switch]$SkipBuild,
 
     [switch]$KeepAppOpen
@@ -165,6 +167,10 @@ if (-not $SkipBuild) {
 }
 
 $appExe = Join-Path $repoRoot "src\SnapStudio.App\bin\$Platform\$Configuration\$targetFramework\$runtimeIdentifier\SnapStudio.App.exe"
+if (-not [string]::IsNullOrWhiteSpace($AppExecutablePath)) {
+    $appExe = [System.IO.Path]::GetFullPath($AppExecutablePath)
+}
+
 if (-not (Test-Path -LiteralPath $appExe -PathType Leaf)) {
     throw "SnapStudio.App.exe was not found at '$appExe'. Build the app first or check -Configuration/-Platform."
 }
@@ -184,6 +190,10 @@ try {
         "Export",
         "Search capture history",
         "Capture history",
+        "Annotation layers",
+        "Delete selected layer",
+        "Resize layers and captures pane",
+        "Unpin layers and captures pane",
         "Include cursor",
         "Capture delay",
         "Capture hotkey",
@@ -201,6 +211,7 @@ try {
         "Annotation tool",
         "Annotation color",
         "Annotation size",
+        "Rectangle corner style",
         "Annotation opacity",
         "Crop to selected annotation",
         "Resize unit",
@@ -227,6 +238,26 @@ try {
 
     Start-Sleep -Milliseconds 250
     [void](Assert-ElementByName -Root $window -Name "Unpin right tools pane")
+
+    $leftSplitter = Assert-ElementByName -Root $window -Name "Resize layers and captures pane"
+    $leftSplitterPosition = $leftSplitter.Current.BoundingRectangle.Left
+    $unpinLeftPane = Assert-ElementByName -Root $window -Name "Unpin layers and captures pane"
+    if (-not (Invoke-Element -Element $unpinLeftPane)) {
+        throw "Unable to invoke the layers and captures pane unpin button."
+    }
+
+    Start-Sleep -Milliseconds 250
+    $pinLeftPane = Assert-ElementByName -Root $window -Name "Pin layers and captures pane"
+    if (-not (Invoke-Element -Element $pinLeftPane)) {
+        throw "Unable to invoke the layers and captures pane pin button."
+    }
+
+    Start-Sleep -Milliseconds 250
+    [void](Assert-ElementByName -Root $window -Name "Unpin layers and captures pane")
+    $restoredLeftSplitter = Assert-ElementByName -Root $window -Name "Resize layers and captures pane"
+    if ([Math]::Abs($restoredLeftSplitter.Current.BoundingRectangle.Left - $leftSplitterPosition) -gt 3) {
+        throw "The layers and captures pane did not restore its previous width."
+    }
 
     [void](Assert-AnyElementByName -Root $window -Names @("Editor canvas", "Settings capture hotkey"))
 

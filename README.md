@@ -35,6 +35,13 @@ The project is structured around clear boundaries:
 
 See [docs/project-plan.md](docs/project-plan.md) for the working roadmap, QA checklist, release gates, and architecture principles.
 
+## Download the preview
+
+Get the first preview from [GitHub Releases](https://github.com/MaxAkbar/SnapStudio/releases/tag/v0.1.0-alpha.1).
+On Windows 11 x64, download `SnapStudio-0.1.0-alpha.1-win-x64-portable.zip`, extract the entire ZIP, and run `SnapStudio.App.exe`. The portable build includes .NET and the Windows App SDK runtime. Captures and settings are saved under your local Windows profile.
+
+This is an unsigned alpha preview. OCR, scrolling capture, and screen recording are disabled by default. See the [release notes](docs/releases/v0.1.0-alpha.1.md) for validation and package limitations.
+
 ## Requirements
 
 - Windows 11.

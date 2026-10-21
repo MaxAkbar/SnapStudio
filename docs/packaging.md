@@ -29,6 +29,17 @@ artifacts\msix\verify\x64\
 
 `artifacts\` is ignored by git.
 
+## Portable GitHub Preview
+
+Publish the x64 app with its .NET and Windows App SDK runtimes:
+
+```powershell
+dotnet publish src\SnapStudio.App\SnapStudio.App.csproj --configuration Release --runtime win-x64 --self-contained true -p:Platform=x64 -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true --output artifacts\portable\win-x64
+.\eng\run-ui-smoke.ps1 -Configuration Release -Platform x64 -SkipBuild -AppExecutablePath artifacts\portable\win-x64\SnapStudio.App.exe
+```
+
+Include `LICENSE` and `docs\privacy.md` in the distribution, then ZIP the entire publish directory. Users must extract all files before running `SnapStudio.App.exe`. This build is unsigned and uses the normal local Windows profile for captures and settings. OCR, scrolling capture, and screen recording remain disabled by default.
+
 ## Release Package Smoke
 
 Use the Release smoke before handing a package to testers:
