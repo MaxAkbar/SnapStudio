@@ -583,10 +583,6 @@ if (-not $SkipBuild) {
 $packageBuildRoot = Join-Path $appProjectDirectory "bin\$Configuration\$targetFramework\$runtimeIdentifier"
 $recipePath = Join-Path $packageBuildRoot "SnapStudio.App.build.appxrecipe"
 
-if (-not (Test-Path -LiteralPath $recipePath -PathType Leaf)) {
-    throw "Package recipe was not found at '$recipePath'. Run without -SkipBuild or inspect the publish output."
-}
-
 $stagingRoot = Join-Path $msixArtifactsRoot "layout\$Platform"
 $verifyRoot = Join-Path $msixArtifactsRoot "verify\$Platform"
 
@@ -594,8 +590,28 @@ Remove-DirectoryIfExists -Path $stagingRoot -AllowedRoot $msixArtifactsRoot
 Remove-DirectoryIfExists -Path $verifyRoot -AllowedRoot $msixArtifactsRoot
 New-Item -ItemType Directory -Force -Path $stagingRoot, $verifyRoot, $OutputDirectory | Out-Null
 
-$payloadResult = Copy-PackagePayloadFromRecipe -RecipePath $recipePath -StagingRoot $stagingRoot -RuntimePayloadRoot $packageBuildRoot
-$additionalPayloadCount = Copy-AdditionalRuntimePayload -SourceRoot $packageBuildRoot -StagingRoot $stagingRoot
+if (Test-Path -LiteralPath $recipePath -PathType Leaf) {
+    $payloadResult = Copy-PackagePayloadFromRecipe -RecipePath $recipePath -StagingRoot $stagingRoot -RuntimePayloadRoot $packageBuildRoot
+    $additionalPayloadCount = Copy-AdditionalRuntimePayload -SourceRoot $packageBuildRoot -StagingRoot $stagingRoot
+}
+else {
+    # Current Windows App SDK versions can publish successfully without an appxrecipe.
+    $publishRoot = Join-Path $packageBuildRoot "publish"
+    $appExe = Join-Path $publishRoot "SnapStudio.App.exe"
+    $appPri = Join-Path $packageBuildRoot "SnapStudio.App.pri"
+    if (-not (Test-Path -LiteralPath $appExe -PathType Leaf) -or -not (Test-Path -LiteralPath $appPri -PathType Leaf)) {
+        throw "Package publish output or generated app PRI is missing. Run without -SkipBuild or inspect the publish output."
+    }
+
+    Write-Host "No package recipe was generated; staging the published app and generated resource index."
+    $additionalPayloadCount = Copy-AdditionalRuntimePayload -SourceRoot $publishRoot -StagingRoot $stagingRoot
+    $stagedAssets = Join-Path $stagingRoot "Assets"
+    if (-not (Test-Path -LiteralPath $stagedAssets -PathType Container)) {
+        Copy-Item -LiteralPath (Join-Path $appProjectDirectory "Assets") -Destination $stagedAssets -Recurse -Force
+    }
+    Copy-Item -LiteralPath $appPri -Destination (Join-Path $stagingRoot "resources.pri") -Force
+    $payloadResult = [pscustomobject]@{ CopiedCount = 1; ManifestCopied = $false }
+}
 $manifestPath = Join-Path $stagingRoot "AppxManifest.xml"
 
 if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {

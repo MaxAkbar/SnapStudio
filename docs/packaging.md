@@ -14,7 +14,7 @@ The script:
 
 - Restores `SnapStudio.App` for the selected Windows runtime identifier.
 - Publishes with `WindowsPackageType=MSIX` without changing the project file's normal development settings.
-- Stages package payload from the generated `.appxrecipe`.
+- Stages package payload from the generated `.appxrecipe`, or from the publish output and generated app resource index when the SDK does not emit a recipe.
 - Adds runtime files that the current SDK output leaves outside the recipe, including project reference assemblies.
 - Generates the package manifest when the SDK recipe points to a manifest file that was not materialized.
 - Runs `makeappx pack` and then `makeappx unpack` as a package smoke test.

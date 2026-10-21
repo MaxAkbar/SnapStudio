@@ -327,6 +327,7 @@ Assert-FileExists -Path $packagePath -Description "MSIX package"
 
 $requiredPayloadFiles = @(
     "SnapStudio.App.exe",
+    "resources.pri",
     "SnapStudio.Core.dll",
     "SnapStudio.Platform.Windows.dll",
     "Assets\StoreLogo.png"
