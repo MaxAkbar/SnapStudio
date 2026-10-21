@@ -40,6 +40,8 @@ dotnet publish src\SnapStudio.App\SnapStudio.App.csproj --configuration Release 
 
 `SnapStudioPortable` enables Windows App SDK self-contained deployment only in the executable project. Applying `WindowsAppSDKSelfContained` on the command line also affects referenced libraries and can merge conflicting runtime resources. See [Microsoft's self-contained deployment guidance](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/self-contained-deploy/deploy-self-contained-apps).
 
+The app project also includes its generated `SnapStudio.App.pri` in the portable publish. This resource index is required for the app window to open.
+
 Include `LICENSE` and `docs\privacy.md` in the distribution, then ZIP the entire publish directory. Users must extract all files before running `SnapStudio.App.exe`. This build is unsigned and uses the normal local Windows profile for captures and settings. OCR, scrolling capture, and screen recording remain disabled by default.
 
 ## Release Package Smoke

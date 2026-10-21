@@ -51,4 +51,11 @@
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
+
+  <Target Name="IncludePortableAppResources" AfterTargets="ComputeFilesToPublish" Condition="'$(SnapStudioPortable)' == 'true'">
+    <Error Condition="!Exists('$(TargetDir)$(TargetName).pri')" Text="The generated app PRI is required for the portable publish." />
+    <ItemGroup>
+      <ResolvedFileToPublish Include="$(TargetDir)$(TargetName).pri" RelativePath="$(TargetName).pri" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
 </Project>
