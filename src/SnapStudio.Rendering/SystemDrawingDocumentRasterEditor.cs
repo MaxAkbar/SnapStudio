@@ -9,6 +9,12 @@ namespace SnapStudio.Rendering;
 
 public sealed class SystemDrawingDocumentRasterEditor : IDocumentRasterEditor
 {
+    public Task<RegionFillResult> FindFillRegionAsync(RegionFillRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return Task.Run(() => SystemDrawingRegionFill.Find(request, cancellationToken), cancellationToken);
+    }
+
     public Task<RasterEditResult> CropAsync(
         RasterCropRequest request,
         CancellationToken cancellationToken)

@@ -43,7 +43,7 @@ public sealed partial class MainPage : Page
     private AnnotationBoundsHandle _annotationDragHandle = AnnotationBoundsHandle.Move;
     private RectD _annotationDragOriginalSourceBounds;
     private PointD _annotationDragStartSourcePoint;
-    private Point _rectangleDragStart;
+    private Point _annotationDragStart;
     private readonly List<PointD> _penStrokePoints = [];
     private bool _isUpdatingBindings;
     private bool _isReadyForControlEvents;
@@ -582,6 +582,16 @@ public sealed partial class MainPage : Page
         if (sender is Button { DataContext: AnnotationOverlayItem item })
         {
             ViewModel.SelectAnnotation(item.Id);
+            UpdateBindingsFromViewModel();
+        }
+    }
+
+    private async void MoveObjectMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: AnnotationOverlayItem item, Tag: string tag }
+            && int.TryParse(tag, NumberStyles.Integer, CultureInfo.InvariantCulture, out int direction))
+        {
+            await ViewModel.MoveAnnotationInLayerAsync(item.Id, direction, CancellationToken.None);
             UpdateBindingsFromViewModel();
         }
     }
@@ -1364,6 +1374,8 @@ public sealed partial class MainPage : Page
 
     private bool IsPenToolActive => !ViewModel.IsSelectionToolActive && ViewModel.ActiveAnnotationKind == AnnotationKind.Pen;
 
+    private bool IsFillToolActive => !ViewModel.IsSelectionToolActive && ViewModel.ActiveAnnotationKind == AnnotationKind.Fill;
+
     private void SelectionToolButton_Click(object sender, RoutedEventArgs e)
     {
         ViewModel.UseSelectionTool();
@@ -1374,7 +1386,7 @@ public sealed partial class MainPage : Page
         object sender,
         Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
     {
-        if (IsPenToolActive) return;
+        if (IsPenToolActive || IsFillToolActive) return;
         if (sender is Microsoft.UI.Xaml.FrameworkElement
             {
                 DataContext: AnnotationOverlayItem item
@@ -1397,7 +1409,7 @@ public sealed partial class MainPage : Page
         object sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        if (IsPenToolActive) return;
+        if (IsPenToolActive || IsFillToolActive) return;
         if (sender is FrameworkElement { DataContext: AnnotationOverlayItem item })
         {
             BeginAnnotationDrag(e, item, AnnotationBoundsHandle.Move);
@@ -1421,13 +1433,13 @@ public sealed partial class MainPage : Page
         BeginAnnotationDrag(e, item, handle);
     }
 
-    private void CanvasSurface_PointerPressed(
+    private async void CanvasSurface_PointerPressed(
         object sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         if (_canvasDragMode != CanvasDragMode.None
             || !ViewModel.HasCurrentDocument
-            || (!IsPenToolActive && IsAnnotationInteraction(e.OriginalSource)))
+            || (!IsPenToolActive && !IsFillToolActive && IsAnnotationInteraction(e.OriginalSource)))
         {
             return;
         }
@@ -1445,6 +1457,14 @@ public sealed partial class MainPage : Page
         if (ViewModel.IsSelectionToolActive)
         {
             e.Handled = true;
+            return;
+        }
+
+        if (IsFillToolActive)
+        {
+            e.Handled = true;
+            await ViewModel.FillAtCanvasPointAsync(new PointD(pointerPoint.Position.X, pointerPoint.Position.Y), CancellationToken.None);
+            UpdateBindingsFromViewModel();
             return;
         }
 
@@ -1469,9 +1489,9 @@ public sealed partial class MainPage : Page
         }
 
         _canvasDragMode = CanvasDragMode.DrawAnnotation;
-        _rectangleDragStart = ClampToCanvas(pointerPoint.Position);
+        _annotationDragStart = ClampToCanvas(pointerPoint.Position);
         CanvasSurface.CapturePointer(e.Pointer);
-        ShowDragRectanglePreview(CreateDisplayBounds(_rectangleDragStart, _rectangleDragStart));
+        ShowDrawingPreview(_annotationDragStart);
         e.Handled = true;
     }
 
@@ -1497,7 +1517,7 @@ public sealed partial class MainPage : Page
         else if (_canvasDragMode == CanvasDragMode.DrawAnnotation)
         {
             Point previewPoint = CreateConstrainedShapePointIfNeeded(currentPoint, e);
-            ShowDragRectanglePreview(CreateDisplayBounds(_rectangleDragStart, previewPoint));
+            ShowDrawingPreview(previewPoint);
         }
         else
         {
@@ -1537,7 +1557,7 @@ public sealed partial class MainPage : Page
 
         Point annotationEndPoint = CreateConstrainedShapePointIfNeeded(currentPoint, e);
         RectD displayBounds = CreateDisplayBounds(
-            _rectangleDragStart,
+            _annotationDragStart,
             annotationEndPoint);
         EndCanvasDrag(e);
 
@@ -1545,7 +1565,7 @@ public sealed partial class MainPage : Page
         bool isTooSmall = !isLinearAnnotation
             ? displayBounds.Width < MinimumDragDisplaySize
                 || displayBounds.Height < MinimumDragDisplaySize
-            : CalculateDistance(_rectangleDragStart, currentPoint) < MinimumDragDisplaySize;
+            : CalculateDistance(_annotationDragStart, currentPoint) < MinimumDragDisplaySize;
 
         if (isTooSmall)
         {
@@ -1557,7 +1577,7 @@ public sealed partial class MainPage : Page
 
         RectD? sourceBounds = isLinearAnnotation
             ? ViewModel.CreateDirectedSourceBoundsFromCanvasDrag(
-                new PointD(_rectangleDragStart.X, _rectangleDragStart.Y),
+                new PointD(_annotationDragStart.X, _annotationDragStart.Y),
                 new PointD(currentPoint.X, currentPoint.Y))
             : ViewModel.CreateSourceBoundsFromCanvasDrag(displayBounds);
         if (sourceBounds is RectD bounds)
@@ -1750,6 +1770,10 @@ public sealed partial class MainPage : Page
         foreach (AnnotationOverlayItem item in ViewModel.AnnotationOverlays)
         {
             FrameworkElement annotationElement = CreateAnnotationElement(item);
+            if (item.Id == _annotationDragId)
+            {
+                annotationElement.Visibility = Visibility.Collapsed;
+            }
             Canvas.SetLeft(annotationElement, item.Left);
             Canvas.SetTop(annotationElement, item.Top);
             AnnotationCanvas.Children.Add(annotationElement);
@@ -1765,6 +1789,7 @@ public sealed partial class MainPage : Page
             AnnotationKind.Blur => CreateBlurAnnotationElement(item),
             AnnotationKind.Ellipse => CreateEllipseAnnotationElement(item),
             AnnotationKind.Pen => CreatePenAnnotationElement(item),
+            AnnotationKind.Fill => CreateFillAnnotationElement(item),
             _ => CreateRectangleAnnotationElement(item)
         };
 
@@ -1795,6 +1820,7 @@ public sealed partial class MainPage : Page
             AnnotationKind.Highlight => "highlight",
             AnnotationKind.Blur => "blur",
             AnnotationKind.Pen => "pen stroke",
+            AnnotationKind.Fill => "filled region",
             _ => "annotation"
         };
         return $"{selectedPrefix}{kind} annotation, {Math.Round(item.Width)} by {Math.Round(item.Height)}";
@@ -1828,6 +1854,7 @@ public sealed partial class MainPage : Page
             BorderBrush = item.StrokeBrush,
             BorderThickness = item.StrokeThickness,
             CornerRadius = new CornerRadius(item.CornerRadius),
+            Margin = item.Kind == AnnotationKind.Rectangle ? new Thickness(-item.StrokeThicknessValue / 2) : new Thickness(0),
             DataContext = item
         };
         body.PointerPressed += AnnotationBody_PointerPressed;
@@ -1892,6 +1919,32 @@ public sealed partial class MainPage : Page
                 item));
         }
 
+    }
+
+    private FrameworkElement CreateFillAnnotationElement(AnnotationOverlayItem item)
+    {
+        var root = new Grid { Width = item.Width, Height = item.Height, DataContext = item };
+        var geometry = new GeometryGroup { FillRule = FillRule.Nonzero };
+        foreach (RectD rectangle in item.FillRectangles)
+            geometry.Children.Add(new RectangleGeometry { Rect = new Rect(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height) });
+        var path = new Microsoft.UI.Xaml.Shapes.Path { Data = geometry, Fill = item.FillBrush, DataContext = item };
+        // A filled background must allow drawing other tools over it.
+        path.SetBinding(UIElement.IsHitTestVisibleProperty, new Microsoft.UI.Xaml.Data.Binding
+        {
+            Source = ViewModel,
+            Path = new PropertyPath(nameof(ShellViewModel.IsSelectionToolActive)),
+            Mode = Microsoft.UI.Xaml.Data.BindingMode.OneWay
+        });
+        path.PointerPressed += AnnotationBody_PointerPressed;
+        path.Tapped += AnnotationOverlay_Tapped;
+        var drawing = new Canvas
+        {
+            Clip = new RectangleGeometry { Rect = new Rect(-item.Left, -item.Top, ViewModel.CanvasDisplayWidth, ViewModel.CanvasDisplayHeight) }
+        };
+        drawing.Children.Add(path);
+        root.Children.Add(drawing);
+        AddBoxResizeHandles(root, item);
+        return root;
     }
 
     private FrameworkElement CreatePenAnnotationElement(AnnotationOverlayItem item)
@@ -1966,6 +2019,7 @@ public sealed partial class MainPage : Page
 
         var hitTarget = new Microsoft.UI.Xaml.Shapes.Ellipse
         {
+            Margin = new Thickness(-item.StrokeThicknessValue / 2),
             Fill = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)),
             Stroke = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)),
             StrokeThickness = Math.Max(12, item.StrokeThicknessValue + 8),
@@ -1977,6 +2031,7 @@ public sealed partial class MainPage : Page
 
         root.Children.Add(new Microsoft.UI.Xaml.Shapes.Ellipse
         {
+            Margin = new Thickness(-item.StrokeThicknessValue / 2),
             Fill = item.FillBrush,
             Stroke = item.StrokeBrush,
             StrokeThickness = item.StrokeThicknessValue,
@@ -2405,7 +2460,8 @@ public sealed partial class MainPage : Page
         _annotationDragOriginalSourceBounds = originalSourceBounds;
         _annotationDragStartSourcePoint = dragStartSourcePoint;
         CanvasSurface.CapturePointer(e.Pointer);
-        ShowDragRectanglePreview(ViewModel.CreateDisplayBoundsFromSourceBounds(originalSourceBounds));
+        SetDraggedAnnotationVisibility(Visibility.Collapsed);
+        ShowDragAnnotationPreview(ViewModel.CreateAnnotationEditPreview(item.Id, originalSourceBounds));
         e.Handled = true;
     }
 
@@ -2418,7 +2474,7 @@ public sealed partial class MainPage : Page
             IsShiftPressed(e));
         if (editedSourceBounds is RectD sourceBounds)
         {
-            ShowDragRectanglePreview(ViewModel.CreateDisplayBoundsFromSourceBounds(sourceBounds));
+            ShowDragAnnotationPreview(ViewModel.CreateAnnotationEditPreview(_annotationDragId, sourceBounds));
         }
     }
 
@@ -2466,13 +2522,14 @@ public sealed partial class MainPage : Page
 
     private void EndCanvasDrag(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        SetDraggedAnnotationVisibility(Visibility.Visible);
         _canvasDragMode = CanvasDragMode.None;
         _annotationDragId = Guid.Empty;
         _annotationDragHandle = AnnotationBoundsHandle.Move;
         _annotationDragOriginalSourceBounds = default;
         _annotationDragStartSourcePoint = default;
         CanvasSurface.ReleasePointerCapture(e.Pointer);
-        DragRectanglePreview.Visibility = Visibility.Collapsed;
+        AnnotationDragPreview.Children.Clear();
         PenStrokePreview.Visibility = Visibility.Collapsed;
         PenDotPreview.Visibility = Visibility.Collapsed;
         PenStrokePreview.Points.Clear();
@@ -2480,13 +2537,52 @@ public sealed partial class MainPage : Page
         e.Handled = true;
     }
 
-    private void ShowDragRectanglePreview(RectD displayBounds)
+    private void SetDraggedAnnotationVisibility(Visibility visibility)
     {
-        Microsoft.UI.Xaml.Controls.Canvas.SetLeft(DragRectanglePreview, displayBounds.X);
-        Microsoft.UI.Xaml.Controls.Canvas.SetTop(DragRectanglePreview, displayBounds.Y);
-        DragRectanglePreview.Width = Math.Max(1, displayBounds.Width);
-        DragRectanglePreview.Height = Math.Max(1, displayBounds.Height);
-        DragRectanglePreview.Visibility = Visibility.Visible;
+        foreach (FrameworkElement element in AnnotationCanvas.Children.OfType<FrameworkElement>())
+        {
+            if (element.DataContext is AnnotationOverlayItem item && item.Id == _annotationDragId)
+            {
+                element.Visibility = visibility;
+            }
+        }
+    }
+
+    private void ShowDrawingPreview(Point end)
+    {
+        ShowDragAnnotationPreview(ViewModel.CreateActiveAnnotationPreview(
+            new PointD(_annotationDragStart.X, _annotationDragStart.Y), new PointD(end.X, end.Y)));
+    }
+
+    private void ShowDragAnnotationPreview(AnnotationOverlayItem? item)
+    {
+        AnnotationDragPreview.Children.Clear();
+        if (item is null)
+        {
+            return;
+        }
+
+        FrameworkElement preview = CreateAnnotationElement(item);
+        preview.IsHitTestVisible = false;
+        AutomationProperties.SetName(preview, $"Preview of {CreateAnnotationAutomationName(item)}");
+        AutomationProperties.SetHelpText(preview, "Shows the annotation while drawing, moving, or resizing it.");
+        Canvas.SetLeft(preview, item.Left);
+        Canvas.SetTop(preview, item.Top);
+        AnnotationDragPreview.Children.Add(preview);
+
+        if (item.Kind == AnnotationKind.Blur)
+        {
+            var outline = new Border
+            {
+                Width = item.Width,
+                Height = item.Height,
+                BorderBrush = new SolidColorBrush(Color.FromArgb(255, 0, 120, 212)),
+                BorderThickness = new Thickness(1)
+            };
+            Canvas.SetLeft(outline, item.Left);
+            Canvas.SetTop(outline, item.Top);
+            AnnotationDragPreview.Children.Add(outline);
+        }
     }
 
     private Point CreateConstrainedShapePointIfNeeded(
@@ -2499,12 +2595,12 @@ public sealed partial class MainPage : Page
             return currentPoint;
         }
 
-        double deltaX = currentPoint.X - _rectangleDragStart.X;
-        double deltaY = currentPoint.Y - _rectangleDragStart.Y;
+        double deltaX = currentPoint.X - _annotationDragStart.X;
+        double deltaY = currentPoint.Y - _annotationDragStart.Y;
         double side = Math.Min(Math.Abs(deltaX), Math.Abs(deltaY));
         return ClampToCanvas(new Point(
-            _rectangleDragStart.X + Math.Sign(deltaX) * side,
-            _rectangleDragStart.Y + Math.Sign(deltaY) * side));
+            _annotationDragStart.X + Math.Sign(deltaX) * side,
+            _annotationDragStart.Y + Math.Sign(deltaY) * side));
     }
 
     private void UpdateBindingsFromViewModel()
@@ -2534,6 +2630,7 @@ public sealed partial class MainPage : Page
         UpdateAnnotationToolButton(HighlightToolButton, 5);
         UpdateAnnotationToolButton(BlurToolButton, 6);
         UpdateAnnotationToolButton(PenToolButton, 7);
+        UpdateAnnotationToolButton(FillToolButton, 8);
     }
 
     private void UpdateAnnotationToolButton(Button button, int toolIndex)

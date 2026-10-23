@@ -679,6 +679,18 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="items:AnnotationOverlayItem">
                                                     <Grid Height="36" Margin="12,0,0,2">
+                                                        <Grid.ContextFlyout>
+                                                            <MenuFlyout>
+                                                                <MenuFlyoutItem Text="{x:Bind LayerLabel}" IsEnabled="False" />
+                                                                <MenuFlyoutSeparator />
+                                                                <MenuFlyoutItem Text="Move up" DataContext="{x:Bind}" Tag="1" IsEnabled="{x:Bind CanMoveUp}" Click="MoveObjectMenuItem_Click">
+                                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70E;" /></MenuFlyoutItem.Icon>
+                                                                </MenuFlyoutItem>
+                                                                <MenuFlyoutItem Text="Move down" DataContext="{x:Bind}" Tag="-1" IsEnabled="{x:Bind CanMoveDown}" Click="MoveObjectMenuItem_Click">
+                                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70D;" /></MenuFlyoutItem.Icon>
+                                                                </MenuFlyoutItem>
+                                                            </MenuFlyout>
+                                                        </Grid.ContextFlyout>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="30" />
                                                             <ColumnDefinition Width="*" />
@@ -713,9 +725,10 @@
                                                         <Button
                                                             Grid.Column="1"
                                                             AutomationProperties.Name="{x:Bind ObjectAutomationName}"
+                                                            AutomationProperties.HelpText="{x:Bind ObjectSelectionHelpText}"
                                                             Click="AnnotationObject_Click"
                                                             Style="{StaticResource LayerRowButtonStyle}"
-                                                            ToolTipService.ToolTip="{x:Bind LayerLabel}">
+                                                            ToolTipService.ToolTip="{x:Bind ObjectSelectionHelpText}">
                                                             <Grid ColumnSpacing="6">
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="24" />
@@ -1121,6 +1134,16 @@
                                         <controls:AnnotationToolIcon Kind="Blur" />
                                     </Button>
                                     <Button
+                                        x:Name="FillToolButton"
+                                        AutomationProperties.HelpText="Click inside a rectangle or ellipse to change its fill. Click an image area to add a connected fill to the selected layer."
+                                        AutomationProperties.Name="Fill bucket tool"
+                                        Click="AnnotationToolButton_Click"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        Tag="8"
+                                        ToolTipService.ToolTip="Fill bucket">
+                                        <controls:AnnotationToolIcon Kind="Fill" />
+                                    </Button>
+                                    <Button
                                         AccessKey="C"
                                         AutomationProperties.HelpText="Crop the current capture to the selected annotation bounds."
                                         AutomationProperties.Name="Crop to selected annotation"
@@ -1275,12 +1298,7 @@
                                         Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}"
                                         Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
                                         IsHitTestVisible="False">
-                                        <Border
-                                            x:Name="DragRectanglePreview"
-                                            Background="#220078D4"
-                                            BorderBrush="#FF0078D4"
-                                            BorderThickness="2"
-                                            Visibility="Collapsed" />
+                                        <Canvas x:Name="AnnotationDragPreview" />
                                         <Polyline
                                             x:Name="PenStrokePreview"
                                             StrokeStartLineCap="Round"
@@ -1498,6 +1516,7 @@
                                 <ComboBoxItem Content="Highlight" />
                                 <ComboBoxItem Content="Blur" />
                                 <ComboBoxItem Content="Pen" />
+                                <ComboBoxItem Content="Fill bucket" />
                             </ComboBox>
                         </StackPanel>
 
@@ -1561,7 +1580,7 @@
                             </Button>
                         </StackPanel>
 
-                        <Grid ColumnSpacing="8">
+                        <Grid ColumnSpacing="8" Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="78" />
@@ -1609,8 +1628,17 @@
                             Value="{x:Bind ViewModel.AnnotationOpacity, Mode=OneWay}"
                             ValueChanged="AnnotationOpacity_ValueChanged" />
 
+                        <Slider
+                            AutomationProperties.Name="Fill tolerance"
+                            AutomationProperties.HelpText="For image areas, higher tolerance fills a wider range of similar colors. Zero fills only matching colors. Shape fills do not use tolerance."
+                            Header="Fill tolerance"
+                            Minimum="0" Maximum="255" StepFrequency="1"
+                            Value="{x:Bind ViewModel.FillTolerance, Mode=TwoWay}"
+                            Visibility="{x:Bind ViewModel.FillToleranceControlsVisibility, Mode=OneWay}" />
+
                         <TextBox
                             AutomationProperties.HelpText="Edit the selected text annotation."
+                            Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}"
                             AutomationProperties.Name="Annotation text"
                             Header="Text"
                             LostFocus="AnnotationText_LostFocus"

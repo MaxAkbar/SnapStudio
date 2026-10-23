@@ -9,6 +9,12 @@ namespace SnapStudio.App.ViewModels.Items;
 public sealed class AnnotationOverlayItem
 {
     public IReadOnlyList<PointD> StrokePoints { get; private init; } = [];
+
+    public IReadOnlyList<RectD> FillRectangles { get; private init; } = [];
+
+    public bool CanMoveUp { get; private init; }
+
+    public bool CanMoveDown { get; private init; }
     private AnnotationOverlayItem(
         AnnotationKind kind,
         Guid id,
@@ -111,6 +117,7 @@ public sealed class AnnotationOverlayItem
         AnnotationKind.Highlight => "▤",
         AnnotationKind.Blur => "◌",
         AnnotationKind.Pen => "✎",
+        AnnotationKind.Fill => "▧",
         _ => "•"
     };
 
@@ -126,6 +133,8 @@ public sealed class AnnotationOverlayItem
 
     public string ObjectAutomationName => $"Select {LayerLabel} object";
 
+    public string ObjectSelectionHelpText => $"{LayerLabel}. Right-click to move this object up or down within its layer.";
+
     public string ObjectVisibilityAutomationName => IsVisible
         ? $"Hide {LayerLabel} object"
         : $"Show {LayerLabel} object";
@@ -137,7 +146,9 @@ public sealed class AnnotationOverlayItem
     public static AnnotationOverlayItem FromAnnotation(
         AnnotationObject annotation,
         double zoom,
-        Guid? selectedAnnotationId)
+        Guid? selectedAnnotationId,
+        bool canMoveUp = false,
+        bool canMoveDown = false)
     {
         ArgumentNullException.ThrowIfNull(annotation);
 
@@ -171,6 +182,10 @@ public sealed class AnnotationOverlayItem
             annotation.IsVisible,
             isSelected)
         {
+            CanMoveUp = canMoveUp,
+            CanMoveDown = canMoveDown,
+            FillRectangles = annotation.FillRectangles.Select(rectangle => new RectD(rectangle.X * bounds.Width * zoom,
+                rectangle.Y * bounds.Height * zoom, rectangle.Width * bounds.Width * zoom, rectangle.Height * bounds.Height * zoom)).ToArray(),
             StrokePoints = annotation.StrokePoints.Select(point => new PointD(point.X * bounds.Width * zoom, point.Y * bounds.Height * zoom)).ToArray()
         };
     }

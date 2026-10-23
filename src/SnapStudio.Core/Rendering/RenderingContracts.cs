@@ -7,6 +7,8 @@ public interface IDocumentRenderer
 
 public interface IDocumentRasterEditor
 {
+    Task<RegionFillResult> FindFillRegionAsync(RegionFillRequest request, CancellationToken cancellationToken);
+
     Task<RasterEditResult> CropAsync(
         RasterCropRequest request,
         CancellationToken cancellationToken);

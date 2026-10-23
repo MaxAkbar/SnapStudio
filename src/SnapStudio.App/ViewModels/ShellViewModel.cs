@@ -49,6 +49,9 @@ public enum DocumentHistoryFilter
 
 public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChanged, IDisposable
 {
+    private bool _fillInProgress;
+    private int _documentChangeVersion;
+    private double _fillTolerance = 16;
     private const int ThumbnailMaximumPixelSize = 128;
     private const string PrivacyDocumentFileName = "privacy.md";
     private const string StillCaptureFeatureFlag = "Capture.WgcStill";
@@ -1020,7 +1023,24 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public int AnnotationToolSelectionIndex => IsSelectionToolActive ? 0 : AnnotationToolIndex + 1;
 
-    public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive && ActiveAnnotationKind != AnnotationKind.Pen;
+    public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive
+        && ActiveAnnotationKind is not (AnnotationKind.Pen or AnnotationKind.Fill);
+
+    public Visibility AnnotationShapeControlsVisibility => ActiveOrSelectedAnnotationKind == AnnotationKind.Fill
+        ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility FillToleranceControlsVisibility => !IsSelectionToolActive && ActiveAnnotationKind == AnnotationKind.Fill
+        ? Visibility.Visible : Visibility.Collapsed;
+
+    public double FillTolerance
+    {
+        get => _fillTolerance;
+        set
+        {
+            _fillTolerance = double.IsFinite(value) ? Math.Clamp(Math.Round(value), 0, 255) : 16;
+            OnPropertyChanged(nameof(FillTolerance));
+        }
+    }
 
     public AnnotationStyle DrawingStyle => CreateAnnotationStyle(ActiveAnnotationKind);
 
@@ -1033,6 +1053,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
         OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
+        OnPropertyChanged(nameof(FillToleranceControlsVisibility));
         StatusText = "Selection: choose an object to move or resize it.";
     }
 
@@ -1046,7 +1067,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                 return;
             }
 
-            _annotationToolIndex = Math.Clamp(value, 0, 7);
+            _annotationToolIndex = Math.Clamp(value, 0, 8);
             OnPropertyChanged(nameof(AnnotationToolIndex));
             OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
             OnPropertyChanged(nameof(ActiveAnnotationKind));
@@ -1065,6 +1086,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         5 => AnnotationKind.Highlight,
         6 => AnnotationKind.Blur,
         7 => AnnotationKind.Pen,
+        8 => AnnotationKind.Fill,
         _ => AnnotationKind.Rectangle
     };
 
@@ -1077,6 +1099,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         AnnotationKind.Highlight => "Highlighter",
         AnnotationKind.Blur => "Blur",
         AnnotationKind.Pen => "Pen",
+        AnnotationKind.Fill => "Fill bucket",
         _ => "Rectangle"
     };
 
@@ -1443,6 +1466,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         ApplyAnnotationToolDefaultsWhenUnselected();
         RefreshAnnotationOverlays();
         NotifyEditorStateChanged();
+        OnPropertyChanged(nameof(FillToleranceControlsVisibility));
         StatusText = $"Tool: {ActiveAnnotationKind}.";
     }
 
@@ -3029,9 +3053,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public async Task AddActiveAnnotationAsync(CancellationToken cancellationToken)
     {
-        if (IsSelectionToolActive || ActiveAnnotationKind == AnnotationKind.Pen)
+        if (IsSelectionToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
         {
-            StatusText = "Choose a shape tool, or draw on the canvas with Pen.";
+            StatusText = "Choose a shape tool, draw with Pen, or click an area with Fill bucket.";
             return;
         }
         await AddAnnotationCoreAsync(ActiveAnnotationKind, null, cancellationToken)
@@ -3042,12 +3066,99 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         RectD sourceBounds,
         CancellationToken cancellationToken)
     {
-        if (IsSelectionToolActive || ActiveAnnotationKind == AnnotationKind.Pen)
+        if (IsSelectionToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
         {
             return;
         }
         await AddAnnotationCoreAsync(ActiveAnnotationKind, sourceBounds, cancellationToken)
             .ConfigureAwait(true);
+    }
+
+    public async Task FillAtCanvasPointAsync(PointD displayPoint, CancellationToken cancellationToken)
+    {
+        if (_fillInProgress || _currentDocument is null || _documentRepository is null
+            || _documentRenderer is null || _documentRasterEditor is null || _annotationEditor is null
+            || !_canvasViewport.HasSource)
+        {
+            return;
+        }
+
+        CaptureDocument document = _currentDocument;
+        int changeVersion = _documentChangeVersion;
+        Guid? layerId = _layerWorkspace.ActiveLayerId;
+        PointD point = _canvasViewport.ToSourcePoint(displayPoint);
+        point = new PointD(Math.Clamp(point.X, 0, document.SourceImage.Width - 1), Math.Clamp(point.Y, 0, document.SourceImage.Height - 1));
+        AnnotationStyle style = CreateAnnotationStyle(AnnotationKind.Fill);
+        int tolerance = (int)FillTolerance;
+        _fillInProgress = true;
+        try
+        {
+            if (ShapeFill.FindTarget(document, point) is AnnotationObject shape)
+            {
+                bool changed = await _annotationEditor.SetShapeFillAsync(document, shape, style.Fill, style.Opacity, cancellationToken)
+                    .ConfigureAwait(true);
+                if (!changed)
+                {
+                    StatusText = "This shape already has that fill.";
+                    return;
+                }
+
+                _annotationSelection.Clear();
+                await SaveCurrentDocumentAsync($"{shape.Kind} filled.", cancellationToken).ConfigureAwait(true);
+                return;
+            }
+
+            StatusText = "Filling area…";
+            RenderResult rendered = await _documentRenderer.RenderAsync(new RenderRequest(document.Id, 1, null), cancellationToken)
+                .ConfigureAwait(true);
+            if (!rendered.Succeeded || rendered.Image is null)
+            {
+                StatusText = $"Fill failed: {rendered.ErrorMessage}";
+                return;
+            }
+
+            RegionFillResult result = await _documentRasterEditor.FindFillRegionAsync(new RegionFillRequest(rendered.Image, point, tolerance), cancellationToken)
+                .ConfigureAwait(true);
+            if (!result.Succeeded || result.Region is not FillRegion region)
+            {
+                StatusText = $"Fill failed: {result.ErrorMessage}";
+                return;
+            }
+
+            if (!ReferenceEquals(document, _currentDocument) || changeVersion != _documentChangeVersion
+                || layerId != _layerWorkspace.ActiveLayerId)
+            {
+                StatusText = "The document or selected layer changed. Click again to fill.";
+                return;
+            }
+
+            if (style.Fill.A == 0 || (style.Opacity == 1 && style.Fill.A == 255 && region.OriginalColor == style.Fill))
+            {
+                StatusText = "This area already has that color.";
+                return;
+            }
+
+            var fill = new AnnotationObject
+            {
+                Kind = AnnotationKind.Fill,
+                Bounds = region.Bounds,
+                FillRectangles = [.. region.Rectangles],
+                Style = style
+            };
+            if (!_layerWorkspace.TryAssignActiveLayer(document, fill))
+            {
+                StatusText = "Show the selected layer before filling.";
+                return;
+            }
+
+            await _annotationEditor.AddAsync(document, fill, cancellationToken).ConfigureAwait(true);
+            _annotationSelection.Clear();
+            await SaveCurrentDocumentAsync("Area filled.", cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            _fillInProgress = false;
+        }
     }
 
     public async Task AddPenStrokeAsync(IReadOnlyList<PointD> points, CancellationToken cancellationToken)
@@ -3119,6 +3230,30 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         return _currentDocument?.Annotations
             .FirstOrDefault(annotation => annotation.Id == annotationId)
             ?.Bounds;
+    }
+
+    public AnnotationOverlayItem? CreateActiveAnnotationPreview(PointD displayStart, PointD displayEnd)
+    {
+        if (_currentDocument is null || !_canvasViewport.HasSource
+            || IsSelectionToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
+        {
+            return null;
+        }
+
+        PointD start = _canvasViewport.ToSourcePoint(displayStart);
+        PointD end = _canvasViewport.ToSourcePoint(displayEnd);
+        AnnotationObject annotation = CreateAnnotation(_currentDocument, ActiveAnnotationKind,
+            new RectD(start.X, start.Y, end.X - start.X, end.Y - start.Y));
+        return AnnotationOverlayItem.FromAnnotation(annotation, _canvasViewport.Zoom, null);
+    }
+
+    public AnnotationOverlayItem? CreateAnnotationEditPreview(Guid annotationId, RectD sourceBounds)
+    {
+        AnnotationObject? annotation = _currentDocument?.Annotations
+            .FirstOrDefault(candidate => candidate.Id == annotationId);
+        return annotation is null
+            ? null
+            : AnnotationOverlayItem.FromAnnotation(CloneAnnotation(annotation, sourceBounds), _canvasViewport.Zoom, null);
     }
 
     public RectD? CreateEditedAnnotationBounds(
@@ -3449,6 +3584,27 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             ? "Layer deleted."
             : $"Layer and {objectCount} object{(objectCount == 1 ? string.Empty : "s")} deleted.";
         await SaveCurrentDocumentAsync(status, cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task MoveAnnotationInLayerAsync(Guid annotationId, int direction, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _annotationEditor is null)
+        {
+            return;
+        }
+
+        AnnotationObject? annotation = _currentDocument.Annotations.FirstOrDefault(candidate => candidate.Id == annotationId);
+        if (annotation is null || !await _annotationEditor.MoveInLayerAsync(_currentDocument, annotation, direction, cancellationToken)
+            .ConfigureAwait(true))
+        {
+            return;
+        }
+
+        _annotationSelection.Select(_currentDocument, annotationId);
+        _layerWorkspace.SelectAnnotation(annotation);
+        SyncStyleControlsFromSelectedAnnotation();
+        await SaveCurrentDocumentAsync(direction > 0 ? "Object moved up." : "Object moved down.", cancellationToken)
+            .ConfigureAwait(true);
     }
 
     public async Task MoveSelectedAnnotationToLayerAsync(
@@ -4870,6 +5026,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
+        _documentChangeVersion++;
         await _documentRepository
             .SaveAsync(_currentDocument, cancellationToken)
             .ConfigureAwait(true);
@@ -5123,7 +5280,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             AnnotationText = annotation.Text ?? "Text";
             SelectAnnotationColor(annotation.Style.Text);
         }
-        else if (annotation.Kind == AnnotationKind.Highlight)
+        else if (annotation.Kind is AnnotationKind.Highlight or AnnotationKind.Fill)
         {
             SelectAnnotationColor(annotation.Style.Fill);
         }
@@ -5137,6 +5294,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             AnnotationKind.Highlight => 5,
             AnnotationKind.Blur => 6,
             AnnotationKind.Pen => 7,
+            AnnotationKind.Fill => 8,
             _ => 0
         };
         NotifyAnnotationStyleControlsChanged();
@@ -5390,9 +5548,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         AnnotationObject annotation,
         RectD cropBounds)
     {
-        if (annotation.Kind == AnnotationKind.Pen)
+        if (annotation.Kind is AnnotationKind.Pen or AnnotationKind.Fill)
         {
-            // Keep the stroke geometry intact; the cropped canvas clips the visible portion.
+            // Keep fill and stroke geometry intact; the cropped canvas clips the visible portion.
             RectD bounds = annotation.Bounds;
             double radius = annotation.Style.StrokeThickness / 2;
             if (bounds.Right + radius < cropBounds.X || bounds.X - radius > cropBounds.Right
@@ -5476,6 +5634,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             Bounds = bounds,
             Text = annotation.Text,
             StrokePoints = [.. annotation.StrokePoints],
+            FillRectangles = [.. annotation.FillRectangles],
             Style = annotation.Style
         };
     }
@@ -5656,6 +5815,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         return annotationKind switch
         {
+            AnnotationKind.Fill => new AnnotationStyle(ColorRgba.Transparent, color, ColorRgba.Black, 1, opacity),
             AnnotationKind.Text => new AnnotationStyle(
                 ColorRgba.Transparent,
                 ColorRgba.Transparent,
@@ -5698,7 +5858,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                 StrokeThickness = AnnotationStrokeThickness,
                 Opacity = AnnotationOpacity
             },
-            AnnotationKind.Highlight => before with
+            AnnotationKind.Highlight or AnnotationKind.Fill => before with
             {
                 Fill = color,
                 Opacity = AnnotationOpacity
@@ -5909,6 +6069,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     private void NotifyAnnotationStyleControlsChanged()
     {
+        OnPropertyChanged(nameof(AnnotationShapeControlsVisibility));
+        OnPropertyChanged(nameof(FillToleranceControlsVisibility));
         OnPropertyChanged(nameof(AnnotationSizeHeader));
         OnPropertyChanged(nameof(AnnotationSizeMaximum));
         OnPropertyChanged(nameof(AnnotationSizeStepFrequency));

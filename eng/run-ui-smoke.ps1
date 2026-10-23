@@ -197,6 +197,7 @@ try {
         "Paste image",
         "Select annotations",
         "Pen tool",
+        "Fill bucket tool",
         "Copy current capture",
         "Export",
         "Search capture history",

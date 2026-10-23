@@ -262,12 +262,16 @@ internal sealed class AnnotationLayerWorkspace
         }
 
         var itemsByLayer = new Dictionary<Guid, List<AnnotationOverlayItem>>();
-        foreach (AnnotationObject annotation in DocumentLayers.InPaintOrder(document))
+        AnnotationObject[] annotations = DocumentLayers.InPaintOrder(document).ToArray();
+        for (int index = 0; index < annotations.Length; index++)
         {
+            AnnotationObject annotation = annotations[index];
             AnnotationOverlayItem item = AnnotationOverlayItem.FromAnnotation(
                 annotation,
                 zoom,
-                selectedAnnotationId);
+                selectedAnnotationId,
+                index < annotations.Length - 1 && annotations[index + 1].LayerId == annotation.LayerId,
+                index > 0 && annotations[index - 1].LayerId == annotation.LayerId);
             if (DocumentLayers.IsEffectivelyVisible(document, annotation))
             {
                 Overlays.Add(item);

@@ -45,6 +45,26 @@ public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
         return editStack.ExecuteAsync(document, new RemoveAnnotationCommand(annotation), cancellationToken);
     }
 
+    public async ValueTask<bool> MoveInLayerAsync(
+        CaptureDocument document,
+        AnnotationObject annotation,
+        int direction,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(annotation);
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureCurrentAnnotation(document, annotation);
+        if (DocumentLayers.FindAdjacentAnnotationIndex(document, annotation.Id, direction) < 0)
+        {
+            return false;
+        }
+
+        await editStack.ExecuteAsync(document, new MoveAnnotationInLayerCommand(annotation.Id, direction), cancellationToken)
+            .ConfigureAwait(false);
+        return true;
+    }
+
     public ValueTask SetBoundsAsync(
         CaptureDocument document,
         AnnotationObject annotation,
@@ -91,6 +111,39 @@ public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
             document,
             new UpdateAnnotationStyleCommand(annotation.Id, annotation.Style, style, displayName),
             cancellationToken);
+    }
+
+    public async ValueTask<bool> SetShapeFillAsync(
+        CaptureDocument document,
+        AnnotationObject annotation,
+        ColorRgba color,
+        double opacity,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(annotation);
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureCurrentAnnotation(document, annotation);
+        if (annotation.Kind is not (AnnotationKind.Rectangle or AnnotationKind.Ellipse))
+        {
+            throw new ArgumentException("Only rectangles and ellipses have an editable shape fill.", nameof(annotation));
+        }
+
+        if (!double.IsFinite(opacity) || opacity < 0 || opacity > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(opacity));
+        }
+
+        // Keep the object's overall opacity and outline. Bucket opacity affects only its fill.
+        AnnotationStyle style = annotation.Style with { Fill = color with { A = (byte)Math.Round(color.A * opacity) } };
+        if (style == annotation.Style)
+        {
+            return false;
+        }
+
+        await SetStyleAsync(document, annotation, style, $"Fill {annotation.Kind}", cancellationToken)
+            .ConfigureAwait(false);
+        return true;
     }
 
     public ValueTask SetVisibilityAsync(

@@ -12,7 +12,8 @@ public enum AnnotationKind
     Text,
     Highlight,
     Blur,
-    Pen
+    Pen,
+    Fill
 }
 
 public enum DestructiveOperationKind
@@ -25,7 +26,7 @@ public enum DestructiveOperationKind
 
 public sealed class CaptureDocument
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
     public DocumentId Id { get; set; } = DocumentId.New();
 
@@ -68,6 +69,9 @@ public sealed class AnnotationObject
 
     // Pen samples are normalized to Bounds so moving or resizing keeps the stroke shape.
     public List<PointD> StrokePoints { get; set; } = [];
+
+    // Filled regions are normalized to Bounds, preserving holes when moved or resized.
+    public List<RectD> FillRectangles { get; set; } = [];
 
     public AnnotationStyle Style { get; set; } = AnnotationStyle.Default;
 }

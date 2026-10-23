@@ -212,6 +212,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
                 annotation.Bounds.Height * scale),
             Text = annotation.Text,
             StrokePoints = [.. annotation.StrokePoints],
+            FillRectangles = [.. annotation.FillRectangles],
             Style = annotation.Style with
             {
                 StrokeThickness = Math.Max(1, annotation.Style.StrokeThickness * scale),
@@ -228,6 +229,9 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     {
         switch (annotation.Kind)
         {
+            case AnnotationKind.Fill:
+                DrawFill(graphics, annotation);
+                break;
             case AnnotationKind.Pen:
                 DrawPenStroke(graphics, annotation);
                 break;
@@ -253,6 +257,14 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
                 BlurRegionInPlace(bitmap, annotation.Bounds, ResolveBlurRadius(annotation.Style.Opacity));
                 break;
         }
+    }
+
+    private static void DrawFill(Graphics graphics, AnnotationObject annotation)
+    {
+        using var path = new GraphicsPath(FillMode.Winding);
+        foreach (RectD rectangle in AreaFill.GetRectangles(annotation)) path.AddRectangle(ToRectangleF(rectangle));
+        using Brush brush = CreateBrush(annotation.Style.Fill, annotation.Style.Opacity);
+        graphics.FillPath(brush, path);
     }
 
     private static void DrawPenStroke(Graphics graphics, AnnotationObject annotation)

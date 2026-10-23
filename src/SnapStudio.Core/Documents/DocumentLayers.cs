@@ -56,7 +56,7 @@ public static class DocumentLayers
             }
         }
 
-        if (document.SchemaVersion == 2)
+        if (document.SchemaVersion is 2 or 3)
         {
             document.SchemaVersion = CaptureDocument.CurrentSchemaVersion;
         }
@@ -105,6 +105,10 @@ public static class DocumentLayers
             {
                 FreehandStroke.Validate(annotation);
             }
+            else if (annotation.Kind == AnnotationKind.Fill)
+            {
+                AreaFill.Validate(annotation);
+            }
         }
     }
 
@@ -128,6 +132,32 @@ public static class DocumentLayers
         {
             throw new InvalidDataException($"Document schema version {document.SchemaVersion} is invalid.");
         }
+    }
+
+    public static int FindAdjacentAnnotationIndex(CaptureDocument document, Guid annotationId, int direction)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        if (direction is not (-1 or 1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(direction), "Move an object up or down by one position.");
+        }
+
+        int index = document.Annotations.FindIndex(annotation => annotation.Id == annotationId);
+        if (index < 0 || document.Annotations[index].LayerId is not Guid layerId
+            || document.Layers.All(layer => layer.Id != layerId))
+        {
+            return -1;
+        }
+
+        for (int neighbor = index + direction; neighbor >= 0 && neighbor < document.Annotations.Count; neighbor += direction)
+        {
+            if (document.Annotations[neighbor].LayerId == layerId)
+            {
+                return neighbor;
+            }
+        }
+
+        return -1;
     }
 
     public static IEnumerable<AnnotationObject> InPaintOrder(CaptureDocument document)

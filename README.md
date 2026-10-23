@@ -15,6 +15,8 @@ SnapStudio is in active development. The current codebase includes the main capt
 - Local workspace with recent captures, thumbnails, search, filters, rename, duplicate, folder open, remove from history, and move to recycle bin.
 - Editable annotations: rectangle, ellipse, line, arrow, text, freehand pen, highlight, and blur. Use the dashed-square Selection tool to select, move, and resize objects.
 - Right-click a layer to rename it, move it up or down in the stack, or choose a color label. Layer changes support undo and redo.
+- Right-click an object inside a layer to move it up or down within that layer. Object order is saved and supports undo and redo.
+- Use **Fill bucket** inside a rectangle or ellipse to change that object's fill while keeping its outline. The fill moves and resizes with the shape. On image areas, the bucket adds a connected fill object to the selected layer; adjust tolerance to include similar colors. Both support undo and redo.
 - Paste a clipboard image as a new editable document with **Paste** or **Ctrl+V**.
 - Create a transparent canvas with **New** or **Ctrl+N**, then choose its width and height. The checkerboard shows transparency in the editor; PNG export preserves it.
 - Selection, move, resize, style controls, opacity, presets, undo, and redo.

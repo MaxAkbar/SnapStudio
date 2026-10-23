@@ -71,6 +71,12 @@ public sealed class AnnotationToolIcon : UserControl
                 Line(new Point(5, 15), new Point(3, 20), new Point(8, 20));
                 Line(new Point(3, 23), new Point(21, 23));
                 break;
+            case "Fill":
+                Line(new Point(9, 3), new Point(18, 12), new Point(9, 21), new Point(1, 13), new Point(10, 4));
+                Line(new Point(4, 10), new Point(16, 10));
+                Line(new Point(8, 8), new Point(8, 2), new Point(11, 2), new Point(14, 5));
+                Line(new Point(21, 13), new Point(19, 18), new Point(21, 20), new Point(23, 18), new Point(21, 13));
+                break;
             case "Blur":
                 for (int y = 0; y < 3; y++)
                 {
