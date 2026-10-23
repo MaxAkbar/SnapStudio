@@ -19,7 +19,7 @@ public sealed class WindowsImageCreationService : IImageCreationService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceImageDirectory);
         _sourceImageDirectory = Path.GetFullPath(sourceImageDirectory);
-        _readClipboardImage = readClipboardImage ?? ReadClipboardImageAsync;
+        _readClipboardImage = readClipboardImage ?? OpenClipboardImageStreamAsync;
     }
 
     public async Task<CaptureOutcome> CreateBlankAsync(
@@ -55,6 +55,29 @@ public sealed class WindowsImageCreationService : IImageCreationService
 
     public async Task<CaptureOutcome> PasteAsync(CancellationToken cancellationToken)
     {
+        ClipboardImageResult clipboard = await ReadClipboardImageAsync(cancellationToken).ConfigureAwait(true);
+        if (clipboard.Image is not AnnotationImage image)
+        {
+            return Failure(clipboard.ErrorMessage ?? "The clipboard image could not be pasted.", clipboard.Exception);
+        }
+
+        try
+        {
+            return await Task.Run(() =>
+            {
+                using var stream = new MemoryStream(image.PngBytes, writable: false);
+                using var bitmap = new Bitmap(stream);
+                return SaveImage(bitmap, "clipboard", "Pasted image", cancellationToken);
+            }, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return Failure($"The clipboard image could not be pasted: {exception.Message}", exception);
+        }
+    }
+
+    public async Task<ClipboardImageResult> ReadClipboardImageAsync(CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         try
         {
@@ -62,7 +85,7 @@ public sealed class WindowsImageCreationService : IImageCreationService
             using Stream? stream = await _readClipboardImage(cancellationToken).ConfigureAwait(true);
             if (stream is null)
             {
-                return Failure("The clipboard does not contain an image. Copy an image and try Paste again.");
+                return new ClipboardImageResult(null, "The clipboard does not contain an image. Copy an image and try Paste again.");
             }
 
             return await Task.Run(() =>
@@ -71,15 +94,18 @@ public sealed class WindowsImageCreationService : IImageCreationService
                 using var bitmap = new Bitmap(stream);
                 if (NewImageRequest.GetValidationError(bitmap.Width, bitmap.Height) is string error)
                 {
-                    return Failure(error);
+                    return new ClipboardImageResult(null, error);
                 }
 
-                return SaveImage(bitmap, "clipboard", "Pasted image", cancellationToken);
+                using var encoded = new MemoryStream();
+                bitmap.Save(encoded, ImageFormat.Png);
+                cancellationToken.ThrowIfCancellationRequested();
+                return new ClipboardImageResult(new AnnotationImage(bitmap.Width, bitmap.Height, encoded.ToArray()), null);
             }, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            return Failure($"The clipboard image could not be pasted: {exception.Message}", exception);
+            return new ClipboardImageResult(null, $"The clipboard image could not be pasted: {exception.Message}", exception);
         }
     }
 
@@ -113,7 +139,7 @@ public sealed class WindowsImageCreationService : IImageCreationService
         }
     }
 
-    private static async Task<Stream?> ReadClipboardImageAsync(CancellationToken cancellationToken)
+    private static async Task<Stream?> OpenClipboardImageStreamAsync(CancellationToken cancellationToken)
     {
         DataPackageView content = Clipboard.GetContent();
         if (content.Contains(WindowsClipboardService.PngClipboardFormat))

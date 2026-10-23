@@ -7,7 +7,11 @@ public interface IImageCreationService
     Task<CaptureOutcome> CreateBlankAsync(NewImageRequest request, CancellationToken cancellationToken);
 
     Task<CaptureOutcome> PasteAsync(CancellationToken cancellationToken);
+
+    Task<ClipboardImageResult> ReadClipboardImageAsync(CancellationToken cancellationToken);
 }
+
+public sealed record ClipboardImageResult(AnnotationImage? Image, string? ErrorMessage, Exception? Exception = null);
 
 public sealed record NewImageRequest(int Width, int Height)
 {

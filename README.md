@@ -20,7 +20,7 @@ SnapStudio is in active development. The current codebase includes the main capt
 - Right-click an object inside a layer to move it up or down within that layer. Object order is saved and supports undo and redo.
 - Right-click an object on the editor canvas or in the layer list to duplicate, show/hide, arrange, move to another visible layer, or delete it. Keyboard shortcuts are shown in the menu.
 - Use **Fill bucket** inside a rectangle or ellipse to change that object's fill while keeping its outline. The fill moves and resizes with the shape. On image areas, the bucket adds a connected fill object to the selected layer; adjust tolerance to include similar colors. Both support undo and redo.
-- Paste a clipboard image as a new editable document with **Paste** or **Ctrl+V**.
+- Paste a clipboard image over the open image as a new editable layer with **Paste** or **Ctrl+V**. The pasted image keeps its transparency and can be moved or resized independently. Use the arrow beside Paste and choose **Paste as new image**, or press **Ctrl+Shift+V**, to open it as a separate document. With no image open, **Ctrl+V** creates a new document.
 - Create a transparent canvas with **New** or **Ctrl+N**, then choose its width and height. The checkerboard shows transparency in the editor; PNG export preserves it.
 - Selection, move, resize, style controls, opacity, presets, undo, and redo.
 - Crop and resize, including pixel or percentage resize with optional aspect-ratio lock.

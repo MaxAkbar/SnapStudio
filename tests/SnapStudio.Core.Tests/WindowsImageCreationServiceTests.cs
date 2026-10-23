@@ -109,6 +109,48 @@ public sealed class WindowsImageCreationServiceTests
     }
 
     [TestMethod]
+    public async Task ReadClipboardImageAsync_PreservesAlphaWithoutCreatingSourceFiles()
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        using var source = new Bitmap(12, 10, PixelFormat.Format32bppArgb);
+        source.SetPixel(3, 4, Color.FromArgb(96, 20, 90, 180));
+        source.SetPixel(5, 6, Color.Red);
+        using var encoded = new MemoryStream();
+        source.Save(encoded, ImageFormat.Png);
+        var clipboardStream = new MemoryStream(encoded.ToArray());
+        var service = new WindowsImageCreationService(workspace.Path, _ => Task.FromResult<Stream?>(clipboardStream));
+
+        ClipboardImageResult result = await service.ReadClipboardImageAsync(CancellationToken.None);
+
+        Assert.IsNotNull(result.Image, result.ErrorMessage);
+        Assert.IsFalse(clipboardStream.CanRead);
+        Assert.IsEmpty(Directory.GetFiles(workspace.Path));
+        using var stream = new MemoryStream(result.Image.PngBytes);
+        using var image = new Bitmap(stream);
+        Assert.AreEqual(12, result.Image.Width);
+        Assert.AreEqual(10, result.Image.Height);
+        Assert.AreEqual(0, image.GetPixel(0, 0).A);
+        Assert.AreEqual(96, image.GetPixel(3, 4).A);
+        Assert.AreEqual(Color.Red.ToArgb(), image.GetPixel(5, 6).ToArgb());
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task ReadClipboardImageAsync_EmptyOrCorruptClipboardReturnsFailureWithoutFiles(bool corrupt)
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        var service = new WindowsImageCreationService(workspace.Path,
+            _ => Task.FromResult<Stream?>(corrupt ? new MemoryStream([1, 2, 3]) : null));
+
+        ClipboardImageResult result = await service.ReadClipboardImageAsync(CancellationToken.None);
+
+        Assert.IsNull(result.Image);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(result.ErrorMessage));
+        Assert.IsEmpty(Directory.GetFiles(workspace.Path));
+    }
+
+    [TestMethod]
     public async Task CancelledOperationsDoNotReadClipboardOrCreateFiles()
     {
         using var workspace = TemporaryWorkspace.Create();
@@ -124,6 +166,7 @@ public sealed class WindowsImageCreationServiceTests
         await Assert.ThrowsExactlyAsync<OperationCanceledException>(
             () => service.CreateBlankAsync(new NewImageRequest(32, 24), cancellation.Token));
         await Assert.ThrowsExactlyAsync<OperationCanceledException>(() => service.PasteAsync(cancellation.Token));
+        await Assert.ThrowsExactlyAsync<OperationCanceledException>(() => service.ReadClipboardImageAsync(cancellation.Token));
 
         Assert.IsFalse(clipboardRead);
         Assert.IsEmpty(Directory.GetFiles(workspace.Path));

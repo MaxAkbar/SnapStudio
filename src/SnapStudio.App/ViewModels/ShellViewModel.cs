@@ -176,6 +176,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private int _annotationToolIndex;
     private int _annotationStrokeIndex;
     private double _annotationStrokeThickness = 2;
+    private string _annotationSizeText = "2";
     private double _annotationCornerRadius = AnnotationCornerRadiusDefault;
     private double _annotationOpacity = 1;
     private ColorRgba _customAnnotationColor = new(76, 194, 255, 255);
@@ -990,6 +991,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         && !_screenRecordingOperationInProgress
         && !IsScreenRecording;
 
+    public bool CanPasteImageAsLayer => CanCreateImage && HasCurrentDocument && _annotationEditor is not null;
+
     public string WorkspaceTitleText
     {
         get => _workspaceTitleText;
@@ -1131,24 +1134,31 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     public double AnnotationStrokeThickness
     {
         get => _annotationStrokeThickness;
-        set
-        {
-            if (!double.IsFinite(value))
-            {
-                return;
-            }
-
-            double normalized = Math.Clamp(value, 1, AnnotationSizeInputMaximum);
-            if (Math.Abs(_annotationStrokeThickness - normalized) < 0.01)
-            {
-                return;
-            }
-
-            _annotationStrokeThickness = normalized;
-            OnPropertyChanged(nameof(AnnotationStrokeThickness));
-            OnPropertyChanged(nameof(AnnotationSizeSliderValue));
-        }
+        set => SetAnnotationStrokeThickness(value, preserveInputText: false);
     }
+
+    public string AnnotationSizeText => _annotationSizeText;
+
+    private void SetAnnotationStrokeThickness(double value, bool preserveInputText)
+    {
+        if (!double.IsFinite(value)) return;
+        double normalized = Math.Clamp(value, 1, AnnotationSizeInputMaximum);
+        bool changed = Math.Abs(_annotationStrokeThickness - normalized) >= 0.01;
+        _annotationStrokeThickness = normalized;
+        if (!preserveInputText || normalized != value) ResetAnnotationSizeText();
+        if (!changed) return;
+        OnPropertyChanged(nameof(AnnotationStrokeThickness));
+        OnPropertyChanged(nameof(AnnotationSizeSliderValue));
+    }
+
+    private void SetAnnotationSizeText(string text)
+    {
+        if (_annotationSizeText == text) return;
+        _annotationSizeText = text;
+        OnPropertyChanged(nameof(AnnotationSizeText));
+    }
+
+    public void ResetAnnotationSizeText() => SetAnnotationSizeText(AnnotationStrokeThickness.ToString(CultureInfo.CurrentCulture));
 
     public string AnnotationSizeHeader => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
         ? "Text size"
@@ -1402,6 +1412,17 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         AnnotationStrokeThickness = strokeThickness;
         await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
             .ConfigureAwait(true);
+    }
+
+    public async Task UpdateAnnotationSizeTextAsync(string text, CancellationToken cancellationToken)
+    {
+        // Keep incomplete input (such as a trailing decimal point) through binding refreshes.
+        SetAnnotationSizeText(text);
+        if (!double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out double value)
+            || !double.IsFinite(value) || value < 1) return;
+        MarkAnnotationPresetCustom();
+        SetAnnotationStrokeThickness(value, preserveInputText: true);
+        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken).ConfigureAwait(true);
     }
 
     public async Task UpdateAnnotationCornerStyleAsync(
@@ -2553,9 +2574,55 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         ? OpenImageSourceAsync(_imageImportService!.ImportAsync, "Open", cancellationToken)
         : Task.CompletedTask;
 
-    public Task PasteImageAsync(CancellationToken cancellationToken) => CanCreateImage
+    public Task PasteImageAsync(CancellationToken cancellationToken) => HasCurrentDocument
+        ? PasteImageAsLayerAsync(cancellationToken)
+        : PasteImageAsNewDocumentAsync(cancellationToken);
+
+    public Task PasteImageAsNewDocumentAsync(CancellationToken cancellationToken) => CanCreateImage
         ? OpenImageSourceAsync(_imageCreationService!.PasteAsync, "Paste", cancellationToken)
         : Task.CompletedTask;
+
+    public async Task PasteImageAsLayerAsync(CancellationToken cancellationToken)
+    {
+        if (!CanPasteImageAsLayer || _currentDocument is not CaptureDocument document) return;
+        SetCaptureInProgress(true);
+        CaptureNoticeIsOpen = false;
+        try
+        {
+            ClipboardImageResult result = await _imageCreationService!.ReadClipboardImageAsync(cancellationToken).ConfigureAwait(true);
+            if (result.Image is not AnnotationImage image)
+            {
+                string message = result.ErrorMessage ?? "The clipboard image could not be pasted.";
+                StatusText = $"Paste failed: {message}";
+                ShowCaptureNotice("Paste failed", message, result.Exception is null ? InfoBarSeverity.Warning : InfoBarSeverity.Error);
+                return;
+            }
+
+            if (!ReferenceEquals(_currentDocument, document))
+            {
+                StatusText = "The open image changed. Paste again to add a layer to this image.";
+                return;
+            }
+
+            AnnotationObject annotation = await _annotationEditor!.PasteImageAsLayerAsync(document, image, cancellationToken).ConfigureAwait(true);
+            UseSelectionTool();
+            SelectAnnotation(annotation.Id);
+            await SaveCurrentDocumentAsync("Image pasted as a new layer. Drag to move or resize it.", cancellationToken).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            StatusText = "Paste cancelled.";
+        }
+        catch (Exception exception)
+        {
+            StatusText = $"Paste failed: {exception.Message}";
+            ShowCaptureNotice("Paste failed", exception.Message, InfoBarSeverity.Error);
+        }
+        finally
+        {
+            SetCaptureInProgress(false);
+        }
+    }
 
     public Task CreateBlankImageAsync(NewImageRequest request, CancellationToken cancellationToken) => CanCreateImage
         ? OpenImageSourceAsync(
@@ -4842,6 +4909,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         _captureInProgress = isInProgress;
         OnPropertyChanged(nameof(CanCreateImage));
+        OnPropertyChanged(nameof(CanPasteImageAsLayer));
         OnPropertyChanged(nameof(CanOpenImageFile));
         OnPropertyChanged(nameof(CanCaptureScrolling));
         OnPropertyChanged(nameof(CanToggleScreenRecording));
@@ -4856,6 +4924,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         _screenRecordingOperationInProgress = isInProgress;
         OnPropertyChanged(nameof(CanCreateImage));
+        OnPropertyChanged(nameof(CanPasteImageAsLayer));
         OnPropertyChanged(nameof(CanOpenImageFile));
         OnPropertyChanged(nameof(CanToggleScreenRecording));
         OnPropertyChanged(nameof(CanChangeScreenRecordingAudioMode));
@@ -5241,6 +5310,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             cancellationToken).ConfigureAwait(true);
 
         _annotationSelection.Select(_currentDocument, annotation.Id);
+        RefreshAnnotationOverlays();
+        NotifyEditorStateChanged();
         await SaveCurrentDocumentAsync($"{displayName} complete.", cancellationToken)
             .ConfigureAwait(true);
     }
@@ -5283,6 +5354,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private void NotifyDocumentWorkspaceStateChanged()
     {
         OnPropertyChanged(nameof(HasCurrentDocument));
+        OnPropertyChanged(nameof(CanPasteImageAsLayer));
         OnPropertyChanged(nameof(CanRenameCurrentDocument));
         OnPropertyChanged(nameof(CanDuplicateCurrentDocument));
         OnPropertyChanged(nameof(CanDeleteCurrentDocument));
@@ -5297,6 +5369,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private void NotifyScreenRecordingStateChanged()
     {
         OnPropertyChanged(nameof(CanCreateImage));
+        OnPropertyChanged(nameof(CanPasteImageAsLayer));
         OnPropertyChanged(nameof(CanOpenImageFile));
         OnPropertyChanged(nameof(IsScreenRecording));
         OnPropertyChanged(nameof(ScreenRecordingCommandText));

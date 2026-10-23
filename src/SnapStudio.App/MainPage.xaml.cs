@@ -176,7 +176,7 @@ public sealed partial class MainPage : Page
     {
         if (TryHandleApplicationShortcut(args, ViewModel.CanCreateImage))
         {
-            await PasteImageAndFitAsync(CancellationToken.None);
+            await PasteImageAndUpdateAsync(CancellationToken.None, sender.Modifiers.HasFlag(VirtualKeyModifiers.Shift));
         }
     }
 
@@ -718,7 +718,12 @@ public sealed partial class MainPage : Page
 
     private async void PasteImageButton_Click(object sender, RoutedEventArgs e)
     {
-        await PasteImageAndFitAsync(CancellationToken.None);
+        await PasteImageAndUpdateAsync(CancellationToken.None);
+    }
+
+    private async void PasteImageAsNewDocument_Click(object sender, RoutedEventArgs e)
+    {
+        await PasteImageAndUpdateAsync(CancellationToken.None, asNewDocument: true);
     }
 
     private async Task ShowNewImageDialogAsync()
@@ -1312,21 +1317,25 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private async void AnnotationSizeNumber_ValueChanged(
+    private async void AnnotationSizeText_TextChanged(
         object sender,
-        NumberBoxValueChangedEventArgs e)
+        TextChangedEventArgs e)
     {
-        if (ShouldIgnoreControlEvent()
-            || !double.IsFinite(e.NewValue))
+        if (ShouldIgnoreControlEvent() || sender is not TextBox textBox)
         {
             return;
         }
 
-        await ViewModel.UpdateAnnotationStrokeThicknessAsync(
-            e.NewValue,
+        await ViewModel.UpdateAnnotationSizeTextAsync(
+            textBox.Text,
             CancellationToken.None);
         UpdateBindingsFromViewModel();
         RefreshAnnotationCanvas();
+    }
+
+    private void AnnotationSizeText_LostFocus(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ResetAnnotationSizeText();
     }
 
     private async void AnnotationCornerStyle_SelectionChanged(
@@ -1687,11 +1696,18 @@ public sealed partial class MainPage : Page
         FitCurrentCanvas();
     }
 
-    private async Task PasteImageAndFitAsync(CancellationToken cancellationToken)
+    private async Task PasteImageAndUpdateAsync(CancellationToken cancellationToken, bool asNewDocument = false)
     {
-        await ViewModel.PasteImageAsync(cancellationToken);
+        var previousDocumentId = ViewModel.CurrentDocumentId;
+        if (asNewDocument)
+            await ViewModel.PasteImageAsNewDocumentAsync(cancellationToken);
+        else
+            await ViewModel.PasteImageAsync(cancellationToken);
         UpdateBindingsFromViewModel();
-        FitCurrentCanvas();
+        if (ViewModel.CurrentDocumentId != previousDocumentId)
+            FitCurrentCanvas();
+        else if (ViewModel.HasSelectedAnnotation && !ShouldIgnoreApplicationShortcut())
+            CanvasScrollViewer.Focus(FocusState.Programmatic);
     }
 
     private async Task CopyCurrentDocumentAsync(CancellationToken cancellationToken)

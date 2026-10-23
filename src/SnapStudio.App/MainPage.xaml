@@ -109,6 +109,10 @@
             Modifiers="Control"
             Invoked="PasteImageKeyboardAccelerator_Invoked" />
         <KeyboardAccelerator
+            Key="V"
+            Modifiers="Control,Shift"
+            Invoked="PasteImageKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator
             Key="R"
             Modifiers="Control"
             Invoked="CaptureRegionKeyboardAccelerator_Invoked" />
@@ -308,20 +312,44 @@
                             <TextBlock Text="Open" />
                         </StackPanel>
                     </Button>
-                    <Button
-                        AccessKey="V"
-                        AutomationProperties.AcceleratorKey="Ctrl+V"
-                        AutomationProperties.HelpText="Paste a clipboard image as a new document."
-                        AutomationProperties.Name="Paste image"
-                        Click="PasteImageButton_Click"
-                        IsEnabled="{x:Bind ViewModel.CanCreateImage, Mode=OneWay}"
-                        Style="{StaticResource TopCommandButtonStyle}"
-                        ToolTipService.ToolTip="Paste image (Ctrl+V)">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <SymbolIcon Symbol="Paste" />
-                            <TextBlock Text="Paste" />
-                        </StackPanel>
-                    </Button>
+                    <StackPanel Orientation="Horizontal" Spacing="0">
+                        <Button
+                            AccessKey="V"
+                            AutomationProperties.AcceleratorKey="Ctrl+V"
+                            AutomationProperties.HelpText="Paste a clipboard image as a new layer in the open image, or as a new image if none is open."
+                            AutomationProperties.Name="Paste image"
+                            Click="PasteImageButton_Click"
+                            IsEnabled="{x:Bind ViewModel.CanCreateImage, Mode=OneWay}"
+                            Style="{StaticResource TopCommandButtonStyle}"
+                            ToolTipService.ToolTip="Paste image as a layer (Ctrl+V)">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <SymbolIcon Symbol="Paste" />
+                                <TextBlock Text="Paste" />
+                            </StackPanel>
+                        </Button>
+                        <Button
+                            AutomationProperties.Name="Paste options"
+                            AutomationProperties.HelpText="Choose whether to paste an image as a new layer or a new image."
+                            IsEnabled="{x:Bind ViewModel.CanCreateImage, Mode=OneWay}"
+                            Style="{StaticResource TopCommandButtonStyle}"
+                            Padding="4,0"
+                            ToolTipService.ToolTip="Paste options">
+                            <Button.Flyout>
+                                <MenuFlyout Placement="Bottom">
+                                    <MenuFlyoutItem
+                                        Text="Paste as new layer"
+                                        KeyboardAcceleratorTextOverride="Ctrl+V"
+                                        IsEnabled="{x:Bind ViewModel.CanPasteImageAsLayer, Mode=OneWay}"
+                                        Click="PasteImageButton_Click" />
+                                    <MenuFlyoutItem
+                                        Text="Paste as new image"
+                                        KeyboardAcceleratorTextOverride="Ctrl+Shift+V"
+                                        Click="PasteImageAsNewDocument_Click" />
+                                </MenuFlyout>
+                            </Button.Flyout>
+                            <FontIcon Glyph="&#xE70D;" FontSize="10" />
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
 
                 <Button
@@ -1597,17 +1625,15 @@
                                 StepFrequency="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
                                 Value="{x:Bind ViewModel.AnnotationSizeSliderValue, Mode=OneWay}"
                                 ValueChanged="AnnotationStrokeSize_ValueChanged" />
-                            <NumberBox
+                            <TextBox
                                 Grid.Column="1"
-                                AutomationProperties.HelpText="Enter a custom annotation stroke thickness or text size. Type a larger stroke width here to go beyond the slider."
+                                AutomationProperties.HelpText="Enter a stroke width in pixels or a text size. Valid numbers apply immediately; stroke widths can exceed the slider range."
                                 AutomationProperties.Name="Annotation size value"
                                 Header="Value"
-                                Maximum="{x:Bind ViewModel.AnnotationSizeInputMaximum, Mode=OneWay}"
-                                Minimum="1"
-                                SmallChange="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
-                                SpinButtonPlacementMode="Hidden"
-                                Value="{x:Bind ViewModel.AnnotationStrokeThickness, Mode=OneWay}"
-                                ValueChanged="AnnotationSizeNumber_ValueChanged" />
+                                InputScope="Number"
+                                Text="{x:Bind ViewModel.AnnotationSizeText, Mode=OneWay}"
+                                TextChanged="AnnotationSizeText_TextChanged"
+                                LostFocus="AnnotationSizeText_LostFocus" />
                         </Grid>
 
                         <ComboBox

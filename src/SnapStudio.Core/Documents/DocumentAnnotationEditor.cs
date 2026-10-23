@@ -8,6 +8,37 @@ namespace SnapStudio.Core.Documents;
 /// </summary>
 public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
 {
+    public async ValueTask<AnnotationObject> PasteImageAsLayerAsync(
+        CaptureDocument document, AnnotationImage image, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(image);
+        cancellationToken.ThrowIfCancellationRequested();
+        DocumentLayers.ValidateForSave(document);
+        if (NewImageRequest.GetValidationError(image.Width, image.Height) is not null || image.PngBytes is not { Length: > 0 })
+            throw new InvalidDataException("The clipboard image has no valid image data.");
+        if (document.SourceImage.Width <= 0 || document.SourceImage.Height <= 0)
+            throw new InvalidDataException("Open or create an image before pasting a layer.");
+
+        string name = "Pasted image";
+        for (int number = 2; document.Layers.Any(layer => string.Equals(layer.Name, name, StringComparison.OrdinalIgnoreCase)); number++)
+            name = $"Pasted image {number}";
+        var layer = new AnnotationLayer { Name = name };
+        double scale = Math.Min(1, Math.Min((double)document.SourceImage.Width / image.Width, (double)document.SourceImage.Height / image.Height));
+        double width = image.Width * scale;
+        double height = image.Height * scale;
+        var annotation = new AnnotationObject
+        {
+            Kind = AnnotationKind.Image,
+            LayerId = layer.Id,
+            Text = name,
+            Image = image.DeepCopy(),
+            Bounds = new RectD((document.SourceImage.Width - width) / 2, (document.SourceImage.Height - height) / 2, width, height)
+        };
+        await editStack.ExecuteAsync(document, new PasteImageLayerCommand(layer, annotation), cancellationToken).ConfigureAwait(false);
+        return annotation;
+    }
+
     public ValueTask AddAsync(
         CaptureDocument document,
         AnnotationObject annotation,
