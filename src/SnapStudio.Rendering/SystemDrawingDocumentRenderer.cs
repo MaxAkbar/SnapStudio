@@ -102,7 +102,8 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
                     DrawAnnotation(
                         graphics,
                         outputBitmap,
-                        TransformAnnotationForRender(annotation, viewport, scale));
+                        TransformAnnotationForRender(annotation, viewport, scale),
+                        scale);
                 }
             }
 
@@ -222,7 +223,8 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     private static void DrawAnnotation(
         Graphics graphics,
         Bitmap bitmap,
-        AnnotationObject annotation)
+        AnnotationObject annotation,
+        double scale)
     {
         switch (annotation.Kind)
         {
@@ -236,10 +238,10 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
                 DrawEllipse(graphics, annotation);
                 break;
             case AnnotationKind.Line:
-                DrawLine(graphics, annotation, hasArrowHead: false);
+                DrawLine(graphics, annotation);
                 break;
             case AnnotationKind.Arrow:
-                DrawLine(graphics, annotation, hasArrowHead: true);
+                DrawArrow(graphics, annotation, scale);
                 break;
             case AnnotationKind.Text:
                 DrawText(graphics, annotation);
@@ -343,53 +345,32 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
 
     private static void DrawLine(
         Graphics graphics,
-        AnnotationObject annotation,
-        bool hasArrowHead)
+        AnnotationObject annotation)
     {
         PointF start = new((float)annotation.Bounds.X, (float)annotation.Bounds.Y);
         PointF end = new((float)annotation.Bounds.Right, (float)annotation.Bounds.Bottom);
         using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity);
 
         graphics.DrawLine(pen, start, end);
-
-        if (hasArrowHead)
-        {
-            DrawArrowHead(graphics, annotation, start, end);
-        }
     }
 
-    private static void DrawArrowHead(
+    private static void DrawArrow(
         Graphics graphics,
         AnnotationObject annotation,
-        PointF start,
-        PointF end)
+        double scale)
     {
-        double deltaX = end.X - start.X;
-        double deltaY = end.Y - start.Y;
-        double length = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-        if (length < 1)
+        PointF[] points = ArrowGeometry.CreateOutline(
+                new PointD(annotation.Bounds.X, annotation.Bounds.Y),
+                new PointD(annotation.Bounds.Right, annotation.Bounds.Bottom),
+                annotation.Style.StrokeThickness, scale)
+            .Select(point => new PointF((float)point.X, (float)point.Y)).ToArray();
+        if (points.Length == 0)
         {
             return;
         }
 
-        double unitX = deltaX / length;
-        double unitY = deltaY / length;
-        double perpendicularX = -unitY;
-        double perpendicularY = unitX;
-        double headLength = Math.Max(10, annotation.Style.StrokeThickness * 4);
-        double headWidth = Math.Max(8, annotation.Style.StrokeThickness * 3);
-        var basePoint = new PointF(
-            (float)(end.X - unitX * headLength),
-            (float)(end.Y - unitY * headLength));
-        PointF left = new(
-            (float)(basePoint.X + perpendicularX * headWidth / 2),
-            (float)(basePoint.Y + perpendicularY * headWidth / 2));
-        PointF right = new(
-            (float)(basePoint.X - perpendicularX * headWidth / 2),
-            (float)(basePoint.Y - perpendicularY * headWidth / 2));
-
         using Brush brush = CreateBrush(annotation.Style.Stroke, annotation.Style.Opacity);
-        graphics.FillPolygon(brush, [end, left, right]);
+        graphics.FillPolygon(brush, points);
     }
 
     private static void DrawText(Graphics graphics, AnnotationObject annotation)

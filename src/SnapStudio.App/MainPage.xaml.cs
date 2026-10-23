@@ -2239,20 +2239,22 @@ public sealed partial class MainPage : Page
         hitLine.Tapped += AnnotationOverlay_Tapped;
         root.Children.Add(hitLine);
 
-        root.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
-        {
-            X1 = item.StartX,
-            Y1 = item.StartY,
-            X2 = item.EndX,
-            Y2 = item.EndY,
-            Stroke = item.StrokeBrush,
-            StrokeThickness = item.StrokeThicknessValue,
-            IsHitTestVisible = false
-        });
-
         if (item.Kind == AnnotationKind.Arrow)
         {
-            root.Children.Add(CreateArrowHead(item));
+            root.Children.Add(CreateArrowElement(item));
+        }
+        else
+        {
+            root.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
+            {
+                X1 = item.StartX,
+                Y1 = item.StartY,
+                X2 = item.EndX,
+                Y2 = item.EndY,
+                Stroke = item.StrokeBrush,
+                StrokeThickness = item.StrokeThicknessValue,
+                IsHitTestVisible = false
+            });
         }
 
         if (item.IsSelected)
@@ -2272,42 +2274,19 @@ public sealed partial class MainPage : Page
         return root;
     }
 
-    private Microsoft.UI.Xaml.Shapes.Polygon CreateArrowHead(AnnotationOverlayItem item)
+    private Microsoft.UI.Xaml.Shapes.Polygon CreateArrowElement(AnnotationOverlayItem item)
     {
-        const double minimumHeadLength = 10;
-        double deltaX = item.EndX - item.StartX;
-        double deltaY = item.EndY - item.StartY;
-        double length = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-        if (length < 1)
+        var points = new PointCollection();
+        foreach (PointD point in ArrowGeometry.CreateOutline(
+            new PointD(item.StartX, item.StartY), new PointD(item.EndX, item.EndY),
+            item.StrokeThicknessValue, ViewModel.CanvasZoom))
         {
-            return new Microsoft.UI.Xaml.Shapes.Polygon();
+            points.Add(new Point(point.X, point.Y));
         }
-
-        double unitX = deltaX / length;
-        double unitY = deltaY / length;
-        double perpendicularX = -unitY;
-        double perpendicularY = unitX;
-        double headLength = Math.Max(minimumHeadLength, item.StrokeThicknessValue * 4);
-        double headWidth = Math.Max(8, item.StrokeThicknessValue * 3);
-        var tip = new Point(item.EndX, item.EndY);
-        var basePoint = new Point(
-            tip.X - unitX * headLength,
-            tip.Y - unitY * headLength);
-        var left = new Point(
-            basePoint.X + perpendicularX * headWidth / 2,
-            basePoint.Y + perpendicularY * headWidth / 2);
-        var right = new Point(
-            basePoint.X - perpendicularX * headWidth / 2,
-            basePoint.Y - perpendicularY * headWidth / 2);
 
         return new Microsoft.UI.Xaml.Shapes.Polygon
         {
-            Points = new PointCollection
-            {
-                tip,
-                left,
-                right
-            },
+            Points = points,
             Fill = item.StrokeBrush,
             IsHitTestVisible = false
         };

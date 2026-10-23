@@ -12,6 +12,39 @@ namespace SnapStudio.Core.Tests;
 public sealed class SystemDrawingDocumentRendererTests
 {
     [TestMethod]
+    [DataRow(0.5)]
+    [DataRow(1.0)]
+    [DataRow(2.0)]
+    public async Task RenderAsync_ArrowHasAPointedTipAndUniformOpacity(double scale)
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        string sourcePath = Path.Combine(workspace.Path, "source.png");
+        CreateSolidImage(sourcePath, 160, 96, Color.Transparent);
+        var document = new CaptureDocument
+        {
+            SourceImage = new ImageAsset(sourcePath, 160, 96, ImagePixelFormat.Bgra32),
+            Annotations = [new AnnotationObject
+            {
+                Kind = AnnotationKind.Arrow,
+                Bounds = new RectD(24, 48, 104, 0),
+                Style = new AnnotationStyle(new ColorRgba(255, 0, 0, 255), ColorRgba.Transparent, ColorRgba.Black, 6, 0.5)
+            }]
+        };
+        AssignDefaultLayer(document);
+        var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
+        RenderResult result = await renderer.RenderAsync(
+            new RenderRequest(document.Id, scale, new RectD(8, 8, 144, 80)), CancellationToken.None);
+        Assert.IsTrue(result.Succeeded, result.ErrorMessage);
+        using Bitmap rendered = LoadBitmap(result.Image!.Pixels);
+        Color Pixel(double x, double y) => rendered.GetPixel((int)Math.Round((x - 8) * scale), (int)Math.Round((y - 8) * scale));
+
+        Assert.AreEqual(0, Pixel(130, 48).A, "The shaft must not protrude past the arrow tip.");
+        Assert.AreEqual(0, Pixel(126, 51).A, "The tip must taper to a point instead of ending in a thick line cap.");
+        Assert.IsInRange(120, 135, (int)Pixel(60, 48).A);
+        Assert.IsInRange(120, 135, (int)Pixel(114, 48).A, "The head and shaft must be filled once, with no darker overlap.");
+    }
+
+    [TestMethod]
     public async Task RenderAsync_RejectsOrphanedAnnotation()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();

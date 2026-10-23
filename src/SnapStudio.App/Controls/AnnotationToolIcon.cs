@@ -3,6 +3,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+using SnapStudio.Core.Documents;
+using SnapStudio.Core.Primitives;
 using Windows.Foundation;
 
 namespace SnapStudio.App.Controls;
@@ -48,8 +50,12 @@ public sealed class AnnotationToolIcon : UserControl
                 Line(new Point(4, 20), new Point(20, 4));
                 break;
             case "Arrow":
-                Line(new Point(4, 20), new Point(20, 4));
-                Line(new Point(10, 4), new Point(20, 4), new Point(20, 14));
+                var arrowPoints = new PointCollection();
+                foreach (PointD point in ArrowGeometry.CreateOutline(new PointD(4, 20), new PointD(20, 4), 1.7))
+                    arrowPoints.Add(new Point(point.X, point.Y));
+                var arrow = new Polygon { Points = arrowPoints };
+                arrow.SetBinding(Shape.FillProperty, new Binding { Source = this, Path = new PropertyPath(nameof(Foreground)) });
+                _canvas.Children.Add(arrow);
                 break;
             case "Text":
                 Line(new Point(4, 5), new Point(20, 5));
