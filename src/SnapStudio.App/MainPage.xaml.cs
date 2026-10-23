@@ -44,6 +44,7 @@ public sealed partial class MainPage : Page
     private RectD _annotationDragOriginalSourceBounds;
     private PointD _annotationDragStartSourcePoint;
     private Point _rectangleDragStart;
+    private readonly List<PointD> _penStrokePoints = [];
     private bool _isUpdatingBindings;
     private bool _isReadyForControlEvents;
     private bool _newImageDialogIsOpen;
@@ -71,6 +72,7 @@ public sealed partial class MainPage : Page
     {
         None,
         DrawAnnotation,
+        DrawPen,
         MoveAnnotation,
         ResizeAnnotation
     }
@@ -1176,7 +1178,8 @@ public sealed partial class MainPage : Page
 
         if (sender is ComboBox { SelectedIndex: >= 0 } comboBox)
         {
-            ViewModel.UpdateAnnotationTool(comboBox.SelectedIndex);
+            if (comboBox.SelectedIndex == 0) ViewModel.UseSelectionTool();
+            else ViewModel.UpdateAnnotationTool(comboBox.SelectedIndex - 1);
             UpdateBindingsFromViewModel();
         }
     }
@@ -1359,10 +1362,19 @@ public sealed partial class MainPage : Page
         await RedoAndUpdateAsync(CancellationToken.None);
     }
 
+    private bool IsPenToolActive => !ViewModel.IsSelectionToolActive && ViewModel.ActiveAnnotationKind == AnnotationKind.Pen;
+
+    private void SelectionToolButton_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.UseSelectionTool();
+        UpdateBindingsFromViewModel();
+    }
+
     private void AnnotationOverlay_Tapped(
         object sender,
         Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
     {
+        if (IsPenToolActive) return;
         if (sender is Microsoft.UI.Xaml.FrameworkElement
             {
                 DataContext: AnnotationOverlayItem item
@@ -1385,6 +1397,7 @@ public sealed partial class MainPage : Page
         object sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (IsPenToolActive) return;
         if (sender is FrameworkElement { DataContext: AnnotationOverlayItem item })
         {
             BeginAnnotationDrag(e, item, AnnotationBoundsHandle.Move);
@@ -1414,7 +1427,7 @@ public sealed partial class MainPage : Page
     {
         if (_canvasDragMode != CanvasDragMode.None
             || !ViewModel.HasCurrentDocument
-            || IsAnnotationInteraction(e.OriginalSource))
+            || (!IsPenToolActive && IsAnnotationInteraction(e.OriginalSource)))
         {
             return;
         }
@@ -1428,6 +1441,32 @@ public sealed partial class MainPage : Page
         ViewModel.ClearAnnotationSelection();
         UpdateBindingsFromViewModel();
         RefreshAnnotationCanvas();
+
+        if (ViewModel.IsSelectionToolActive)
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if (IsPenToolActive)
+        {
+            _canvasDragMode = CanvasDragMode.DrawPen;
+            _penStrokePoints.Clear();
+            PenStrokePreview.Points.Clear();
+            AnnotationStyle style = ViewModel.DrawingStyle;
+            var brush = new SolidColorBrush(Color.FromArgb(style.Stroke.A, style.Stroke.R, style.Stroke.G, style.Stroke.B));
+            PenStrokePreview.Stroke = brush;
+            PenStrokePreview.StrokeThickness = style.StrokeThickness * ViewModel.CanvasZoom;
+            PenStrokePreview.Opacity = style.Opacity;
+            PenDotPreview.Fill = brush;
+            PenDotPreview.Opacity = style.Opacity;
+            PenDotPreview.Width = PenDotPreview.Height = PenStrokePreview.StrokeThickness;
+            PenStrokePreview.Visibility = Visibility.Visible;
+            AppendPenPoint(pointerPoint.Position);
+            CanvasSurface.CapturePointer(e.Pointer);
+            e.Handled = true;
+            return;
+        }
 
         _canvasDragMode = CanvasDragMode.DrawAnnotation;
         _rectangleDragStart = ClampToCanvas(pointerPoint.Position);
@@ -1448,7 +1487,14 @@ public sealed partial class MainPage : Page
         Microsoft.UI.Input.PointerPoint pointerPoint = e.GetCurrentPoint(CanvasSurface);
         Point currentPoint = ClampToCanvas(pointerPoint.Position);
 
-        if (_canvasDragMode == CanvasDragMode.DrawAnnotation)
+        if (_canvasDragMode == CanvasDragMode.DrawPen)
+        {
+            foreach (Microsoft.UI.Input.PointerPoint sample in e.GetIntermediatePoints(CanvasSurface).OrderBy(point => point.Timestamp))
+            {
+                AppendPenPoint(sample.Position);
+            }
+        }
+        else if (_canvasDragMode == CanvasDragMode.DrawAnnotation)
         {
             Point previewPoint = CreateConstrainedShapePointIfNeeded(currentPoint, e);
             ShowDragRectanglePreview(CreateDisplayBounds(_rectangleDragStart, previewPoint));
@@ -1472,6 +1518,16 @@ public sealed partial class MainPage : Page
 
         Microsoft.UI.Input.PointerPoint pointerPoint = e.GetCurrentPoint(CanvasSurface);
         Point currentPoint = ClampToCanvas(pointerPoint.Position);
+
+        if (_canvasDragMode == CanvasDragMode.DrawPen)
+        {
+            AppendPenPoint(currentPoint);
+            PointD[] points = _penStrokePoints.ToArray();
+            EndCanvasDrag(e);
+            await ViewModel.AddPenStrokeAsync(points, CancellationToken.None);
+            UpdateBindingsFromViewModel();
+            return;
+        }
 
         if (_canvasDragMode is CanvasDragMode.MoveAnnotation or CanvasDragMode.ResizeAnnotation)
         {
@@ -1519,6 +1575,32 @@ public sealed partial class MainPage : Page
         {
             EndCanvasDrag(e);
         }
+    }
+
+    private void CanvasSurface_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        if (_canvasDragMode != CanvasDragMode.None)
+        {
+            EndCanvasDrag(e);
+        }
+    }
+
+    private void AppendPenPoint(Point point)
+    {
+        Point display = ClampToCanvas(point);
+        PointD? source = ViewModel.CreateSourcePointFromCanvasPoint(new PointD(display.X, display.Y));
+        if (source is not PointD sample) return;
+        if (_penStrokePoints.Count > 0)
+        {
+            PointD last = _penStrokePoints[^1];
+            if (Math.Abs(last.X - sample.X) * ViewModel.CanvasZoom < 0.5
+                && Math.Abs(last.Y - sample.Y) * ViewModel.CanvasZoom < 0.5) return;
+        }
+        _penStrokePoints.Add(sample);
+        PenStrokePreview.Points.Add(display);
+        PenDotPreview.Visibility = _penStrokePoints.Count == 1 ? Visibility.Visible : Visibility.Collapsed;
+        Canvas.SetLeft(PenDotPreview, display.X - PenDotPreview.Width / 2);
+        Canvas.SetTop(PenDotPreview, display.Y - PenDotPreview.Height / 2);
     }
 
     private async Task CaptureAndFitAsync(CaptureMode captureMode, CancellationToken cancellationToken)
@@ -1682,6 +1764,7 @@ public sealed partial class MainPage : Page
             AnnotationKind.Text => CreateTextAnnotationElement(item),
             AnnotationKind.Blur => CreateBlurAnnotationElement(item),
             AnnotationKind.Ellipse => CreateEllipseAnnotationElement(item),
+            AnnotationKind.Pen => CreatePenAnnotationElement(item),
             _ => CreateRectangleAnnotationElement(item)
         };
 
@@ -1711,6 +1794,7 @@ public sealed partial class MainPage : Page
             AnnotationKind.Text => $"text, {TrimAutomationText(item.Text)}",
             AnnotationKind.Highlight => "highlight",
             AnnotationKind.Blur => "blur",
+            AnnotationKind.Pen => "pen stroke",
             _ => "annotation"
         };
         return $"{selectedPrefix}{kind} annotation, {Math.Round(item.Width)} by {Math.Round(item.Height)}";
@@ -1750,6 +1834,12 @@ public sealed partial class MainPage : Page
         body.Tapped += AnnotationOverlay_Tapped;
         root.Children.Add(body);
 
+        AddBoxResizeHandles(root, item);
+        return root;
+    }
+
+    private void AddBoxResizeHandles(Grid root, AnnotationOverlayItem item)
+    {
         if (item.IsSelected)
         {
             root.Children.Add(CreateResizeHandle(
@@ -1802,7 +1892,67 @@ public sealed partial class MainPage : Page
                 item));
         }
 
+    }
+
+    private FrameworkElement CreatePenAnnotationElement(AnnotationOverlayItem item)
+    {
+        var root = new Grid { Width = item.Width, Height = item.Height, DataContext = item };
+        var drawing = new Canvas
+        {
+            Clip = new RectangleGeometry { Rect = new Rect(-item.Left, -item.Top, ViewModel.CanvasDisplayWidth, ViewModel.CanvasDisplayHeight) }
+        };
+        var points = new PointCollection();
+        foreach (PointD point in item.StrokePoints) points.Add(new Point(point.X, point.Y));
+        var hit = new Microsoft.UI.Xaml.Shapes.Polyline
+        {
+            Points = points,
+            Stroke = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
+            StrokeThickness = Math.Max(12, item.StrokeThicknessValue),
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            DataContext = item
+        };
+        hit.PointerPressed += AnnotationBody_PointerPressed;
+        hit.Tapped += AnnotationOverlay_Tapped;
+        drawing.Children.Add(hit);
+        if (points.Count == 1)
+        {
+            var dot = new Microsoft.UI.Xaml.Shapes.Ellipse
+            {
+                Width = item.StrokeThicknessValue,
+                Height = item.StrokeThicknessValue,
+                Fill = item.StrokeBrush,
+                DataContext = item
+            };
+            Canvas.SetLeft(dot, points[0].X - dot.Width / 2);
+            Canvas.SetTop(dot, points[0].Y - dot.Height / 2);
+            dot.PointerPressed += AnnotationBody_PointerPressed;
+            dot.Tapped += AnnotationOverlay_Tapped;
+            drawing.Children.Add(dot);
+        }
+        else
+        {
+            drawing.Children.Add(new Microsoft.UI.Xaml.Shapes.Polyline
+            {
+                Points = CreatePenPointCollection(item.StrokePoints),
+                Stroke = item.StrokeBrush,
+                StrokeThickness = item.StrokeThicknessValue,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                StrokeLineJoin = PenLineJoin.Round,
+                IsHitTestVisible = false
+            });
+        }
+        root.Children.Add(drawing);
+        AddBoxResizeHandles(root, item);
         return root;
+    }
+
+    private static PointCollection CreatePenPointCollection(IReadOnlyList<PointD> points)
+    {
+        var collection = new PointCollection();
+        foreach (PointD point in points) collection.Add(new Point(point.X, point.Y));
+        return collection;
     }
 
     private FrameworkElement CreateEllipseAnnotationElement(AnnotationOverlayItem item)
@@ -2344,6 +2494,10 @@ public sealed partial class MainPage : Page
         _annotationDragStartSourcePoint = default;
         CanvasSurface.ReleasePointerCapture(e.Pointer);
         DragRectanglePreview.Visibility = Visibility.Collapsed;
+        PenStrokePreview.Visibility = Visibility.Collapsed;
+        PenDotPreview.Visibility = Visibility.Collapsed;
+        PenStrokePreview.Points.Clear();
+        _penStrokePoints.Clear();
         e.Handled = true;
     }
 
@@ -2391,6 +2545,8 @@ public sealed partial class MainPage : Page
 
     private void UpdateAnnotationToolbarSelection()
     {
+        SelectionToolButton.Background = ViewModel.IsSelectionToolActive
+            ? (Brush)Resources["SnapAccentMutedBrush"] : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         UpdateAnnotationToolButton(RectangleToolButton, 0);
         UpdateAnnotationToolButton(EllipseToolButton, 1);
         UpdateAnnotationToolButton(LineToolButton, 2);
@@ -2398,11 +2554,12 @@ public sealed partial class MainPage : Page
         UpdateAnnotationToolButton(TextToolButton, 4);
         UpdateAnnotationToolButton(HighlightToolButton, 5);
         UpdateAnnotationToolButton(BlurToolButton, 6);
+        UpdateAnnotationToolButton(PenToolButton, 7);
     }
 
     private void UpdateAnnotationToolButton(Button button, int toolIndex)
     {
-        bool isActive = ViewModel.AnnotationToolIndex == toolIndex;
+        bool isActive = !ViewModel.IsSelectionToolActive && ViewModel.AnnotationToolIndex == toolIndex;
         button.Background = isActive
             ? (Brush)Resources["SnapAccentMutedBrush"]
             : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));

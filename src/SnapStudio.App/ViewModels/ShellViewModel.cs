@@ -1016,6 +1016,26 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
     }
 
+    public bool IsSelectionToolActive { get; private set; } = true;
+
+    public int AnnotationToolSelectionIndex => IsSelectionToolActive ? 0 : AnnotationToolIndex + 1;
+
+    public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive && ActiveAnnotationKind != AnnotationKind.Pen;
+
+    public AnnotationStyle DrawingStyle => CreateAnnotationStyle(ActiveAnnotationKind);
+
+    public double CanvasZoom => _canvasViewport.Zoom;
+
+    public void UseSelectionTool()
+    {
+        IsSelectionToolActive = true;
+        OnPropertyChanged(nameof(IsSelectionToolActive));
+        OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
+        OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
+        OnPropertyChanged(nameof(CanAddActiveAnnotation));
+        StatusText = "Selection: choose an object to move or resize it.";
+    }
+
     public int AnnotationToolIndex
     {
         get => _annotationToolIndex;
@@ -1026,10 +1046,12 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                 return;
             }
 
-            _annotationToolIndex = Math.Clamp(value, 0, 6);
+            _annotationToolIndex = Math.Clamp(value, 0, 7);
             OnPropertyChanged(nameof(AnnotationToolIndex));
+            OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
             OnPropertyChanged(nameof(ActiveAnnotationKind));
             OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
+            OnPropertyChanged(nameof(CanAddActiveAnnotation));
             NotifyAnnotationStyleControlsChanged();
         }
     }
@@ -1042,10 +1064,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         4 => AnnotationKind.Text,
         5 => AnnotationKind.Highlight,
         6 => AnnotationKind.Blur,
+        7 => AnnotationKind.Pen,
         _ => AnnotationKind.Rectangle
     };
 
-    public string ActiveAnnotationToolLabel => ActiveAnnotationKind switch
+    public string ActiveAnnotationToolLabel => IsSelectionToolActive ? "Selection" : ActiveAnnotationKind switch
     {
         AnnotationKind.Ellipse => "Ellipse",
         AnnotationKind.Line => "Line",
@@ -1053,6 +1076,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         AnnotationKind.Text => "Text",
         AnnotationKind.Highlight => "Highlighter",
         AnnotationKind.Blur => "Blur",
+        AnnotationKind.Pen => "Pen",
         _ => "Rectangle"
     };
 
@@ -1408,14 +1432,30 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public void UpdateAnnotationTool(int toolIndex)
     {
+        IsSelectionToolActive = false;
+        OnPropertyChanged(nameof(IsSelectionToolActive));
+        OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
+        OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
+        OnPropertyChanged(nameof(CanAddActiveAnnotation));
+        _annotationSelection.Clear();
         MarkAnnotationPresetCustom();
         AnnotationToolIndex = toolIndex;
         ApplyAnnotationToolDefaultsWhenUnselected();
+        RefreshAnnotationOverlays();
+        NotifyEditorStateChanged();
         StatusText = $"Tool: {ActiveAnnotationKind}.";
     }
 
     public void UpdateAnnotationPreset(int presetIndex)
     {
+        if (presetIndex > 0)
+        {
+            IsSelectionToolActive = false;
+            OnPropertyChanged(nameof(IsSelectionToolActive));
+            OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
+            OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
+            OnPropertyChanged(nameof(CanAddActiveAnnotation));
+        }
         if (presetIndex < 0 || presetIndex > 6)
         {
             return;
@@ -2989,6 +3029,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public async Task AddActiveAnnotationAsync(CancellationToken cancellationToken)
     {
+        if (IsSelectionToolActive || ActiveAnnotationKind == AnnotationKind.Pen)
+        {
+            StatusText = "Choose a shape tool, or draw on the canvas with Pen.";
+            return;
+        }
         await AddAnnotationCoreAsync(ActiveAnnotationKind, null, cancellationToken)
             .ConfigureAwait(true);
     }
@@ -2997,8 +3042,31 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         RectD sourceBounds,
         CancellationToken cancellationToken)
     {
+        if (IsSelectionToolActive || ActiveAnnotationKind == AnnotationKind.Pen)
+        {
+            return;
+        }
         await AddAnnotationCoreAsync(ActiveAnnotationKind, sourceBounds, cancellationToken)
             .ConfigureAwait(true);
+    }
+
+    public async Task AddPenStrokeAsync(IReadOnlyList<PointD> points, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _annotationEditor is null || points.Count == 0)
+        {
+            return;
+        }
+
+        AnnotationObject stroke = FreehandStroke.Create(points, CreateAnnotationStyle(AnnotationKind.Pen));
+        if (!_layerWorkspace.TryAssignActiveLayer(_currentDocument, stroke))
+        {
+            StatusText = "Show the selected layer before drawing.";
+            return;
+        }
+
+        await _annotationEditor.AddAsync(_currentDocument, stroke, cancellationToken).ConfigureAwait(true);
+        _annotationSelection.Clear();
+        await SaveCurrentDocumentAsync("Pen stroke added.", cancellationToken).ConfigureAwait(true);
     }
 
     public RectD? CreateSourceBoundsFromCanvasDrag(RectD displayBounds)
@@ -5025,6 +5093,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     private void NotifyEditorStateChanged()
     {
+        OnPropertyChanged(nameof(CanAddActiveAnnotation));
         OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanRedo));
         OnPropertyChanged(nameof(CanDeleteActiveLayer));
@@ -5067,6 +5136,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             AnnotationKind.Text => 4,
             AnnotationKind.Highlight => 5,
             AnnotationKind.Blur => 6,
+            AnnotationKind.Pen => 7,
             _ => 0
         };
         NotifyAnnotationStyleControlsChanged();
@@ -5320,6 +5390,18 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         AnnotationObject annotation,
         RectD cropBounds)
     {
+        if (annotation.Kind == AnnotationKind.Pen)
+        {
+            // Keep the stroke geometry intact; the cropped canvas clips the visible portion.
+            RectD bounds = annotation.Bounds;
+            double radius = annotation.Style.StrokeThickness / 2;
+            if (bounds.Right + radius < cropBounds.X || bounds.X - radius > cropBounds.Right
+                || bounds.Bottom + radius < cropBounds.Y || bounds.Y - radius > cropBounds.Bottom)
+            {
+                return null;
+            }
+            return CloneAnnotation(annotation, bounds with { X = bounds.X - cropBounds.X, Y = bounds.Y - cropBounds.Y });
+        }
         if (annotation.Kind is AnnotationKind.Line or AnnotationKind.Arrow)
         {
             PointD start = ClampPointToBounds(
@@ -5393,6 +5475,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             IsVisible = annotation.IsVisible,
             Bounds = bounds,
             Text = annotation.Text,
+            StrokePoints = [.. annotation.StrokePoints],
             Style = annotation.Style
         };
     }

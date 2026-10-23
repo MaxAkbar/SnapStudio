@@ -40,6 +40,7 @@ public sealed class DocumentLayersTests
     {
         var document = new CaptureDocument
         {
+            SchemaVersion = 2,
             Layers = [],
             Annotations = [new AnnotationObject { Kind = AnnotationKind.Text }]
         };

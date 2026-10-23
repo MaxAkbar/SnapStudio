@@ -13,7 +13,7 @@ SnapStudio is in active development. The current codebase includes the main capt
 - Region, picker/window, display, full-screen, and scrolling capture entry points.
 - Adjustable region selection before capture.
 - Local workspace with recent captures, thumbnails, search, filters, rename, duplicate, folder open, remove from history, and move to recycle bin.
-- Editable annotations: rectangle, ellipse, line, arrow, text, highlight, and blur.
+- Editable annotations: rectangle, ellipse, line, arrow, text, freehand pen, highlight, and blur. Use the dashed-square Selection tool to select, move, and resize objects.
 - Right-click a layer to rename it, move it up or down in the stack, or choose a color label. Layer changes support undo and redo.
 - Paste a clipboard image as a new editable document with **Paste** or **Ctrl+V**.
 - Create a transparent canvas with **New** or **Ctrl+N**, then choose its width and height. The checkerboard shows transparency in the editor; PNG export preserves it.

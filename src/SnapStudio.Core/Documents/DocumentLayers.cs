@@ -36,12 +36,12 @@ public static class DocumentLayers
 
             document.SchemaVersion = CaptureDocument.CurrentSchemaVersion;
         }
-        else if (document.Layers.Count == 0 && document.Annotations.Count == 0)
+        else if (document.SchemaVersion == 2 && document.Layers.Count == 0 && document.Annotations.Count == 0)
         {
             // Earlier version 2 writes could persist an empty layer collection.
             EnsureDefaultLayer(document);
         }
-        else if (document.Layers.Count <= 1
+        else if (document.SchemaVersion == 2 && document.Layers.Count <= 1
             && document.Annotations.Count > 0
             && document.Annotations.All(annotation => annotation.LayerId is null))
         {
@@ -54,6 +54,11 @@ public static class DocumentLayers
             {
                 annotation.LayerId = layerId;
             }
+        }
+
+        if (document.SchemaVersion == 2)
+        {
+            document.SchemaVersion = CaptureDocument.CurrentSchemaVersion;
         }
 
         ValidateForSave(document);
@@ -94,6 +99,11 @@ public static class DocumentLayers
             if (annotation.LayerId is not Guid layerId || !layerIds.Contains(layerId))
             {
                 throw new InvalidDataException($"Annotation {annotation.Id} does not belong to an existing layer.");
+            }
+
+            if (annotation.Kind == AnnotationKind.Pen)
+            {
+                FreehandStroke.Validate(annotation);
             }
         }
     }

@@ -14,9 +14,7 @@ public partial class App : Application
     {
         InitializeComponent();
 
-        string appDataRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SnapStudio");
+        string appDataRoot = AppServices.ResolveAppDataRoot();
         _crashRecoveryJournal = AppServices.CreateCrashRecoveryJournal(appDataRoot);
 
         UnhandledException += App_UnhandledException;

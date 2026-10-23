@@ -62,9 +62,7 @@ public sealed record AppServices(
         ICrashRecoveryJournal? crashRecoveryJournal = null,
         string? recoverySessionId = null)
     {
-        string appDataRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SnapStudio");
+        string appDataRoot = ResolveAppDataRoot();
 
         var defaultSettings = ApplicationSettings.CreateDefault(Path.Combine(appDataRoot, "Documents"));
         var settingsStore = new JsonSettingsStore(Path.Combine(appDataRoot, "settings.json"), defaultSettings);
@@ -189,6 +187,15 @@ public sealed record AppServices(
             scrollingStitcher,
             screenRecordingService,
             new NamedPipeEditorMessageServer(NamedPipeEditorMessageDefaults.PipeName));
+    }
+
+    internal static string ResolveAppDataRoot()
+    {
+        // An explicit override lets development previews use an isolated local profile.
+        string? configured = Environment.GetEnvironmentVariable("SNAPSTUDIO_DATA_ROOT");
+        return string.IsNullOrWhiteSpace(configured)
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SnapStudio")
+            : Path.GetFullPath(configured);
     }
 
     public static ICrashRecoveryJournal CreateCrashRecoveryJournal(string appDataRoot)

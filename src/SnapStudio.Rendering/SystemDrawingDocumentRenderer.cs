@@ -210,6 +210,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
                 annotation.Bounds.Width * scale,
                 annotation.Bounds.Height * scale),
             Text = annotation.Text,
+            StrokePoints = [.. annotation.StrokePoints],
             Style = annotation.Style with
             {
                 StrokeThickness = Math.Max(1, annotation.Style.StrokeThickness * scale),
@@ -225,6 +226,9 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     {
         switch (annotation.Kind)
         {
+            case AnnotationKind.Pen:
+                DrawPenStroke(graphics, annotation);
+                break;
             case AnnotationKind.Rectangle:
                 DrawRectangle(graphics, annotation);
                 break;
@@ -246,6 +250,25 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             case AnnotationKind.Blur:
                 BlurRegionInPlace(bitmap, annotation.Bounds, ResolveBlurRadius(annotation.Style.Opacity));
                 break;
+        }
+    }
+
+    private static void DrawPenStroke(Graphics graphics, AnnotationObject annotation)
+    {
+        PointF[] points = FreehandStroke.GetPoints(annotation).Select(point => new PointF((float)point.X, (float)point.Y)).ToArray();
+        using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity);
+        pen.StartCap = LineCap.Round;
+        pen.EndCap = LineCap.Round;
+        pen.LineJoin = LineJoin.Round;
+        if (points.Length == 1 || points.All(point => point == points[0]))
+        {
+            using Brush brush = CreateBrush(annotation.Style.Stroke, annotation.Style.Opacity);
+            float radius = pen.Width / 2;
+            graphics.FillEllipse(brush, points[0].X - radius, points[0].Y - radius, pen.Width, pen.Width);
+        }
+        else
+        {
+            graphics.DrawLines(pen, points);
         }
     }
 

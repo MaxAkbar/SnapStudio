@@ -73,6 +73,7 @@ public static class CaptureDocumentWorkspaceEditor
                 IsVisible = annotation.IsVisible,
                 Bounds = annotation.Bounds,
                 Text = annotation.Text,
+                StrokePoints = [.. annotation.StrokePoints],
                 Style = annotation.Style
             })
             .ToList();

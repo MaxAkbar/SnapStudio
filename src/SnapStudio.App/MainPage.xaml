@@ -1032,11 +1032,13 @@
                                     Orientation="Horizontal"
                                     Spacing="8">
                                     <Button
+                                        x:Name="SelectionToolButton"
                                         AutomationProperties.HelpText="Use pointer selection on the canvas."
                                         AutomationProperties.Name="Select annotations"
+                                        Click="SelectionToolButton_Click"
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         ToolTipService.ToolTip="Select">
-                                        <FontIcon Glyph="&#xE8B7;" />
+                                        <controls:AnnotationToolIcon Kind="Select" />
                                     </Button>
                                     <Button
                                         x:Name="RectangleToolButton"
@@ -1046,7 +1048,7 @@
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         Tag="0"
                                         ToolTipService.ToolTip="Rectangle">
-                                        <TextBlock FontSize="24" Text="&#x25A1;" />
+                                        <controls:AnnotationToolIcon Kind="Rectangle" />
                                     </Button>
                                     <Button
                                         x:Name="EllipseToolButton"
@@ -1056,7 +1058,7 @@
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         Tag="1"
                                         ToolTipService.ToolTip="Ellipse">
-                                        <FontIcon Glyph="&#xEA3A;" />
+                                        <controls:AnnotationToolIcon Kind="Ellipse" />
                                     </Button>
                                     <Button
                                         x:Name="LineToolButton"
@@ -1066,7 +1068,7 @@
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         Tag="2"
                                         ToolTipService.ToolTip="Line">
-                                        <FontIcon Glyph="&#xE738;" />
+                                        <controls:AnnotationToolIcon Kind="Line" />
                                     </Button>
                                     <Button
                                         x:Name="ArrowToolButton"
@@ -1076,7 +1078,7 @@
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         Tag="3"
                                         ToolTipService.ToolTip="Arrow">
-                                        <FontIcon Glyph="&#xE8AD;" />
+                                        <controls:AnnotationToolIcon Kind="Arrow" />
                                     </Button>
                                     <Button
                                         x:Name="TextToolButton"
@@ -1086,7 +1088,17 @@
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         Tag="4"
                                         ToolTipService.ToolTip="Text">
-                                        <TextBlock FontSize="22" FontWeight="SemiBold" Text="A" />
+                                        <controls:AnnotationToolIcon Kind="Text" />
+                                    </Button>
+                                    <Button
+                                        x:Name="PenToolButton"
+                                        AutomationProperties.HelpText="Draw freehand on the canvas using the selected color and width."
+                                        AutomationProperties.Name="Pen tool"
+                                        Click="AnnotationToolButton_Click"
+                                        Style="{StaticResource EditorToolButtonStyle}"
+                                        Tag="7"
+                                        ToolTipService.ToolTip="Pen — draw freehand">
+                                        <controls:AnnotationToolIcon Kind="Pen" />
                                     </Button>
                                     <Button
                                         x:Name="HighlightToolButton"
@@ -1096,7 +1108,7 @@
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         Tag="5"
                                         ToolTipService.ToolTip="Highlight">
-                                        <SymbolIcon Symbol="Edit" />
+                                        <controls:AnnotationToolIcon Kind="Highlight" />
                                     </Button>
                                     <Button
                                         x:Name="BlurToolButton"
@@ -1106,7 +1118,7 @@
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         Tag="6"
                                         ToolTipService.ToolTip="Blur">
-                                        <FontIcon Glyph="&#xE9D2;" />
+                                        <controls:AnnotationToolIcon Kind="Blur" />
                                     </Button>
                                     <Button
                                         AccessKey="C"
@@ -1130,7 +1142,7 @@
                                         AutomationProperties.HelpText="Add the selected annotation tool to the current capture."
                                         AutomationProperties.Name="Add selected annotation tool"
                                         Click="AddAnnotationButton_Click"
-                                        IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
+                                        IsEnabled="{x:Bind ViewModel.CanAddActiveAnnotation, Mode=OneWay}"
                                         Style="{StaticResource EditorToolButtonStyle}"
                                         ToolTipService.ToolTip="Add selected tool">
                                         <SymbolIcon Symbol="Add" />
@@ -1243,6 +1255,7 @@
                                     VerticalAlignment="Center"
                                     Background="Transparent"
                                     PointerCanceled="CanvasSurface_PointerCanceled"
+                                    PointerCaptureLost="CanvasSurface_PointerCaptureLost"
                                     PointerMoved="CanvasSurface_PointerMoved"
                                     PointerPressed="CanvasSurface_PointerPressed"
                                     PointerReleased="CanvasSurface_PointerReleased">
@@ -1268,6 +1281,15 @@
                                             BorderBrush="#FF0078D4"
                                             BorderThickness="2"
                                             Visibility="Collapsed" />
+                                        <Polyline
+                                            x:Name="PenStrokePreview"
+                                            StrokeStartLineCap="Round"
+                                            StrokeEndLineCap="Round"
+                                            StrokeLineJoin="Round"
+                                            Visibility="Collapsed">
+                                            <Polyline.Points><PointCollection /></Polyline.Points>
+                                        </Polyline>
+                                        <Ellipse x:Name="PenDotPreview" Visibility="Collapsed" />
                                     </Canvas>
                                 </Grid>
                             </ScrollViewer>
@@ -1465,8 +1487,9 @@
                                 AutomationProperties.HelpText="Choose the annotation tool used for new annotations."
                                 AutomationProperties.Name="Annotation tool"
                                 Header="Tool"
-                                SelectedIndex="{x:Bind ViewModel.AnnotationToolIndex, Mode=OneWay}"
+                                SelectedIndex="{x:Bind ViewModel.AnnotationToolSelectionIndex, Mode=OneWay}"
                                 SelectionChanged="AnnotationTool_SelectionChanged">
+                                <ComboBoxItem Content="Selection" />
                                 <ComboBoxItem Content="Rectangle" />
                                 <ComboBoxItem Content="Ellipse" />
                                 <ComboBoxItem Content="Line" />
@@ -1474,6 +1497,7 @@
                                 <ComboBoxItem Content="Text" />
                                 <ComboBoxItem Content="Highlight" />
                                 <ComboBoxItem Content="Blur" />
+                                <ComboBoxItem Content="Pen" />
                             </ComboBox>
                         </StackPanel>
 

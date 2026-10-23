@@ -195,6 +195,8 @@ try {
         "Open image",
         "New image",
         "Paste image",
+        "Select annotations",
+        "Pen tool",
         "Copy current capture",
         "Export",
         "Search capture history",

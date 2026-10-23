@@ -8,6 +8,7 @@ namespace SnapStudio.App.ViewModels.Items;
 
 public sealed class AnnotationOverlayItem
 {
+    public IReadOnlyList<PointD> StrokePoints { get; private init; } = [];
     private AnnotationOverlayItem(
         AnnotationKind kind,
         Guid id,
@@ -109,6 +110,7 @@ public sealed class AnnotationOverlayItem
         AnnotationKind.Text => "T",
         AnnotationKind.Highlight => "▤",
         AnnotationKind.Blur => "◌",
+        AnnotationKind.Pen => "✎",
         _ => "•"
     };
 
@@ -167,7 +169,10 @@ public sealed class AnnotationOverlayItem
             CalculateFontSize(annotation.Style.StrokeThickness, annotation.Kind, zoom),
             opacity,
             annotation.IsVisible,
-            isSelected);
+            isSelected)
+        {
+            StrokePoints = annotation.StrokePoints.Select(point => new PointD(point.X * bounds.Width * zoom, point.Y * bounds.Height * zoom)).ToArray()
+        };
     }
 
     private static double CalculateRelativeStartX(

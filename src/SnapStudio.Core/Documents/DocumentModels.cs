@@ -11,7 +11,8 @@ public enum AnnotationKind
     Ellipse,
     Text,
     Highlight,
-    Blur
+    Blur,
+    Pen
 }
 
 public enum DestructiveOperationKind
@@ -24,7 +25,7 @@ public enum DestructiveOperationKind
 
 public sealed class CaptureDocument
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     public DocumentId Id { get; set; } = DocumentId.New();
 
@@ -64,6 +65,9 @@ public sealed class AnnotationObject
     public RectD Bounds { get; set; }
 
     public string? Text { get; set; }
+
+    // Pen samples are normalized to Bounds so moving or resizing keeps the stroke shape.
+    public List<PointD> StrokePoints { get; set; } = [];
 
     public AnnotationStyle Style { get; set; } = AnnotationStyle.Default;
 }
