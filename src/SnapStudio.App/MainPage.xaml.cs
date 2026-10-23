@@ -852,6 +852,31 @@ public sealed partial class MainPage : Page
         UpdateBindingsFromViewModel();
     }
 
+    private void CanvasContent_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        if (!e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control) || !ViewModel.HasCurrentDocument) return;
+        var pointer = e.GetCurrentPoint(CanvasSurface);
+        if (pointer.Properties.IsHorizontalMouseWheel || pointer.Properties.MouseWheelDelta == 0) return;
+        // Handle this on the content before the event reaches ScrollViewer's scrolling behavior.
+        e.Handled = true;
+        if (_canvasDragMode != CanvasDragMode.None) return;
+
+        double previousZoom = ViewModel.CanvasZoom;
+        Point viewportPoint = e.GetCurrentPoint(CanvasScrollViewer).Position;
+        Point sourcePoint = new(pointer.Position.X / previousZoom, pointer.Position.Y / previousZoom);
+        ViewModel.ZoomWithWheel(pointer.Properties.MouseWheelDelta);
+        if (ViewModel.CanvasZoom == previousZoom) return;
+
+        UpdateBindingsFromViewModel();
+        CanvasScrollViewer.UpdateLayout();
+        Point movedPoint = CanvasSurface.TransformToVisual(CanvasScrollViewer).TransformPoint(
+            new Point(sourcePoint.X * ViewModel.CanvasZoom, sourcePoint.Y * ViewModel.CanvasZoom));
+        CanvasScrollViewer.ChangeView(
+            Math.Clamp(CanvasScrollViewer.HorizontalOffset + movedPoint.X - viewportPoint.X, 0, CanvasScrollViewer.ScrollableWidth),
+            Math.Clamp(CanvasScrollViewer.VerticalOffset + movedPoint.Y - viewportPoint.Y, 0, CanvasScrollViewer.ScrollableHeight),
+            null, disableAnimation: true);
+    }
+
     private void HistorySplitter_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         if (!_historyPaneIsExpanded)

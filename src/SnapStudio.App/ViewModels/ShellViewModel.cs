@@ -3087,27 +3087,19 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         FitCanvasToViewport(viewportWidth, viewportHeight);
     }
 
-    public void ZoomIn()
+    public void ZoomIn() => ZoomWithWheel(120);
+
+    public void ZoomOut() => ZoomWithWheel(-120);
+
+    public void ZoomWithWheel(int wheelDelta)
     {
-        if (!_canvasViewport.HasSource)
+        if (!_canvasViewport.HasSource || wheelDelta == 0)
         {
             return;
         }
 
         _canvasFitToViewport = false;
-        SetCanvasViewport(_canvasViewport.WithZoom(_canvasViewport.Zoom * 1.25));
-        StatusText = $"Zoom: {CanvasZoomLabel}.";
-    }
-
-    public void ZoomOut()
-    {
-        if (!_canvasViewport.HasSource)
-        {
-            return;
-        }
-
-        _canvasFitToViewport = false;
-        SetCanvasViewport(_canvasViewport.WithZoom(_canvasViewport.Zoom / 1.25));
+        SetCanvasViewport(_canvasViewport.ZoomWithWheel(wheelDelta));
         StatusText = $"Zoom: {CanvasZoomLabel}.";
     }
 

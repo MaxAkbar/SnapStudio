@@ -1283,7 +1283,7 @@
 
                     <Border
                         Grid.Row="3"
-                        AutomationProperties.HelpText="Shows the current capture and its annotations."
+                        AutomationProperties.HelpText="Shows the current capture and its annotations. Hold Ctrl and scroll the mouse wheel to zoom at the pointer."
                         AutomationProperties.Name="Editor canvas"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
@@ -1302,44 +1302,50 @@
                                 Visibility="{x:Bind ViewModel.CanvasImageVisibility, Mode=OneWay}"
                                 ZoomMode="Disabled">
                                 <Grid
-                                    x:Name="CanvasSurface"
-                                    Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}"
-                                    Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
+                                    MinWidth="{x:Bind CanvasScrollViewer.ViewportWidth, Mode=OneWay}"
+                                    MinHeight="{x:Bind CanvasScrollViewer.ViewportHeight, Mode=OneWay}"
                                     Background="Transparent"
-                                    PointerCanceled="CanvasSurface_PointerCanceled"
-                                    PointerCaptureLost="CanvasSurface_PointerCaptureLost"
-                                    PointerMoved="CanvasSurface_PointerMoved"
-                                    PointerPressed="CanvasSurface_PointerPressed"
-                                    PointerReleased="CanvasSurface_PointerReleased">
-                                    <controls:TransparencyBackground />
-                                    <Image
-                                        AutomationProperties.HelpText="{x:Bind ViewModel.CurrentDocumentDetail, Mode=OneWay}"
-                                        AutomationProperties.Name="{x:Bind ViewModel.CurrentDocumentTitle, Mode=OneWay}"
+                                    PointerWheelChanged="CanvasContent_PointerWheelChanged">
+                                    <Grid
+                                        x:Name="CanvasSurface"
                                         Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}"
                                         Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
-                                        Source="{x:Bind ViewModel.CanvasImageSource, Mode=OneWay}"
-                                        Stretch="Fill" />
-                                    <Canvas
-                                        x:Name="AnnotationCanvas"
-                                        Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}"
-                                        Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}" />
-                                    <Canvas
-                                        Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}"
-                                        Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
-                                        IsHitTestVisible="False">
-                                        <Canvas x:Name="AnnotationDragPreview" />
-                                        <Polyline
-                                            x:Name="PenStrokePreview"
-                                            StrokeStartLineCap="Round"
-                                            StrokeEndLineCap="Round"
-                                            StrokeLineJoin="Round"
-                                            Visibility="Collapsed">
-                                            <Polyline.Points><PointCollection /></Polyline.Points>
-                                        </Polyline>
-                                        <Ellipse x:Name="PenDotPreview" Visibility="Collapsed" />
-                                    </Canvas>
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="Transparent"
+                                        PointerCanceled="CanvasSurface_PointerCanceled"
+                                        PointerCaptureLost="CanvasSurface_PointerCaptureLost"
+                                        PointerMoved="CanvasSurface_PointerMoved"
+                                        PointerPressed="CanvasSurface_PointerPressed"
+                                        PointerReleased="CanvasSurface_PointerReleased">
+                                        <controls:TransparencyBackground />
+                                        <Image
+                                            AutomationProperties.HelpText="{x:Bind ViewModel.CurrentDocumentDetail, Mode=OneWay}"
+                                            AutomationProperties.Name="{x:Bind ViewModel.CurrentDocumentTitle, Mode=OneWay}"
+                                            Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}"
+                                            Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
+                                            Source="{x:Bind ViewModel.CanvasImageSource, Mode=OneWay}"
+                                            Stretch="Fill" />
+                                        <Canvas
+                                            x:Name="AnnotationCanvas"
+                                            Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}"
+                                            Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}" />
+                                        <Canvas
+                                            Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}"
+                                            Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
+                                            IsHitTestVisible="False">
+                                            <Canvas x:Name="AnnotationDragPreview" />
+                                            <Polyline
+                                                x:Name="PenStrokePreview"
+                                                StrokeStartLineCap="Round"
+                                                StrokeEndLineCap="Round"
+                                                StrokeLineJoin="Round"
+                                                Visibility="Collapsed">
+                                                <Polyline.Points><PointCollection /></Polyline.Points>
+                                            </Polyline>
+                                            <Ellipse x:Name="PenDotPreview" Visibility="Collapsed" />
+                                        </Canvas>
+                                    </Grid>
                                 </Grid>
                             </ScrollViewer>
                             <StackPanel

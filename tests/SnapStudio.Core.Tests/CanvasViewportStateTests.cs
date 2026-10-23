@@ -42,6 +42,38 @@ public sealed class CanvasViewportStateTests
     }
 
     [TestMethod]
+    [DataRow(120, 1.25)]
+    [DataRow(-120, 0.8)]
+    [DataRow(240, 1.5625)]
+    [DataRow(-240, 0.64)]
+    [DataRow(60, 1.118033988749895)]
+    [DataRow(int.MaxValue, CanvasViewportState.MaximumZoom)]
+    [DataRow(int.MinValue, CanvasViewportState.MinimumZoom)]
+    public void ZoomWithWheel_UsesDirectionNotchesAndFractionalDeltasWithinLimits(int delta, double zoom)
+    {
+        CanvasViewportState viewport = CanvasViewportState.Create(800, 600).ZoomWithWheel(delta);
+
+        Assert.AreEqual(zoom, viewport.Zoom, 0.0000001);
+        Assert.AreEqual(800 * zoom, viewport.DisplayWidth, 0.0001);
+        Assert.AreEqual(600 * zoom, viewport.DisplayHeight, 0.0001);
+    }
+
+    [TestMethod]
+    public void ZoomWithWheel_OppositeDeltasRestoreZoomAndLimitsStillAllowTheOppositeDirection()
+    {
+        CanvasViewportState original = CanvasViewportState.Create(800, 600).WithZoom(1.7);
+        Assert.AreEqual(original.Zoom, original.ZoomWithWheel(45).ZoomWithWheel(-45).Zoom, 0.0000001);
+        CanvasViewportState maximum = original.WithZoom(CanvasViewportState.MaximumZoom);
+        Assert.AreEqual(maximum, maximum.ZoomWithWheel(120));
+        Assert.IsTrue(maximum.ZoomWithWheel(-120).Zoom < maximum.Zoom);
+        CanvasViewportState minimum = original.WithZoom(CanvasViewportState.MinimumZoom);
+        Assert.AreEqual(minimum, minimum.ZoomWithWheel(-120));
+        Assert.IsTrue(minimum.ZoomWithWheel(120).Zoom > minimum.Zoom);
+        Assert.AreSame(original, original.ZoomWithWheel(0));
+        Assert.AreSame(CanvasViewportState.Empty, CanvasViewportState.Empty.ZoomWithWheel(120));
+    }
+
+    [TestMethod]
     public void ToSourceBounds_NormalizesReverseDragAndAppliesZoom()
     {
         CanvasViewportState viewport = CanvasViewportState

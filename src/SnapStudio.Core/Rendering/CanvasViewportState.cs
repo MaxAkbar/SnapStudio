@@ -52,6 +52,14 @@ public sealed record CanvasViewportState(
         return WithZoom(fitZoom);
     }
 
+    public CanvasViewportState ZoomWithWheel(int wheelDelta)
+    {
+        if (!HasSource || wheelDelta == 0) return this;
+        // Windows reports 120 per wheel notch; smaller deltas retain smooth-wheel precision.
+        double zoom = Zoom * Math.Pow(1.25, wheelDelta / 120d);
+        return WithZoom(Math.Clamp(zoom, MinimumZoom, MaximumZoom));
+    }
+
     public RectD ToSourceBounds(RectD displayBounds)
     {
         if (!HasSource)
