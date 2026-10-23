@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using SnapStudio.App.ViewModels.Items;
 using SnapStudio.Core.Documents;
+using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.App.ViewModels;
 
@@ -150,12 +151,29 @@ internal sealed class AnnotationLayerWorkspace
         IEditCommandStack editStack, CancellationToken cancellationToken)
     {
         AnnotationLayer? layer = document.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
-        if (layer is null || layer.ColorLabel == color)
+        if (layer is null || (layer.ColorLabel == color && layer.CustomColor is null))
         {
             return false;
         }
 
         await editStack.ExecuteAsync(document, new SetLayerColorCommand(layerId, color), cancellationToken)
+            .ConfigureAwait(false);
+        ActiveLayerId = layerId;
+        return true;
+    }
+
+    public async ValueTask<bool> SetLayerCustomColorAsync(
+        CaptureDocument document, Guid layerId, ColorRgba color,
+        IEditCommandStack editStack, CancellationToken cancellationToken)
+    {
+        AnnotationLayer? layer = document.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
+        ColorRgba opaqueColor = color with { A = 255 };
+        if (layer is null || (layer.ColorLabel == LayerColorLabel.None && layer.CustomColor == opaqueColor))
+        {
+            return false;
+        }
+
+        await editStack.ExecuteAsync(document, new SetLayerColorCommand(layerId, opaqueColor), cancellationToken)
             .ConfigureAwait(false);
         ActiveLayerId = layerId;
         return true;

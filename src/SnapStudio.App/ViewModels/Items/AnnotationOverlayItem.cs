@@ -8,6 +8,8 @@ namespace SnapStudio.App.ViewModels.Items;
 
 public sealed class AnnotationOverlayItem
 {
+    public AnnotationImage? Image { get; private init; }
+
     public IReadOnlyList<PointD> StrokePoints { get; private init; } = [];
 
     public IReadOnlyList<RectD> FillRectangles { get; private init; } = [];
@@ -103,7 +105,7 @@ public sealed class AnnotationOverlayItem
 
     public bool IsSelected { get; }
 
-    public string LayerLabel => Kind == AnnotationKind.Text
+    public string LayerLabel => Kind is AnnotationKind.Text or AnnotationKind.Image
         ? Text
         : Kind == AnnotationKind.Highlight ? "Highlighter" : Kind.ToString();
 
@@ -114,6 +116,7 @@ public sealed class AnnotationOverlayItem
         AnnotationKind.Rectangle => "□",
         AnnotationKind.Ellipse => "○",
         AnnotationKind.Text => "T",
+        AnnotationKind.Image => "\u2196",
         AnnotationKind.Highlight => "▤",
         AnnotationKind.Blur => "◌",
         AnnotationKind.Pen => "✎",
@@ -182,6 +185,7 @@ public sealed class AnnotationOverlayItem
             annotation.IsVisible,
             isSelected)
         {
+            Image = annotation.Image,
             CanMoveUp = canMoveUp,
             CanMoveDown = canMoveDown,
             FillRectangles = annotation.FillRectangles.Select(rectangle => new RectD(rectangle.X * bounds.Width * zoom,

@@ -13,7 +13,8 @@ public enum AnnotationKind
     Highlight,
     Blur,
     Pen,
-    Fill
+    Fill,
+    Image
 }
 
 public enum DestructiveOperationKind
@@ -26,7 +27,7 @@ public enum DestructiveOperationKind
 
 public sealed class CaptureDocument
 {
-    public const int CurrentSchemaVersion = 4;
+    public const int CurrentSchemaVersion = 5;
 
     public DocumentId Id { get; set; } = DocumentId.New();
 
@@ -73,7 +74,15 @@ public sealed class AnnotationObject
     // Filled regions are normalized to Bounds, preserving holes when moved or resized.
     public List<RectD> FillRectangles { get; set; } = [];
 
+    public AnnotationImage? Image { get; set; }
+
     public AnnotationStyle Style { get; set; } = AnnotationStyle.Default;
+}
+
+// Embed small image objects in the document so they survive saves and duplication.
+public sealed record AnnotationImage(int Width, int Height, byte[] PngBytes)
+{
+    public AnnotationImage DeepCopy() => this with { PngBytes = [.. PngBytes] };
 }
 
 public enum LayerColorLabel
@@ -95,6 +104,8 @@ public sealed class AnnotationLayer
     public string Name { get; set; } = "Layer 1";
 
     public LayerColorLabel ColorLabel { get; set; }
+
+    public ColorRgba? CustomColor { get; set; }
 
     public bool IsVisible { get; set; } = true;
 }

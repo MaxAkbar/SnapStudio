@@ -49,6 +49,7 @@ public sealed partial class MainPage : Page
     private bool _isReadyForControlEvents;
     private bool _newImageDialogIsOpen;
     private bool _layerRenameDialogIsOpen;
+    private bool _layerColorDialogIsOpen;
     private bool _historyPaneIsExpanded = true;
     private bool _historySplitterIsDragging;
     private Point _historySplitterStartPoint;
@@ -487,7 +488,7 @@ public sealed partial class MainPage : Page
 
     private async void RenameLayerMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if (_layerRenameDialogIsOpen || _newImageDialogIsOpen
+        if (_layerRenameDialogIsOpen || _layerColorDialogIsOpen || _newImageDialogIsOpen
             || sender is not FrameworkElement { DataContext: AnnotationLayerItem item })
         {
             return;
@@ -549,6 +550,49 @@ public sealed partial class MainPage : Page
         {
             await ViewModel.SetLayerColorAsync(item.Id, color, CancellationToken.None);
             UpdateBindingsFromViewModel();
+        }
+    }
+
+    private async void LayerCustomColorMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (_layerColorDialogIsOpen || _layerRenameDialogIsOpen || _newImageDialogIsOpen
+            || sender is not FrameworkElement { DataContext: AnnotationLayerItem item })
+        {
+            return;
+        }
+
+        _layerColorDialogIsOpen = true;
+        try
+        {
+            var picker = new ColorPicker
+            {
+                Color = item.IndicatorColor,
+                IsAlphaEnabled = false,
+                IsMoreButtonVisible = false,
+                IsHexInputVisible = true
+            };
+            AutomationProperties.SetName(picker, "Custom layer color picker");
+            AutomationProperties.SetHelpText(picker, $"Choose a color label for {item.Name}.");
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = $"Color for {item.Name}",
+                Content = picker,
+                PrimaryButtonText = "Apply",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary
+            };
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                Color color = picker.Color;
+                await ViewModel.SetLayerCustomColorAsync(item.Id,
+                    new ColorRgba(color.R, color.G, color.B, 255), CancellationToken.None);
+                UpdateBindingsFromViewModel();
+            }
+        }
+        finally
+        {
+            _layerColorDialogIsOpen = false;
         }
     }
 
@@ -688,7 +732,7 @@ public sealed partial class MainPage : Page
 
     private async Task ShowNewImageDialogAsync()
     {
-        if (_newImageDialogIsOpen || _layerRenameDialogIsOpen || !ViewModel.CanCreateImage)
+        if (_newImageDialogIsOpen || _layerRenameDialogIsOpen || _layerColorDialogIsOpen || !ViewModel.CanCreateImage)
         {
             return;
         }
@@ -1729,6 +1773,7 @@ public sealed partial class MainPage : Page
         return !_isReadyForControlEvents
             || _newImageDialogIsOpen
             || _layerRenameDialogIsOpen
+            || _layerColorDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen
             || IsEditableFocusedElement(FocusManager.GetFocusedElement(XamlRoot));
     }
@@ -1790,6 +1835,7 @@ public sealed partial class MainPage : Page
             AnnotationKind.Ellipse => CreateEllipseAnnotationElement(item),
             AnnotationKind.Pen => CreatePenAnnotationElement(item),
             AnnotationKind.Fill => CreateFillAnnotationElement(item),
+            AnnotationKind.Image => CreateImageAnnotationElement(item),
             _ => CreateRectangleAnnotationElement(item)
         };
 
@@ -1821,6 +1867,7 @@ public sealed partial class MainPage : Page
             AnnotationKind.Blur => "blur",
             AnnotationKind.Pen => "pen stroke",
             AnnotationKind.Fill => "filled region",
+            AnnotationKind.Image => TrimAutomationText(item.Text),
             _ => "annotation"
         };
         return $"{selectedPrefix}{kind} annotation, {Math.Round(item.Width)} by {Math.Round(item.Height)}";
@@ -1919,6 +1966,32 @@ public sealed partial class MainPage : Page
                 item));
         }
 
+    }
+
+    private FrameworkElement CreateImageAnnotationElement(AnnotationOverlayItem item)
+    {
+        var root = new Grid { Width = item.Width, Height = item.Height, DataContext = item };
+        var bitmap = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage();
+        if (item.Image is not null)
+        {
+            using var stream = new MemoryStream(item.Image.PngBytes, writable: false);
+            bitmap.SetSource(stream.AsRandomAccessStream());
+        }
+        var body = new Grid { Width = item.Width, Height = item.Height, Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)), DataContext = item };
+        body.Children.Add(new Microsoft.UI.Xaml.Controls.Image { Source = bitmap, Stretch = Stretch.Fill, Opacity = item.Opacity, IsHitTestVisible = false });
+        body.PointerPressed += AnnotationBody_PointerPressed;
+        body.Tapped += AnnotationOverlay_Tapped;
+        body.SetBinding(UIElement.IsHitTestVisibleProperty, new Microsoft.UI.Xaml.Data.Binding
+        {
+            Source = ViewModel,
+            Path = new PropertyPath(nameof(ShellViewModel.IsSelectionToolActive)),
+            Mode = Microsoft.UI.Xaml.Data.BindingMode.OneWay
+        });
+        var drawing = new Canvas { Clip = new RectangleGeometry { Rect = new Rect(-item.Left, -item.Top, ViewModel.CanvasDisplayWidth, ViewModel.CanvasDisplayHeight) } };
+        drawing.Children.Add(body);
+        root.Children.Add(drawing);
+        AddBoxResizeHandles(root, item);
+        return root;
     }
 
     private FrameworkElement CreateFillAnnotationElement(AnnotationOverlayItem item)

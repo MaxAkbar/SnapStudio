@@ -76,6 +76,7 @@ public sealed class UpdateDocumentRasterCommand : IEditCommand
                 Text = annotation.Text,
                 StrokePoints = [.. annotation.StrokePoints],
                 FillRectangles = [.. annotation.FillRectangles],
+                Image = annotation.Image?.DeepCopy(),
                 Style = annotation.Style
             })
             .ToList();

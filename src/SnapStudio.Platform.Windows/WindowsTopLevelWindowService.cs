@@ -9,11 +9,32 @@ public sealed record WindowsTopLevelWindow(
     nint Handle,
     string Title,
     RectD Bounds,
-    string ProcessName);
+    string ProcessName)
+{
+    public uint ProcessId { get; init; }
+
+    public uint ThreadId { get; init; }
+
+    // ExactFrame identifies a window by handle, process and thread, since handles can be reused.
+    public bool IsSameWindow(WindowsTopLevelWindow other) => Handle == other.Handle
+        && ProcessId == other.ProcessId && ThreadId == other.ThreadId;
+
+    public string Description => $"{ProcessName}.exe · {Bounds.Width:0} × {Bounds.Height:0}";
+}
 
 public sealed class WindowsTopLevelWindowService
 {
     private const uint GwOwner = 4;
+    private const int DwmwaCloaked = 14;
+    private const int DwmwaExtendedFrameBounds = 9;
+
+    public static RectD? GetVisibleBounds(nint window)
+    {
+        if (!IsWindowVisible(window) || IsIconic(window)) return null;
+        if (DwmGetWindowAttribute(window, DwmwaExtendedFrameBounds, out NativeRect visible, Marshal.SizeOf<NativeRect>()) == 0)
+            return visible.ToRectD();
+        return GetWindowRect(window, out NativeRect bounds) ? bounds.ToRectD() : null;
+    }
 
     public IReadOnlyList<WindowsTopLevelWindow> GetCaptureCandidates(nint excludedWindowHandle)
     {
@@ -33,7 +54,7 @@ public sealed class WindowsTopLevelWindowService
             },
             0);
 
-        return candidates;
+        return candidates.OrderBy(window => window.Title, StringComparer.CurrentCultureIgnoreCase).ToArray();
     }
 
     private static bool TryCreateCandidate(
@@ -53,8 +74,9 @@ public sealed class WindowsTopLevelWindowService
             return false;
         }
 
-        GetWindowThreadProcessId(windowHandle, out uint processId);
-        if (processId == currentProcessId)
+        uint threadId = GetWindowThreadProcessId(windowHandle, out uint processId);
+        if (processId == 0 || processId == currentProcessId
+            || (DwmGetWindowAttributeInt(windowHandle, DwmwaCloaked, out int cloaked, sizeof(int)) == 0 && cloaked != 0))
         {
             return false;
         }
@@ -70,7 +92,9 @@ public sealed class WindowsTopLevelWindowService
             return false;
         }
 
-        RectD bounds = rect.ToRectD();
+        // Reuse ExactFrame's visible-frame measurement to exclude invisible resize borders.
+        RectD bounds = DwmGetWindowAttribute(windowHandle, DwmwaExtendedFrameBounds, out NativeRect visible, Marshal.SizeOf<NativeRect>()) == 0
+            ? visible.ToRectD() : rect.ToRectD();
         if (bounds.Width < 32 || bounds.Height < 32)
         {
             return false;
@@ -80,9 +104,19 @@ public sealed class WindowsTopLevelWindowService
             windowHandle,
             title,
             bounds,
-            ResolveProcessName((int)processId));
+            ResolveProcessName((int)processId))
+        {
+            ProcessId = processId,
+            ThreadId = threadId
+        };
         return true;
     }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmGetWindowAttribute(nint window, int attribute, out NativeRect value, int size);
+
+    [DllImport("dwmapi.dll", EntryPoint = "DwmGetWindowAttribute")]
+    private static extern int DwmGetWindowAttributeInt(nint window, int attribute, out int value, int size);
 
     private static string GetWindowTitle(nint windowHandle)
     {

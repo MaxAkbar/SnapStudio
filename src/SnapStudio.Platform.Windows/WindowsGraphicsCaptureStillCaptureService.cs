@@ -3,6 +3,7 @@ using SnapStudio.Core.Primitives;
 using SnapStudio.Core.System;
 using Microsoft.Graphics.Canvas;
 using System.Globalization;
+using System.Collections.Concurrent;
 using Windows.Foundation;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX;
@@ -61,21 +62,45 @@ public sealed class WindowsGraphicsCaptureStillCaptureService : IStillCaptureSer
                 $"Capture target '{request.TargetKind}' is not supported by the Windows.Graphics.Capture adapter."));
         }
 
-        if (string.IsNullOrWhiteSpace(request.TargetHint)
-            || _registry is null
-            || !_registry.TryGet(request.TargetHint, out GraphicsCaptureItem item))
+        GraphicsCaptureItem? item = null;
+        IReadOnlyList<WindowsDesktopCaptureTarget>? desktop = null;
+        if (!string.IsNullOrWhiteSpace(request.TargetHint) && _registry is not null)
+        {
+            if (request.TargetKind == CaptureTargetKind.FullScreen && _registry.TryGetDesktop(request.TargetHint, out var targets))
+                desktop = targets;
+            else if (_registry.TryGet(request.TargetHint, out GraphicsCaptureItem selected))
+                item = selected;
+        }
+
+        if (item is null && desktop is null)
         {
             return CaptureOutcome.Failed(new CaptureFailure(
                 CaptureFailureReason.TargetUnavailable,
                 "No Windows.Graphics.Capture target was selected."));
         }
 
+        WindowsCaptureTargetGeometry? geometry = null;
+        if (item is not null && request.TargetHint is not null)
+            _registry?.TryGetGeometry(request.TargetHint, out geometry);
+        if (request.IncludeCursor && (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 19041)
+            || (desktop is null && geometry is null)))
+            return CaptureOutcome.Failed(new CaptureFailure(CaptureFailureReason.Unsupported,
+                "Choose a display or window again to capture an editable mouse pointer. Windows 10 version 2004 or later is required."));
+
         if (request.Delay > TimeSpan.Zero)
         {
             await Task.Delay(request.Delay, cancellationToken).ConfigureAwait(false);
         }
 
-        if (!HasValidCaptureItemSize(item.Size))
+        if (desktop is not null && !WindowsDirectCaptureGeometry.HasSameDisplayLayout(
+                desktop.Select(target => target.Monitor), new WindowsDisplayMonitorService().GetMonitors()))
+        {
+            return CaptureOutcome.Failed(new CaptureFailure(CaptureFailureReason.TargetUnavailable,
+                "The display configuration changed. Start the capture again."));
+        }
+
+        if ((item is not null && !HasValidCaptureItemSize(item.Size))
+            || (desktop is not null && desktop.Any(target => !HasValidCaptureItemSize(target.Item.Size))))
         {
             return CaptureOutcome.Failed(new CaptureFailure(
                 CaptureFailureReason.TargetUnavailable,
@@ -84,8 +109,9 @@ public sealed class WindowsGraphicsCaptureStillCaptureService : IStillCaptureSer
 
         try
         {
-            CaptureResult capture = await CaptureFrameAsync(item, request, cancellationToken)
-                .ConfigureAwait(false);
+            CaptureResult capture = desktop is not null
+                ? await CaptureDesktopAsync(desktop, request, cancellationToken).ConfigureAwait(false)
+                : await CaptureFrameAsync(item!, request, cancellationToken, geometry).ConfigureAwait(false);
 
             return CaptureOutcome.Success(capture);
         }
@@ -113,10 +139,72 @@ public sealed class WindowsGraphicsCaptureStillCaptureService : IStillCaptureSer
         return size.Width > 0 && size.Height > 0;
     }
 
+    private async Task<CaptureResult> CaptureDesktopAsync(
+        IReadOnlyList<WindowsDesktopCaptureTarget> targets,
+        CaptureRequest request,
+        CancellationToken cancellationToken)
+    {
+        var captures = new ConcurrentBag<CaptureResult>();
+        CaptureId id = CaptureId.New();
+        string outputPath = Path.Combine(_outputDirectory, $"{id}.png");
+        bool saved = false;
+        WindowsCursorSnapshot? cursor = null;
+        int cursorSampled = 0;
+        void SampleCursor()
+        {
+            if (request.IncludeCursor && Interlocked.CompareExchange(ref cursorSampled, 1, 0) == 0)
+                cursor = WindowsCursorCapture.Capture();
+        }
+        try
+        {
+            WindowsDesktopCaptureImage[] images = await Task.WhenAll(targets.Select(async target =>
+            {
+                CaptureResult capture = await CaptureFrameAsync(target.Item, request with
+                {
+                    TargetKind = CaptureTargetKind.Display,
+                    IncludeCursor = false,
+                    Delay = TimeSpan.Zero,
+                    Bounds = null,
+                    TargetMetadata = null
+                }, cancellationToken, frameCaptured: SampleCursor).ConfigureAwait(false);
+                captures.Add(capture);
+                return new WindowsDesktopCaptureImage(capture.SourceImage, target.Monitor.Bounds);
+            })).ConfigureAwait(false);
+
+            ImageAsset image = await Task.Run(() => WindowsDesktopCaptureComposer.Save(images, outputPath, cancellationToken), cancellationToken)
+                .ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            var metadata = request.TargetMetadata is null ? new Dictionary<string, string>() : new Dictionary<string, string>(request.TargetMetadata);
+            metadata["source"] = "capture";
+            metadata["targetKind"] = CaptureTargetKind.FullScreen.ToString();
+            metadata["displayName"] = "All displays";
+            metadata["monitorCount"] = targets.Count.ToString(CultureInfo.InvariantCulture);
+            metadata["includeCursor"] = request.IncludeCursor.ToString();
+            metadata["delayMilliseconds"] = request.Delay.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
+            saved = true;
+            return new CaptureResult(id, _clock.UtcNow, image, metadata,
+                cursor?.ForCapture(WindowsRegionCaptureGeometry.CreateVirtualScreenBounds(targets.Select(target => target.Monitor).ToArray())));
+        }
+        finally
+        {
+            foreach (CaptureResult capture in captures) TryDeleteCapture(capture.SourceImage.Path);
+            if (!saved) TryDeleteCapture(outputPath);
+        }
+    }
+
+    private static void TryDeleteCapture(string path)
+    {
+        try { File.Delete(path); }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
     private async Task<CaptureResult> CaptureFrameAsync(
         GraphicsCaptureItem item,
         CaptureRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        WindowsCaptureTargetGeometry? geometry = null,
+        Action? frameCaptured = null)
     {
         Directory.CreateDirectory(_outputDirectory);
 
@@ -133,7 +221,7 @@ public sealed class WindowsGraphicsCaptureStillCaptureService : IStillCaptureSer
 
         if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 19041))
         {
-            session.IsCursorCaptureEnabled = request.IncludeCursor;
+            session.IsCursorCaptureEnabled = false;
         }
 
         using Direct3D11CaptureFrame frame = await CaptureOneFrameAsync(
@@ -141,11 +229,20 @@ public sealed class WindowsGraphicsCaptureStillCaptureService : IStillCaptureSer
                 session,
                 cancellationToken)
             .ConfigureAwait(false);
+        frameCaptured?.Invoke();
         using CanvasBitmap bitmap = CanvasBitmap.CreateFromDirect3D11Surface(
             canvasDevice,
             frame.Surface);
 
         RectD outputBounds = ResolveOutputBounds(frame.ContentSize, request);
+        CapturedCursor? cursor = null;
+        if (request.IncludeCursor && geometry is not null)
+        {
+            RectD screen = geometry.WindowHandle == 0 ? geometry.ScreenBounds
+                : WindowsTopLevelWindowService.GetVisibleBounds(geometry.WindowHandle) ?? geometry.ScreenBounds;
+            cursor = WindowsCursorCapture.Capture()?.ForCapture(new RectD(screen.X + outputBounds.X,
+                screen.Y + outputBounds.Y, outputBounds.Width, outputBounds.Height), geometry.WindowHandle);
+        }
         if (request.TargetKind == CaptureTargetKind.Region)
         {
             using CanvasRenderTarget croppedBitmap = CreateCroppedBitmap(
@@ -190,7 +287,8 @@ public sealed class WindowsGraphicsCaptureStillCaptureService : IStillCaptureSer
                 (int)Math.Round(outputBounds.Width),
                 (int)Math.Round(outputBounds.Height),
                 ImagePixelFormat.Bgra32),
-            metadata);
+            metadata,
+            cursor);
     }
 
     private static CanvasRenderTarget CreateCroppedBitmap(

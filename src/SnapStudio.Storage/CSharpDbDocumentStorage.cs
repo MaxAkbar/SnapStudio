@@ -56,6 +56,18 @@ public sealed class CSharpDbDocumentCatalog : IDocumentCatalog
 public sealed class CSharpDbDocumentStore
 {
     private const string DatabaseFileName = "snapstudio-documents.db";
+    private const string CreateDocumentsTableSql = """
+        CREATE TABLE IF NOT EXISTS documents (
+            id TEXT PRIMARY KEY,
+            created_at_utc TEXT NOT NULL,
+            modified_at_utc TEXT NOT NULL,
+            title TEXT NOT NULL,
+            source_image_path TEXT NOT NULL,
+            annotation_count INTEGER NOT NULL,
+            source_kind TEXT NOT NULL,
+            document_json TEXT NOT NULL
+        )
+        """;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -99,6 +111,7 @@ public sealed class CSharpDbDocumentStore
             Metadata = new DocumentMetadata(now, now, properties)
         };
 
+        CapturedCursorLayer.AddTo(document, capture.Cursor);
         await SaveAsync(document, cancellationToken).ConfigureAwait(false);
         return document;
     }
@@ -247,15 +260,54 @@ public sealed class CSharpDbDocumentStore
             return false;
         }
 
-        await ExecuteNonQueryAsync(
-            connection,
-            transaction: null,
-            "DELETE FROM documents WHERE id = @id",
-            [new("@id", id.ToString())],
-            cancellationToken).ConfigureAwait(false);
+        await using DbTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using DbCommand count = connection.CreateCommand();
+        count.Transaction = transaction;
+        count.CommandText = "SELECT COUNT(*) FROM documents";
+        long documentCount = Convert.ToInt64(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
+        if (documentCount <= 2)
+        {
+            await RemoveFromSmallLibraryAsync(connection, transaction, id, cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            await ExecuteNonQueryAsync(connection, transaction, "DELETE FROM documents WHERE id = @id",
+                [new("@id", id.ToString())], cancellationToken).ConfigureAwait(false);
+        }
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         DeleteThumbnailCacheFiles(id);
         return true;
+    }
+
+    private static async Task RemoveFromSmallLibraryAsync(DbConnection connection, DbTransaction transaction, DocumentId id, CancellationToken cancellationToken)
+    {
+        // CSharpDB 4.6.4 can leave an invalid child pointer when deleting the last
+        // leaf of a split tree. Rebuild only this tiny table, atomically, retaining
+        // the remaining row's exact values (including its document JSON).
+        var remaining = new List<object[]>();
+        await using (DbCommand read = connection.CreateCommand())
+        {
+            read.Transaction = transaction;
+            read.CommandText = "SELECT id, created_at_utc, modified_at_utc, title, source_image_path, annotation_count, source_kind, document_json FROM documents WHERE id <> @id";
+            AddParameter(read, "@id", id.ToString());
+            await using DbDataReader reader = await read.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                var values = new object[8];
+                reader.GetValues(values);
+                remaining.Add(values);
+            }
+        }
+        await ExecuteNonQueryAsync(connection, transaction, "DROP TABLE documents", [], cancellationToken).ConfigureAwait(false);
+        await ExecuteNonQueryAsync(connection, transaction, CreateDocumentsTableSql, [], cancellationToken).ConfigureAwait(false);
+        foreach (object[] row in remaining)
+        {
+            await ExecuteNonQueryAsync(connection, transaction,
+                "INSERT INTO documents (id, created_at_utc, modified_at_utc, title, source_image_path, annotation_count, source_kind, document_json) VALUES (@id, @created, @modified, @title, @path, @count, @kind, @json)",
+                [new("@id", row[0]), new("@created", row[1]), new("@modified", row[2]), new("@title", row[3]),
+                 new("@path", row[4]), new("@count", row[5]), new("@kind", row[6]), new("@json", row[7])], cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public async Task<IReadOnlyList<DocumentSummary>> GetRecentAsync(
@@ -321,18 +373,7 @@ public sealed class CSharpDbDocumentStore
             await ExecuteNonQueryAsync(
                 connection,
                 transaction: null,
-                """
-                CREATE TABLE IF NOT EXISTS documents (
-                    id TEXT PRIMARY KEY,
-                    created_at_utc TEXT NOT NULL,
-                    modified_at_utc TEXT NOT NULL,
-                    title TEXT NOT NULL,
-                    source_image_path TEXT NOT NULL,
-                    annotation_count INTEGER NOT NULL,
-                    source_kind TEXT NOT NULL,
-                    document_json TEXT NOT NULL
-                )
-                """,
+                CreateDocumentsTableSql,
                 [],
                 cancellationToken).ConfigureAwait(false);
 

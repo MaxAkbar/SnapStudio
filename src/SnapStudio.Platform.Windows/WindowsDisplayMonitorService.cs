@@ -7,7 +7,16 @@ public sealed record WindowsDisplayMonitor(
     nint Handle,
     RectD Bounds,
     bool IsPrimary,
-    string DeviceName);
+    string DeviceName)
+{
+    public int Number { get; init; }
+
+    public int Dpi { get; init; } = 96;
+
+    public string Title => $"Display {Number}" + (IsPrimary ? " · Primary" : string.Empty);
+
+    public string Resolution => $"{Bounds.Width:0} × {Bounds.Height:0} · {Math.Round(Dpi * 100d / 96):0}%";
+}
 
 public sealed class WindowsDisplayMonitorService
 {
@@ -29,7 +38,10 @@ public sealed class WindowsDisplayMonitorService
                         monitor,
                         info.Monitor.ToRectD(),
                         (info.Flags & MonitorInfoPrimary) == MonitorInfoPrimary,
-                        info.DeviceName));
+                        info.DeviceName)
+                    {
+                        Dpi = GetDpiForMonitor(monitor, 0, out uint dpiX, out _) == 0 ? (int)dpiX : 96
+                    });
                 }
 
                 return true;
@@ -37,9 +49,19 @@ public sealed class WindowsDisplayMonitorService
             0);
 
         return succeeded
-            ? monitors
+            ? NumberMonitors(monitors)
             : [];
     }
+
+    // Adapted from ExactFrame's DisplayService: physical bounds and left-to-right numbering.
+    public static IReadOnlyList<WindowsDisplayMonitor> NumberMonitors(IEnumerable<WindowsDisplayMonitor> monitors) => monitors
+        .OrderBy(monitor => monitor.Bounds.X)
+        .ThenBy(monitor => monitor.Bounds.Y)
+        .Select((monitor, index) => monitor with { Number = index + 1 })
+        .ToArray();
+
+    [DllImport("shcore.dll")]
+    private static extern int GetDpiForMonitor(nint monitor, int dpiType, out uint dpiX, out uint dpiY);
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

@@ -10,20 +10,23 @@ public sealed class WindowsDirectDisplayCaptureTargetSelector : ICaptureTargetSe
     private readonly WindowsDisplayMonitorService _displayMonitors;
     private readonly WindowsGraphicsCaptureItemFactory _itemFactory;
     private readonly WindowsGraphicsCaptureItemRegistry _registry;
+    private readonly IWindowsCaptureTargetPicker? _picker;
 
     public WindowsDirectDisplayCaptureTargetSelector(
         WindowsGraphicsCaptureItemRegistry registry,
         WindowsDisplayMonitorService? displayMonitors = null,
-        WindowsGraphicsCaptureItemFactory? itemFactory = null)
+        WindowsGraphicsCaptureItemFactory? itemFactory = null,
+        IWindowsCaptureTargetPicker? picker = null)
     {
         ArgumentNullException.ThrowIfNull(registry);
 
         _registry = registry;
         _displayMonitors = displayMonitors ?? new WindowsDisplayMonitorService();
         _itemFactory = itemFactory ?? new WindowsGraphicsCaptureItemFactory();
+        _picker = picker;
     }
 
-    public Task<CaptureTargetSelection?> SelectTargetAsync(
+    public async Task<CaptureTargetSelection?> SelectTargetAsync(
         CaptureTargetRequest request,
         CancellationToken cancellationToken)
     {
@@ -34,27 +37,56 @@ public sealed class WindowsDirectDisplayCaptureTargetSelector : ICaptureTargetSe
             || (!request.AllowedTargets.Contains(CaptureTargetKind.Display)
                 && !request.AllowedTargets.Contains(CaptureTargetKind.FullScreen)))
         {
-            return Task.FromResult<CaptureTargetSelection?>(null);
+            return null;
         }
 
         IReadOnlyList<WindowsDisplayMonitor> monitors = _displayMonitors.GetMonitors();
-        WindowsDisplayMonitor? monitor = WindowsDirectCaptureGeometry.SelectPrimaryMonitor(monitors);
+        if (request.AllowedTargets.Contains(CaptureTargetKind.FullScreen))
+        {
+            if (monitors.Count == 0) return null;
+            string desktopId = _registry.RegisterDesktop(monitors.Select(monitor =>
+                new WindowsDesktopCaptureTarget(_itemFactory.CreateForMonitor(monitor.Handle), monitor)).ToArray());
+            return new CaptureTargetSelection(CaptureTargetKind.FullScreen, desktopId,
+                WindowsRegionCaptureGeometry.CreateVirtualScreenBounds(monitors), CreateDesktopMetadata(monitors));
+        }
+
+        WindowsDisplayMonitor? selected = _picker is null ? null
+            : await _picker.PickDisplayAsync(_displayMonitors.GetMonitors, cancellationToken).ConfigureAwait(true);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (selected is null) return null;
+        monitors = _displayMonitors.GetMonitors();
+        WindowsDisplayMonitor? monitor = monitors.FirstOrDefault(candidate => candidate.DeviceName == selected.DeviceName
+            && candidate.Handle == selected.Handle && candidate.Bounds == selected.Bounds);
         if (monitor is null)
         {
-            return Task.FromResult<CaptureTargetSelection?>(null);
+            throw new InvalidOperationException("The display configuration changed. Choose the display again.");
         }
 
         GraphicsCaptureItem item = _itemFactory.CreateForMonitor(monitor.Handle);
-        string targetId = _registry.Register(item);
-        CaptureTargetKind targetKind = request.AllowedTargets.Contains(CaptureTargetKind.FullScreen)
-            ? CaptureTargetKind.FullScreen
-            : CaptureTargetKind.Display;
-
-        return Task.FromResult<CaptureTargetSelection?>(new CaptureTargetSelection(
-            targetKind,
+        string targetId = _registry.Register(item, new WindowsCaptureTargetGeometry(monitor.Bounds));
+        return new CaptureTargetSelection(
+            CaptureTargetKind.Display,
             targetId,
             new RectD(0, 0, monitor.Bounds.Width, monitor.Bounds.Height),
-            CreateMonitorMetadata(request.SelectionMode, monitor, monitors)));
+            CreateMonitorMetadata(CaptureTargetSelectionMode.Picker, monitor, monitors));
+    }
+
+    private static IReadOnlyDictionary<string, string> CreateDesktopMetadata(IReadOnlyList<WindowsDisplayMonitor> monitors)
+    {
+        RectD bounds = WindowsRegionCaptureGeometry.CreateVirtualScreenBounds(monitors);
+        var metadata = new Dictionary<string, string>
+        {
+            ["selectionMode"] = CaptureTargetSelectionMode.Automatic.ToString(),
+            ["displayName"] = "All displays",
+            ["monitorCount"] = monitors.Count.ToString(CultureInfo.InvariantCulture),
+            ["virtualScreenBoundsX"] = bounds.X.ToString(CultureInfo.InvariantCulture),
+            ["virtualScreenBoundsY"] = bounds.Y.ToString(CultureInfo.InvariantCulture),
+            ["virtualScreenBoundsWidth"] = bounds.Width.ToString(CultureInfo.InvariantCulture),
+            ["virtualScreenBoundsHeight"] = bounds.Height.ToString(CultureInfo.InvariantCulture)
+        };
+        for (int index = 0; index < monitors.Count; index++)
+            metadata[$"monitor{index + 1}DeviceName"] = monitors[index].DeviceName;
+        return metadata;
     }
 
     private static IReadOnlyDictionary<string, string> CreateMonitorMetadata(

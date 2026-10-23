@@ -199,7 +199,7 @@
                             </MenuFlyoutItem>
                             <MenuFlyoutItem
                                 AccessKey="P"
-                                AutomationProperties.HelpText="Capture using the Windows graphics capture picker."
+                                AutomationProperties.HelpText="Choose a window or display to capture."
                                 AutomationProperties.Name="Capture with picker"
                                 Click="CapturePickerButton_Click"
                                 Text="Picker">
@@ -209,7 +209,7 @@
                             </MenuFlyoutItem>
                             <MenuFlyoutItem
                                 AccessKey="D"
-                                AutomationProperties.HelpText="Capture a display."
+                                AutomationProperties.HelpText="Choose which connected display to capture."
                                 AutomationProperties.Name="Capture display"
                                 Click="CaptureDisplayButton_Click"
                                 Text="Display">
@@ -219,17 +219,17 @@
                             </MenuFlyoutItem>
                             <MenuFlyoutItem
                                 AccessKey="F"
-                                AutomationProperties.HelpText="Capture the full screen."
+                                AutomationProperties.HelpText="Capture all connected displays together in one image."
                                 AutomationProperties.Name="Capture full screen"
                                 Click="CaptureFullScreenButton_Click"
-                                Text="Full Screen">
+                                Text="Full Screen (all displays)">
                                 <MenuFlyoutItem.Icon>
                                     <SymbolIcon Symbol="FullScreen" />
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutItem
                                 AccessKey="W"
-                                AutomationProperties.HelpText="Capture a window."
+                                AutomationProperties.HelpText="Choose an open window by title or app name."
                                 AutomationProperties.Name="Capture window"
                                 Click="CaptureWindowButton_Click"
                                 Text="Window">
@@ -583,6 +583,10 @@
                                                 </MenuFlyoutItem>
                                                 <MenuFlyoutItem Text="Gray" DataContext="{x:Bind}" Tag="Gray" Click="LayerColorMenuItem_Click">
                                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91F;" Foreground="#A9B2BE" /></MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutSeparator />
+                                                <MenuFlyoutItem Text="Custom color…" DataContext="{x:Bind}" Click="LayerCustomColorMenuItem_Click">
+                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE790;" /></MenuFlyoutItem.Icon>
                                                 </MenuFlyoutItem>
                                             </MenuFlyoutSubItem>
                                         </MenuFlyout>
@@ -1019,7 +1023,7 @@
                     <InfoBar
                         Margin="16,12,16,0"
                         IsClosable="True"
-                        IsOpen="{x:Bind ViewModel.CaptureNoticeIsOpen, Mode=OneWay}"
+                        IsOpen="{x:Bind ViewModel.CaptureNoticeIsOpen, Mode=TwoWay}"
                         Message="{x:Bind ViewModel.CaptureNoticeMessage, Mode=OneWay}"
                         Severity="{x:Bind ViewModel.CaptureNoticeSeverity, Mode=OneWay}"
                         Title="{x:Bind ViewModel.CaptureNoticeTitle, Mode=OneWay}" />
@@ -1520,7 +1524,7 @@
                             </ComboBox>
                         </StackPanel>
 
-                        <StackPanel Spacing="8">
+                        <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}">
                             <TextBlock
                                 Foreground="{StaticResource SnapMutedBrush}"
                                 Text="Color" />
@@ -1775,7 +1779,7 @@
                                 Text="Capture" />
 
                             <ToggleSwitch
-                                AutomationProperties.HelpText="Include the mouse cursor in new captures."
+                                AutomationProperties.HelpText="Capture the mouse pointer as a movable object in its own layer."
                                 AutomationProperties.Name="Include cursor"
                                 Header="Cursor"
                                 IsOn="{x:Bind ViewModel.IncludeCursor, Mode=TwoWay}" />

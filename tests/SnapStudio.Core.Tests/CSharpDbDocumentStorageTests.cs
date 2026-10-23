@@ -167,6 +167,49 @@ public sealed class CSharpDbDocumentStorageTests
         Assert.IsTrue(File.Exists(sourcePath));
     }
 
+    [TestMethod]
+    public async Task DeleteAsync_SmallLibraryKeepsOtherDocumentAndItsVersionGuard()
+    {
+        using var workspace = CSharpDbTestWorkspace.Create();
+        var store = new CSharpDbDocumentStore(workspace.Path);
+        var repository = new CSharpDbDocumentRepository(store);
+        CaptureDocument remaining = await CreateDocumentAsync(repository, "Keep me", DateTimeOffset.UtcNow);
+        CaptureDocument removed = await CreateDocumentAsync(repository, "Remove me", DateTimeOffset.UtcNow);
+        remaining.SchemaVersion = CaptureDocument.CurrentSchemaVersion + 1;
+        await ReplaceDocumentJsonAsync(store, remaining);
+        Assert.IsTrue(await repository.DeleteAsync(removed.Id, CancellationToken.None));
+        DocumentSummary summary = Assert.ContainsSingle(await new CSharpDbDocumentCatalog(store).GetRecentAsync(25, CancellationToken.None));
+        Assert.AreEqual(remaining.Id, summary.Id);
+        Assert.AreEqual("Keep me", summary.Title);
+        await Assert.ThrowsExactlyAsync<NotSupportedException>(() => repository.GetAsync(remaining.Id, CancellationToken.None));
+        await Assert.ThrowsExactlyAsync<NotSupportedException>(() => repository.SaveAsync(new CaptureDocument { Id = remaining.Id }, CancellationToken.None));
+    }
+
+    [TestMethod]
+    public async Task TableRebuildRollbackPreservesOriginalCaptures()
+    {
+        using var workspace = CSharpDbTestWorkspace.Create();
+        var store = new CSharpDbDocumentStore(workspace.Path);
+        var repository = new CSharpDbDocumentRepository(store);
+        CaptureDocument original = await CreateDocumentAsync(repository, "Original", DateTimeOffset.UtcNow);
+        var builder = new CSharpDbConnectionStringBuilder { DataSource = store.DatabasePath, Pooling = true };
+        await using (var connection = new CSharpDbConnection(builder.ConnectionString))
+        {
+            await connection.OpenAsync();
+            await using DbTransaction transaction = await connection.BeginTransactionAsync();
+            await using DbCommand command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = "DROP TABLE documents";
+            await command.ExecuteNonQueryAsync();
+            await transaction.RollbackAsync();
+        }
+        await CSharpDbConnection.ClearPoolAsync(builder.ConnectionString);
+        CaptureDocument? restored = await new CSharpDbDocumentRepository(new CSharpDbDocumentStore(workspace.Path)).GetAsync(original.Id, CancellationToken.None);
+        Assert.IsNotNull(restored);
+        Assert.AreEqual(original.SourceImage, restored.SourceImage);
+        Assert.AreEqual("Original", restored.Metadata.Properties["title"]);
+    }
+
     private static async Task<CaptureDocument> CreateDocumentAsync(
         IDocumentRepository repository,
         string title,

@@ -42,7 +42,8 @@ public sealed class CaptureWorkflow : ICaptureWorkflow
                 new CaptureTargetRequest(
                     request.AllowedTargets,
                     AllowDelayedCapture: request.Delay > TimeSpan.Zero,
-                    request.SelectionMode),
+                    request.SelectionMode,
+                    request.IncludeCursor),
                 cancellationToken)
             .ConfigureAwait(false);
 

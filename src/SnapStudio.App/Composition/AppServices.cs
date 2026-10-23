@@ -60,7 +60,8 @@ public sealed record AppServices(
         nint ownerWindowHandle = 0,
         IRegionSelectionService? regionSelection = null,
         ICrashRecoveryJournal? crashRecoveryJournal = null,
-        string? recoverySessionId = null)
+        string? recoverySessionId = null,
+        IWindowsCaptureTargetPicker? captureTargetPicker = null)
     {
         string appDataRoot = ResolveAppDataRoot();
 
@@ -90,7 +91,8 @@ public sealed record AppServices(
         ICaptureTargetSelector captureTargetSelector = CreateCaptureTargetSelector(
             ownerWindowHandle,
             captureItemRegistry,
-            regionSelection);
+            regionSelection,
+            captureTargetPicker);
         IStillCaptureService stillCapture = new WindowsGraphicsCaptureStillCaptureService(
             captureItemRegistry,
             Path.Combine(storageRoot, "SourceImages"),
@@ -229,7 +231,8 @@ public sealed record AppServices(
     private static ICaptureTargetSelector CreateCaptureTargetSelector(
         nint ownerWindowHandle,
         WindowsGraphicsCaptureItemRegistry captureItemRegistry,
-        IRegionSelectionService? regionSelection)
+        IRegionSelectionService? regionSelection,
+        IWindowsCaptureTargetPicker? captureTargetPicker)
     {
         if (ownerWindowHandle == 0)
         {
@@ -244,13 +247,13 @@ public sealed record AppServices(
                 captureItemRegistry));
         }
 
-        selectors.Add(new WindowsDirectDisplayCaptureTargetSelector(captureItemRegistry));
+        selectors.Add(new WindowsDirectDisplayCaptureTargetSelector(captureItemRegistry, picker: captureTargetPicker));
         selectors.Add(new WindowsDirectWindowCaptureTargetSelector(
             ownerWindowHandle,
-            captureItemRegistry));
+            captureItemRegistry, picker: captureTargetPicker));
         selectors.Add(new WindowsGraphicsCapturePickerTargetSelector(
             ownerWindowHandle,
-            captureItemRegistry));
+            captureItemRegistry, captureTargetPicker));
 
         return new CompositeCaptureTargetSelector(selectors);
     }

@@ -48,6 +48,7 @@ public sealed class CaptureWorkflowTests
         Assert.AreEqual("region-1", captureService.LastRequest?.TargetHint);
         Assert.AreEqual(new RectD(1, 2, 30, 40), captureService.LastRequest?.Bounds);
         Assert.AreEqual(CaptureTargetSelectionMode.Picker, selector.LastRequest?.SelectionMode);
+        Assert.IsFalse(selector.LastRequest?.IncludeCursor);
         Assert.AreEqual("Picker", captureService.LastRequest?.TargetMetadata?["selectionMode"]);
 
         var completed = Assert.IsExactInstanceOfType<CaptureCompletedEditorMessage>(
@@ -73,6 +74,7 @@ public sealed class CaptureWorkflowTests
 
         Assert.IsFalse(result.Succeeded);
         Assert.AreEqual(CaptureFailureReason.Cancelled, result.Failure?.Reason);
+        Assert.IsTrue(selector.LastRequest?.IncludeCursor);
         Assert.AreEqual(0, captureService.CallCount);
         Assert.IsNull(repository.CreatedFromCapture);
         Assert.IsEmpty(editorMessages.Messages);

@@ -56,7 +56,7 @@ public static class DocumentLayers
             }
         }
 
-        if (document.SchemaVersion is 2 or 3)
+        if (document.SchemaVersion is 2 or 3 or 4)
         {
             document.SchemaVersion = CaptureDocument.CurrentSchemaVersion;
         }
@@ -108,6 +108,14 @@ public static class DocumentLayers
             else if (annotation.Kind == AnnotationKind.Fill)
             {
                 AreaFill.Validate(annotation);
+            }
+            else if (annotation.Kind == AnnotationKind.Image)
+            {
+                if (annotation.Image is not { Width: > 0, Height: > 0, PngBytes.Length: > 0 }
+                    || !double.IsFinite(annotation.Bounds.X) || !double.IsFinite(annotation.Bounds.Y)
+                    || !double.IsFinite(annotation.Bounds.Width) || !double.IsFinite(annotation.Bounds.Height)
+                    || annotation.Bounds.Width <= 0 || annotation.Bounds.Height <= 0)
+                    throw new InvalidDataException("An image object must contain PNG data and valid bounds.");
             }
         }
     }

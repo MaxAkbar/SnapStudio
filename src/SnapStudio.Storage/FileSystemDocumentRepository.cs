@@ -45,6 +45,7 @@ public sealed class FileSystemDocumentRepository : IDocumentRepository
             Metadata = new DocumentMetadata(now, now, properties)
         };
 
+        CapturedCursorLayer.AddTo(document, capture.Cursor);
         await SaveAsync(document, cancellationToken).ConfigureAwait(false);
         return document;
     }

@@ -1026,7 +1026,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive
         && ActiveAnnotationKind is not (AnnotationKind.Pen or AnnotationKind.Fill);
 
-    public Visibility AnnotationShapeControlsVisibility => ActiveOrSelectedAnnotationKind == AnnotationKind.Fill
+    public Visibility AnnotationShapeControlsVisibility => ActiveOrSelectedAnnotationKind is AnnotationKind.Fill or AnnotationKind.Image
+        ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility AnnotationColorControlsVisibility => ActiveOrSelectedAnnotationKind == AnnotationKind.Image
         ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility FillToleranceControlsVisibility => !IsSelectionToolActive && ActiveAnnotationKind == AnnotationKind.Fill
@@ -1507,7 +1510,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     public bool CaptureNoticeIsOpen
     {
         get => _captureNoticeIsOpen;
-        private set
+        set
         {
             if (_captureNoticeIsOpen == value)
             {
@@ -3543,6 +3546,18 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         await CompleteLayerChangeAsync(changed, "Layer color updated.", cancellationToken).ConfigureAwait(true);
     }
 
+    public async Task SetLayerCustomColorAsync(Guid layerId, ColorRgba color, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
+        {
+            return;
+        }
+
+        bool changed = await _layerWorkspace.SetLayerCustomColorAsync(
+            _currentDocument, layerId, color, _editCommandStack, cancellationToken).ConfigureAwait(true);
+        await CompleteLayerChangeAsync(changed, "Custom layer color updated.", cancellationToken).ConfigureAwait(true);
+    }
+
     private async Task CompleteLayerChangeAsync(bool changed, string status, CancellationToken cancellationToken)
     {
         if (!changed)
@@ -4430,9 +4445,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         string prompt = captureMode switch
         {
             CaptureMode.Region => "Select a region to capture.",
-            CaptureMode.Display => "Capturing the primary display.",
-            CaptureMode.FullScreen => "Capturing full screen from the primary display.",
-            CaptureMode.Window => "Capturing the frontmost visible window outside SnapStudio.",
+            CaptureMode.Display => "Choose a display to capture.",
+            CaptureMode.FullScreen => "Capturing all connected displays.",
+            CaptureMode.Window => "Choose a window to capture.",
             _ => "Choose a window or display to capture."
         };
 
@@ -5295,6 +5310,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             AnnotationKind.Blur => 6,
             AnnotationKind.Pen => 7,
             AnnotationKind.Fill => 8,
+            AnnotationKind.Image => AnnotationToolIndex,
             _ => 0
         };
         NotifyAnnotationStyleControlsChanged();
@@ -5548,9 +5564,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         AnnotationObject annotation,
         RectD cropBounds)
     {
-        if (annotation.Kind is AnnotationKind.Pen or AnnotationKind.Fill)
+        if (annotation.Kind is AnnotationKind.Pen or AnnotationKind.Fill or AnnotationKind.Image)
         {
-            // Keep fill and stroke geometry intact; the cropped canvas clips the visible portion.
+            // Keep image, fill and stroke geometry intact; the cropped canvas clips the visible portion.
             RectD bounds = annotation.Bounds;
             double radius = annotation.Style.StrokeThickness / 2;
             if (bounds.Right + radius < cropBounds.X || bounds.X - radius > cropBounds.Right
@@ -5635,6 +5651,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             Text = annotation.Text,
             StrokePoints = [.. annotation.StrokePoints],
             FillRectangles = [.. annotation.FillRectangles],
+            Image = annotation.Image?.DeepCopy(),
             Style = annotation.Style
         };
     }
@@ -5863,6 +5880,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                 Fill = color,
                 Opacity = AnnotationOpacity
             },
+            AnnotationKind.Image => before with { Opacity = AnnotationOpacity },
             AnnotationKind.Blur => before with
             {
                 Stroke = ColorRgba.Transparent,
@@ -6070,6 +6088,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private void NotifyAnnotationStyleControlsChanged()
     {
         OnPropertyChanged(nameof(AnnotationShapeControlsVisibility));
+        OnPropertyChanged(nameof(AnnotationColorControlsVisibility));
         OnPropertyChanged(nameof(FillToleranceControlsVisibility));
         OnPropertyChanged(nameof(AnnotationSizeHeader));
         OnPropertyChanged(nameof(AnnotationSizeMaximum));

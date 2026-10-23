@@ -47,6 +47,7 @@ public static class CaptureDocumentWorkspaceEditor
                 Id = layer.Id,
                 Name = layer.Name,
                 ColorLabel = layer.ColorLabel,
+                CustomColor = layer.CustomColor,
                 IsVisible = layer.IsVisible
             }).ToList(),
             DestructiveOperations = CloneDestructiveOperations(source.DestructiveOperations),
@@ -75,6 +76,7 @@ public static class CaptureDocumentWorkspaceEditor
                 Text = annotation.Text,
                 StrokePoints = [.. annotation.StrokePoints],
                 FillRectangles = [.. annotation.FillRectangles],
+                Image = annotation.Image?.DeepCopy(),
                 Style = annotation.Style
             })
             .ToList();

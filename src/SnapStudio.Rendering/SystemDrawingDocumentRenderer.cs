@@ -213,6 +213,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             Text = annotation.Text,
             StrokePoints = [.. annotation.StrokePoints],
             FillRectangles = [.. annotation.FillRectangles],
+            Image = annotation.Image?.DeepCopy(),
             Style = annotation.Style with
             {
                 StrokeThickness = Math.Max(1, annotation.Style.StrokeThickness * scale),
@@ -229,6 +230,9 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     {
         switch (annotation.Kind)
         {
+            case AnnotationKind.Image:
+                DrawImageObject(graphics, annotation);
+                break;
             case AnnotationKind.Fill:
                 DrawFill(graphics, annotation);
                 break;
@@ -265,6 +269,18 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
         foreach (RectD rectangle in AreaFill.GetRectangles(annotation)) path.AddRectangle(ToRectangleF(rectangle));
         using Brush brush = CreateBrush(annotation.Style.Fill, annotation.Style.Opacity);
         graphics.FillPath(brush, path);
+    }
+
+    private static void DrawImageObject(Graphics graphics, AnnotationObject annotation)
+    {
+        if (annotation.Image is null) return;
+        using var stream = new MemoryStream(annotation.Image.PngBytes, writable: false);
+        using var image = Image.FromStream(stream);
+        using var attributes = new ImageAttributes();
+        attributes.SetColorMatrix(new ColorMatrix { Matrix33 = (float)Math.Clamp(annotation.Style.Opacity, 0, 1) });
+        RectD bounds = annotation.Bounds;
+        PointF[] destination = [new((float)bounds.X, (float)bounds.Y), new((float)bounds.Right, (float)bounds.Y), new((float)bounds.X, (float)bounds.Bottom)];
+        graphics.DrawImage(image, destination, new RectangleF(0, 0, image.Width, image.Height), GraphicsUnit.Pixel, attributes);
     }
 
     private static void DrawPenStroke(Graphics graphics, AnnotationObject annotation)

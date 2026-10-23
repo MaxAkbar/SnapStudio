@@ -1,4 +1,5 @@
 using SnapStudio.Core.Primitives;
+using SnapStudio.Core.Documents;
 
 namespace SnapStudio.Core.Capture;
 
@@ -66,7 +67,8 @@ public sealed record StillCaptureCapability(
 public sealed record CaptureTargetRequest(
     IReadOnlyCollection<CaptureTargetKind> AllowedTargets,
     bool AllowDelayedCapture,
-    CaptureTargetSelectionMode SelectionMode = CaptureTargetSelectionMode.Automatic);
+    CaptureTargetSelectionMode SelectionMode = CaptureTargetSelectionMode.Automatic,
+    bool IncludeCursor = false);
 
 public sealed record CaptureTargetSelection(
     CaptureTargetKind TargetKind,
@@ -89,7 +91,10 @@ public sealed record CaptureResult(
     CaptureId Id,
     DateTimeOffset CapturedAtUtc,
     ImageAsset SourceImage,
-    IReadOnlyDictionary<string, string> Metadata);
+    IReadOnlyDictionary<string, string> Metadata,
+    CapturedCursor? Cursor = null);
+
+public sealed record CapturedCursor(AnnotationImage Image, RectD Bounds);
 
 public sealed record CaptureFailure(
     CaptureFailureReason Reason,

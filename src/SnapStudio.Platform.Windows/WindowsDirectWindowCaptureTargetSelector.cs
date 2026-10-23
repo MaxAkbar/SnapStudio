@@ -11,12 +11,14 @@ public sealed class WindowsDirectWindowCaptureTargetSelector : ICaptureTargetSel
     private readonly WindowsGraphicsCaptureItemFactory _itemFactory;
     private readonly WindowsGraphicsCaptureItemRegistry _registry;
     private readonly WindowsTopLevelWindowService _windows;
+    private readonly IWindowsCaptureTargetPicker? _picker;
 
     public WindowsDirectWindowCaptureTargetSelector(
         nint ownerWindowHandle,
         WindowsGraphicsCaptureItemRegistry registry,
         WindowsTopLevelWindowService? windows = null,
-        WindowsGraphicsCaptureItemFactory? itemFactory = null)
+        WindowsGraphicsCaptureItemFactory? itemFactory = null,
+        IWindowsCaptureTargetPicker? picker = null)
     {
         ArgumentNullException.ThrowIfNull(registry);
 
@@ -24,9 +26,10 @@ public sealed class WindowsDirectWindowCaptureTargetSelector : ICaptureTargetSel
         _registry = registry;
         _windows = windows ?? new WindowsTopLevelWindowService();
         _itemFactory = itemFactory ?? new WindowsGraphicsCaptureItemFactory();
+        _picker = picker;
     }
 
-    public Task<CaptureTargetSelection?> SelectTargetAsync(
+    public async Task<CaptureTargetSelection?> SelectTargetAsync(
         CaptureTargetRequest request,
         CancellationToken cancellationToken)
     {
@@ -37,34 +40,34 @@ public sealed class WindowsDirectWindowCaptureTargetSelector : ICaptureTargetSel
             || request.SelectionMode != CaptureTargetSelectionMode.Automatic
             || !request.AllowedTargets.Contains(CaptureTargetKind.Window))
         {
-            return Task.FromResult<CaptureTargetSelection?>(null);
+            return null;
         }
 
-        WindowsTopLevelWindow? window = _windows
-            .GetCaptureCandidates(_ownerWindowHandle)
-            .FirstOrDefault();
-
-        if (window is null)
-        {
-            return Task.FromResult<CaptureTargetSelection?>(null);
-        }
+        WindowsTopLevelWindow? selected = _picker is null ? null
+            : await _picker.PickWindowAsync(() => _windows.GetCaptureCandidates(_ownerWindowHandle), cancellationToken)
+                .ConfigureAwait(true);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (selected is null) return null;
+        WindowsTopLevelWindow window = _windows.GetCaptureCandidates(_ownerWindowHandle)
+            .FirstOrDefault(candidate => candidate.IsSameWindow(selected))
+            ?? throw new InvalidOperationException("That window closed or became unavailable. Choose another window.");
 
         GraphicsCaptureItem item = _itemFactory.CreateForWindow(window.Handle);
-        string targetId = _registry.Register(item);
+        string targetId = _registry.Register(item, new WindowsCaptureTargetGeometry(window.Bounds, window.Handle));
 
-        return Task.FromResult<CaptureTargetSelection?>(new CaptureTargetSelection(
+        return new CaptureTargetSelection(
             CaptureTargetKind.Window,
             targetId,
             new RectD(0, 0, window.Bounds.Width, window.Bounds.Height),
             new Dictionary<string, string>
             {
-                ["selectionMode"] = request.SelectionMode.ToString(),
+                ["selectionMode"] = CaptureTargetSelectionMode.Picker.ToString(),
                 ["windowTitle"] = window.Title,
                 ["windowProcessName"] = window.ProcessName,
                 ["windowBoundsX"] = window.Bounds.X.ToString(CultureInfo.InvariantCulture),
                 ["windowBoundsY"] = window.Bounds.Y.ToString(CultureInfo.InvariantCulture),
                 ["windowBoundsWidth"] = window.Bounds.Width.ToString(CultureInfo.InvariantCulture),
                 ["windowBoundsHeight"] = window.Bounds.Height.ToString(CultureInfo.InvariantCulture)
-            }));
+            });
     }
 }

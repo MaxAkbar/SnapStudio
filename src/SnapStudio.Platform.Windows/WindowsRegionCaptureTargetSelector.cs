@@ -83,7 +83,7 @@ public sealed class WindowsRegionCaptureTargetSelector : ICaptureTargetSelector
         }
 
         GraphicsCaptureItem item = _itemFactory.CreateForMonitor(monitor.Handle);
-        string targetId = _registry.Register(item);
+        string targetId = _registry.Register(item, new WindowsCaptureTargetGeometry(monitor.Bounds));
 
         return new CaptureTargetSelection(
             CaptureTargetKind.Region,
