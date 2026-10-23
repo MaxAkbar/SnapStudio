@@ -9,6 +9,7 @@ namespace SnapStudio.Platform.Windows;
 
 public sealed class WindowsClipboardService : IClipboardService
 {
+    internal const string PngClipboardFormat = "PNG";
     private readonly IDocumentRenderer _documentRenderer;
     private readonly string _temporaryDirectory;
 
@@ -53,7 +54,10 @@ public sealed class WindowsClipboardService : IClipboardService
                 .AsTask(cancellationToken)
                 .ConfigureAwait(true);
 
+            using IRandomAccessStreamWithContentType png = await file.OpenReadAsync()
+                .AsTask(cancellationToken).ConfigureAwait(true);
             var data = new DataPackage();
+            data.SetData(PngClipboardFormat, png);
             data.SetBitmap(RandomAccessStreamReference.CreateFromFile(file));
             Clipboard.SetContent(data);
             Clipboard.Flush();

@@ -51,6 +51,8 @@ public sealed record DocumentSummaryItem(
         {
             "capture" => "Capture",
             "import" => "Import",
+            "clipboard" => "Clipboard",
+            "new" => "New image",
             "scrollingcapture" => "Scrolling",
             "duplicate" => "Duplicate",
             "seed" => "Seed",

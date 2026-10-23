@@ -346,9 +346,11 @@ public sealed class CSharpDbDocumentStore
 
     private CSharpDbConnection CreateConnection()
     {
-        var builder = new DbConnectionStringBuilder
+        // Share one database engine so overlapping document and thumbnail operations do not close each other's WAL.
+        var builder = new CSharpDbConnectionStringBuilder
         {
-            ["Data Source"] = _databasePath
+            DataSource = _databasePath,
+            Pooling = true
         };
 
         return new CSharpDbConnection(builder.ConnectionString);

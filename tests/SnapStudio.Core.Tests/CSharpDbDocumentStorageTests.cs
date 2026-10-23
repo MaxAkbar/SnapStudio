@@ -15,7 +15,7 @@ public sealed class CSharpDbDocumentStorageTests
     [TestMethod]
     public async Task GetAsync_MigratesLegacyDocumentAndKeepsLayerIdAfterSave()
     {
-        using var workspace = TemporaryWorkspace.Create();
+        using var workspace = CSharpDbTestWorkspace.Create();
         var store = new CSharpDbDocumentStore(workspace.Path);
         var repository = new CSharpDbDocumentRepository(store);
         var document = new CaptureDocument();
@@ -47,7 +47,7 @@ public sealed class CSharpDbDocumentStorageTests
     [TestMethod]
     public async Task GetAndSaveAsync_RejectFutureVersionWithoutChangingStoredDocument()
     {
-        using var workspace = TemporaryWorkspace.Create();
+        using var workspace = CSharpDbTestWorkspace.Create();
         var store = new CSharpDbDocumentStore(workspace.Path);
         var repository = new CSharpDbDocumentRepository(store);
         var document = new CaptureDocument();
@@ -68,7 +68,7 @@ public sealed class CSharpDbDocumentStorageTests
     [TestMethod]
     public async Task CreateSaveGetAsync_RoundTripsEditableDocument()
     {
-        using var workspace = TemporaryWorkspace.Create();
+        using var workspace = CSharpDbTestWorkspace.Create();
         var clock = new FixedClock(new DateTimeOffset(2026, 6, 2, 12, 0, 0, TimeSpan.Zero));
         var store = new CSharpDbDocumentStore(workspace.Path, clock);
         var repository = new CSharpDbDocumentRepository(store);
@@ -116,7 +116,7 @@ public sealed class CSharpDbDocumentStorageTests
     [TestMethod]
     public async Task GetRecentAsync_ReturnsDocumentsOrderedByModifiedDate()
     {
-        using var workspace = TemporaryWorkspace.Create();
+        using var workspace = CSharpDbTestWorkspace.Create();
         var clock = new MutableClock(new DateTimeOffset(2026, 6, 2, 12, 0, 0, TimeSpan.Zero));
         var store = new CSharpDbDocumentStore(workspace.Path, clock);
         var repository = new CSharpDbDocumentRepository(store);
@@ -143,7 +143,7 @@ public sealed class CSharpDbDocumentStorageTests
     [TestMethod]
     public async Task DeleteAsync_RemovesDocumentRowAndKeepsSourceImage()
     {
-        using var workspace = TemporaryWorkspace.Create();
+        using var workspace = CSharpDbTestWorkspace.Create();
         var clock = new FixedClock(new DateTimeOffset(2026, 6, 2, 12, 0, 0, TimeSpan.Zero));
         var store = new CSharpDbDocumentStore(workspace.Path, clock);
         var repository = new CSharpDbDocumentRepository(store);
@@ -191,7 +191,8 @@ public sealed class CSharpDbDocumentStorageTests
     {
         var builder = new DbConnectionStringBuilder
         {
-            ["Data Source"] = store.DatabasePath
+            ["Data Source"] = store.DatabasePath,
+            ["Pooling"] = true
         };
         await using var connection = new CSharpDbConnection(builder.ConnectionString);
         await connection.OpenAsync(CancellationToken.None);

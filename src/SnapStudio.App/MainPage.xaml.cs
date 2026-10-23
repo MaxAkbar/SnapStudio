@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Numerics;
 using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -44,6 +45,7 @@ public sealed partial class MainPage : Page
     private Point _rectangleDragStart;
     private bool _isUpdatingBindings;
     private bool _isReadyForControlEvents;
+    private bool _newImageDialogIsOpen;
     private bool _historyPaneIsExpanded = true;
     private bool _historySplitterIsDragging;
     private Point _historySplitterStartPoint;
@@ -94,6 +96,7 @@ public sealed partial class MainPage : Page
             services.CaptureTargetSelector,
             services.CaptureWorkflow,
             services.ImageImportService,
+            services.ImageCreationService,
             services.ClipboardService,
             services.ExportDestinationPicker,
             services.ExportProviders,
@@ -150,6 +153,26 @@ public sealed partial class MainPage : Page
         }
 
         await OpenAndFitAsync(CancellationToken.None);
+    }
+
+    private async void NewImageKeyboardAccelerator_Invoked(
+        KeyboardAccelerator sender,
+        KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (TryHandleApplicationShortcut(args, ViewModel.CanCreateImage))
+        {
+            await ShowNewImageDialogAsync();
+        }
+    }
+
+    private async void PasteImageKeyboardAccelerator_Invoked(
+        KeyboardAccelerator sender,
+        KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (TryHandleApplicationShortcut(args, ViewModel.CanCreateImage))
+        {
+            await PasteImageAndFitAsync(CancellationToken.None);
+        }
     }
 
     private async void CopyKeyboardAccelerator_Invoked(
@@ -570,6 +593,95 @@ public sealed partial class MainPage : Page
     private async void OpenButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         await OpenAndFitAsync(CancellationToken.None);
+    }
+
+    private async void NewImageButton_Click(object sender, RoutedEventArgs e)
+    {
+        await ShowNewImageDialogAsync();
+    }
+
+    private async void PasteImageButton_Click(object sender, RoutedEventArgs e)
+    {
+        await PasteImageAndFitAsync(CancellationToken.None);
+    }
+
+    private async Task ShowNewImageDialogAsync()
+    {
+        if (_newImageDialogIsOpen || !ViewModel.CanCreateImage)
+        {
+            return;
+        }
+
+        _newImageDialogIsOpen = true;
+        try
+        {
+            var width = new NumberBox
+            {
+                Header = "Width (pixels)",
+                Value = 1280,
+                Minimum = 1,
+                Maximum = NewImageRequest.MaximumDimension,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            var height = new NumberBox
+            {
+                Header = "Height (pixels)",
+                Value = 720,
+                Minimum = 1,
+                Maximum = NewImageRequest.MaximumDimension,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            AutomationProperties.SetName(width, "New image width");
+            AutomationProperties.SetName(height, "New image height");
+            var errorText = new TextBlock { TextWrapping = TextWrapping.Wrap };
+            AutomationProperties.SetLiveSetting(errorText, AutomationLiveSetting.Polite);
+            var content = new StackPanel { Spacing = 12, MinWidth = 280 };
+            content.Children.Add(width);
+            content.Children.Add(height);
+            content.Children.Add(new TextBlock
+            {
+                Text = "The background will be transparent. Export as PNG to keep transparency.",
+                TextWrapping = TextWrapping.Wrap
+            });
+            content.Children.Add(errorText);
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = "New image",
+                Content = content,
+                PrimaryButtonText = "Create",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary
+            };
+
+            void ValidateSize()
+            {
+                string? error = NewImageRequest.GetValidationError(width.Value, height.Value);
+                errorText.Text = error ?? string.Empty;
+                errorText.Visibility = error is null ? Visibility.Collapsed : Visibility.Visible;
+                dialog.IsPrimaryButtonEnabled = error is null;
+            }
+
+            width.ValueChanged += (_, _) => ValidateSize();
+            height.ValueChanged += (_, _) => ValidateSize();
+            dialog.PrimaryButtonClick += (_, args) =>
+            {
+                ValidateSize();
+                args.Cancel = !dialog.IsPrimaryButtonEnabled;
+            };
+            ValidateSize();
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                await ViewModel.CreateBlankImageAsync(
+                    new NewImageRequest((int)width.Value, (int)height.Value), CancellationToken.None);
+                UpdateBindingsFromViewModel();
+                FitCurrentCanvas();
+            }
+        }
+        finally
+        {
+            _newImageDialogIsOpen = false;
+        }
     }
 
     private async void CopyButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -1367,6 +1479,13 @@ public sealed partial class MainPage : Page
         FitCurrentCanvas();
     }
 
+    private async Task PasteImageAndFitAsync(CancellationToken cancellationToken)
+    {
+        await ViewModel.PasteImageAsync(cancellationToken);
+        UpdateBindingsFromViewModel();
+        FitCurrentCanvas();
+    }
+
     private async Task CopyCurrentDocumentAsync(CancellationToken cancellationToken)
     {
         await ViewModel.CopyCurrentDocumentAsync(cancellationToken);
@@ -1437,6 +1556,7 @@ public sealed partial class MainPage : Page
     private bool ShouldIgnoreApplicationShortcut()
     {
         return !_isReadyForControlEvents
+            || _newImageDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen
             || IsEditableFocusedElement(FocusManager.GetFocusedElement(XamlRoot));
     }

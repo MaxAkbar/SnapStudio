@@ -12,6 +12,8 @@ param(
 
     [switch]$SkipBuild,
 
+    [switch]$CreateTransparentImage,
+
     [switch]$KeepAppOpen
 )
 
@@ -105,7 +107,12 @@ function Assert-ElementByName {
         [string]$Name
     )
 
-    $element = Find-ElementByName -Root $Root -Name $Name
+    $deadline = [DateTimeOffset]::UtcNow.AddSeconds(5)
+    do {
+        $element = Find-ElementByName -Root $Root -Name $Name
+        if ($null -ne $element) { break }
+        Start-Sleep -Milliseconds 100
+    } while ([DateTimeOffset]::UtcNow -lt $deadline)
     if ($null -eq $element) {
         throw "Expected UI Automation element '$Name' was not found."
     }
@@ -186,6 +193,8 @@ try {
     $requiredNames = @(
         "Capture",
         "Open image",
+        "New image",
+        "Paste image",
         "Copy current capture",
         "Export",
         "Search capture history",
@@ -224,6 +233,46 @@ try {
     foreach ($name in $requiredNames) {
         [void](Assert-ElementByName -Root $window -Name $name)
     }
+
+    $newImage = Assert-ElementByName -Root $window -Name "New image"
+    if (-not (Invoke-Element -Element $newImage)) {
+        throw "Unable to invoke the New image button."
+    }
+    Start-Sleep -Milliseconds 350
+    $newImageWidth = Assert-ElementByName -Root $window -Name "New image width"
+    $newImageHeight = Assert-ElementByName -Root $window -Name "New image height"
+    $createNewImage = Assert-ElementByName -Root $window -Name "Create"
+    $widthValue = $newImageWidth.GetCurrentPattern([System.Windows.Automation.RangeValuePattern]::Pattern)
+    $heightValue = $newImageHeight.GetCurrentPattern([System.Windows.Automation.RangeValuePattern]::Pattern)
+    $widthValue.SetValue(20000)
+    $heightValue.SetValue(20000)
+    Start-Sleep -Milliseconds 250
+    if ($createNewImage.Current.IsEnabled) {
+        throw "The New image dialog accepted dimensions above the pixel limit."
+    }
+    $widthValue.SetValue(1280)
+    $heightValue.SetValue(720)
+    Start-Sleep -Milliseconds 250
+    if (-not $createNewImage.Current.IsEnabled) {
+        throw "The New image dialog rejected valid dimensions."
+    }
+    if ($CreateTransparentImage) {
+        if (-not (Invoke-Element -Element $createNewImage)) {
+            throw "Unable to create the transparent image."
+        }
+        [void](Assert-ElementByName -Root $window -Name "Untitled image")
+        Start-Sleep -Milliseconds 500
+        if ($process.HasExited) {
+            throw "SnapStudio exited while displaying the transparent image."
+        }
+    }
+    else {
+        $cancelNewImage = Assert-ElementByName -Root $window -Name "Cancel"
+        if (-not (Invoke-Element -Element $cancelNewImage)) {
+            throw "Unable to cancel the New image dialog."
+        }
+    }
+    Start-Sleep -Milliseconds 250
 
     $unpinToolsPane = Assert-ElementByName -Root $window -Name "Unpin right tools pane"
     if (-not (Invoke-Element -Element $unpinToolsPane)) {

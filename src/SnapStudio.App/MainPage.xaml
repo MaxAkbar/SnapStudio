@@ -81,6 +81,14 @@
 
     <Page.KeyboardAccelerators>
         <KeyboardAccelerator
+            Key="N"
+            Modifiers="Control"
+            Invoked="NewImageKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator
+            Key="V"
+            Modifiers="Control"
+            Invoked="PasteImageKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator
             Key="R"
             Modifiers="Control"
             Invoked="CaptureRegionKeyboardAccelerator_Invoked" />
@@ -243,21 +251,50 @@
                     </StackPanel>
                 </Button>
 
-                <Button
-                    Grid.Column="1"
-                    AccessKey="O"
-                    AutomationProperties.AcceleratorKey="Ctrl+O"
-                    AutomationProperties.HelpText="Open an image file into the workspace."
-                    AutomationProperties.Name="Open image"
-                    Click="OpenButton_Click"
-                    IsEnabled="{x:Bind ViewModel.CanOpenImageFile, Mode=OneWay}"
-                    Style="{StaticResource TopCommandButtonStyle}"
-                    ToolTipService.ToolTip="Open">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <SymbolIcon Symbol="OpenFile" />
-                        <TextBlock Text="Open" />
-                    </StackPanel>
-                </Button>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button
+                        AccessKey="N"
+                        AutomationProperties.AcceleratorKey="Ctrl+N"
+                        AutomationProperties.HelpText="Create a new image with a transparent background."
+                        AutomationProperties.Name="New image"
+                        Click="NewImageButton_Click"
+                        IsEnabled="{x:Bind ViewModel.CanCreateImage, Mode=OneWay}"
+                        Style="{StaticResource TopCommandButtonStyle}"
+                        ToolTipService.ToolTip="New image (Ctrl+N)">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <SymbolIcon Symbol="Add" />
+                            <TextBlock Text="New" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        AccessKey="O"
+                        AutomationProperties.AcceleratorKey="Ctrl+O"
+                        AutomationProperties.HelpText="Open an image file into the workspace."
+                        AutomationProperties.Name="Open image"
+                        Click="OpenButton_Click"
+                        IsEnabled="{x:Bind ViewModel.CanOpenImageFile, Mode=OneWay}"
+                        Style="{StaticResource TopCommandButtonStyle}"
+                        ToolTipService.ToolTip="Open (Ctrl+O)">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <SymbolIcon Symbol="OpenFile" />
+                            <TextBlock Text="Open" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        AccessKey="V"
+                        AutomationProperties.AcceleratorKey="Ctrl+V"
+                        AutomationProperties.HelpText="Paste a clipboard image as a new document."
+                        AutomationProperties.Name="Paste image"
+                        Click="PasteImageButton_Click"
+                        IsEnabled="{x:Bind ViewModel.CanCreateImage, Mode=OneWay}"
+                        Style="{StaticResource TopCommandButtonStyle}"
+                        ToolTipService.ToolTip="Paste image (Ctrl+V)">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <SymbolIcon Symbol="Paste" />
+                            <TextBlock Text="Paste" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
 
                 <Button
                     Grid.Column="2"
@@ -1085,6 +1122,7 @@
                                     PointerMoved="CanvasSurface_PointerMoved"
                                     PointerPressed="CanvasSurface_PointerPressed"
                                     PointerReleased="CanvasSurface_PointerReleased">
+                                    <controls:TransparencyBackground />
                                     <Image
                                         AutomationProperties.HelpText="{x:Bind ViewModel.CurrentDocumentDetail, Mode=OneWay}"
                                         AutomationProperties.Name="{x:Bind ViewModel.CurrentDocumentTitle, Mode=OneWay}"

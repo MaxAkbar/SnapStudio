@@ -96,6 +96,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     private readonly DocumentAnnotationEditor? _annotationEditor;
     private readonly ICaptureWorkflow? _captureWorkflow;
     private readonly IImageImportService? _imageImportService;
+    private readonly IImageCreationService? _imageCreationService;
     private readonly IClipboardService? _clipboardService;
     private readonly DispatcherQueue? _dispatcherQueue;
     private readonly IDocumentRepository? _documentRepository;
@@ -202,6 +203,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         ICaptureTargetSelector captureTargetSelector,
         ICaptureWorkflow captureWorkflow,
         IImageImportService imageImportService,
+        IImageCreationService imageCreationService,
         IClipboardService clipboardService,
         IExportDestinationPicker exportDestinationPicker,
         IReadOnlyDictionary<ExportFormat, IExportProvider> exportProviders,
@@ -235,6 +237,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         _captureTargetSelector = captureTargetSelector;
         _captureWorkflow = captureWorkflow;
         _imageImportService = imageImportService;
+        _imageCreationService = imageCreationService;
         _clipboardService = clipboardService;
         _exportDestinationPicker = exportDestinationPicker;
         _exportProviders = exportProviders;
@@ -969,7 +972,16 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     public bool CanPinCurrentDocument => HasCurrentDocument;
 
     public bool CanOpenImageFile => _imageImportService is not null
-        && _documentRepository is not null;
+        && _documentRepository is not null
+        && !_captureInProgress
+        && !_screenRecordingOperationInProgress
+        && !IsScreenRecording;
+
+    public bool CanCreateImage => _imageCreationService is not null
+        && _documentRepository is not null
+        && !_captureInProgress
+        && !_screenRecordingOperationInProgress
+        && !IsScreenRecording;
 
     public string WorkspaceTitleText
     {
@@ -2454,44 +2466,66 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         await OpenDocumentAsync(new DocumentId(parsed), cancellationToken).ConfigureAwait(true);
     }
 
-    public async Task OpenImageFileAsync(CancellationToken cancellationToken)
+    public Task OpenImageFileAsync(CancellationToken cancellationToken) => CanOpenImageFile
+        ? OpenImageSourceAsync(_imageImportService!.ImportAsync, "Open", cancellationToken)
+        : Task.CompletedTask;
+
+    public Task PasteImageAsync(CancellationToken cancellationToken) => CanCreateImage
+        ? OpenImageSourceAsync(_imageCreationService!.PasteAsync, "Paste", cancellationToken)
+        : Task.CompletedTask;
+
+    public Task CreateBlankImageAsync(NewImageRequest request, CancellationToken cancellationToken) => CanCreateImage
+        ? OpenImageSourceAsync(
+            token => _imageCreationService!.CreateBlankAsync(request, token),
+            "New image",
+            cancellationToken)
+        : Task.CompletedTask;
+
+    private async Task OpenImageSourceAsync(
+        Func<CancellationToken, Task<CaptureOutcome>> getImage,
+        string operation,
+        CancellationToken cancellationToken)
     {
-        if (_imageImportService is null || _documentRepository is null)
+        SetCaptureInProgress(true);
+        CaptureNoticeIsOpen = false;
+        try
         {
-            ShowCaptureNotice(
-                "Open unavailable",
-                "Image import is not available in this session.",
-                InfoBarSeverity.Warning);
-            return;
-        }
-
-        CaptureOutcome outcome = await _imageImportService
-            .ImportAsync(cancellationToken)
-            .ConfigureAwait(true);
-
-        if (!outcome.Succeeded || outcome.Capture is not CaptureResult capture)
-        {
-            if (outcome.Failure?.Reason == CaptureFailureReason.Cancelled)
+            CaptureOutcome outcome = await getImage(cancellationToken).ConfigureAwait(true);
+            if (!outcome.Succeeded || outcome.Capture is not CaptureResult capture)
             {
-                StatusText = "Open cancelled.";
+                if (outcome.Failure?.Reason == CaptureFailureReason.Cancelled)
+                {
+                    StatusText = $"{operation} cancelled.";
+                    return;
+                }
+
+                string message = outcome.Failure?.Message ?? "The image could not be opened.";
+                StatusText = $"{operation} failed: {message}";
+                ShowCaptureNotice($"{operation} failed", message,
+                    outcome.Failure?.Exception is null ? InfoBarSeverity.Warning : InfoBarSeverity.Error);
                 return;
             }
 
-            string message = outcome.Failure?.Message ?? "The selected image could not be opened.";
-            StatusText = $"Open failed: {message}";
-            ShowCaptureNotice(
-                "Open failed",
-                message,
-                InfoBarSeverity.Error);
-            return;
+            CaptureDocument document = await _documentRepository!
+                .CreateFromCaptureAsync(capture, cancellationToken)
+                .ConfigureAwait(true);
+            await RefreshRecentDocumentsAsync(cancellationToken).ConfigureAwait(true);
+            await OpenDocumentAsync(document.Id, cancellationToken).ConfigureAwait(true);
+            StatusText = $"Opened {ResolveDocumentTitle(document)}.";
         }
-
-        CaptureDocument document = await _documentRepository
-            .CreateFromCaptureAsync(capture, cancellationToken)
-            .ConfigureAwait(true);
-        await RefreshRecentDocumentsAsync(cancellationToken).ConfigureAwait(true);
-        await OpenDocumentAsync(document.Id, cancellationToken).ConfigureAwait(true);
-        StatusText = $"Opened {ResolveDocumentTitle(document)}.";
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            StatusText = $"{operation} cancelled.";
+        }
+        catch (Exception exception)
+        {
+            StatusText = $"{operation} failed: {exception.Message}";
+            ShowCaptureNotice($"{operation} failed", exception.Message, InfoBarSeverity.Error);
+        }
+        finally
+        {
+            SetCaptureInProgress(false);
+        }
     }
 
     public void SearchRecentDocuments(string searchText)
@@ -4070,7 +4104,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             DocumentHistoryFilter.Imports => string.Equals(
                 document.SourceKind,
                 "import",
-                StringComparison.OrdinalIgnoreCase),
+                StringComparison.OrdinalIgnoreCase)
+                || string.Equals(document.SourceKind, "clipboard", StringComparison.OrdinalIgnoreCase),
             DocumentHistoryFilter.Scrolling => string.Equals(
                 document.SourceKind,
                 "scrollingcapture",
@@ -4474,6 +4509,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
 
         _captureInProgress = isInProgress;
+        OnPropertyChanged(nameof(CanCreateImage));
+        OnPropertyChanged(nameof(CanOpenImageFile));
         OnPropertyChanged(nameof(CanCaptureScrolling));
         OnPropertyChanged(nameof(CanToggleScreenRecording));
     }
@@ -4486,6 +4523,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
 
         _screenRecordingOperationInProgress = isInProgress;
+        OnPropertyChanged(nameof(CanCreateImage));
+        OnPropertyChanged(nameof(CanOpenImageFile));
         OnPropertyChanged(nameof(CanToggleScreenRecording));
         OnPropertyChanged(nameof(CanChangeScreenRecordingAudioMode));
     }
@@ -4924,6 +4963,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     private void NotifyScreenRecordingStateChanged()
     {
+        OnPropertyChanged(nameof(CanCreateImage));
+        OnPropertyChanged(nameof(CanOpenImageFile));
         OnPropertyChanged(nameof(IsScreenRecording));
         OnPropertyChanged(nameof(ScreenRecordingCommandText));
         OnPropertyChanged(nameof(ScreenRecordingAutomationName));
