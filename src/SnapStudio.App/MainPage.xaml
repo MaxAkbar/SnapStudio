@@ -77,6 +77,26 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="7" />
         </Style>
+
+        <Style x:Key="LayerRowButtonStyle" TargetType="Button">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+
+        <Style x:Key="LayerRowIconButtonStyle" TargetType="Button" BasedOn="{StaticResource LayerRowButtonStyle}">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
     </Page.Resources>
 
     <Page.KeyboardAccelerators>
@@ -495,118 +515,222 @@
                     </Grid.RowDefinitions>
                     <ListView
                         AutomationProperties.Name="Annotation layers"
+                        HorizontalAlignment="Stretch"
                         ItemsSource="{x:Bind ViewModel.AnnotationLayers}"
                         MaxHeight="220"
+                        Padding="0"
+                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                        ScrollViewer.HorizontalScrollMode="Disabled"
                         SelectionMode="None">
+                        <ListView.Resources>
+                            <Thickness x:Key="ExpanderHeaderPadding">0</Thickness>
+                            <Thickness x:Key="ExpanderChevronMargin">0</Thickness>
+                            <Thickness x:Key="ExpanderHeaderBorderThickness">0</Thickness>
+                            <Thickness x:Key="ExpanderContentDownBorderThickness">0</Thickness>
+                            <x:Double x:Key="ExpanderChevronButtonSize">24</x:Double>
+                            <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="Transparent" />
+                            <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="Transparent" />
+                            <SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="Transparent" />
+                            <SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="Transparent" />
+                        </ListView.Resources>
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="Padding" Value="0" />
-                                <Setter Property="Margin" Value="0,0,0,2" />
+                                <Setter Property="Margin" Value="0,0,0,4" />
                                 <Setter Property="MinHeight" Value="0" />
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                             </Style>
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="items:AnnotationLayerItem">
-                                <Expander
-                                    AutomationProperties.Name="{x:Bind TreeAutomationName}"
-                                    Collapsed="AnnotationLayer_Collapsed"
-                                    Expanding="AnnotationLayer_Expanding"
-                                    IsExpanded="{x:Bind IsExpanded}">
-                                    <Expander.Header>
-                                    <Grid ColumnSpacing="3">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Button
-                                            AutomationProperties.Name="{x:Bind SelectionAutomationName}"
-                                            Background="{x:Bind BackgroundBrush}"
-                                            BorderBrush="{StaticResource SnapStrokeBrush}"
-                                            BorderThickness="1"
-                                            Click="AnnotationLayer_Click"
-                                            CornerRadius="6"
-                                            HorizontalContentAlignment="Stretch"
-                                            MinHeight="32"
-                                            Padding="5,2">
-                                            <Grid ColumnSpacing="5">
+                                <Grid>
+                                    <Grid.ContextFlyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="{x:Bind Name}" IsEnabled="False" />
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem Text="Rename layer…" DataContext="{x:Bind}" Click="RenameLayerMenuItem_Click">
+                                                <MenuFlyoutItem.Icon><SymbolIcon Symbol="Edit" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Text="Move up" DataContext="{x:Bind}" Tag="1" IsEnabled="{x:Bind CanMoveUp}" Click="MoveLayerMenuItem_Click">
+                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70E;" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Text="Move down" DataContext="{x:Bind}" Tag="-1" IsEnabled="{x:Bind CanMoveDown}" Click="MoveLayerMenuItem_Click">
+                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70D;" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutSubItem Text="{x:Bind ColorMenuText}">
+                                                <MenuFlyoutItem Text="None" DataContext="{x:Bind}" Tag="None" Click="LayerColorMenuItem_Click">
+                                                    <MenuFlyoutItem.Icon><SymbolIcon Symbol="Clear" /></MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Red" DataContext="{x:Bind}" Tag="Red" Click="LayerColorMenuItem_Click">
+                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91F;" Foreground="#EF7070" /></MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Orange" DataContext="{x:Bind}" Tag="Orange" Click="LayerColorMenuItem_Click">
+                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91F;" Foreground="#F5A95B" /></MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Yellow" DataContext="{x:Bind}" Tag="Yellow" Click="LayerColorMenuItem_Click">
+                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91F;" Foreground="#F0D05D" /></MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Green" DataContext="{x:Bind}" Tag="Green" Click="LayerColorMenuItem_Click">
+                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91F;" Foreground="#71CA96" /></MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Blue" DataContext="{x:Bind}" Tag="Blue" Click="LayerColorMenuItem_Click">
+                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91F;" Foreground="#69AEF5" /></MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Purple" DataContext="{x:Bind}" Tag="Purple" Click="LayerColorMenuItem_Click">
+                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91F;" Foreground="#BA8FEB" /></MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Gray" DataContext="{x:Bind}" Tag="Gray" Click="LayerColorMenuItem_Click">
+                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91F;" Foreground="#A9B2BE" /></MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                            </MenuFlyoutSubItem>
+                                        </MenuFlyout>
+                                    </Grid.ContextFlyout>
+                                    <Border
+                                        Height="48"
+                                        VerticalAlignment="Top"
+                                        Background="{x:Bind BackgroundBrush}"
+                                        BorderBrush="{x:Bind BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4" />
+                                    <Border
+                                        Width="3"
+                                        Height="34"
+                                        Margin="0,7,0,0"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Background="{x:Bind IndicatorBrush}"
+                                        CornerRadius="2"
+                                        Visibility="{x:Bind IndicatorVisibility}" />
+                                    <Expander
+                                        AutomationProperties.Name="{x:Bind TreeAutomationName}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Collapsed="AnnotationLayer_Collapsed"
+                                        Expanding="AnnotationLayer_Expanding"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        IsExpanded="{x:Bind IsExpanded}"
+                                        MinHeight="0"
+                                        MinWidth="0"
+                                        Padding="0">
+                                        <Expander.Header>
+                                            <Grid Height="48" Padding="4,0,0,0">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="18" />
+                                                    <ColumnDefinition Width="26" />
                                                     <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="26" />
                                                 </Grid.ColumnDefinitions>
-                                                <SymbolIcon Symbol="Folder" Foreground="{StaticResource SnapAccentBrush}" />
-                                                <StackPanel Grid.Column="1">
-                                                    <TextBlock FontSize="11" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock FontSize="9" Foreground="{StaticResource SnapMutedBrush}" Text="{x:Bind ObjectCount}" />
-                                                </StackPanel>
-                                            </Grid>
-                                        </Button>
-                                        <Button
-                                            Grid.Column="1"
-                                            AutomationProperties.Name="{x:Bind MoveAutomationName}"
-                                            Click="MoveSelectedObjectToLayer_Click"
-                                            FontSize="10"
-                                            IsEnabled="{x:Bind CanMoveSelectedHere}"
-                                            MinWidth="36"
-                                            Padding="3,0"
-                                            ToolTipService.ToolTip="{x:Bind MoveAutomationName}"
-                                            Visibility="{x:Bind MoveVisibility}">
-                                            <TextBlock Text="Move" />
-                                        </Button>
-                                        <Button
-                                            Grid.Column="2"
-                                            AutomationProperties.Name="{x:Bind VisibilityAutomationName}"
-                                            Background="{StaticResource SnapPanelAltBrush}"
-                                            BorderBrush="{StaticResource SnapStrokeBrush}"
-                                            BorderThickness="1"
-                                            Click="AnnotationLayerVisibility_Click"
-                                            CornerRadius="6"
-                                            FontSize="11"
-                                            MinWidth="40"
-                                            Padding="5,0"
-                                            ToolTipService.ToolTip="{x:Bind VisibilityAutomationName}">
-                                            <TextBlock Text="{x:Bind VisibilityText}" />
-                                        </Button>
-                                    </Grid>
-                                    </Expander.Header>
-                                    <ItemsControl ItemsSource="{x:Bind Objects}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="items:AnnotationOverlayItem">
-                                                <Grid ColumnSpacing="4" Margin="16,0,0,2">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Button
-                                                        AutomationProperties.Name="{x:Bind ObjectAutomationName}"
-                                                        Background="{x:Bind LayerBackgroundBrush}"
-                                                        BorderBrush="{StaticResource SnapStrokeBrush}"
-                                                        BorderThickness="1"
-                                                        Click="AnnotationObject_Click"
-                                                        CornerRadius="6"
-                                                        HorizontalContentAlignment="Stretch"
-                                                        MinHeight="32"
-                                                        Padding="7,3">
-                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <TextBlock Foreground="{StaticResource SnapAccentBrush}" Text="{x:Bind LayerGlyph}" />
-                                                            <TextBlock FontSize="11" Text="{x:Bind LayerLabel}" TextTrimming="CharacterEllipsis" />
+                                                <Button
+                                                    AutomationProperties.Name="{x:Bind VisibilityAutomationName}"
+                                                    Click="AnnotationLayerVisibility_Click"
+                                                    Style="{StaticResource LayerRowIconButtonStyle}"
+                                                    ToolTipService.ToolTip="{x:Bind VisibilityAutomationName}">
+                                                    <Grid Width="18" Height="18">
+                                                        <SymbolIcon Symbol="View" />
+                                                        <Path
+                                                            Data="M 1,1 L 17,17"
+                                                            Stroke="{StaticResource SnapMutedBrush}"
+                                                            StrokeThickness="2"
+                                                            Visibility="{x:Bind HiddenVisibility}" />
+                                                    </Grid>
+                                                </Button>
+                                                <Button
+                                                    Grid.Column="1"
+                                                    AutomationProperties.HelpText="{x:Bind SelectionHelpText}"
+                                                    AutomationProperties.Name="{x:Bind SelectionAutomationName}"
+                                                    Click="AnnotationLayer_Click"
+                                                    Style="{StaticResource LayerRowButtonStyle}"
+                                                    ToolTipService.ToolTip="{x:Bind SelectionHelpText}">
+                                                    <Grid ColumnSpacing="6">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="28" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border
+                                                            Height="28"
+                                                            VerticalAlignment="Center"
+                                                            Background="{StaticResource SnapSurfaceBrush}"
+                                                            BorderBrush="{x:Bind BorderBrush}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="3">
+                                                            <SymbolIcon Symbol="Folder" Foreground="{x:Bind IndicatorBrush}" />
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                            <TextBlock FontSize="12" FontWeight="SemiBold" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                                            <TextBlock FontSize="10" Foreground="{StaticResource SnapMutedBrush}" Text="{x:Bind ObjectCount}" />
                                                         </StackPanel>
-                                                    </Button>
-                                                    <Button
-                                                        Grid.Column="1"
-                                                        AutomationProperties.Name="{x:Bind ObjectVisibilityAutomationName}"
-                                                        Click="AnnotationObjectVisibility_Click"
-                                                        FontSize="10"
-                                                        MinWidth="38"
-                                                        Padding="4,0">
-                                                        <TextBlock Text="{x:Bind LayerVisibilityText}" />
-                                                    </Button>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </Expander>
+                                                    </Grid>
+                                                </Button>
+                                                <Button
+                                                    Grid.Column="2"
+                                                    AutomationProperties.Name="{x:Bind MoveAutomationName}"
+                                                    Click="MoveSelectedObjectToLayer_Click"
+                                                    IsEnabled="{x:Bind CanMoveSelectedHere}"
+                                                    Style="{StaticResource LayerRowIconButtonStyle}"
+                                                    ToolTipService.ToolTip="{x:Bind MoveAutomationName}"
+                                                    Visibility="{x:Bind MoveVisibility}">
+                                                    <SymbolIcon Symbol="Forward" />
+                                                </Button>
+                                            </Grid>
+                                        </Expander.Header>
+                                        <ItemsControl HorizontalAlignment="Stretch" ItemsSource="{x:Bind Objects}" Margin="0,2,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="items:AnnotationOverlayItem">
+                                                    <Grid Height="36" Margin="12,0,0,2">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="30" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border
+                                                            Grid.ColumnSpan="2"
+                                                            Background="{x:Bind LayerBackgroundBrush}"
+                                                            BorderBrush="{x:Bind LayerBorderBrush}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="3" />
+                                                        <Border
+                                                            Width="3"
+                                                            Height="24"
+                                                            HorizontalAlignment="Left"
+                                                            Background="{StaticResource SnapAccentBrush}"
+                                                            CornerRadius="2"
+                                                            Visibility="{x:Bind SelectionVisibility}" />
+                                                        <Button
+                                                            AutomationProperties.Name="{x:Bind ObjectVisibilityAutomationName}"
+                                                            Click="AnnotationObjectVisibility_Click"
+                                                            Style="{StaticResource LayerRowIconButtonStyle}"
+                                                            ToolTipService.ToolTip="{x:Bind ObjectVisibilityAutomationName}">
+                                                            <Grid Width="18" Height="18">
+                                                                <SymbolIcon Symbol="View" />
+                                                                <Path
+                                                                    Data="M 1,1 L 17,17"
+                                                                    Stroke="{StaticResource SnapMutedBrush}"
+                                                                    StrokeThickness="2"
+                                                                    Visibility="{x:Bind HiddenVisibility}" />
+                                                            </Grid>
+                                                        </Button>
+                                                        <Button
+                                                            Grid.Column="1"
+                                                            AutomationProperties.Name="{x:Bind ObjectAutomationName}"
+                                                            Click="AnnotationObject_Click"
+                                                            Style="{StaticResource LayerRowButtonStyle}"
+                                                            ToolTipService.ToolTip="{x:Bind LayerLabel}">
+                                                            <Grid ColumnSpacing="6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="24" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Foreground="{StaticResource SnapAccentBrush}" Text="{x:Bind LayerGlyph}" />
+                                                                <TextBlock Grid.Column="1" FontSize="12" Text="{x:Bind LayerLabel}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                                            </Grid>
+                                                        </Button>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Expander>
+                                </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>

@@ -68,11 +68,25 @@ public sealed class AnnotationObject
     public AnnotationStyle Style { get; set; } = AnnotationStyle.Default;
 }
 
+public enum LayerColorLabel
+{
+    None,
+    Red,
+    Orange,
+    Yellow,
+    Green,
+    Blue,
+    Purple,
+    Gray
+}
+
 public sealed class AnnotationLayer
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
     public string Name { get; set; } = "Layer 1";
+
+    public LayerColorLabel ColorLabel { get; set; }
 
     public bool IsVisible { get; set; } = true;
 }

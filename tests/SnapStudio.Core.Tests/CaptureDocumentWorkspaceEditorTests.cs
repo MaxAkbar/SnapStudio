@@ -50,7 +50,7 @@ public sealed class CaptureDocumentWorkspaceEditorTests
                     new Dictionary<string, string> { ["width"] = "50" })
             ]
         };
-        var layer = new AnnotationLayer { Name = "Notes", IsVisible = false };
+        var layer = new AnnotationLayer { Name = "Notes", ColorLabel = LayerColorLabel.Blue, IsVisible = false };
         source.Layers = [layer];
         source.Annotations[0].LayerId = layer.Id;
 
@@ -67,6 +67,7 @@ public sealed class CaptureDocumentWorkspaceEditorTests
         Assert.AreEqual(layer.Id, duplicate.Annotations[0].LayerId);
         Assert.AreEqual(layer.Id, Assert.ContainsSingle(duplicate.Layers).Id);
         Assert.IsFalse(duplicate.Layers[0].IsVisible);
+        Assert.AreEqual(LayerColorLabel.Blue, duplicate.Layers[0].ColorLabel);
         Assert.ContainsSingle(duplicate.DestructiveOperations);
         Assert.AreEqual(default, duplicate.Metadata.CreatedAtUtc);
 

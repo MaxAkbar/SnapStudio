@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Numerics;
 using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.UI.Xaml.Automation;
@@ -46,6 +47,7 @@ public sealed partial class MainPage : Page
     private bool _isUpdatingBindings;
     private bool _isReadyForControlEvents;
     private bool _newImageDialogIsOpen;
+    private bool _layerRenameDialogIsOpen;
     private bool _historyPaneIsExpanded = true;
     private bool _historySplitterIsDragging;
     private Point _historySplitterStartPoint;
@@ -481,6 +483,73 @@ public sealed partial class MainPage : Page
         }
     }
 
+    private async void RenameLayerMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (_layerRenameDialogIsOpen || _newImageDialogIsOpen
+            || sender is not FrameworkElement { DataContext: AnnotationLayerItem item })
+        {
+            return;
+        }
+
+        _layerRenameDialogIsOpen = true;
+        try
+        {
+            var name = new TextBox
+            {
+                Header = "Layer name",
+                Text = item.Name,
+                MaxLength = RenameAnnotationLayerCommand.MaximumNameLength,
+                MinWidth = 280
+            };
+            AutomationProperties.SetName(name, "Layer name");
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = "Rename layer",
+                Content = name,
+                PrimaryButtonText = "Rename",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(name.Text)
+            };
+            name.TextChanged += (_, _) => dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(name.Text);
+            dialog.Opened += (_, _) =>
+            {
+                name.Focus(FocusState.Programmatic);
+                name.SelectAll();
+            };
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                await ViewModel.RenameLayerAsync(item.Id, name.Text, CancellationToken.None);
+                UpdateBindingsFromViewModel();
+            }
+        }
+        finally
+        {
+            _layerRenameDialogIsOpen = false;
+        }
+    }
+
+    private async void MoveLayerMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: AnnotationLayerItem item, Tag: string tag }
+            && int.TryParse(tag, NumberStyles.Integer, CultureInfo.InvariantCulture, out int direction))
+        {
+            await ViewModel.MoveLayerAsync(item.Id, direction, CancellationToken.None);
+            UpdateBindingsFromViewModel();
+        }
+    }
+
+    private async void LayerColorMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: AnnotationLayerItem item, Tag: string tag }
+            && Enum.TryParse(tag, out LayerColorLabel color) && Enum.IsDefined(color))
+        {
+            await ViewModel.SetLayerColorAsync(item.Id, color, CancellationToken.None);
+            UpdateBindingsFromViewModel();
+        }
+    }
+
     private void AnnotationLayer_Expanding(Expander sender, ExpanderExpandingEventArgs e)
     {
         if (sender.DataContext is AnnotationLayerItem item)
@@ -607,7 +676,7 @@ public sealed partial class MainPage : Page
 
     private async Task ShowNewImageDialogAsync()
     {
-        if (_newImageDialogIsOpen || !ViewModel.CanCreateImage)
+        if (_newImageDialogIsOpen || _layerRenameDialogIsOpen || !ViewModel.CanCreateImage)
         {
             return;
         }
@@ -1557,6 +1626,7 @@ public sealed partial class MainPage : Page
     {
         return !_isReadyForControlEvents
             || _newImageDialogIsOpen
+            || _layerRenameDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen
             || IsEditableFocusedElement(FocusManager.GetFocusedElement(XamlRoot));
     }

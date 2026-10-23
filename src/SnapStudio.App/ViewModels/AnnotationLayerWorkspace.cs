@@ -113,6 +113,54 @@ internal sealed class AnnotationLayerWorkspace
         return layer;
     }
 
+    public async ValueTask<bool> RenameLayerAsync(
+        CaptureDocument document, Guid layerId, string name,
+        IEditCommandStack editStack, CancellationToken cancellationToken)
+    {
+        AnnotationLayer? layer = document.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
+        if (layer is null || layer.Name == name.Trim())
+        {
+            return false;
+        }
+
+        await editStack.ExecuteAsync(document, new RenameAnnotationLayerCommand(layerId, name), cancellationToken)
+            .ConfigureAwait(false);
+        ActiveLayerId = layerId;
+        return true;
+    }
+
+    public async ValueTask<bool> MoveLayerAsync(
+        CaptureDocument document, Guid layerId, int direction,
+        IEditCommandStack editStack, CancellationToken cancellationToken)
+    {
+        int index = document.Layers.FindIndex(layer => layer.Id == layerId);
+        if (index < 0 || index + direction < 0 || index + direction >= document.Layers.Count)
+        {
+            return false;
+        }
+
+        await editStack.ExecuteAsync(document, new MoveAnnotationLayerCommand(layerId, direction), cancellationToken)
+            .ConfigureAwait(false);
+        ActiveLayerId = layerId;
+        return true;
+    }
+
+    public async ValueTask<bool> SetLayerColorAsync(
+        CaptureDocument document, Guid layerId, LayerColorLabel color,
+        IEditCommandStack editStack, CancellationToken cancellationToken)
+    {
+        AnnotationLayer? layer = document.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
+        if (layer is null || layer.ColorLabel == color)
+        {
+            return false;
+        }
+
+        await editStack.ExecuteAsync(document, new SetLayerColorCommand(layerId, color), cancellationToken)
+            .ConfigureAwait(false);
+        ActiveLayerId = layerId;
+        return true;
+    }
+
     public async ValueTask<bool> RemoveLayerAsync(
         CaptureDocument document,
         Guid layerId,
@@ -237,8 +285,9 @@ internal sealed class AnnotationLayerWorkspace
             }
         }
 
-        foreach (AnnotationLayer layer in document.Layers.AsEnumerable().Reverse())
+        for (int index = document.Layers.Count - 1; index >= 0; index--)
         {
+            AnnotationLayer layer = document.Layers[index];
             itemsByLayer.TryGetValue(layer.Id, out List<AnnotationOverlayItem>? items);
             Layers.Add(new AnnotationLayerItem(
                 layer,
@@ -247,7 +296,9 @@ internal sealed class AnnotationLayerWorkspace
                 selectedAnnotationId is Guid annotationId
                     && document.Annotations.Any(annotation => annotation.Id == annotationId
                         && annotation.LayerId != layer.Id),
-                !_collapsedLayerIds.Contains(layer.Id)));
+                !_collapsedLayerIds.Contains(layer.Id),
+                index < document.Layers.Count - 1,
+                index > 0));
         }
     }
 }

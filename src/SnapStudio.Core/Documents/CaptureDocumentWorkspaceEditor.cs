@@ -46,6 +46,7 @@ public static class CaptureDocumentWorkspaceEditor
             {
                 Id = layer.Id,
                 Name = layer.Name,
+                ColorLabel = layer.ColorLabel,
                 IsVisible = layer.IsVisible
             }).ToList(),
             DestructiveOperations = CloneDestructiveOperations(source.DestructiveOperations),

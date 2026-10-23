@@ -3303,6 +3303,55 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         await SaveCurrentDocumentAsync($"{layer.Name} added.", cancellationToken).ConfigureAwait(true);
     }
 
+    public async Task RenameLayerAsync(Guid layerId, string name, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
+        {
+            return;
+        }
+
+        bool changed = await _layerWorkspace.RenameLayerAsync(
+            _currentDocument, layerId, name, _editCommandStack, cancellationToken).ConfigureAwait(true);
+        await CompleteLayerChangeAsync(changed, "Layer renamed.", cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task MoveLayerAsync(Guid layerId, int direction, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
+        {
+            return;
+        }
+
+        bool changed = await _layerWorkspace.MoveLayerAsync(
+            _currentDocument, layerId, direction, _editCommandStack, cancellationToken).ConfigureAwait(true);
+        await CompleteLayerChangeAsync(changed, direction > 0 ? "Layer moved up." : "Layer moved down.", cancellationToken)
+            .ConfigureAwait(true);
+    }
+
+    public async Task SetLayerColorAsync(Guid layerId, LayerColorLabel color, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
+        {
+            return;
+        }
+
+        bool changed = await _layerWorkspace.SetLayerColorAsync(
+            _currentDocument, layerId, color, _editCommandStack, cancellationToken).ConfigureAwait(true);
+        await CompleteLayerChangeAsync(changed, "Layer color updated.", cancellationToken).ConfigureAwait(true);
+    }
+
+    private async Task CompleteLayerChangeAsync(bool changed, string status, CancellationToken cancellationToken)
+    {
+        if (!changed)
+        {
+            return;
+        }
+
+        _annotationSelection.Clear();
+        ApplyAnnotationToolDefaultsWhenUnselected();
+        await SaveCurrentDocumentAsync(status, cancellationToken).ConfigureAwait(true);
+    }
+
     public async Task DeleteLayerAsync(Guid layerId, CancellationToken cancellationToken)
     {
         if (_currentDocument is null || _documentRepository is null || _editCommandStack is null)
