@@ -81,6 +81,54 @@ public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
             cancellationToken);
     }
 
+    public async ValueTask<AnnotationObject> DuplicateAsync(CaptureDocument document, AnnotationObject annotation, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(annotation);
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureCurrentAnnotation(document, annotation);
+        var copy = new AnnotationObject
+        {
+            Kind = annotation.Kind,
+            LayerId = annotation.LayerId,
+            IsVisible = annotation.IsVisible,
+            Bounds = AnnotationBoundsEditor.Move(annotation.Bounds, 10, 10,
+                new SizeD(document.SourceImage.Width, document.SourceImage.Height)),
+            Text = annotation.Text,
+            StrokePoints = [.. annotation.StrokePoints],
+            FillRectangles = [.. annotation.FillRectangles],
+            Image = annotation.Image?.DeepCopy(),
+            Style = annotation.Style
+        };
+        await editStack.ExecuteAsync(document, new AddAnnotationCommand(copy, "Duplicate Object"), cancellationToken).ConfigureAwait(false);
+        return copy;
+    }
+
+    public async ValueTask<bool> NudgeAsync(CaptureDocument document, AnnotationObject annotation, double deltaX, double deltaY, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(annotation);
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureCurrentAnnotation(document, annotation);
+        if (!double.IsFinite(deltaX) || !double.IsFinite(deltaY)) throw new ArgumentOutOfRangeException(nameof(deltaX));
+        RectD bounds = AnnotationBoundsEditor.Nudge(annotation.Bounds, deltaX, deltaY,
+            new SizeD(document.SourceImage.Width, document.SourceImage.Height));
+        if (bounds == annotation.Bounds) return false;
+        await SetBoundsAsync(document, annotation, bounds, "Nudge Object", cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    public async ValueTask<bool> ArrangeInLayerAsync(CaptureDocument document, AnnotationObject annotation, bool bringToFront, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(annotation);
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureCurrentAnnotation(document, annotation);
+        if (DocumentLayers.FindAdjacentAnnotationIndex(document, annotation.Id, bringToFront ? 1 : -1) < 0) return false;
+        await editStack.ExecuteAsync(document, new ArrangeAnnotationInLayerCommand(annotation.Id, bringToFront), cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
     public ValueTask SetTextAsync(
         CaptureDocument document,
         AnnotationObject annotation,

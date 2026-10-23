@@ -42,6 +42,18 @@ public static class AnnotationBoundsEditor
             bounds.Height);
     }
 
+    public static RectD Nudge(RectD bounds, double deltaX, double deltaY, SizeD sourceSize)
+    {
+        // Preserve clipped image/stroke geometry and allow it back in gradually,
+        // without snapping or stretching on the first one-pixel keyboard move.
+        RectD normalized = Normalize(bounds);
+        return bounds with
+        {
+            X = bounds.X + Math.Clamp(deltaX, Math.Min(0, -normalized.X), Math.Max(0, sourceSize.Width - normalized.Right)),
+            Y = bounds.Y + Math.Clamp(deltaY, Math.Min(0, -normalized.Y), Math.Max(0, sourceSize.Height - normalized.Bottom))
+        };
+    }
+
     public static RectD Resize(
         RectD bounds,
         AnnotationBoundsHandle handle,

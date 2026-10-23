@@ -18,6 +18,7 @@ SnapStudio is in active development. The current codebase includes the main capt
 - Editable annotations: rectangle, ellipse, line, arrow, text, freehand pen, highlight, and blur. Use the dashed-square Selection tool to select, move, and resize objects.
 - Right-click a layer to rename it, move it up or down in the stack, or choose a color label. **Custom color…** opens a color picker with a hex entry. Layer changes support undo and redo.
 - Right-click an object inside a layer to move it up or down within that layer. Object order is saved and supports undo and redo.
+- Right-click an object on the editor canvas or in the layer list to duplicate, show/hide, arrange, move to another visible layer, or delete it. Keyboard shortcuts are shown in the menu.
 - Use **Fill bucket** inside a rectangle or ellipse to change that object's fill while keeping its outline. The fill moves and resizes with the shape. On image areas, the bucket adds a connected fill object to the selected layer; adjust tolerance to include similar colors. Both support undo and redo.
 - Paste a clipboard image as a new editable document with **Paste** or **Ctrl+V**.
 - Create a transparent canvas with **New** or **Ctrl+N**, then choose its width and height. The checkerboard shows transparency in the editor; PNG export preserves it.
@@ -48,6 +49,23 @@ Get the first preview from [GitHub Releases](https://github.com/MaxAkbar/SnapStu
 On Windows 11 x64, download `SnapStudio-0.1.0-alpha.1-win-x64-portable.zip`, extract the entire ZIP, and run `SnapStudio.App.exe`. The portable build includes .NET and the Windows App SDK runtime. Captures and settings are saved under your local Windows profile.
 
 This is an unsigned alpha preview. OCR, scrolling capture, and screen recording are disabled by default. See the [release notes](docs/releases/v0.1.0-alpha.1.md) for validation and package limitations.
+
+## Object shortcuts
+
+Select an object on the canvas or in the layer list first. Text fields keep their normal editing keys.
+
+| Shortcut | Action |
+| --- | --- |
+| Arrow keys | Move by 1 image pixel |
+| Shift+Arrow | Move by 10 image pixels |
+| Ctrl+D | Duplicate |
+| Ctrl+H | Hide or show |
+| Delete | Delete the selected object |
+| Ctrl+Page Up / Page Down | Bring forward / send backward within its layer |
+| Ctrl+Shift+Page Up / Page Down | Bring to front / send to back within its layer |
+| Shift+F10 or Menu key | Open the selected object's context menu |
+| Escape | Close the menu, then clear the selection |
+| Ctrl+Z / Ctrl+Y | Undo / redo |
 
 ## Requirements
 

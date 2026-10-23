@@ -370,6 +370,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public bool HasSelectedAnnotation => _annotationSelection.HasSelection;
 
+    public Guid? SelectedAnnotationId => _annotationSelection.SelectedAnnotationId;
+
+    public DocumentId? CurrentDocumentId => _currentDocument?.Id;
+
     public bool CanDeleteSelectedAnnotation => HasSelectedAnnotation && HasCurrentDocument;
 
     public bool CanCropToSelection => HasSelectedAnnotation && HasCurrentDocument;
@@ -3449,6 +3453,34 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         await SaveCurrentDocumentAsync("Annotation deleted.", cancellationToken).ConfigureAwait(true);
     }
 
+    public async Task DuplicateSelectedAnnotationAsync(CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _annotationEditor is null
+            || GetSelectedAnnotation() is not AnnotationObject annotation) return;
+        AnnotationObject copy = await _annotationEditor.DuplicateAsync(_currentDocument, annotation, cancellationToken).ConfigureAwait(true);
+        SelectAnnotation(copy.Id);
+        await SaveCurrentDocumentAsync("Object duplicated.", cancellationToken).ConfigureAwait(true);
+    }
+
+    public async Task NudgeSelectedAnnotationAsync(double deltaX, double deltaY, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _annotationEditor is null
+            || GetSelectedAnnotation() is not AnnotationObject annotation) return;
+        if (await _annotationEditor.NudgeAsync(_currentDocument, annotation, deltaX, deltaY, cancellationToken).ConfigureAwait(true))
+        {
+            RefreshAnnotationOverlays();
+            await SaveCurrentDocumentAsync("Object moved.", cancellationToken).ConfigureAwait(true);
+        }
+    }
+
+    public async Task ArrangeSelectedAnnotationAsync(bool bringToFront, CancellationToken cancellationToken)
+    {
+        if (_currentDocument is null || _documentRepository is null || _annotationEditor is null
+            || GetSelectedAnnotation() is not AnnotationObject annotation) return;
+        if (await _annotationEditor.ArrangeInLayerAsync(_currentDocument, annotation, bringToFront, cancellationToken).ConfigureAwait(true))
+            await SaveCurrentDocumentAsync(bringToFront ? "Object brought to front of layer." : "Object sent to back of layer.", cancellationToken).ConfigureAwait(true);
+    }
+
     public void SelectLayer(Guid layerId)
     {
         if (!_layerWorkspace.SelectLayer(_currentDocument, layerId))
@@ -3883,7 +3915,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             _annotationSelection.RetainExisting(_currentDocument);
             _layerWorkspace.RetainActiveLayer(_currentDocument, GetSelectedAnnotation());
             SyncStyleControlsFromSelectedAnnotation();
-            RefreshCanvasAfterRasterEdit();
+            if (sourceImageChanged) RefreshCanvasAfterRasterEdit();
             await SaveCurrentDocumentAsync("Undo complete.", cancellationToken).ConfigureAwait(true);
             if (sourceImageChanged)
             {
@@ -3910,7 +3942,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             _annotationSelection.RetainExisting(_currentDocument);
             _layerWorkspace.RetainActiveLayer(_currentDocument, GetSelectedAnnotation());
             SyncStyleControlsFromSelectedAnnotation();
-            RefreshCanvasAfterRasterEdit();
+            if (sourceImageChanged) RefreshCanvasAfterRasterEdit();
             await SaveCurrentDocumentAsync("Redo complete.", cancellationToken).ConfigureAwait(true);
             if (sourceImageChanged)
             {

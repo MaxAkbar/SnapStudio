@@ -152,6 +152,14 @@
             Key="Delete"
             Modifiers="Control"
             Invoked="DeleteAnnotationKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator Key="Delete" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator Key="D" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator Key="H" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator Key="Escape" Invoked="ClearObjectSelectionKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator Key="PageUp" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator Key="PageDown" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator Key="PageUp" Modifiers="Control,Shift" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator Key="PageDown" Modifiers="Control,Shift" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
     </Page.KeyboardAccelerators>
 
     <Grid>
@@ -682,19 +690,7 @@
                                         <ItemsControl HorizontalAlignment="Stretch" ItemsSource="{x:Bind Objects}" Margin="0,2,0,0">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="items:AnnotationOverlayItem">
-                                                    <Grid Height="36" Margin="12,0,0,2">
-                                                        <Grid.ContextFlyout>
-                                                            <MenuFlyout>
-                                                                <MenuFlyoutItem Text="{x:Bind LayerLabel}" IsEnabled="False" />
-                                                                <MenuFlyoutSeparator />
-                                                                <MenuFlyoutItem Text="Move up" DataContext="{x:Bind}" Tag="1" IsEnabled="{x:Bind CanMoveUp}" Click="MoveObjectMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70E;" /></MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                                <MenuFlyoutItem Text="Move down" DataContext="{x:Bind}" Tag="-1" IsEnabled="{x:Bind CanMoveDown}" Click="MoveObjectMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70D;" /></MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                            </MenuFlyout>
-                                                        </Grid.ContextFlyout>
+                                                    <Grid Height="36" Margin="12,0,0,2" ContextRequested="AnnotationObject_ContextRequested">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="30" />
                                                             <ColumnDefinition Width="*" />
@@ -1182,7 +1178,7 @@
                                         Click="DeleteAnnotationButton_Click"
                                         IsEnabled="{x:Bind ViewModel.CanDeleteSelectedAnnotation, Mode=OneWay}"
                                         Style="{StaticResource EditorToolButtonStyle}"
-                                        ToolTipService.ToolTip="Delete selected annotation">
+                                        ToolTipService.ToolTip="Delete selected object (Delete)">
                                         <SymbolIcon Symbol="Delete" />
                                     </Button>
                                     <Button
@@ -1267,6 +1263,9 @@
                         <Grid>
                             <ScrollViewer
                                 x:Name="CanvasScrollViewer"
+                                IsTabStop="True"
+                                ContextRequested="CanvasObject_ContextRequested"
+                                PreviewKeyDown="CanvasScrollViewer_PreviewKeyDown"
                                 HorizontalScrollBarVisibility="Auto"
                                 HorizontalScrollMode="Enabled"
                                 SizeChanged="CanvasScrollViewer_SizeChanged"

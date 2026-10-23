@@ -3,15 +3,17 @@ namespace SnapStudio.Core.Documents;
 public sealed class AddAnnotationCommand : IEditCommand
 {
     private readonly AnnotationObject _annotation;
+    private readonly string _displayName;
 
-    public AddAnnotationCommand(AnnotationObject annotation)
+    public AddAnnotationCommand(AnnotationObject annotation, string? displayName = null)
     {
         ArgumentNullException.ThrowIfNull(annotation);
 
         _annotation = annotation;
+        _displayName = displayName ?? $"Add {annotation.Kind}";
     }
 
-    public string DisplayName => $"Add {_annotation.Kind}";
+    public string DisplayName => _displayName;
 
     public ValueTask ApplyAsync(CaptureDocument document, CancellationToken cancellationToken)
     {

@@ -136,7 +136,7 @@ public sealed class AnnotationOverlayItem
 
     public string ObjectAutomationName => $"Select {LayerLabel} object";
 
-    public string ObjectSelectionHelpText => $"{LayerLabel}. Right-click to move this object up or down within its layer.";
+    public string ObjectSelectionHelpText => $"{LayerLabel}. Right-click for object actions. Use arrow keys to move, Shift+Arrow for ten pixels, Ctrl+D to duplicate, and Delete to remove.";
 
     public string ObjectVisibilityAutomationName => IsVisible
         ? $"Hide {LayerLabel} object"

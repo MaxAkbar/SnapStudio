@@ -625,17 +625,8 @@ public sealed partial class MainPage : Page
     {
         if (sender is Button { DataContext: AnnotationOverlayItem item })
         {
+            CanvasScrollViewer.Focus(FocusState.Programmatic);
             ViewModel.SelectAnnotation(item.Id);
-            UpdateBindingsFromViewModel();
-        }
-    }
-
-    private async void MoveObjectMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is MenuFlyoutItem { DataContext: AnnotationOverlayItem item, Tag: string tag }
-            && int.TryParse(tag, NumberStyles.Integer, CultureInfo.InvariantCulture, out int direction))
-        {
-            await ViewModel.MoveAnnotationInLayerAsync(item.Id, direction, CancellationToken.None);
             UpdateBindingsFromViewModel();
         }
     }
@@ -1436,6 +1427,7 @@ public sealed partial class MainPage : Page
                 DataContext: AnnotationOverlayItem item
             })
         {
+            CanvasScrollViewer.Focus(FocusState.Programmatic);
             ViewModel.SelectAnnotation(item.Id);
             UpdateBindingsFromViewModel();
             e.Handled = true;
@@ -1494,6 +1486,7 @@ public sealed partial class MainPage : Page
             return;
         }
 
+        CanvasScrollViewer.Focus(FocusState.Programmatic);
         ViewModel.ClearAnnotationSelection();
         UpdateBindingsFromViewModel();
         RefreshAnnotationCanvas();
@@ -1780,13 +1773,12 @@ public sealed partial class MainPage : Page
 
     private static bool IsEditableFocusedElement(object? focusedElement)
     {
-        return focusedElement is TextBox
-            or PasswordBox
-            or RichEditBox
-            or AutoSuggestBox
-            or ComboBox
-            or NumberBox
-            or Slider;
+        for (DependencyObject? element = focusedElement as DependencyObject; element is not null; element = VisualTreeHelper.GetParent(element))
+        {
+            if (element is TextBox or PasswordBox or RichEditBox or AutoSuggestBox or ComboBox or NumberBox or Slider or ContentDialog)
+                return true;
+        }
+        return false;
     }
 
     private void FitCurrentCanvas()
@@ -2522,6 +2514,7 @@ public sealed partial class MainPage : Page
             return;
         }
 
+        CanvasScrollViewer.Focus(FocusState.Programmatic);
         ViewModel.SelectAnnotation(item.Id);
         UpdateBindingsFromViewModel();
 
