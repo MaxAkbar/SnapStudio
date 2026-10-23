@@ -1595,14 +1595,14 @@
                                 Maximum="{x:Bind ViewModel.AnnotationSizeMaximum, Mode=OneWay}"
                                 Minimum="1"
                                 StepFrequency="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
-                                Value="{x:Bind ViewModel.AnnotationStrokeThickness, Mode=OneWay}"
+                                Value="{x:Bind ViewModel.AnnotationSizeSliderValue, Mode=OneWay}"
                                 ValueChanged="AnnotationStrokeSize_ValueChanged" />
                             <NumberBox
                                 Grid.Column="1"
-                                AutomationProperties.HelpText="Enter a custom annotation stroke thickness or text size."
+                                AutomationProperties.HelpText="Enter a custom annotation stroke thickness or text size. Type a larger stroke width here to go beyond the slider."
                                 AutomationProperties.Name="Annotation size value"
                                 Header="Value"
-                                Maximum="{x:Bind ViewModel.AnnotationSizeMaximum, Mode=OneWay}"
+                                Maximum="{x:Bind ViewModel.AnnotationSizeInputMaximum, Mode=OneWay}"
                                 Minimum="1"
                                 SmallChange="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
                                 SpinButtonPlacementMode="Hidden"

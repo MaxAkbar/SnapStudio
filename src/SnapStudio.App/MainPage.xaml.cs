@@ -1317,7 +1317,7 @@ public sealed partial class MainPage : Page
         NumberBoxValueChangedEventArgs e)
     {
         if (ShouldIgnoreControlEvent()
-            || double.IsNaN(e.NewValue))
+            || !double.IsFinite(e.NewValue))
         {
             return;
         }

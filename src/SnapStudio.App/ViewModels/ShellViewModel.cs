@@ -1133,7 +1133,12 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         get => _annotationStrokeThickness;
         set
         {
-            double normalized = Math.Clamp(value, 1, AnnotationSizeMaximum);
+            if (!double.IsFinite(value))
+            {
+                return;
+            }
+
+            double normalized = Math.Clamp(value, 1, AnnotationSizeInputMaximum);
             if (Math.Abs(_annotationStrokeThickness - normalized) < 0.01)
             {
                 return;
@@ -1141,6 +1146,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
             _annotationStrokeThickness = normalized;
             OnPropertyChanged(nameof(AnnotationStrokeThickness));
+            OnPropertyChanged(nameof(AnnotationSizeSliderValue));
         }
     }
 
@@ -1151,6 +1157,12 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     public double AnnotationSizeMaximum => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
         ? AnnotationTextSizeMaximum
         : AnnotationStrokeMaximum;
+
+    public double AnnotationSizeInputMaximum => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
+        ? AnnotationTextSizeMaximum
+        : double.MaxValue;
+
+    public double AnnotationSizeSliderValue => Math.Clamp(AnnotationStrokeThickness, 1, AnnotationSizeMaximum);
 
     public double AnnotationSizeStepFrequency => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
         ? 1
@@ -6056,11 +6068,6 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
                     AnnotationStrokeIndex = 0;
                 }
 
-                if (AnnotationStrokeThickness > AnnotationStrokeMaximum)
-                {
-                    AnnotationStrokeThickness = AnnotationStrokeMaximum;
-                }
-
                 AnnotationOpacity = 1;
                 break;
         }
@@ -6124,6 +6131,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         OnPropertyChanged(nameof(FillToleranceControlsVisibility));
         OnPropertyChanged(nameof(AnnotationSizeHeader));
         OnPropertyChanged(nameof(AnnotationSizeMaximum));
+        OnPropertyChanged(nameof(AnnotationSizeInputMaximum));
+        OnPropertyChanged(nameof(AnnotationSizeSliderValue));
         OnPropertyChanged(nameof(AnnotationSizeStepFrequency));
         OnPropertyChanged(nameof(AnnotationCornerStyleControlsVisibility));
         OnPropertyChanged(nameof(AnnotationCornerStyleIndex));
