@@ -558,7 +558,7 @@
                                                 HorizontalContentAlignment="Stretch"
                                                 MaxDropDownHeight="360"
                                                 AutomationProperties.Name="Capture folders"
-                                                AutomationProperties.HelpText="Choose All captures, Unfiled, or one of your mapped folders and groups."
+                                                AutomationProperties.HelpText="Choose All captures, Unfiled, or one of your mapped folders and groups. Right-click a folder or group to rename it or remove it while keeping its captures."
                                                 ItemsSource="{x:Bind ViewModel.HistoryFolders}"
                                                 SelectedIndex="{x:Bind ViewModel.HistoryFolderIndex, Mode=OneWay}"
                                                 SelectionChanged="HistoryFolder_SelectionChanged"
@@ -569,14 +569,21 @@
                                                 BorderBrush="{ThemeResource WorkspaceFolderBadgeBorderBrush}">
                                                 <ComboBox.ItemTemplate>
                                                     <DataTemplate x:DataType="items:HistoryFolderItem">
-                                                        <TextBlock
-                                                            Text="{x:Bind DisplayName}"
-                                                            FontSize="11"
-                                                            VerticalAlignment="Center"
-                                                            TextTrimming="CharacterEllipsis"
-                                                            ToolTipService.ToolTip="{x:Bind Description}" />
+                                                        <Border Background="Transparent" ContextRequested="HistoryFolderItem_ContextRequested">
+                                                            <TextBlock
+                                                                Text="{x:Bind DisplayName}"
+                                                                FontSize="11"
+                                                                VerticalAlignment="Center"
+                                                                TextTrimming="CharacterEllipsis"
+                                                                ToolTipService.ToolTip="{x:Bind Description}" />
+                                                        </Border>
                                                     </DataTemplate>
                                                 </ComboBox.ItemTemplate>
+                                                <ComboBox.ItemContainerStyle>
+                                                    <Style TargetType="ComboBoxItem">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                    </Style>
+                                                </ComboBox.ItemContainerStyle>
                                             </ComboBox>
                                             <Button
                                                 Click="AddMappedHistoryFolder_Click"

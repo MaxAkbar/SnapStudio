@@ -64,6 +64,9 @@ public sealed partial class ShellViewModel
     public string ValidateHistoryFolderName(string name, bool rename = false) =>
         _historyFolders.ValidateName(name, rename ? _selectedHistoryFolderId : null);
 
+    public string ValidateHistoryFolderName(string name, Guid? renameFolderId) =>
+        _historyFolders.ValidateName(name, renameFolderId);
+
     public string SuggestHistoryFolderName(string name)
     {
         string basis = string.IsNullOrWhiteSpace(name) ? "Images" : name.Trim();
@@ -88,24 +91,41 @@ public sealed partial class ShellViewModel
         });
 
     public Task RenameHistoryFolderAsync(string name, CancellationToken cancellationToken) =>
+        _selectedHistoryFolderId is Guid id ? RenameHistoryFolderAsync(id, name, cancellationToken) : Task.CompletedTask;
+
+    public Task RenameHistoryFolderAsync(Guid folderId, string name, CancellationToken cancellationToken) =>
         RunHistoryFolderOperationAsync(async () =>
         {
-            if (_selectedHistoryFolderId is not Guid id) return;
+            if (!_historyFolders.Folders.Any(folder => folder.Id == folderId))
+            {
+                StatusText = "This folder is no longer available.";
+                return;
+            }
             HistoryFolderState next = _historyFolders.Copy();
-            next.RenameFolder(id, name);
+            next.RenameFolder(folderId, name);
             await SaveHistoryFoldersAsync(next, cancellationToken).ConfigureAwait(true);
             StatusText = $"Renamed folder to {name.Trim()}.";
         });
 
     public Task RemoveHistoryFolderAsync(CancellationToken cancellationToken) =>
+        _selectedHistoryFolderId is Guid id ? RemoveHistoryFolderAsync(id, cancellationToken) : Task.CompletedTask;
+
+    public Task RemoveHistoryFolderAsync(Guid folderId, CancellationToken cancellationToken) =>
         RunHistoryFolderOperationAsync(async () =>
         {
-            if (_selectedHistoryFolderId is not Guid id) return;
+            if (!_historyFolders.Folders.Any(folder => folder.Id == folderId))
+            {
+                StatusText = "This folder is no longer available.";
+                return;
+            }
             HistoryFolderState next = _historyFolders.Copy();
-            next.RemoveFolder(id);
+            next.RemoveFolder(folderId);
             await SaveHistoryFoldersAsync(next, cancellationToken).ConfigureAwait(true);
-            _selectedHistoryFolderId = null;
-            _historyUnfiledOnly = true;
+            if (_selectedHistoryFolderId == folderId)
+            {
+                _selectedHistoryFolderId = null;
+                _historyUnfiledOnly = true;
+            }
             StatusText = "Folder removed. Its captures are now in Unfiled.";
         });
 

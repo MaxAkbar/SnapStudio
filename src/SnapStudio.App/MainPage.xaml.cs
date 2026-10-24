@@ -1872,6 +1872,7 @@ public sealed partial class MainPage : Page
             || _layerColorDialogIsOpen
             || _historyFolderDialogIsOpen
             || _captureDeleteDialogIsOpen
+            || _captureRenameDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen
             || IsEditableFocusedElement(FocusManager.GetFocusedElement(XamlRoot));
     }

@@ -232,6 +232,8 @@ Candidates:
 - Multiple annotations appear in thumbnails.
 - Search and source filters find expected captures.
 - Rename updates history and canvas title.
+- Open the Capture folders dropdown and right-click a folder/group other than the selected one: Rename and Remove target the clicked row. Rename validates that folder's own name and rejects another group's name. Removing a mapped folder stops its mapping and removes only its import ledger; removing a group returns its members to Unfiled. Both preserve editable captures, original/source files, and editor selection/zoom/undo. Removing the selected folder switches to Unfiled; removing another folder retains the current view. All captures and Unfiled have no rename/remove menu. Verify removed mappings stay removed after restart.
+- Right-click a noncurrent capture on a later page or in a filtered folder: Rename opens a prefilled dialog, rejects blank names, and updates the clicked entry. Cancel keeps its title. Duplicate retains that capture's layers/objects and folder membership. Move to folder disables its current destination; Show in folder reveals its stored source file in Explorer. All four actions preserve the open editor, selected object, zoom, and undo history. Renaming the current capture also updates its canvas title.
 - Duplicate creates a separate editable document.
 - Open containing folder selects or opens the current source location when possible.
 - Remove from history keeps the source image file.
