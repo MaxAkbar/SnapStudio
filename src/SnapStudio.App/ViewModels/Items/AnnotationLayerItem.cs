@@ -71,10 +71,10 @@ public sealed class AnnotationLayerItem(
         : Visibility.Collapsed;
 
     public Brush BackgroundBrush => isActive
-        ? new SolidColorBrush(Color.FromArgb(255, 36, 68, 94))
-        : new SolidColorBrush(Color.FromArgb(255, 32, 38, 47));
+        ? new SolidColorBrush(Color.FromArgb(255, 46, 65, 81))
+        : new SolidColorBrush(Color.FromArgb(255, 37, 40, 48));
 
     public Brush BorderBrush => isActive
-        ? new SolidColorBrush(Color.FromArgb(255, 76, 194, 255))
-        : new SolidColorBrush(Color.FromArgb(255, 48, 59, 71));
+        ? new SolidColorBrush(Color.FromArgb(255, 83, 110, 133))
+        : new SolidColorBrush(Color.FromArgb(255, 55, 63, 73));
 }

@@ -1,5 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 namespace SnapStudio.App;
 
@@ -8,6 +10,74 @@ public sealed partial class MainPage
     private bool _layersSectionExpanded = true;
     private bool _recentCapturesSectionExpanded = true;
     private bool _imagesSectionExpanded = true;
+    private bool _focusWorkspace;
+    private bool _restoreHistoryAfterFocus;
+    private bool _restoreInspectorAfterFocus;
+
+    private void FocusWorkspace_Click(object sender, RoutedEventArgs e) => ToggleWorkspaceFocus();
+
+    private void FocusWorkspaceKeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        ToggleWorkspaceFocus();
+        args.Handled = true;
+    }
+
+    private void ToggleWorkspaceFocus()
+    {
+        if (!_focusWorkspace)
+        {
+            _restoreHistoryAfterFocus = _historyPaneIsExpanded;
+            _restoreInspectorAfterFocus = _rightControlsPaneIsExpanded;
+            CollapseHistoryPane();
+            CollapseRightControlsPane();
+            HistoryPane.Visibility = Visibility.Collapsed;
+            RightControlsPane.Visibility = Visibility.Collapsed;
+            HistoryColumn.MinWidth = 0;
+            RightControlsColumn.MinWidth = 0;
+            HistoryColumn.Width = new GridLength(0);
+            RightControlsColumn.Width = new GridLength(0);
+        }
+        else
+        {
+            HistoryPane.Visibility = Visibility.Visible;
+            RightControlsPane.Visibility = Visibility.Visible;
+            HistoryColumn.MinWidth = HistoryCollapsedWidth;
+            RightControlsColumn.MinWidth = RightControlsCollapsedWidth;
+            HistoryColumn.Width = new GridLength(HistoryCollapsedWidth);
+            RightControlsColumn.Width = new GridLength(RightControlsCollapsedWidth);
+            if (_restoreHistoryAfterFocus) ExpandHistoryPane();
+            if (_restoreInspectorAfterFocus) ExpandRightControlsPane();
+        }
+        _focusWorkspace = !_focusWorkspace;
+        AutomationProperties.SetName(FocusWorkspaceButton, _focusWorkspace ? "Exit focus mode" : "Focus mode");
+        ToolTipService.SetToolTip(FocusWorkspaceButton, _focusWorkspace ? "Exit focus mode (F8)" : "Focus mode (F8)");
+    }
+
+    private void InspectorSection_Expanding(Expander sender, ExpanderExpandingEventArgs args)
+    {
+        if (PropertiesSectionExpander is null || ImageDetailsExpander is null || CaptureOptionsExpander is null) return;
+        // Keep the layer list accessible when a longer settings section is opened.
+        foreach (Expander section in new[] { PropertiesSectionExpander, ImageDetailsExpander, CaptureOptionsExpander })
+            if (section != sender) section.IsExpanded = false;
+    }
+
+    private void InspectorBody_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateInspectorViewport();
+
+    private void InspectorSection_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateInspectorViewport();
+
+    private void UpdateInspectorViewport()
+    {
+        if (InspectorBodyGrid is null || PropertiesSectionExpanderScroll is null
+            || ImageDetailsExpanderScroll is null || CaptureOptionsExpanderScroll is null
+            || InspectorLayersSection is null || InspectorLayersRow is null) return;
+        InspectorLayersRow.Height = _layersSectionExpanded ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+        InspectorLayersSection.MinHeight = _layersSectionExpanded ? 120 : 0;
+        double layerSpace = _layersSectionExpanded ? 140 : 40;
+        double settingsSpace = Math.Clamp(InspectorBodyGrid.ActualHeight - layerSpace - 3 * 44 - 12, 80, _layersSectionExpanded ? 280 : 480);
+        PropertiesSectionExpanderScroll.MaxHeight = settingsSpace;
+        ImageDetailsExpanderScroll.MaxHeight = settingsSpace;
+        CaptureOptionsExpanderScroll.MaxHeight = settingsSpace;
+    }
 
     private void ToggleLayersSection_Click(object sender, RoutedEventArgs e)
     {
@@ -56,6 +126,7 @@ public sealed partial class MainPage
             - HistoryExpandedView.Padding.Top - HistoryExpandedView.Padding.Bottom
             - HistoryExpandedView.RowSpacing * 2 - settingsHeight - minimumImagesHeight;
         SidebarControlsScroll.MaxHeight = Math.Max(0, availableHeight);
+        UpdateInspectorViewport();
     }
 
     private void PreviousHistoryPage_Click(object sender, RoutedEventArgs e)

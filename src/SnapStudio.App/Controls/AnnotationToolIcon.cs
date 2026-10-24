@@ -39,23 +39,19 @@ public sealed class AnnotationToolIcon : UserControl
         {
             case "Select":
             case "Rectangle":
-                var rectangle = new Rectangle { Width = 18, Height = 18, RadiusX = 1, RadiusY = 1 };
+                var rectangle = new Rectangle { Width = 18, Height = Kind == "Select" ? 18 : 14, RadiusX = 1, RadiusY = 1 };
                 if (Kind == "Select") rectangle.StrokeDashArray = [2, 2];
-                Add(rectangle, 3, 3);
+                Add(rectangle, 3, Kind == "Select" ? 3 : 5);
                 break;
             case "Ellipse":
-                Add(new Ellipse { Width = 18, Height = 18 }, 3, 3);
+                Add(new Ellipse { Width = 18, Height = 14 }, 3, 5);
                 break;
             case "Line":
                 Line(new Point(4, 20), new Point(20, 4));
                 break;
             case "Arrow":
-                var arrowPoints = new PointCollection();
-                foreach (PointD point in ArrowGeometry.CreateOutline(new PointD(4, 20), new PointD(20, 4), 1.7))
-                    arrowPoints.Add(new Point(point.X, point.Y));
-                var arrow = new Polygon { Points = arrowPoints };
-                arrow.SetBinding(Shape.FillProperty, new Binding { Source = this, Path = new PropertyPath(nameof(Foreground)) });
-                _canvas.Children.Add(arrow);
+                Line(new Point(4, 20), new Point(20, 4));
+                Line(new Point(9, 4), new Point(20, 4), new Point(20, 15));
                 break;
             case "Text":
                 Line(new Point(4, 5), new Point(20, 5));

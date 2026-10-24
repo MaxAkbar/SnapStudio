@@ -28,16 +28,16 @@ public sealed partial class MainPage : Page
 {
     private const double MinimumDragDisplaySize = 4;
     private const double HistoryCollapsedWidth = 52;
-    private const double HistoryExpandedDefaultWidth = 226;
+    private const double HistoryExpandedDefaultWidth = 268;
     private const double HistoryMinimumWidth = 226;
     private const double HistoryMaximumWidth = 560;
-    private const double HistorySplitterWidth = 10;
+    private const double HistorySplitterWidth = 4;
     private const double RightControlsCollapsedWidth = 52;
-    private const double RightControlsExpandedDefaultWidth = 280;
+    private const double RightControlsExpandedDefaultWidth = 272;
     private const double RightControlsMinimumWidth = 238;
     private const double RightControlsMaximumWidth = 560;
-    private const double RightControlsSplitterWidth = 10;
-    private const double EditorMinimumWidth = 360;
+    private const double RightControlsSplitterWidth = 4;
+    private const double EditorMinimumWidth = 412;
 
     private CanvasDragMode _canvasDragMode;
     private Guid _annotationDragId;
@@ -1288,6 +1288,7 @@ public sealed partial class MainPage : Page
         }
 
         ViewModel.UpdateAnnotationTool(toolIndex);
+        PropertiesSectionExpander.IsExpanded = true;
         UpdateBindingsFromViewModel();
         RefreshAnnotationCanvas();
     }
@@ -1470,6 +1471,7 @@ public sealed partial class MainPage : Page
     private void SelectionToolButton_Click(object sender, RoutedEventArgs e)
     {
         ViewModel.UseSelectionTool();
+        PropertiesSectionExpander.IsExpanded = true;
         UpdateBindingsFromViewModel();
     }
 
@@ -2798,6 +2800,9 @@ public sealed partial class MainPage : Page
         try
         {
             Bindings.Update();
+            CaptureHistoryList.SelectedItem = ViewModel.RecentDocuments.FirstOrDefault(
+                item => item.Id == ViewModel.CurrentDocumentId?.ToString());
+            NotifyWorkspacePresentationChanged();
         }
         finally
         {
@@ -2812,6 +2817,8 @@ public sealed partial class MainPage : Page
     {
         SelectionToolButton.Background = ViewModel.IsSelectionToolActive
             ? (Brush)Resources["SnapAccentMutedBrush"] : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+        SelectionToolButton.BorderBrush = ViewModel.IsSelectionToolActive
+            ? new SolidColorBrush(Color.FromArgb(255, 73, 105, 129)) : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         UpdateAnnotationToolButton(RectangleToolButton, 0);
         UpdateAnnotationToolButton(EllipseToolButton, 1);
         UpdateAnnotationToolButton(LineToolButton, 2);
@@ -2830,8 +2837,11 @@ public sealed partial class MainPage : Page
             ? (Brush)Resources["SnapAccentMutedBrush"]
             : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         button.BorderBrush = isActive
-            ? (Brush)Resources["SnapAccentBrush"]
-            : (Brush)Resources["SnapStrokeBrush"];
+            ? new SolidColorBrush(Color.FromArgb(255, 73, 105, 129))
+            : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+        button.Foreground = isActive
+            ? new SolidColorBrush(Color.FromArgb(255, 166, 220, 255))
+            : new SolidColorBrush(Color.FromArgb(255, 164, 174, 186));
     }
 
     private bool ShouldIgnoreControlEvent()

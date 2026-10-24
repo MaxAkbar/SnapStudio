@@ -12,8 +12,8 @@ public sealed partial class MainPage
 
     private void HistoryFolder_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_isUpdatingBindings || sender is not ListView { SelectedIndex: >= 0 } list) return;
-        ViewModel.SelectHistoryFolder(list.SelectedIndex);
+        if (_isUpdatingBindings || sender is not ComboBox { SelectedIndex: >= 0 } picker) return;
+        ViewModel.SelectHistoryFolder(picker.SelectedIndex);
         ScrollCaptureHistoryToStart();
     }
 

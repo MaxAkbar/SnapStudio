@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Merge into the workspace page after XamlControlsResources. Native control
+         templates keep their input, selection, flyout, focus and automation behavior.
+         Palette resources also supply their hover, pressed and disabled states. -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <Color x:Key="WorkspacePanelColor">#202228</Color>
+            <Color x:Key="WorkspaceCommandColor">#2A2D34</Color>
+            <Color x:Key="WorkspaceCommandHoverColor">#353942</Color>
+            <Color x:Key="WorkspaceCommandPressedColor">#30343D</Color>
+            <Color x:Key="WorkspaceBorderColor">#34373F</Color>
+            <Color x:Key="WorkspaceBorderHoverColor">#565C67</Color>
+            <Color x:Key="WorkspaceTextColor">#EEF0F4</Color>
+            <Color x:Key="WorkspaceMutedColor">#969BA8</Color>
+            <Color x:Key="WorkspaceDisabledColor">#6D7380</Color>
+            <Color x:Key="WorkspaceIconHoverColor">#333740</Color>
+            <Color x:Key="WorkspaceFieldColor">#272A31</Color>
+            <Color x:Key="WorkspaceFieldHoverColor">#2B2F37</Color>
+            <Color x:Key="WorkspaceFieldFocusedColor">#1E232B</Color>
+            <Color x:Key="WorkspaceFieldBorderColor">#3C414A</Color>
+            <Color x:Key="WorkspaceAccentColor">#88D2FA</Color>
+            <Color x:Key="WorkspaceAccentHoverColor">#B2E2FF</Color>
+            <Color x:Key="WorkspaceAccentPressedColor">#6DBEEA</Color>
+            <Color x:Key="WorkspaceOnAccentColor">#162B39</Color>
+            <Color x:Key="WorkspaceDisabledBackgroundColor">#23262D</Color>
+            <Color x:Key="WorkspaceTransparentColor">#00000000</Color>
+            <Color x:Key="WorkspaceHeaderHoverColor">#0AFFFFFF</Color>
+            <Color x:Key="WorkspaceHeaderPressedColor">#14FFFFFF</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <StaticResource x:Key="WorkspacePanelColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceCommandColor" ResourceKey="SystemColorButtonFaceColor"/>
+            <StaticResource x:Key="WorkspaceCommandHoverColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceCommandPressedColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceBorderColor" ResourceKey="SystemColorButtonTextColor"/>
+            <StaticResource x:Key="WorkspaceBorderHoverColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceTextColor" ResourceKey="SystemColorButtonTextColor"/>
+            <StaticResource x:Key="WorkspaceMutedColor" ResourceKey="SystemColorButtonTextColor"/>
+            <StaticResource x:Key="WorkspaceDisabledColor" ResourceKey="SystemColorGrayTextColor"/>
+            <StaticResource x:Key="WorkspaceIconHoverColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceFieldColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceFieldHoverColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceFieldFocusedColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceFieldBorderColor" ResourceKey="SystemColorWindowTextColor"/>
+            <StaticResource x:Key="WorkspaceAccentColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceAccentHoverColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceAccentPressedColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceOnAccentColor" ResourceKey="SystemColorHighlightTextColor"/>
+            <StaticResource x:Key="WorkspaceDisabledBackgroundColor" ResourceKey="SystemColorButtonFaceColor"/>
+            <StaticResource x:Key="WorkspaceTransparentColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceHeaderHoverColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceHeaderPressedColor" ResourceKey="SystemColorHighlightColor"/>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <SolidColorBrush x:Key="WorkspacePanelBrush" Color="{ThemeResource WorkspacePanelColor}"/>
+    <SolidColorBrush x:Key="WorkspaceCommandBrush" Color="{ThemeResource WorkspaceCommandColor}"/>
+    <SolidColorBrush x:Key="WorkspaceBorderBrush" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="WorkspaceTextBrush" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="WorkspaceMutedBrush" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="WorkspaceAccentBrush" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="WorkspaceOnAccentBrush" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="ButtonBackground" Color="{ThemeResource WorkspaceCommandColor}"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{ThemeResource WorkspaceCommandHoverColor}"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{ThemeResource WorkspaceCommandPressedColor}"/>
+    <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="{ThemeResource WorkspaceDisabledBackgroundColor}"/>
+    <SolidColorBrush x:Key="ButtonForeground" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="ButtonBorderBrush" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{ThemeResource WorkspaceBorderHoverColor}"/>
+    <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonBackground" Color="{ThemeResource WorkspaceTransparentColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonBackgroundPointerOver" Color="{ThemeResource WorkspaceIconHoverColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonBackgroundPressed" Color="{ThemeResource WorkspaceCommandPressedColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonBackgroundDisabled" Color="{ThemeResource WorkspaceTransparentColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonForeground" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonForegroundPointerOver" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonForegroundPressed" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonBorderBrush" Color="{ThemeResource WorkspaceTransparentColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonBorderBrushPointerOver" Color="{ThemeResource WorkspaceTransparentColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonBorderBrushPressed" Color="{ThemeResource WorkspaceTransparentColor}"/>
+    <SolidColorBrush x:Key="SubtleButtonBorderBrushDisabled" Color="{ThemeResource WorkspaceTransparentColor}"/>
+    <SolidColorBrush x:Key="AccentButtonBackground" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="{ThemeResource WorkspaceAccentHoverColor}"/>
+    <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="{ThemeResource WorkspaceAccentPressedColor}"/>
+    <SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="{ThemeResource WorkspaceDisabledBackgroundColor}"/>
+    <SolidColorBrush x:Key="AccentButtonForeground" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="{ThemeResource WorkspaceAccentHoverColor}"/>
+    <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="{ThemeResource WorkspaceAccentPressedColor}"/>
+    <SolidColorBrush x:Key="AccentButtonBorderBrushDisabled" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="TextControlBackground" Color="{ThemeResource WorkspaceFieldColor}"/>
+    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{ThemeResource WorkspaceFieldHoverColor}"/>
+    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{ThemeResource WorkspaceFieldFocusedColor}"/>
+    <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="{ThemeResource WorkspaceDisabledBackgroundColor}"/>
+    <SolidColorBrush x:Key="TextControlForeground" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="TextControlForegroundFocused" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="TextControlForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="TextControlBorderBrush" Color="{ThemeResource WorkspaceFieldBorderColor}"/>
+    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{ThemeResource WorkspaceBorderHoverColor}"/>
+    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="TextControlHeaderForeground" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="TextControlHeaderForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackground" Color="{ThemeResource WorkspaceFieldColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="{ThemeResource WorkspaceFieldHoverColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="{ThemeResource WorkspaceCommandPressedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="{ThemeResource WorkspaceDisabledBackgroundColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="{ThemeResource WorkspaceFieldFocusedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="{ThemeResource WorkspaceFieldColor}"/>
+    <SolidColorBrush x:Key="ComboBoxForeground" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{ThemeResource WorkspaceFieldBorderColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="{ThemeResource WorkspaceBorderHoverColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushUnfocused" Color="{ThemeResource WorkspaceFieldBorderColor}"/>
+    <SolidColorBrush x:Key="ComboBoxPlaceHolderForeground" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxPlaceHolderForegroundPointerOver" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxPlaceHolderForegroundPressed" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxPlaceHolderForegroundFocused" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxPlaceHolderForegroundFocusedPressed" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxPlaceHolderForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="ComboBoxHeaderForeground" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxHeaderForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForeground" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundFocused" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundFocusedPressed" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundDisabled" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="{ThemeResource WorkspaceCommandColor}"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownForeground" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="WorkspaceHeaderHoverBrush" Color="{ThemeResource WorkspaceHeaderHoverColor}"/>
+    <SolidColorBrush x:Key="WorkspaceHeaderPressedBrush" Color="{ThemeResource WorkspaceHeaderPressedColor}"/>
+    <x:Double x:Key="ComboBoxMinHeight">30</x:Double>
+    <Thickness x:Key="TextControlBorderThemeThicknessFocused">1</Thickness>
+
+    <Style x:Key="WorkspaceCommandButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
+        <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource WorkspaceAccentBrush}"/>
+        <Setter Property="FocusVisualSecondaryBrush" Value="{ThemeResource WorkspacePanelBrush}"/>
+        <Setter Property="FocusVisualMargin" Value="2"/>
+    </Style>
+
+    <Style x:Key="WorkspaceIconButtonStyle" TargetType="Button" BasedOn="{StaticResource SubtleButtonStyle}">
+        <Setter Property="Width" Value="30"/>
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="MinWidth" Value="30"/>
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="CornerRadius" Value="5"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
+        <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource WorkspaceAccentBrush}"/>
+        <Setter Property="FocusVisualSecondaryBrush" Value="{ThemeResource WorkspacePanelBrush}"/>
+        <Setter Property="FocusVisualMargin" Value="2"/>
+    </Style>
+
+    <Style x:Key="WorkspacePrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
+        <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource WorkspaceAccentBrush}"/>
+        <Setter Property="FocusVisualSecondaryBrush" Value="{ThemeResource WorkspacePanelBrush}"/>
+        <Setter Property="FocusVisualMargin" Value="2"/>
+    </Style>
+
+    <Style x:Key="WorkspaceTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
+        <!-- Do not fix Height: a native Header or multiline content must still fit. -->
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="Padding" Value="9,4"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="5"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    </Style>
+
+    <Style x:Key="WorkspaceComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="Padding" Value="9,4,0,4"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="5"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="MaxDropDownHeight" Value="360"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Only the Expander chrome is replaced. Part names, native visual states
+         and the native header toggle preserve its ExpandCollapse automation peer. -->
+    <Style x:Key="WorkspaceExpanderHeaderStyle" TargetType="ToggleButton">
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="42"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="Background" Value="{ThemeResource WorkspacePanelBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
+        <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource WorkspaceAccentBrush}"/>
+        <Setter Property="FocusVisualSecondaryBrush" Value="{ThemeResource WorkspacePanelBrush}"/>
+        <Setter Property="FocusVisualMargin" Value="-2"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid x:Name="HeaderRoot"
+                          Background="{TemplateBinding Background}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          Padding="{TemplateBinding Padding}"
+                          MinHeight="{TemplateBinding MinHeight}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal"/>
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="HeaderRoot.Background" Value="{ThemeResource WorkspaceHeaderHoverBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="HeaderRoot.Background" Value="{ThemeResource WorkspaceHeaderPressedBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="HeaderContent.Foreground" Value="{ThemeResource TextControlForegroundDisabled}"/>
+                                        <Setter Target="Chevron.Foreground" Value="{ThemeResource TextControlForegroundDisabled}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Checked">
+                                    <VisualState.Setters>
+                                        <Setter Target="ChevronRotation.Angle" Value="90"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CheckedPointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="ChevronRotation.Angle" Value="90"/>
+                                        <Setter Target="HeaderRoot.Background" Value="{ThemeResource WorkspaceHeaderHoverBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CheckedPressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="ChevronRotation.Angle" Value="90"/>
+                                        <Setter Target="HeaderRoot.Background" Value="{ThemeResource WorkspaceHeaderPressedBrush}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter x:Name="HeaderContent"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                          Foreground="{TemplateBinding Foreground}"
+                                          FontSize="{TemplateBinding FontSize}"
+                                          FontWeight="{TemplateBinding FontWeight}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Margin="0,0,10,0"
+                                          AutomationProperties.AccessibilityView="Raw"/>
+                        <FontIcon x:Name="Chevron" Grid.Column="1"
+                                  Glyph="&#xE76C;" FontSize="10"
+                                  FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                  Foreground="{ThemeResource WorkspaceMutedBrush}"
+                                  VerticalAlignment="Center"
+                                  IsHitTestVisible="False"
+                                  RenderTransformOrigin="0.5,0.5"
+                                  AutomationProperties.AccessibilityView="Raw">
+                            <FontIcon.RenderTransform>
+                                <RotateTransform x:Name="ChevronRotation"/>
+                            </FontIcon.RenderTransform>
+                        </FontIcon>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="WorkspaceExpanderStyle" TargetType="Expander">
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="42"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <!-- Padding controls the header inset; content owns its own spacing. -->
+        <Setter Property="Padding" Value="14,0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Expander">
+                    <Grid MinWidth="{TemplateBinding MinWidth}" MaxWidth="{TemplateBinding MaxWidth}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition x:Name="HeaderRow" Height="Auto"/>
+                            <RowDefinition x:Name="ContentRow" Height="*"/>
+                        </Grid.RowDefinitions>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="ExpandStates">
+                                <VisualState x:Name="ExpandDown">
+                                    <VisualState.Setters>
+                                        <Setter Target="ExpanderContent.Visibility" Value="Visible"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="ExpandUp">
+                                    <VisualState.Setters>
+                                        <Setter Target="ExpanderContent.Visibility" Value="Visible"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CollapseDown"/>
+                                <VisualState x:Name="CollapseUp"/>
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="ExpandDirectionStates">
+                                <VisualState x:Name="Down"/>
+                                <VisualState x:Name="Up">
+                                    <VisualState.Setters>
+                                        <Setter Target="ExpanderHeader.(Grid.Row)" Value="1"/>
+                                        <Setter Target="ExpanderContentClip.(Grid.Row)" Value="0"/>
+                                        <Setter Target="HeaderRow.Height" Value="*"/>
+                                        <Setter Target="ContentRow.Height" Value="Auto"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ToggleButton x:Name="ExpanderHeader"
+                                      AutomationProperties.AutomationId="ExpanderToggleButton"
+                                      Style="{StaticResource WorkspaceExpanderHeaderStyle}"
+                                      MinHeight="{TemplateBinding MinHeight}"
+                                      Padding="{TemplateBinding Padding}"
+                                      Background="{TemplateBinding Background}"
+                                      BorderBrush="{TemplateBinding BorderBrush}"
+                                      IsEnabled="{TemplateBinding IsEnabled}"
+                                      Foreground="{TemplateBinding Foreground}"
+                                      FontSize="{TemplateBinding FontSize}"
+                                      FontWeight="{TemplateBinding FontWeight}"
+                                      Content="{TemplateBinding Header}"
+                                      ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                      ContentTemplateSelector="{TemplateBinding HeaderTemplateSelector}"
+                                      IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                        <Border x:Name="ExpanderContentClip" Grid.Row="1">
+                            <Border x:Name="ExpanderContent"
+                                    Visibility="Collapsed"
+                                    Background="{TemplateBinding Background}"
+                                    Padding="0">
+                                <ContentPresenter Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                <Border.RenderTransform>
+                                    <CompositeTransform/>
+                                </Border.RenderTransform>
+                            </Border>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="WorkspaceLayerExpanderStyle" TargetType="Expander" BasedOn="{StaticResource WorkspaceExpanderStyle}">
+        <Setter Property="MinHeight" Value="46"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+</ResourceDictionary>

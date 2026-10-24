@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#17191e">
+  <title>SnapStudio — Workspace design preview</title>
+  <link rel="icon" href="assets/app-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+  <symbol id="i-library" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16m4-11h5m-5 5h5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-7 5 7"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="m10 8 3-3a4 4 0 0 1 6 6l-3 3M14 16l-3 3a4 4 0 0 1-6-6l3-3m1 6 6-6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 10a8 8 0 0 0-14-4L3 9m0-6v6h6m-5 5a8 8 0 0 0 14 4l3-3m0 6v-6h-6"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M8 5 6 8H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2l-2-3Z"/><circle cx="12" cy="14" r="4"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+  <symbol id="i-paste" viewBox="0 0 24 24"><path d="M8 5H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"/><rect x="8" y="2" width="8" height="6" rx="2"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 15V3m-5 5 5-5 5 5M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="m8 4-5 5 5 5M3 9h10a7 7 0 0 1 0 14"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="m16 4 5 5-5 5m5-5H11a7 7 0 0 0 0 14"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="m5 3 14 10-7 1-3 7Z"/></symbol>
+  <symbol id="i-select" viewBox="0 0 24 24"><path stroke-dasharray="3 3" d="M3 3h18v18H3Z"/></symbol>
+  <symbol id="i-rectangle" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/></symbol>
+  <symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="7"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 20 20 4m-11 0h11v11"/></symbol>
+  <symbol id="i-line" viewBox="0 0 24 24"><path d="m4 20 16-16"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 7V4h16v3M12 4v17m-4 0h8"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="m14 4 6 6M3 21l6-1L21 8a2.1 2.1 0 0 0 0-3l-2-2a2.1 2.1 0 0 0-3 0L4 15Z"/></symbol>
+  <symbol id="i-highlight" viewBox="0 0 24 24"><path d="m8 14 8-11 5 4-8 11Zm0 0-3 5 4 1 4-2M3 23h18"/></symbol>
+  <symbol id="i-blur" viewBox="0 0 24 24"><path d="M6 3v18m6-18v18m6-18v18M3 6h18M3 12h18M3 18h18" stroke-dasharray=".5 4" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="i-fill" viewBox="0 0 24 24"><path d="m4 11 8-8 9 9-8 8a3 3 0 0 1-4 0l-5-5a3 3 0 0 1 0-4Zm-1 1h18M9 1l5 5M20 17s-3 3-3 4a3 3 0 0 0 6 0c0-1-3-4-3-4Z"/></symbol>
+  <symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2v16h16M2 6h16v16"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="m3 3 18 18M9 5a12 12 0 0 1 3 0c6 0 10 7 10 7a20 20 0 0 1-3 4M6 6a22 22 0 0 0-4 6s4 7 10 7a12 12 0 0 0 5-1"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m2 8 10-5 10 5-10 5Zm0 5 10 5 10-5M2 18l10 5 10-5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="m10 2-1 3-3 1-3-1-2 4 2 2v3l-2 2 2 4 3-1 3 1 1 3h4l1-3 3-1 3 1 2-4-2-2v-3l2-2-2-4-3 1-3-1-1-3Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-panel-left" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></symbol>
+  <symbol id="i-panel-right" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+  <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M12 17v4m-5 0h10"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M7 5.5h.1m3 0h.1"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="5" width="13" height="14" rx="2"/><path d="m15 10 7-4v12l-7-4Z"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><rect x="7" y="7" width="10" height="10" rx="1"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 1v2m0 18v2M1 12h2m18 0h2M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m6 12 6-6 6 6M12 6v14"/></symbol>
+</defs></svg>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="SnapStudio home"><img src="assets/app-icon.png" alt=""><span>SnapStudio</span><span class="preview-badge">DESIGN PREVIEW</span></a>
+    <div class="top-actions">
+      <div class="menu-anchor"><button class="button capture-button" id="capture-button" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-camera"/></svg><span>New capture</span><svg class="small"><use href="#i-down"/></svg></button>
+        <div class="popover capture-popover" id="capture-menu" role="menu" hidden>
+          <div class="menu-heading">CAPTURE</div>
+          <button role="menuitem" data-demo="Select a region on your screen"><svg><use href="#i-select"/></svg>Region <kbd>Ctrl R</kbd></button>
+          <button role="menuitem" data-demo="Choose an open window"><svg><use href="#i-window"/></svg>Window…</button>
+          <button role="menuitem" data-demo="Choose a connected display"><svg><use href="#i-monitor"/></svg>Display…</button>
+          <button role="menuitem" data-demo="Capture all connected displays"><svg><use href="#i-grid"/></svg>All displays</button>
+          <button role="menuitem" data-demo="Set up a screen recording"><svg><use href="#i-video"/></svg>Screen recording…</button>
+          <div class="menu-divider"></div><label class="menu-option"><input type="checkbox" checked> Include mouse pointer</label><label class="menu-option">Delay <select aria-label="Capture delay"><option>No delay</option><option>3 seconds</option><option>5 seconds</option></select></label>
+        </div>
+      </div>
+      <button class="button subtle top-secondary" id="new-canvas"><svg><use href="#i-plus"/></svg>New</button>
+      <button class="button subtle top-secondary" id="open-image"><svg><use href="#i-folder"/></svg>Open</button>
+      <button class="button subtle top-secondary" id="paste-image"><svg><use href="#i-paste"/></svg>Paste</button>
+    </div>
+    <div class="top-spacer"></div>
+    <button class="icon-button focus-button" id="focus-button" title="Focus mode (F8)" aria-label="Focus mode" aria-pressed="false"><svg><use href="#i-focus"/></svg></button>
+    <span class="top-divider"></span>
+    <button class="button subtle" id="copy-button"><svg><use href="#i-copy"/></svg><span>Copy</span></button>
+    <div class="menu-anchor"><button class="button export-button" id="export-button" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-export"/></svg><span>Export</span><svg class="small"><use href="#i-down"/></svg></button>
+      <div class="popover export-popover" id="export-menu" role="menu" hidden><div class="menu-heading">EXPORT IMAGE</div><button role="menuitem" data-export="svg">Download preview <span class="format">SVG</span></button><button role="menuitem" data-export="png">Save as PNG… <span class="format">PNG</span></button><button role="menuitem" data-export="jpg">Save as JPEG… <span class="format">JPG</span></button><div class="menu-divider"></div><span class="menu-note">Preview downloads the sample artwork.</span></div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="library pane" aria-label="Capture library">
+      <div class="pane-title"><div><svg><use href="#i-library"/></svg><h1>Library</h1></div><button class="icon-button" id="collapse-library" title="Collapse library" aria-label="Collapse library"><svg><use href="#i-panel-left"/></svg></button></div>
+      <div class="library-expanded">
+        <div class="folder-toolbar" role="group" aria-label="Folder navigation">
+          <label class="folder-picker" id="folder-picker" title="Mapped folder · Pictures / Website feedback">
+            <svg aria-hidden="true"><use href="#i-folder"/></svg>
+            <select id="folder-select" aria-label="Capture folder">
+              <option value="all">All captures (32)</option>
+              <option value="unfiled">Unfiled (8)</option>
+              <optgroup label="Mapped folders"><option value="website" selected>Website feedback (14)</option><option value="product">Product shots (6)</option></optgroup>
+              <optgroup label="Groups"><option value="ideas">Ideas &amp; inspiration (4)</option></optgroup>
+            </select>
+            <svg class="picker-chevron" aria-hidden="true"><use href="#i-down"/></svg>
+          </label>
+          <button class="icon-button folder-action" id="add-folder" title="Add folder" aria-label="Add folder"><svg><use href="#i-plus"/></svg></button>
+          <button class="icon-button folder-action" id="refresh-folders" title="Refresh selected folder" aria-label="Refresh mapped folders"><svg><use href="#i-refresh"/></svg></button>
+        </div>
+        <label class="search-box"><svg><use href="#i-search"/></svg><input type="search" id="search" placeholder="Search captures…" autocomplete="off" aria-label="Search captures"><kbd>⌕</kbd></label>
+        <div class="capture-list-heading"><button class="section-toggle" data-section="captures" aria-expanded="true"><svg class="disclosure"><use href="#i-chevron"/></svg>CAPTURES <span id="capture-count">14</span></button><div class="menu-anchor"><button class="icon-button small-button" id="sort-button" title="Sort captures" aria-label="Sort captures"><svg><use href="#i-more"/></svg></button><div class="popover small-popover" id="sort-menu" hidden><button data-sort="new">Newest first <svg><use href="#i-check"/></svg></button><button data-sort="name">Name A–Z</button><button id="new-group">New group…</button></div></div></div>
+        <div class="captures-body" id="capture-section"><div class="capture-list" id="capture-list"></div><div class="pagination"><span id="page-label">1–6 of 14</span><div><button class="icon-button small-button" id="previous-page" aria-label="Previous page"><svg class="reverse"><use href="#i-chevron"/></svg></button><span id="page-number">1 / 3</span><button class="icon-button small-button" id="next-page" aria-label="Next page"><svg><use href="#i-chevron"/></svg></button></div></div></div>
+        <div class="library-footer"><button class="button subtle" id="settings-button"><svg><use href="#i-settings"/></svg>Settings</button><span class="local-badge"><span></span>Local workspace</span></div>
+      </div>
+      <div class="library-rail"><button class="icon-button" id="expand-library" title="Expand library" aria-label="Expand library"><svg><use href="#i-library"/></svg></button><button class="icon-button" id="rail-folder" title="Show folders" aria-label="Show folders"><svg><use href="#i-folder"/></svg></button></div>
+    </aside>
+
+    <main class="editor" aria-label="Image editor">
+      <div class="document-bar"><div class="document-name"><svg><use href="#i-image"/></svg><span id="document-title">Homepage — hero feedback</span><span class="file-type">PNG</span></div><div class="document-actions"><span class="saved-state"><span></span>All changes saved</span><button class="icon-button" id="document-menu-button" title="Manage capture" aria-label="Manage capture"><svg><use href="#i-more"/></svg></button></div></div>
+      <div class="context-bar"><div class="context-tool"><svg id="active-tool-icon"><use href="#i-move"/></svg><span id="active-tool-name">Move</span></div><span class="context-divider"></span><span class="context-hint" id="context-hint">Select an object to move or edit it</span><div class="context-actions"><button class="icon-button" id="undo-button" title="Undo (Ctrl Z)" aria-label="Undo"><svg><use href="#i-undo"/></svg></button><button class="icon-button" id="redo-button" title="Redo (Ctrl Y)" aria-label="Redo"><svg><use href="#i-redo"/></svg></button><span class="context-divider"></span><button class="icon-button" id="toggle-inspector" title="Toggle inspector" aria-label="Toggle inspector"><svg><use href="#i-panel-right"/></svg></button></div></div>
+      <div class="editor-surface">
+        <nav class="tool-rail" aria-label="Editing tools" id="tool-rail"></nav>
+        <div class="canvas-area" id="canvas-area">
+          <div class="canvas-label"><span id="canvas-label">Website feedback</span><span>1120 × 740</span></div>
+          <div class="artboard-wrap" id="artboard-wrap"><div class="artboard" id="artboard">
+            <img class="sample-image" id="sample-image" src="assets/sample-capture.svg" alt="Sample Northline travel website capture">
+            <svg class="annotations" id="annotations" viewBox="0 0 1120 740" aria-label="Editable sample annotations">
+              <defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 6 3 0 6" fill="none" stroke="#f9a66b" stroke-width="1.6"/></marker></defs>
+              <g id="annotation-note"><rect x="55" y="525" width="397" height="50" rx="7" fill="#25353d"/><circle cx="80" cy="550" r="13" fill="#8bd6fa"/><text x="80" y="554" text-anchor="middle" font-size="11" fill="#17232b" font-weight="700">01</text><text x="104" y="556" font-size="17" font-weight="600" fill="#fff">Give this action a little more emphasis</text><path d="M217 524 Q228 500 267 477" fill="none" stroke="#f9a66b" stroke-width="3" marker-end="url(#arrowhead)"/></g>
+              <rect id="annotation-shape" x="52" y="405" width="240" height="61" rx="5" fill="none" stroke="#69c8ff" stroke-width="4"/>
+              <g id="selection-bounds"><rect x="45" y="398" width="254" height="75" rx="0" fill="none" stroke="#87d5ff" stroke-width="1.5" stroke-dasharray="5 4"/><g fill="#e6f7ff" stroke="#56b6ed" stroke-width="1.5"><rect x="41" y="394" width="8" height="8"/><rect x="295" y="394" width="8" height="8"/><rect x="41" y="469" width="8" height="8"/><rect x="295" y="469" width="8" height="8"/></g><g><rect x="45" y="369" width="110" height="23" rx="4" fill="#81d3ff"/><text x="100" y="385" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="12" fill="#142330">CTA highlight</text></g></g>
+            </svg>
+          </div></div>
+          <div class="canvas-bottom"><div class="canvas-tip"><svg><use href="#i-move"/></svg><span id="canvas-tip">Drag objects to move · Ctrl + scroll to zoom</span></div><div class="zoom-bar"><button class="icon-button small-button" id="zoom-out" title="Zoom out" aria-label="Zoom out"><svg><use href="#i-minus"/></svg></button><button class="zoom-value" id="zoom-reset" title="Reset zoom">Fit</button><button class="icon-button small-button" id="zoom-in" title="Zoom in" aria-label="Zoom in"><svg><use href="#i-plus"/></svg></button><span></span><button class="icon-button small-button" id="zoom-fit" title="Fit image" aria-label="Fit image"><svg><use href="#i-fit"/></svg></button></div></div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="inspector pane" aria-label="Object inspector">
+      <div class="pane-title"><div><svg><use href="#i-settings"/></svg><h2>Inspector</h2></div><button class="icon-button" id="collapse-inspector" title="Collapse inspector" aria-label="Collapse inspector"><svg><use href="#i-panel-right"/></svg></button></div>
+      <div class="inspector-scroll">
+        <section class="inspector-section properties-section"><button class="inspector-heading" data-section="properties" aria-expanded="true"><span>Properties <span class="subtle-label" id="object-type">Rectangle</span></span><svg class="disclosure"><use href="#i-chevron"/></svg></button>
+          <div class="section-content" id="properties-section">
+            <label class="field-label" for="object-name">Object name</label><input class="text-field" id="object-name" value="CTA highlight" maxlength="60">
+            <div id="shape-properties"><div class="property-row"><span>Stroke</span><label class="color-input"><input type="color" id="stroke-color" value="#69c8ff" aria-label="Stroke color"><span id="stroke-hex">69C8FF</span></label><label class="number-field"><input type="number" id="stroke-width" min="1" value="4" aria-label="Stroke width"><span>px</span></label></div>
+            <div class="color-swatches" id="color-swatches"><button style="--swatch:#69c8ff" data-color="#69c8ff" class="active" aria-label="Sky blue"></button><button style="--swatch:#ffffff" data-color="#ffffff" aria-label="White"></button><button style="--swatch:#f9a66b" data-color="#f9a66b" aria-label="Apricot"></button><button style="--swatch:#fa7e8b" data-color="#fa7e8b" aria-label="Coral"></button><button style="--swatch:#99d7b2" data-color="#99d7b2" aria-label="Mint"></button><button style="--swatch:#b4a1f4" data-color="#b4a1f4" aria-label="Lavender"></button><button id="custom-color" class="custom-swatch" title="Custom color" aria-label="Custom color"><svg><use href="#i-plus"/></svg></button></div>
+            <div class="property-row"><span>Fill</span><button class="fill-control" id="fill-toggle" aria-pressed="false"><span class="transparent-swatch"></span><span id="fill-label">None</span><svg><use href="#i-down"/></svg></button></div>
+            <div class="property-row opacity-row"><label for="opacity">Opacity</label><input type="range" id="opacity" min="0" max="100" value="100"><output id="opacity-value">100%</output></div>
+            <div class="property-divider"></div><div class="property-row"><span>Corner style</span><div class="segmented"><button id="corners-square" title="Square corners" aria-label="Square corners"><svg><use href="#i-rectangle"/></svg></button><button class="active" id="corners-round" title="Rounded corners" aria-label="Rounded corners"><span class="rounded-square"></span></button></div></div></div>
+            <div id="text-properties" hidden><label class="field-label text-spacing" for="font-family">Font</label><select class="text-field" id="font-family"><option>Segoe UI</option><option>Arial</option><option>Georgia</option><option>Consolas</option></select><div class="property-row"><label for="font-size">Text size</label><label class="number-field"><input type="number" id="font-size" value="17" min="1" aria-label="Text size"><span>px</span></label></div><label class="field-label" for="note-text">Text content</label><textarea id="note-text" class="text-field" rows="3">Give this action a little more emphasis</textarea></div>
+          </div>
+        </section>
+        <section class="inspector-section layers-section"><div class="layers-heading"><button class="inspector-heading" data-section="layers" aria-expanded="true"><span>Layers <span class="badge" id="layer-count">3</span></span><svg class="disclosure"><use href="#i-chevron"/></svg></button><button class="icon-button small-button" id="add-layer" title="Add layer" aria-label="Add layer"><svg><use href="#i-plus"/></svg></button></div><div id="layers-section"><div class="layer-list" id="layer-list"></div><div class="layer-footnote"><svg><use href="#i-move"/></svg>Right-click a layer for more options</div></div></section>
+        <section class="inspector-section image-section"><button class="inspector-heading" data-section="image" aria-expanded="false"><span>Image details</span><svg class="disclosure"><use href="#i-chevron"/></svg></button><div id="image-section" class="section-content" hidden><div class="property-row"><span>Dimensions</span><span>1120 × 740 px</span></div><div class="property-row"><span>Background</span><span id="background-label">Image</span></div><div class="property-row"><span>Source</span><span>Window capture</span></div><button class="button full-width" data-demo="Resize the canvas without changing your original">Resize image…</button></div></section>
+      </div>
+      <div class="inspector-bottom"><svg><use href="#i-lock"/></svg><span>Your originals stay untouched.</span></div>
+    </aside>
+  </div>
+  <footer class="statusbar"><div><span class="status-dot"></span><span id="status-text">Ready to create</span><span class="status-separator">/</span><span>1120 × 740 px</span></div><div><span class="preview-notice">Interactive preview · sample content</span><kbd>F8</kbd><span>focus mode</span></div></footer>
+</div>
+
+<div class="popover context-menu" id="context-menu" role="menu" hidden></div>
+<div class="toast" id="toast" role="status"><svg><use href="#i-check"/></svg><span></span><button class="icon-button small-button" id="close-toast" aria-label="Dismiss message"><svg><use href="#i-close"/></svg></button></div>
+<dialog id="app-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description"><form method="dialog"><div class="dialog-top"><span class="dialog-eyebrow" id="dialog-eyebrow">SNAPSTUDIO</span><button class="icon-button" value="cancel" formnovalidate aria-label="Close dialog"><svg><use href="#i-close"/></svg></button></div><h2 id="dialog-title"></h2><p id="dialog-description"></p><div id="dialog-content"></div><div class="dialog-footer"><button class="button" value="cancel" formnovalidate>Cancel</button><button class="button export-button" id="dialog-submit" value="confirm">Add folder</button></div></form></dialog>
+<input type="file" id="image-input" accept="image/*" hidden>
+<script src="app.js"></script>
+</body>
+</html>

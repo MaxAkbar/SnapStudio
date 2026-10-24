@@ -158,6 +158,97 @@ function Invoke-Element {
     return $false
 }
 
+function Set-ElementExpanded {
+    param(
+        [Parameter(Mandatory)]
+        [System.Windows.Automation.AutomationElement]$Element,
+
+        [Parameter(Mandatory)]
+        [bool]$Expanded
+    )
+
+    $pattern = $null
+    if ($Element.TryGetCurrentPattern(
+        [System.Windows.Automation.ExpandCollapsePattern]::Pattern,
+        [ref]$pattern)) {
+        $targetState = if ($Expanded) {
+            [System.Windows.Automation.ExpandCollapseState]::Expanded
+        }
+        else {
+            [System.Windows.Automation.ExpandCollapseState]::Collapsed
+        }
+        if ($pattern.Current.ExpandCollapseState -ne $targetState) {
+            if ($Expanded) { $pattern.Expand() }
+            else { $pattern.Collapse() }
+        }
+        return $true
+    }
+
+    # Some WinUI versions expose only the expander header's Invoke pattern.
+    if (Invoke-Element -Element $Element) { return $true }
+    $buttonCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Button)
+    $header = $Element.FindFirst(
+        [System.Windows.Automation.TreeScope]::Descendants,
+        $buttonCondition)
+    return $null -ne $header -and (Invoke-Element -Element $header)
+}
+
+function Set-SectionExpanded {
+    param(
+        [Parameter(Mandatory)]
+        [System.Windows.Automation.AutomationElement]$Root,
+
+        [Parameter(Mandatory)]
+        [string]$Name,
+
+        [Parameter(Mandatory)]
+        [bool]$Expanded
+    )
+
+    $section = Assert-ElementByName -Root $Root -Name $Name
+    if (-not (Set-ElementExpanded -Element $section -Expanded $Expanded)) {
+        throw "Unable to change the '$Name' section expansion state."
+    }
+    Start-Sleep -Milliseconds 250
+}
+
+function Close-ElementFlyout {
+    param(
+        [Parameter(Mandatory)]
+        [System.Windows.Automation.AutomationElement]$Element
+    )
+
+    $pattern = $null
+    if ($Element.TryGetCurrentPattern(
+        [System.Windows.Automation.ExpandCollapsePattern]::Pattern,
+        [ref]$pattern)) {
+        $pattern.Collapse()
+    }
+    else {
+        # Plain WinUI Button flyouts may not expose an ExpandCollapse pattern.
+        $Element.SetFocus()
+        [System.Windows.Forms.SendKeys]::SendWait("{ESC}")
+    }
+    Start-Sleep -Milliseconds 250
+}
+
+function Test-ElementVisible {
+    param(
+        [Parameter(Mandatory)]
+        [System.Windows.Automation.AutomationElement]$Root,
+
+        [Parameter(Mandatory)]
+        [string]$Name
+    )
+
+    $element = Find-ElementByName -Root $Root -Name $Name
+    return $null -ne $element -and -not $element.Current.IsOffscreen `
+        -and $element.Current.BoundingRectangle.Width -gt 0 `
+        -and $element.Current.BoundingRectangle.Height -gt 0
+}
+
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $runtimeIdentifier = Get-RuntimeIdentifier -Architecture $Platform
 $appProject = Join-Path $repoRoot "src\SnapStudio.App\SnapStudio.App.csproj"
@@ -184,6 +275,7 @@ if (-not (Test-Path -LiteralPath $appExe -PathType Leaf)) {
 
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
+Add-Type -AssemblyName System.Windows.Forms
 
 $process = Start-Process -FilePath $appExe -PassThru
 try {
@@ -201,41 +293,71 @@ try {
         "Copy current capture",
         "Export",
         "Search capture history",
+        "Capture folders",
+        "Add mapped folder",
+        "Refresh mapped folders",
+        "Manage capture folders",
         "Capture history",
         "Annotation layers",
         "Delete selected layer",
         "Resize layers and captures pane",
         "Unpin layers and captures pane",
-        "Include cursor",
-        "Capture delay",
-        "Capture hotkey",
-        "Right controls scroll area",
-        "Remove current capture from history",
-        "Move current capture to recycle bin",
         "Resize right tools pane",
         "Unpin right tools pane",
-        "Selected capture properties",
-        "Selected capture width",
-        "Selected capture height",
-        "Selected capture file size",
+        "Properties",
+        "Image details",
+        "Capture options",
+        "Manage current capture",
+        "Focus mode",
         "Add selected annotation tool",
         "Delete selected annotation",
-        "Annotation tool",
-        "Annotation color",
-        "Annotation size",
-        "Rectangle corner style",
-        "Annotation opacity",
-        "Crop to selected annotation",
-        "Resize unit",
-        "Resize width",
-        "Resize height",
-        "Lock resize aspect ratio",
-        "Resize document"
+        "Crop to selected annotation"
     )
 
     foreach ($name in $requiredNames) {
         [void](Assert-ElementByName -Root $window -Name $name)
     }
+
+    # Tool-specific properties are realized only for the selected tool.
+    $rectangleTool = Assert-ElementByName -Root $window -Name "Rectangle tool"
+    if (-not (Invoke-Element -Element $rectangleTool)) {
+        throw "Unable to select the Rectangle tool."
+    }
+    Start-Sleep -Milliseconds 250
+    foreach ($name in @("Annotation color", "Annotation opacity")) {
+        [void](Assert-ElementByName -Root $window -Name $name)
+    }
+    Set-SectionExpanded -Root $window -Name "More tool options" -Expanded $true
+    [void](Assert-ElementByName -Root $window -Name "Annotation size")
+    [void](Assert-ElementByName -Root $window -Name "Rectangle corner style")
+    [void](Assert-ElementByName -Root $window -Name "Annotation preset")
+    [void](Assert-ElementByName -Root $window -Name "Annotation tool")
+    Set-SectionExpanded -Root $window -Name "More tool options" -Expanded $false
+
+    $textTool = Assert-ElementByName -Root $window -Name "Text tool"
+    if (-not (Invoke-Element -Element $textTool)) {
+        throw "Unable to select the Text tool."
+    }
+    Start-Sleep -Milliseconds 250
+    [void](Assert-ElementByName -Root $window -Name "Text font")
+    [void](Assert-ElementByName -Root $window -Name "Annotation text")
+    $rectangleTool = Assert-ElementByName -Root $window -Name "Rectangle tool"
+    if (-not (Invoke-Element -Element $rectangleTool)) {
+        throw "Unable to restore the Rectangle tool."
+    }
+
+    Set-SectionExpanded -Root $window -Name "Capture options" -Expanded $true
+    foreach ($name in @("Include cursor", "Capture delay", "Capture hotkey")) {
+        [void](Assert-ElementByName -Root $window -Name $name)
+    }
+    Set-SectionExpanded -Root $window -Name "Image details" -Expanded $true
+    foreach ($name in @(
+        "Selected capture properties", "Selected capture width", "Selected capture height",
+        "Selected capture file size", "Resize unit", "Resize width", "Resize height",
+        "Lock resize aspect ratio", "Resize document")) {
+        [void](Assert-ElementByName -Root $window -Name $name)
+    }
+    Set-SectionExpanded -Root $window -Name "Properties" -Expanded $true
 
     $newImage = Assert-ElementByName -Root $window -Name "New image"
     if (-not (Invoke-Element -Element $newImage)) {
@@ -310,6 +432,47 @@ try {
     if ([Math]::Abs($restoredLeftSplitter.Current.BoundingRectangle.Left - $leftSplitterPosition) -gt 3) {
         throw "The layers and captures pane did not restore its previous width."
     }
+
+    $canvasBeforeFocus = Assert-ElementByName -Root $window -Name "Editor canvas"
+    $canvasWidthBeforeFocus = $canvasBeforeFocus.Current.BoundingRectangle.Width
+    $focusMode = Assert-ElementByName -Root $window -Name "Focus mode"
+    if (-not (Invoke-Element -Element $focusMode)) {
+        throw "Unable to enter focus mode."
+    }
+    Start-Sleep -Milliseconds 250
+    $exitFocusMode = Assert-ElementByName -Root $window -Name "Exit focus mode"
+    $focusedCanvas = Assert-ElementByName -Root $window -Name "Editor canvas"
+    [void](Assert-ElementByName -Root $window -Name "Select annotations")
+    if ((Test-ElementVisible -Root $window -Name "Unpin layers and captures pane") `
+        -or (Test-ElementVisible -Root $window -Name "Unpin right tools pane")) {
+        throw "Focus mode left a side pane visible."
+    }
+    if ($focusedCanvas.Current.BoundingRectangle.Width -le $canvasWidthBeforeFocus + 100) {
+        throw "Focus mode did not give the canvas the expected additional space."
+    }
+    if (-not (Invoke-Element -Element $exitFocusMode)) {
+        throw "Unable to exit focus mode."
+    }
+    Start-Sleep -Milliseconds 250
+    foreach ($name in @("Focus mode", "Unpin layers and captures pane", "Unpin right tools pane", "Capture folders", "Annotation layers")) {
+        [void](Assert-ElementByName -Root $window -Name $name)
+    }
+    $restoredFocusSplitter = Assert-ElementByName -Root $window -Name "Resize layers and captures pane"
+    if ([Math]::Abs($restoredFocusSplitter.Current.BoundingRectangle.Left - $leftSplitterPosition) -gt 3) {
+        throw "Leaving focus mode did not restore the previous library width."
+    }
+
+    $manageCapture = Assert-ElementByName -Root $window -Name "Manage current capture"
+    if (-not (Set-ElementExpanded -Element $manageCapture -Expanded $true)) {
+        throw "Unable to open the capture management flyout."
+    }
+    foreach ($name in @(
+        "Current capture title", "Rename current capture", "Duplicate current capture",
+        "Open current capture folder", "Remove current capture from history",
+        "Move current capture to recycle bin", "Move current capture to folder")) {
+        [void](Assert-ElementByName -Root $window -Name $name)
+    }
+    Close-ElementFlyout -Element $manageCapture
 
     [void](Assert-AnyElementByName -Root $window -Names @("Editor canvas", "Settings capture hotkey"))
 

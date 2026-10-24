@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="740" viewBox="0 0 1120 740" role="img" aria-labelledby="title desc">
+  <title id="title">Northline outdoor travel website</title>
+  <desc id="desc">An editorial travel homepage with a forest green and warm ivory palette, a mountain landscape, and three destination cards.</desc>
+  <defs>
+    <clipPath id="hero"><rect x="606" y="139" width="456" height="388" rx="8"/></clipPath>
+    <clipPath id="card-one"><rect x="58" y="604" width="94" height="90" rx="5"/></clipPath>
+    <clipPath id="card-two"><rect x="402" y="604" width="94" height="90" rx="5"/></clipPath>
+    <clipPath id="card-three"><rect x="746" y="604" width="94" height="90" rx="5"/></clipPath>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#E6D1AD"/><stop offset="1" stop-color="#F6E6C8"/></linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#A7BDB2"/><stop offset="1" stop-color="#759B94"/></linearGradient>
+    <pattern id="grain" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="2" r=".5" fill="#FFFFFF" opacity=".1"/><circle cx="5" cy="5" r=".5" fill="#203F37" opacity=".06"/></pattern>
+  </defs>
+  <rect width="1120" height="740" fill="#F7F5EE"/>
+  <!-- Browser chrome keeps this recognizable as a captured web page. -->
+  <path d="M0 0H1120V34H0Z" fill="#E8E8E5"/>
+  <circle cx="18" cy="17" r="4" fill="#D28377"/><circle cx="32" cy="17" r="4" fill="#DBBA70"/><circle cx="46" cy="17" r="4" fill="#91AE8C"/>
+  <rect x="317" y="7" width="486" height="21" rx="5" fill="#F6F6F4"/>
+  <path d="M335 16v-3a3 3 0 016 0v3m-7 0h8v6h-8z" fill="none" stroke="#90958F" stroke-width="1"/>
+  <text x="560" y="21" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6B736A">northline.travel</text>
+  <path d="M1082 13v8m-4-4h8" stroke="#8E968F" stroke-width="1.2"/>
+  <!-- Site navigation. -->
+  <path d="M59 77l9-18 9 18m-12-5h8m9 5 7-13 7 13" fill="none" stroke="#294A3C" stroke-width="2.2" stroke-linejoin="round"/>
+  <text x="108" y="77" font-family="Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="3" fill="#294A3C">NORTHLINE</text>
+  <g font-family="Arial, sans-serif" font-size="12" fill="#45564B">
+    <text x="528" y="74">Destinations</text><text x="645" y="74">Our approach</text><text x="769" y="74">Field notes</text>
+  </g>
+  <rect x="939" y="53" width="123" height="37" rx="3" fill="none" stroke="#C9CEC3"/>
+  <text x="1000" y="76" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#294A3C">Plan a journey</text>
+  <path d="M58 108H1062" stroke="#E1E2D9"/>
+  <!-- Editorial copy. -->
+  <text x="58" y="169" font-family="Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="2.6" fill="#9D634C">FOR THE WANDERERS AT HEART</text>
+  <g font-family="Georgia, 'Times New Roman', serif" font-size="62" letter-spacing="-2.5" fill="#294A3C">
+    <text x="55" y="248">A little further.</text>
+    <text x="55" y="315">A little freer.</text>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="14" fill="#7B8376">
+    <text x="58" y="356">Quiet trails. Wide horizons. The kind of places</text>
+    <text x="58" y="379">that stay with you long after the journey ends.</text>
+  </g>
+  <rect x="58" y="411" width="227" height="49" rx="4" fill="#294A3C"/>
+  <text x="78" y="441" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#FAF9EF">Find your next escape</text>
+  <path d="M256 431l5 5-5 5m-9-5h14" fill="none" stroke="#FAF9EF" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <g font-family="Arial, sans-serif" font-size="10" fill="#899181">
+    <circle cx="65" cy="494" r="7" fill="none" stroke="#B7BEAE"/>
+    <path d="M62 494l2 2 4-5" fill="none" stroke="#718467" stroke-width="1"/>
+    <text x="82" y="498">Small groups. Thoughtfully guided. Always a little wild.</text>
+  </g>
+  <!-- Illustrated mountain photograph substitute. -->
+  <g clip-path="url(#hero)">
+    <rect x="606" y="139" width="456" height="388" fill="url(#sky)"/>
+    <circle cx="918" cy="221" r="45" fill="#C78358"/>
+    <path d="M606 361L707 256 766 308 839 225 967 362 1062 296V527H606Z" fill="#ADB4A0"/>
+    <path d="M717 334L839 225 967 362 856 311 825 278 798 320 770 314Z" fill="#D6D0AF"/>
+    <path d="M837 225L856 265 837 257 820 269Z" fill="#F6EDD6"/>
+    <path d="M606 374L699 315 755 368 803 337 859 376 926 307 1062 411V527H606Z" fill="#6E8E78"/>
+    <path d="M606 418C680 380 720 401 780 383S904 397 959 390 1029 408 1062 399V527H606Z" fill="#345D4C"/>
+    <path d="M789 411C811 410 830 417 848 426 875 439 896 434 918 440 934 444 957 462 971 471L983 527H701C744 490 829 476 831 461S797 443 780 439 773 420 789 411Z" fill="url(#water)"/>
+    <path d="M606 456C652 444 705 450 752 472S814 512 838 527H606Z" fill="#264B3C"/>
+    <path d="M961 444C1001 420 1042 432 1062 446V527H976C963 500 941 471 961 444Z" fill="#294C3B"/>
+    <g fill="#1F4034">
+      <path d="M639 459l15-45 15 45h-10v25h-10v-25z"/><path d="M665 474l13-38 13 38h-9v24h-8v-24z"/>
+      <path d="M1028 445l13-42 13 42h-9v27h-8v-27z"/><path d="M1007 457l11-35 11 35h-8v23h-7v-23z"/>
+    </g>
+    <path d="M683 527C703 507 717 500 731 496" fill="none" stroke="#C3AD7E" stroke-width="9"/>
+    <rect x="606" y="139" width="456" height="388" fill="url(#grain)"/>
+    <rect x="626" y="479" width="134" height="29" rx="3" fill="#F7F5EE" fill-opacity=".94"/>
+    <path d="M640 489a4 4 0 018 0c0 4-4 8-4 8s-4-4-4-8Z" fill="none" stroke="#64725D" stroke-width="1"/><circle cx="644" cy="489" r="1" fill="#64725D"/>
+    <text x="657" y="497" font-family="Arial, sans-serif" font-size="10" fill="#45564B">The Dolomites, Italy</text>
+    <rect x="1008" y="158" width="34" height="34" rx="17" fill="#F7F5EE" fill-opacity=".85"/>
+    <path d="M1019 181v-11h11m-11 11 11-11" fill="none" stroke="#45564B" stroke-width="1.3"/>
+  </g>
+  <!-- Destination cards. -->
+  <path d="M58 562H1062" stroke="#DDDFD4"/>
+  <text x="58" y="586" font-family="Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="2" fill="#737F6B">YOUR NEXT CHAPTER</text>
+  <text x="1062" y="586" text-anchor="end" font-family="Arial, sans-serif" font-size="10" fill="#6C7964">Explore all journeys &#8599;</text>
+  <g clip-path="url(#card-one)">
+    <rect x="58" y="604" width="94" height="90" fill="#D9CFAB"/><circle cx="126" cy="625" r="13" fill="#BD855C"/>
+    <path d="M58 659l34-39 34 45 26-16v45H58Z" fill="#90A58C"/><path d="M92 620l9 14-10-3-7 3Z" fill="#E9E3CC"/>
+    <path d="M58 676l30-18 40 19 24-4v21H58Z" fill="#4F7059"/>
+  </g>
+  <g clip-path="url(#card-two)">
+    <rect x="402" y="604" width="94" height="90" fill="#CBD6CF"/><path d="M402 646l22-13 21 12 25-8 26 17v40h-94Z" fill="#749582"/>
+    <path d="M402 666c26-10 45 3 60 0s21-13 34-9v37h-94Z" fill="#A5BDB5"/><path d="M402 682c30-14 50-1 94-12" fill="none" stroke="#D3DCCF" stroke-width="3"/>
+    <path d="M408 640l8-23 8 23h-5v20h-6v-20z" fill="#3D6552"/><path d="M476 649l8-25 8 25h-5v14h-6v-14z" fill="#3D6552"/>
+  </g>
+  <g clip-path="url(#card-three)">
+    <rect x="746" y="604" width="94" height="90" fill="#E8D6B7"/><circle cx="814" cy="624" r="12" fill="#D5A46C"/>
+    <path d="M746 663l31-35 29 27 34-10v49h-94Z" fill="#C28C65"/><path d="M746 678c23-20 48-5 65-10s23-2 29 2v24h-94Z" fill="#B46F4E"/>
+    <path d="M783 694c5-16 21-17 27-30" stroke="#E7C89D" fill="none" stroke-width="5"/>
+  </g>
+  <g font-family="Georgia, 'Times New Roman', serif" font-size="21" fill="#294A3C">
+    <text x="170" y="632">Into the alpine</text><text x="514" y="632">The quieter coast</text><text x="858" y="632">Desert, slowly</text>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="10" fill="#7B8574">
+    <text x="170" y="653">DOLOMITES, ITALY</text><text x="514" y="653">LOFOTEN, NORWAY</text><text x="858" y="653">WADI RUM, JORDAN</text>
+    <text x="170" y="678">7 days &#183; From &#8364;1,490</text><text x="514" y="678">6 days &#183; From &#8364;1,680</text><text x="858" y="678">5 days &#183; From &#8364;990</text>
+  </g>
+  <path d="M381 613v72m344-72v72" stroke="#E0E2D7"/>
+  <text x="560" y="725" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" letter-spacing=".6" fill="#A4AA9C">LESS RUSH. MORE WORLD.</text>
+</svg>
