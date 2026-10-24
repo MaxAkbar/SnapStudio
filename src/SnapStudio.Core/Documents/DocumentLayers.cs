@@ -56,7 +56,7 @@ public static class DocumentLayers
             }
         }
 
-        if (document.SchemaVersion is 2 or 3 or 4)
+        if (document.SchemaVersion is 2 or 3 or 4 or 5)
         {
             document.SchemaVersion = CaptureDocument.CurrentSchemaVersion;
         }

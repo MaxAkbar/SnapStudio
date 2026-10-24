@@ -63,6 +63,21 @@ public sealed class WindowsClipboardServiceTests
         Assert.AreEqual(new RenderRequest(id, 1, null), renderer.LastRequest);
     }
 
+    [TestMethod]
+    public async Task CopyDocumentAsync_RenderExceptionReturnsFailureInsteadOfAbortingCopy()
+    {
+        var clipboard = new WindowsClipboardService(new ThrowingRenderer());
+        ClipboardResult result = await clipboard.CopyDocumentAsync(DocumentId.New(), new RectD(0, 0, 30, 20), CancellationToken.None);
+        Assert.IsFalse(result.Succeeded);
+        Assert.Contains("render error", result.ErrorMessage ?? "");
+    }
+
+    private sealed class ThrowingRenderer : IDocumentRenderer
+    {
+        public Task<RenderResult> RenderAsync(RenderRequest request, CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("Controlled render error");
+    }
+
     private sealed class FakeDocumentRenderer(RenderResult result) : IDocumentRenderer
     {
         public RenderRequest? LastRequest { get; private set; }

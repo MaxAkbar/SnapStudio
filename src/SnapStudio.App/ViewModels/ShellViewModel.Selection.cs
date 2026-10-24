@@ -1,11 +1,12 @@
 using SnapStudio.Core.Documents;
 using SnapStudio.Core.Primitives;
+using SnapStudio.Rendering;
 
 namespace SnapStudio.App.ViewModels;
 
 public sealed partial class ShellViewModel
 {
-    private enum SelectionStyleAspect { All, Color, Width, Corners, Opacity }
+    private enum SelectionStyleAspect { All, Color, Width, Corners, Opacity, Font }
 
     public IReadOnlySet<Guid> SelectedAnnotationIds => _annotationSelection.SelectedAnnotationIds;
     public int SelectedAnnotationCount => SelectedAnnotationIds.Count;
@@ -102,8 +103,9 @@ public sealed partial class ShellViewModel
     }
 
     private Task ApplySelectionStyleAsync(SelectionStyleAspect aspect, CancellationToken token) =>
-        EditSelectionAsync((editor, document, ids) => editor.SetStylesAsync(document,
-            document.Annotations.Where(item => ids.Contains(item.Id)).ToDictionary(item => item.Id, item =>
+        EditSelectionAsync((editor, document, ids) =>
+        {
+            var styles = document.Annotations.Where(item => ids.Contains(item.Id)).ToDictionary(item => item.Id, item =>
             {
                 AnnotationStyle before = item.Style;
                 AnnotationStyle updated = CreateUpdatedStyle(item.Kind, before);
@@ -113,7 +115,12 @@ public sealed partial class ShellViewModel
                     SelectionStyleAspect.Width => before with { StrokeThickness = updated.StrokeThickness },
                     SelectionStyleAspect.Corners => before with { CornerRadius = updated.CornerRadius },
                     SelectionStyleAspect.Opacity => before with { Opacity = updated.Opacity },
+                    SelectionStyleAspect.Font => item.Kind == AnnotationKind.Text ? before with { FontFamily = AnnotationFontFamily } : before,
                     _ => updated
                 };
-            }), token), "Selected objects updated.", token);
+            });
+            var fittedBounds = document.Annotations.Where(item => styles.ContainsKey(item.Id) && item.Kind == AnnotationKind.Text)
+                .ToDictionary(item => item.Id, item => TextAnnotationLayout.FitBounds(item.Bounds, item.Text, styles[item.Id].StrokeThickness, styles[item.Id].FontFamily));
+            return editor.SetStylesAsync(document, styles, token, fittedBounds);
+        }, "Selected objects updated.", token);
 }

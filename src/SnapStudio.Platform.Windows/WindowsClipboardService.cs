@@ -37,17 +37,15 @@ public sealed class WindowsClipboardService : IClipboardService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        RenderResult renderResult = await _documentRenderer
-            .RenderAsync(new RenderRequest(documentId, 1, sourceBounds), cancellationToken)
-            .ConfigureAwait(true);
-
-        if (!renderResult.Succeeded || renderResult.Image is not RenderedImage image)
-        {
-            return ClipboardResult.Failed(renderResult.ErrorMessage ?? "The document could not be rendered.");
-        }
-
         try
         {
+            RenderResult renderResult = await _documentRenderer
+                .RenderAsync(new RenderRequest(documentId, 1, sourceBounds), cancellationToken)
+                .ConfigureAwait(true);
+
+            if (!renderResult.Succeeded || renderResult.Image is not RenderedImage image)
+                return ClipboardResult.Failed(renderResult.ErrorMessage ?? "The document could not be rendered.");
+
             Directory.CreateDirectory(_temporaryDirectory);
             string temporaryPath = Path.Combine(_temporaryDirectory, $"{documentId.Value:N}.png");
             await File

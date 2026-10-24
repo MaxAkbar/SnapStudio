@@ -164,15 +164,16 @@ public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
         CaptureDocument document,
         AnnotationObject annotation,
         string? text,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        RectD? fittedBounds = null)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(annotation);
         EnsureCurrentAnnotation(document, annotation);
-        return editStack.ExecuteAsync(
-            document,
-            new UpdateAnnotationTextCommand(annotation.Id, annotation.Text, text),
-            cancellationToken);
+        IEditCommand command = new UpdateAnnotationTextCommand(annotation.Id, annotation.Text, text);
+        if (fittedBounds is RectD bounds && bounds != annotation.Bounds)
+            command = new CompositeEditCommand("Edit Text", [command, new UpdateAnnotationBoundsCommand(annotation.Id, annotation.Bounds, bounds)]);
+        return editStack.ExecuteAsync(document, command, cancellationToken);
     }
 
     public ValueTask SetStyleAsync(
@@ -180,16 +181,17 @@ public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
         AnnotationObject annotation,
         AnnotationStyle style,
         string displayName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        RectD? fittedBounds = null)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(annotation);
         ArgumentNullException.ThrowIfNull(style);
         EnsureCurrentAnnotation(document, annotation);
-        return editStack.ExecuteAsync(
-            document,
-            new UpdateAnnotationStyleCommand(annotation.Id, annotation.Style, style, displayName),
-            cancellationToken);
+        IEditCommand command = new UpdateAnnotationStyleCommand(annotation.Id, annotation.Style, style, displayName);
+        if (fittedBounds is RectD bounds && bounds != annotation.Bounds)
+            command = new CompositeEditCommand(displayName, [command, new UpdateAnnotationBoundsCommand(annotation.Id, annotation.Bounds, bounds)]);
+        return editStack.ExecuteAsync(document, command, cancellationToken);
     }
 
     public async ValueTask<bool> SetShapeFillAsync(

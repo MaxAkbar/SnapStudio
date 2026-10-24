@@ -216,7 +216,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             Image = annotation.Image?.DeepCopy(),
             Style = annotation.Style with
             {
-                StrokeThickness = Math.Max(1, annotation.Style.StrokeThickness * scale),
+                StrokeThickness = Math.Max(annotation.Kind == AnnotationKind.Text ? 0.1 : 1, annotation.Style.StrokeThickness * scale),
                 CornerRadius = Math.Max(0, annotation.Style.CornerRadius * scale)
             }
         };
@@ -252,7 +252,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
                 DrawArrow(graphics, annotation, scale);
                 break;
             case AnnotationKind.Text:
-                DrawText(graphics, annotation);
+                DrawText(graphics, annotation, scale);
                 break;
             case AnnotationKind.Highlight:
                 DrawHighlight(graphics, annotation);
@@ -401,28 +401,18 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
         graphics.FillPolygon(brush, points);
     }
 
-    private static void DrawText(Graphics graphics, AnnotationObject annotation)
+    private static void DrawText(Graphics graphics, AnnotationObject annotation, double scale)
     {
         RectangleF rectangle = ToRectangleF(annotation.Bounds);
         using Brush brush = CreateBrush(annotation.Style.Text, annotation.Style.Opacity);
-        using var font = new Font(
-            "Segoe UI",
-            (float)Math.Max(8, annotation.Style.StrokeThickness * 4 + 8),
-            FontStyle.Regular,
-            GraphicsUnit.Pixel);
-        using var format = new StringFormat
-        {
-            Alignment = StringAlignment.Near,
-            LineAlignment = StringAlignment.Near,
-            Trimming = StringTrimming.EllipsisCharacter,
-            FormatFlags = StringFormatFlags.LineLimit
-        };
+        using Font font = SystemFontCatalog.CreateFont(annotation.Style.FontFamily, annotation.Style.StrokeThickness);
+        using StringFormat format = TextAnnotationLayout.CreateFormat();
 
         graphics.DrawString(
-            string.IsNullOrWhiteSpace(annotation.Text) ? "Text" : annotation.Text,
+            TextAnnotationLayout.DisplayText(annotation.Text),
             font,
             brush,
-            rectangle,
+            new PointF(rectangle.X + (float)(TextAnnotationLayout.Padding * scale), rectangle.Y + (float)(TextAnnotationLayout.Padding * scale)),
             format);
     }
 

@@ -1624,6 +1624,16 @@
                             </Button>
                         </StackPanel>
 
+                        <ComboBox
+                            Header="Font"
+                            AutomationProperties.Name="Text font"
+                            AutomationProperties.HelpText="Choose a font installed on this computer. Applies to selected text objects or new text."
+                            ItemsSource="{x:Bind ViewModel.AnnotationFontFamilies, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.AnnotationFontFamily, Mode=OneWay}"
+                            IsTextSearchEnabled="True"
+                            SelectionChanged="AnnotationFontFamily_SelectionChanged"
+                            Visibility="{x:Bind ViewModel.AnnotationFontControlsVisibility, Mode=OneWay}" />
+
                         <Grid ColumnSpacing="8" Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -1640,7 +1650,7 @@
                                 ValueChanged="AnnotationStrokeSize_ValueChanged" />
                             <TextBox
                                 Grid.Column="1"
-                                AutomationProperties.HelpText="Enter a stroke width in pixels or a text size. Valid numbers apply immediately; stroke widths can exceed the slider range."
+                                AutomationProperties.HelpText="Enter a stroke width in pixels or a text size. Valid numbers apply immediately; both can exceed the slider range."
                                 AutomationProperties.Name="Annotation size value"
                                 Header="Value"
                                 InputScope="Number"

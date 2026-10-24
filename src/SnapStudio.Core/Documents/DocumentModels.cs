@@ -27,7 +27,7 @@ public enum DestructiveOperationKind
 
 public sealed class CaptureDocument
 {
-    public const int CurrentSchemaVersion = 5;
+    public const int CurrentSchemaVersion = 6;
 
     public DocumentId Id { get; set; } = DocumentId.New();
 
@@ -118,6 +118,10 @@ public sealed record AnnotationStyle(
     double Opacity,
     double CornerRadius = 0)
 {
+    public const string DefaultFontFamily = "Segoe UI";
+
+    public string FontFamily { get; init; } = DefaultFontFamily;
+
     public static AnnotationStyle Default => new(
         ColorRgba.Black,
         ColorRgba.Transparent,

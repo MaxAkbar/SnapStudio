@@ -47,9 +47,18 @@ public sealed class DocumentSelectionEditor(IEditCommandStack editStack)
         ExecuteAsync(document, Resolve(document, ids).Where(item => item.IsVisible != visible)
             .Select(item => (IEditCommand)new UpdateAnnotationVisibilityCommand(item.Id, item.IsVisible, visible)).ToArray(), visible ? "Show Objects" : "Hide Objects", token);
 
-    public ValueTask<bool> SetStylesAsync(CaptureDocument document, IReadOnlyDictionary<Guid, AnnotationStyle> styles, CancellationToken token) =>
-        ExecuteAsync(document, Resolve(document, styles.Keys).Where(item => item.Style != styles[item.Id])
-            .Select(item => (IEditCommand)new UpdateAnnotationStyleCommand(item.Id, item.Style, styles[item.Id], "Style Objects")).ToArray(), "Style Objects", token);
+    public ValueTask<bool> SetStylesAsync(CaptureDocument document, IReadOnlyDictionary<Guid, AnnotationStyle> styles, CancellationToken token,
+        IReadOnlyDictionary<Guid, RectD>? fittedBounds = null)
+    {
+        var commands = new List<IEditCommand>();
+        foreach (AnnotationObject item in Resolve(document, styles.Keys))
+        {
+            if (item.Style != styles[item.Id]) commands.Add(new UpdateAnnotationStyleCommand(item.Id, item.Style, styles[item.Id], "Style Objects"));
+            if (fittedBounds is not null && fittedBounds.TryGetValue(item.Id, out RectD bounds) && bounds != item.Bounds)
+                commands.Add(new UpdateAnnotationBoundsCommand(item.Id, item.Bounds, bounds));
+        }
+        return ExecuteAsync(document, commands, "Style Objects", token);
+    }
 
     public ValueTask<bool> MoveToLayerAsync(CaptureDocument document, IEnumerable<Guid> ids, Guid layerId, CancellationToken token)
     {

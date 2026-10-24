@@ -19,6 +19,7 @@ using SnapStudio.Core.ScreenRecording;
 using SnapStudio.Core.Settings;
 using SnapStudio.Core.System;
 using SnapStudio.Ipc;
+using SnapStudio.Rendering;
 
 namespace SnapStudio.App.ViewModels;
 
@@ -103,6 +104,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     private readonly IClipboardService? _clipboardService;
     private readonly DispatcherQueue? _dispatcherQueue;
     private readonly IDocumentRepository? _documentRepository;
+    private Task _pendingDocumentSave = Task.CompletedTask;
     private readonly NamedPipeEditorMessageServer? _editorMessageServer;
     private readonly IExportDestinationPicker? _exportDestinationPicker;
     private readonly IReadOnlyDictionary<ExportFormat, IExportProvider>? _exportProviders;
@@ -1169,9 +1171,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         ? AnnotationTextSizeMaximum
         : AnnotationStrokeMaximum;
 
-    public double AnnotationSizeInputMaximum => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
-        ? AnnotationTextSizeMaximum
-        : double.MaxValue;
+    public double AnnotationSizeInputMaximum => double.MaxValue;
 
     public double AnnotationSizeSliderValue => Math.Clamp(AnnotationStrokeThickness, 1, AnnotationSizeMaximum);
 
@@ -1488,7 +1488,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             _currentDocument,
             annotation,
             AnnotationText,
-            cancellationToken).ConfigureAwait(true);
+            cancellationToken,
+            TextAnnotationLayout.FitBounds(annotation.Bounds, AnnotationText, annotation.Style.StrokeThickness, annotation.Style.FontFamily)).ConfigureAwait(true);
 
         if (!SelectedAnnotationIds.Contains(annotation.Id)) _annotationSelection.Select(_currentDocument, annotation.Id);
         await SaveCurrentDocumentAsync("Edit Text complete.", cancellationToken)
@@ -2903,9 +2904,26 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
+        DocumentId documentId = _currentDocumentId.Value;
+        try
+        {
+            await _pendingDocumentSave.WaitAsync(cancellationToken).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            StatusText = "Copy cancelled.";
+            return;
+        }
+        catch (Exception exception)
+        {
+            StatusText = $"Copy failed: {exception.Message}";
+            ShowCaptureNotice("Copy failed", "The latest edits could not be saved. " + exception.Message, InfoBarSeverity.Error);
+            return;
+        }
+        if (_currentDocumentId != documentId) return;
         RectD? selectionBounds = SourceSelectionBounds;
         ClipboardResult result = await _clipboardService
-            .CopyDocumentAsync(_currentDocumentId.Value, selectionBounds, cancellationToken)
+            .CopyDocumentAsync(documentId, selectionBounds, cancellationToken)
             .ConfigureAwait(true);
 
         if (result.Succeeded)
@@ -3332,9 +3350,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     {
         AnnotationObject? annotation = _currentDocument?.Annotations
             .FirstOrDefault(candidate => candidate.Id == annotationId);
-        return annotation is null || !DocumentLayers.IsEffectivelyVisible(_currentDocument!, annotation)
-            ? null
-            : AnnotationOverlayItem.FromAnnotation(CloneAnnotation(annotation, sourceBounds, copyImageBytes: false), _canvasViewport.Zoom, null);
+        if (annotation is null || !DocumentLayers.IsEffectivelyVisible(_currentDocument!, annotation)) return null;
+        AnnotationObject preview = CloneAnnotation(annotation, sourceBounds, copyImageBytes: false);
+        if (annotation.Kind == AnnotationKind.Text && TextSizeChanged(annotation.Bounds, sourceBounds))
+            (preview.Bounds, preview.Style) = TextAnnotationLayout.Resize(annotation, sourceBounds);
+        return AnnotationOverlayItem.FromAnnotation(preview, _canvasViewport.Zoom, null);
     }
 
     public RectD? CreateEditedAnnotationBounds(
@@ -3377,6 +3397,10 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 sourceSize);
         }
 
+        if (handle == AnnotationBoundsHandle.Move && GetSelectedAnnotation()?.Kind == AnnotationKind.Text)
+            return AnnotationBoundsEditor.Nudge(originalSourceBounds, currentSourcePoint.X - dragStartSourcePoint.X,
+                currentSourcePoint.Y - dragStartSourcePoint.Y, sourceSize);
+
         return handle == AnnotationBoundsHandle.Move
             ? AnnotationBoundsEditor.Move(
                 originalSourceBounds,
@@ -3412,7 +3436,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         RectD before = annotation.Bounds;
-        RectD after = NormalizeAndClampSourceBounds(
+        RectD after = annotation.Kind == AnnotationKind.Text ? Normalize(sourceBounds) : NormalizeAndClampSourceBounds(
             _currentDocument,
             sourceBounds,
             annotation.Kind);
@@ -3421,12 +3445,14 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
-        await _annotationEditor.SetBoundsAsync(
-            _currentDocument,
-            annotation,
-            after,
-            displayName,
-            cancellationToken).ConfigureAwait(true);
+        if (annotation.Kind == AnnotationKind.Text && TextSizeChanged(before, after))
+        {
+            (RectD bounds, AnnotationStyle style) = TextAnnotationLayout.Resize(annotation, after);
+            await _annotationEditor.SetStyleAsync(_currentDocument, annotation, style, displayName, cancellationToken, bounds).ConfigureAwait(true);
+            SyncStyleControlsFromSelectedAnnotation();
+        }
+        else
+            await _annotationEditor.SetBoundsAsync(_currentDocument, annotation, after, displayName, cancellationToken).ConfigureAwait(true);
 
         if (!SelectedAnnotationIds.Contains(annotationId)) _annotationSelection.Select(_currentDocument, annotationId);
         // Commit the visual position before saving so release never shows the old bounds.
@@ -5128,6 +5154,10 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
+        // Replace the old fixed text rectangles with their intrinsic content bounds in the workspace.
+        foreach (AnnotationObject annotation in document.Annotations.Where(item => item.Kind == AnnotationKind.Text))
+            annotation.Bounds = TextAnnotationLayout.FitBounds(annotation.Bounds, annotation.Text, annotation.Style.StrokeThickness, annotation.Style.FontFamily);
+        _pendingDocumentSave = Task.CompletedTask;
         _currentDocument = document;
         _layerWorkspace.OpenDocument(document);
         _currentDocumentId = document.Id;
@@ -5173,9 +5203,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         _documentChangeVersion++;
-        await _documentRepository
-            .SaveAsync(_currentDocument, cancellationToken)
-            .ConfigureAwait(true);
+        Task save = _documentRepository.SaveAsync(_currentDocument, cancellationToken);
+        _pendingDocumentSave = save;
+        await save.ConfigureAwait(true);
 
         await WriteDocumentRecoveryEntryAsync(
                 RecoveryJournalEventKind.DocumentSaved,
@@ -5319,7 +5349,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         AnnotationStyle before = annotation.Style;
-        AnnotationStyle after = CreateUpdatedStyle(annotation.Kind, before);
+        if (aspect == SelectionStyleAspect.Font && annotation.Kind != AnnotationKind.Text) return;
+        AnnotationStyle after = aspect == SelectionStyleAspect.Font
+            ? before with { FontFamily = AnnotationFontFamily } : CreateUpdatedStyle(annotation.Kind, before);
 
         if (StylesAreEquivalent(before, after))
         {
@@ -5331,7 +5363,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             annotation,
             after,
             displayName,
-            cancellationToken).ConfigureAwait(true);
+            cancellationToken,
+            annotation.Kind == AnnotationKind.Text
+                ? TextAnnotationLayout.FitBounds(annotation.Bounds, annotation.Text, after.StrokeThickness, after.FontFamily) : null).ConfigureAwait(true);
 
         if (!SelectedAnnotationIds.Contains(annotation.Id)) _annotationSelection.Select(_currentDocument, annotation.Id);
         RefreshAnnotationOverlays();
@@ -5436,6 +5470,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         AnnotationStrokeThickness = annotation.Style.StrokeThickness;
         AnnotationCornerRadius = annotation.Style.CornerRadius;
         AnnotationOpacity = annotation.Style.Opacity;
+        SyncAnnotationFontFromSelection();
         if (annotation.Kind == AnnotationKind.Text)
         {
             AnnotationText = annotation.Text ?? "Text";
@@ -5795,7 +5830,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         double width = ResolveDefaultAnnotationLength(document.SourceImage.Width, 0.35, 80);
         double height = ResolveDefaultAnnotationLength(document.SourceImage.Height, 0.25, 60);
 
-        return CreateAnnotation(
+        AnnotationObject annotation = CreateAnnotation(
             document,
             annotationKind,
             new RectD(
@@ -5803,6 +5838,10 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 (document.SourceImage.Height - height) / 2,
                 width,
                 height));
+        if (annotationKind == AnnotationKind.Text)
+            annotation.Bounds = annotation.Bounds with { X = (document.SourceImage.Width - annotation.Bounds.Width) / 2,
+                Y = (document.SourceImage.Height - annotation.Bounds.Height) / 2 };
+        return annotation;
     }
 
     private AnnotationObject CreateAnnotation(
@@ -5810,14 +5849,20 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         AnnotationKind annotationKind,
         RectD sourceBounds)
     {
-        return new AnnotationObject
+        AnnotationObject annotation = new()
         {
             Kind = annotationKind,
             Bounds = NormalizeAndClampSourceBounds(document, sourceBounds, annotationKind),
             Text = annotationKind == AnnotationKind.Text ? AnnotationText : null,
             Style = CreateAnnotationStyle(annotationKind)
         };
+        if (annotationKind == AnnotationKind.Text)
+            annotation.Bounds = TextAnnotationLayout.FitBounds(annotation.Bounds, annotation.Text, annotation.Style.StrokeThickness, annotation.Style.FontFamily);
+        return annotation;
     }
+
+    private static bool TextSizeChanged(RectD before, RectD after) =>
+        Math.Abs(before.Width - after.Width) > 0.01 || Math.Abs(before.Height - after.Height) > 0.01;
 
     private static RectD NormalizeAndClampSourceBounds(
         CaptureDocument document,
@@ -5929,6 +5974,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         return first.Stroke == second.Stroke
             && first.Fill == second.Fill
             && first.Text == second.Text
+            && string.Equals(first.FontFamily, second.FontFamily, StringComparison.OrdinalIgnoreCase)
             && Math.Abs(first.StrokeThickness - second.StrokeThickness) < tolerance
             && Math.Abs(first.CornerRadius - second.CornerRadius) < tolerance
             && Math.Abs(first.Opacity - second.Opacity) < tolerance;
@@ -5961,7 +6007,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 ColorRgba.Transparent,
                 color,
                 AnnotationStrokeThickness,
-                opacity),
+                opacity) { FontFamily = AnnotationFontFamily },
             AnnotationKind.Highlight => new AnnotationStyle(
                 ColorRgba.Transparent,
                 ResolveFilledToolColor(annotationKind, color),
@@ -6206,6 +6252,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     private void NotifyAnnotationStyleControlsChanged()
     {
         OnPropertyChanged(nameof(AnnotationShapeControlsVisibility));
+        OnPropertyChanged(nameof(AnnotationFontControlsVisibility));
         OnPropertyChanged(nameof(AnnotationColorControlsVisibility));
         OnPropertyChanged(nameof(FillToleranceControlsVisibility));
         OnPropertyChanged(nameof(AnnotationSizeHeader));

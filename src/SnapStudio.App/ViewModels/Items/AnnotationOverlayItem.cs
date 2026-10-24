@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using SnapStudio.Core.Documents;
 using SnapStudio.Core.Primitives;
+using SnapStudio.Rendering;
 using Windows.UI;
 
 namespace SnapStudio.App.ViewModels.Items;
@@ -9,6 +10,8 @@ namespace SnapStudio.App.ViewModels.Items;
 public sealed class AnnotationOverlayItem
 {
     public AnnotationImage? Image { get; private init; }
+
+    public string FontFamily { get; private init; } = AnnotationStyle.DefaultFontFamily;
 
     public IReadOnlyList<PointD> StrokePoints { get; private init; } = [];
 
@@ -186,6 +189,7 @@ public sealed class AnnotationOverlayItem
             isSelected)
         {
             Image = annotation.Image,
+            FontFamily = SystemFontCatalog.ResolveFamily(annotation.Style.FontFamily),
             CanMoveUp = canMoveUp,
             CanMoveDown = canMoveDown,
             FillRectangles = annotation.FillRectangles.Select(rectangle => new RectD(rectangle.X * bounds.Width * zoom,
@@ -263,9 +267,9 @@ public sealed class AnnotationOverlayItem
         AnnotationKind annotationKind,
         double zoom)
     {
-        if (annotationKind == AnnotationKind.Text && styleSize > 12)
+        if (annotationKind == AnnotationKind.Text)
         {
-            return Math.Max(10, styleSize * zoom);
+            return Math.Max(0.1, styleSize * zoom);
         }
 
         return Math.Max(10, (styleSize * 4 + 8) * zoom);

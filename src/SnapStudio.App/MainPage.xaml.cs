@@ -2359,22 +2359,30 @@ public sealed partial class MainPage : Page
         var body = new Border
         {
             Background = item.FillBrush,
-            BorderBrush = item.StrokeBrush,
-            BorderThickness = item.StrokeThickness,
             DataContext = item,
-            Padding = new Thickness(4)
+            Padding = new Thickness(SnapStudio.Rendering.TextAnnotationLayout.Padding * ViewModel.CanvasZoom)
         };
         body.PointerPressed += AnnotationBody_PointerPressed;
         body.Tapped += AnnotationOverlay_Tapped;
 
-        body.Child = new TextBlock
+        body.Child = new Viewbox
         {
-            Text = item.Text,
-            Foreground = item.TextBrush,
-            FontSize = item.FontSize,
-            TextWrapping = TextWrapping.Wrap,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            IsHitTestVisible = false
+            Stretch = Stretch.Uniform,
+            StretchDirection = Microsoft.UI.Xaml.Controls.StretchDirection.DownOnly,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            IsHitTestVisible = false,
+            Child = new TextBlock
+            {
+                Text = item.Text,
+                Foreground = item.TextBrush,
+                FontFamily = new FontFamily(item.FontFamily),
+                FontSize = item.FontSize,
+                TextWrapping = TextWrapping.NoWrap,
+                TextTrimming = TextTrimming.None,
+                IsTextSelectionEnabled = false,
+                IsHitTestVisible = false
+            }
         };
 
         root.Children.Add(body);
