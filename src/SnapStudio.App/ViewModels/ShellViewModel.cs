@@ -1035,6 +1035,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     }
 
     public bool IsSelectionToolActive { get; private set; } = true;
+    public bool IsMarqueeToolActive => IsSelectionToolActive && _isMarqueeTool;
+    public bool IsMoveToolActive => IsSelectionToolActive && !_isMarqueeTool;
+    private bool _isMarqueeTool = true;
 
     public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive
         && ActiveAnnotationKind is not (AnnotationKind.Pen or AnnotationKind.Fill);
@@ -1056,14 +1059,23 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public double CanvasZoom => _canvasViewport.Zoom;
 
-    public void UseSelectionTool()
+    public void UseSelectionTool() => SetSelectionTool(marquee: true);
+
+    public void UseMoveTool() => SetSelectionTool(marquee: false);
+
+    private void SetSelectionTool(bool marquee)
     {
+        _isMarqueeTool = marquee;
         IsSelectionToolActive = true;
         OnPropertyChanged(nameof(IsSelectionToolActive));
+        OnPropertyChanged(nameof(IsMarqueeToolActive));
+        OnPropertyChanged(nameof(IsMoveToolActive));
         OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
         OnPropertyChanged(nameof(FillToleranceControlsVisibility));
-        StatusText = "Selection: drag a rectangle to select objects. Shift-click adds or removes an object.";
+        StatusText = marquee ? "Marquee: drag to select an area. Drag inside the selection to move its boundary. V moves objects."
+            : "Move: click an object to select it, then drag to move. Shift-click adds or removes objects. M selects an area.";
+        RefreshAnnotationOverlays();
         NotifyAnnotationStyleControlsChanged();
     }
 
@@ -1099,7 +1111,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         _ => AnnotationKind.Rectangle
     };
 
-    public string ActiveAnnotationToolLabel => SelectedAnnotationCount > 1 ? $"{SelectedAnnotationCount} objects selected" : IsSelectionToolActive ? "Selection" : ActiveAnnotationKind switch
+    public string ActiveAnnotationToolLabel => IsSelectionToolActive ? (IsMarqueeToolActive ? "Marquee" : "Move") : ActiveAnnotationKind switch
     {
         AnnotationKind.Ellipse => "Ellipse",
         AnnotationKind.Line => "Line",
@@ -1493,6 +1505,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     {
         IsSelectionToolActive = false;
         OnPropertyChanged(nameof(IsSelectionToolActive));
+        OnPropertyChanged(nameof(IsMarqueeToolActive));
+        OnPropertyChanged(nameof(IsMoveToolActive));
         OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
         _annotationSelection.Clear();
@@ -1511,6 +1525,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         {
             IsSelectionToolActive = false;
             OnPropertyChanged(nameof(IsSelectionToolActive));
+            OnPropertyChanged(nameof(IsMarqueeToolActive));
+            OnPropertyChanged(nameof(IsMoveToolActive));
             OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
             OnPropertyChanged(nameof(CanAddActiveAnnotation));
         }
@@ -5401,7 +5417,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             _currentDocument,
             _canvasViewport.Zoom,
             _annotationSelection.SelectedAnnotationIds,
-            _canvasViewport.HasSource);
+            _canvasViewport.HasSource,
+            showTransformHandles: IsMoveToolActive);
 
         OnPropertyChanged(nameof(AnnotationOverlays));
         OnPropertyChanged(nameof(AnnotationLayerCount));

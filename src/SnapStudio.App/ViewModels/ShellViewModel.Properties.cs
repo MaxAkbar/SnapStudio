@@ -6,7 +6,7 @@ namespace SnapStudio.App.ViewModels;
 
 public sealed partial class ShellViewModel
 {
-    private AnnotationProperty CurrentAnnotationProperties => HasSelectedAnnotation
+    private AnnotationProperty CurrentAnnotationProperties => IsMarqueeToolActive && MarqueeSourceBounds.HasValue ? AnnotationProperty.None : HasSelectedAnnotation
         ? AnnotationProperties.Common(_currentDocument!.Annotations.Where(item => SelectedAnnotationIds.Contains(item.Id)).Select(item => item.Kind))
         : IsSelectionToolActive ? AnnotationProperty.None : AnnotationProperties.For(ActiveAnnotationKind);
 
@@ -20,10 +20,13 @@ public sealed partial class ShellViewModel
     public Visibility AnnotationOpacityControlsVisibility => PropertyVisibility(AnnotationProperty.Opacity | AnnotationProperty.BlurStrength);
     public Visibility AnnotationCornerStyleControlsVisibility => PropertyVisibility(AnnotationProperty.Corners);
     public Visibility AnnotationTextControlsVisibility => CanEditAnnotationText ? PropertyVisibility(AnnotationProperty.TextContent) : Visibility.Collapsed;
-    public Visibility AnnotationSelectionControlsVisibility => IsSelectionToolActive && !HasSelectedAnnotation ? Visibility.Visible : Visibility.Collapsed;
-    public Visibility AnnotationSelectionCropVisibility => IsSelectionToolActive && !HasSelectedAnnotation && CanCropToSelection ? Visibility.Visible : Visibility.Collapsed;
-    public Visibility AnnotationMultipleSelectionVisibility => SelectedAnnotationCount > 1 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AnnotationSelectionControlsVisibility => IsSelectionToolActive && (IsMarqueeToolActive && MarqueeSourceBounds.HasValue || !HasSelectedAnnotation) ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AnnotationSelectionCropVisibility => IsSelectionToolActive && CanCropToSelection && (IsMarqueeToolActive || !HasSelectedAnnotation) ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AnnotationMultipleSelectionVisibility => SelectedAnnotationCount > 1 && CurrentAnnotationProperties != AnnotationProperty.None ? Visibility.Visible : Visibility.Collapsed;
     public Visibility AnnotationPresetControlsVisibility => !HasSelectedAnnotation && !IsSelectionToolActive ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AnnotationMorePropertiesVisibility => AnnotationPatternControlsVisibility == Visibility.Visible
+        || AnnotationCornerStyleControlsVisibility == Visibility.Visible || AnnotationPresetControlsVisibility == Visibility.Visible
+        ? Visibility.Visible : Visibility.Collapsed;
     public string AnnotationOpacityHeader => HasAnnotationProperty(AnnotationProperty.BlurStrength) ? "Blur strength" : "Opacity";
     public string AnnotationColorHeader => SelectedAnnotationCount > 1 ? "Color" : ActiveOrSelectedAnnotationKind switch
     {
@@ -32,17 +35,18 @@ public sealed partial class ShellViewModel
         _ => "Stroke color"
     };
 
-    public string AnnotationPropertiesTitle => SelectedAnnotationCount > 1 ? $"{SelectedAnnotationCount} objects selected"
+    public string AnnotationPropertiesTitle => IsMarqueeToolActive && MarqueeSourceBounds.HasValue ? "Marquee" : SelectedAnnotationCount > 1 ? $"{SelectedAnnotationCount} objects selected"
         : GetSelectedAnnotation() is { } selected ? selected.Kind switch
         {
             AnnotationKind.Image => "Image", AnnotationKind.Fill => "Filled region",
             AnnotationKind.Highlight => "Highlighter", _ => selected.Kind.ToString()
         } : ActiveAnnotationToolLabel;
 
-    public string AnnotationSelectionDescription => !HasCurrentDocument ? "Open or capture an image to start selecting objects."
+    public string AnnotationSelectionDescription => !HasCurrentDocument ? "Open or capture an image to start selecting."
         : SourceSelectionBounds is { } bounds
-            ? $"Selected area: {Math.Round(bounds.Width)} × {Math.Round(bounds.Height)} px. Use Crop to keep this area."
-            : "Drag a marquee to select objects. Shift adds to the selection; Ctrl toggles objects. Select an object to edit its properties.";
+            ? $"Selected area: {Math.Round(bounds.Width)} × {Math.Round(bounds.Height)} px. Copy or Crop uses this area. M adjusts its boundary; V moves objects."
+            : IsMarqueeToolActive ? "Drag anywhere on the image to select an area, including over objects. Drag inside an existing marquee to move its boundary. Use V to move objects."
+            : "Click an object to select it, then drag to move it. Shift-click adds or removes objects. Use M to select an area for Copy or Crop.";
 
     public ColorRgba AnnotationPropertyColor => ResolveStyleColor();
     public bool HasMixedAnnotationColors => HasSelectedAnnotation && _currentDocument!.Annotations

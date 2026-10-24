@@ -271,7 +271,8 @@ internal sealed class AnnotationLayerWorkspace
         CaptureDocument? document,
         double zoom,
         IReadOnlySet<Guid> selectedAnnotationIds,
-        bool hasSource)
+        bool hasSource,
+        bool showTransformHandles = true)
     {
         if (document is null || !hasSource)
         {
@@ -295,7 +296,8 @@ internal sealed class AnnotationLayerWorkspace
                 zoom,
                 selectedAnnotationIds.Contains(annotation.Id) ? annotation.Id : null,
                 index < annotations.Length - 1 && annotations[index + 1].LayerId == annotation.LayerId,
-                index > 0 && annotations[index - 1].LayerId == annotation.LayerId);
+                index > 0 && annotations[index - 1].LayerId == annotation.LayerId,
+                showTransformHandles);
             if (!_objects.TryGetValue(annotation.Id, out AnnotationOverlayItem? item))
                 _objects[annotation.Id] = item = next;
             else item.UpdateFrom(next);

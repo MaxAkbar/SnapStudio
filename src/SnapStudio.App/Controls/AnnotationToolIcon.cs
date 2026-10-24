@@ -41,6 +41,10 @@ public sealed class AnnotationToolIcon : UserControl
         _canvas.Children.Clear();
         switch (Kind)
         {
+            case "Move":
+                Line(new Point(4, 2), new Point(18, 12), new Point(11, 13), new Point(8, 20), new Point(4, 2));
+                Line(new Point(16, 17), new Point(22, 23));
+                break;
             case "Design":
                 Line(new Point(4, 18), new Point(16, 6), new Point(20, 10), new Point(8, 22), new Point(3, 23), new Point(4, 18));
                 Line(new Point(4, 2), new Point(22, 20));

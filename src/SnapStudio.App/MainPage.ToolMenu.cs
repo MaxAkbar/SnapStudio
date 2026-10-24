@@ -14,7 +14,7 @@ public sealed partial class MainPage
         var documentId = ViewModel.CurrentDocumentId;
         (string name, int? index)[] tools =
         [
-            ("Select", null), ("Rectangle", 0), ("Ellipse", 1), ("Line", 2), ("Arrow", 3),
+            ("Move", -1), ("Marquee", null), ("Rectangle", 0), ("Ellipse", 1), ("Line", 2), ("Arrow", 3),
             ("Text", 4), ("Pen", 7), ("Highlight", 5), ("Blur", 6), ("Fill bucket", 8)
         ];
         foreach ((string name, int? index) in tools)
@@ -24,8 +24,8 @@ public sealed partial class MainPage
             {
                 Text = name, GroupName = group,
                 KeyboardAcceleratorTextOverride = ToolShortcut(index),
-                IsChecked = index.HasValue ? !ViewModel.IsSelectionToolActive && ViewModel.AnnotationToolIndex == index
-                    : ViewModel.IsSelectionToolActive
+                IsChecked = index == -1 ? ViewModel.IsMoveToolActive : index.HasValue ? !ViewModel.IsSelectionToolActive && ViewModel.AnnotationToolIndex == index
+                    : ViewModel.IsMarqueeToolActive
             };
             item.Click += (_, _) =>
             {
@@ -51,7 +51,8 @@ public sealed partial class MainPage
     {
         HideToolDesignDrawer();
         _objectContextMenu?.Hide();
-        if (toolIndex is int index) ViewModel.UpdateAnnotationTool(index);
+        if (toolIndex == -1) ViewModel.UseMoveTool();
+        else if (toolIndex is int index) ViewModel.UpdateAnnotationTool(index);
         else ViewModel.UseSelectionTool();
         PropertiesSectionExpander.IsExpanded = true;
         UpdateBindingsFromViewModel();

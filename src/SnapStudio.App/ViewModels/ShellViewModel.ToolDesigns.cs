@@ -15,7 +15,7 @@ public sealed partial class ShellViewModel
     private readonly SemaphoreSlim _toolDesignGate = new(1, 1);
     public StrokePattern AnnotationPattern { get; private set; }
     public int AnnotationPatternIndex => (int)AnnotationPattern;
-    public Visibility AnnotationPatternControlsVisibility => ToolDesigns.SupportsPattern(ActiveOrSelectedAnnotationKind)
+    public Visibility AnnotationPatternControlsVisibility => HasAnnotationProperty(AnnotationProperty.StrokeWidth) && ToolDesigns.SupportsPattern(ActiveOrSelectedAnnotationKind)
         && (HasSelectedAnnotation ? _currentDocument!.Annotations.Where(item => SelectedAnnotationIds.Contains(item.Id)).All(item => ToolDesigns.SupportsPattern(item.Kind)) : !IsSelectionToolActive)
             ? Visibility.Visible : Visibility.Collapsed;
     public IReadOnlyList<ToolDesign> SavedToolDesigns => _savedToolDesigns;

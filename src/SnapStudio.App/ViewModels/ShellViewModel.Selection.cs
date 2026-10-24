@@ -20,6 +20,22 @@ public sealed partial class ShellViewModel
     public RectD? PersistentSelectionSourceBounds => _annotationSelection.HasMarquee || SelectedAnnotationCount > 1 ? SourceSelectionBounds : null;
 
     public RectD? SelectionDisplayBounds => PersistentSelectionSourceBounds is RectD bounds ? _canvasViewport.ToDisplayBounds(bounds) : null;
+    public RectD? MarqueeSourceBounds => _annotationSelection.HasMarquee ? SourceSelectionBounds : null;
+
+    public void SelectEntireCanvas()
+    {
+        if (_currentDocument is null) return;
+        _annotationSelection.SelectIntersecting(_currentDocument, new(0, 0, _currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height));
+        RefreshSelection();
+    }
+
+    public void MoveMarquee(double dx, double dy)
+    {
+        if (_currentDocument is null || MarqueeSourceBounds is not RectD bounds) return;
+        RectD moved = MarqueeBoundsEditor.Move(bounds, dx, dy, new(_currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height));
+        _annotationSelection.SelectIntersecting(_currentDocument, moved);
+        RefreshSelection();
+    }
 
     public void RestoreAnnotationSelection(IEnumerable<Guid> ids, RectD? selectionBounds = null)
     {
@@ -55,9 +71,13 @@ public sealed partial class ShellViewModel
     public IReadOnlyDictionary<Guid, RectD> GetSelectedAnnotationBounds() => _currentDocument?.Annotations
         .Where(item => SelectedAnnotationIds.Contains(item.Id)).ToDictionary(item => item.Id, item => item.Bounds) ?? [];
 
-    public IReadOnlyDictionary<Guid, RectD> CreateSelectionMoveBounds(IReadOnlyDictionary<Guid, RectD> original, PointD start, PointD current) =>
-        _currentDocument is null ? original : AnnotationBoundsEditor.MoveSelection(original, current.X - start.X, current.Y - start.Y,
-            new SizeD(_currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height));
+    public IReadOnlyDictionary<Guid, RectD> CreateSelectionMoveBounds(IReadOnlyDictionary<Guid, RectD> original, PointD start, PointD current, bool constrain = false)
+    {
+        if (_currentDocument is null) return original;
+        double dx = current.X - start.X, dy = current.Y - start.Y;
+        if (constrain) { if (Math.Abs(dx) >= Math.Abs(dy)) dy = 0; else dx = 0; }
+        return AnnotationBoundsEditor.MoveSelection(original, dx, dy, new(_currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height));
+    }
 
     public async Task UpdateSelectionBoundsAsync(IReadOnlyDictionary<Guid, RectD> bounds, string name, CancellationToken token)
     {

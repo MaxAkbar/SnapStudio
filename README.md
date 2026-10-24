@@ -20,10 +20,10 @@ SnapStudio is in active development. The current codebase includes the main capt
 - Editing tools sit beside the canvas. **Properties** and **Layers** share the right **Inspector**, with **Image details** and **Capture options** available when needed. Use **…** beside the image title to rename, duplicate, move to a folder, or remove the current capture. Collapse **Folders and search**, **Captures**, or **Layers** independently; collapsing Captures hides its list and pagination together. Both side panes can still be resized or collapsed. **Focus mode** beside the image title, or **F8**, hides both panes and restores their previous widths and open/closed states when you return.
 - With the folder dropdown open, right-click a folder or group for **Rename…** and **Remove … (keep captures)**. Removing a mapped folder stops its mapping; removing either kind returns its captures to **Unfiled** and keeps the image files and editable documents. **All captures** and **Unfiled** remain available.
 - Choose **Dark**, **Light**, or **Use system setting** under **Settings → Appearance → Theme**, then **Save** to apply it without restarting. The choice is remembered and included in settings imports and exports. Existing settings keep the dark theme.
-- Editable annotations: rectangle, ellipse, line, arrow, text, freehand pen, highlight, and blur. Use the dashed-square Selection tool to select, move, and resize objects.
+- Editable annotations: rectangle, ellipse, line, arrow, text, freehand pen, highlight, and blur. **Move (V)** selects, moves, and resizes objects. **Marquee (M)** selects an image area without grabbing the objects underneath it.
 - **Design** at the bottom of the tool rail creates, edits, imports, and exports reusable styles for existing tools. Tools with designs show an arrow; click to open their design drawer, or right-click any drawing tool to create a design. Rectangle, ellipse, line, arrow, and pen include dashed and dotted variants. Designs can save color, fill, width or text size, opacity, corners, and font where applicable. Existing objects retain their own editable styles. Import a SnapStudio JSON design pack, such as [the example pack](docs/tool-designs.sample.json); export shares your saved designs. Styles and line patterns survive reopening and are included in Copy and export.
-- **Properties** follows the selected object or drawing tool. Select with no objects chosen shows selection guidance and a crop action for a selected area. Rectangles show corner controls; text shows font and text size; images show opacity; blur shows strength. Mixed object selections show only shared properties, and text/fill color previews use the object's actual color.
-- Right-click the image background with no objects selected to choose **Select**, **Rectangle**, **Ellipse**, **Line**, **Arrow**, **Text**, **Pen**, **Highlight**, **Blur**, or **Fill bucket**. The menu marks the active tool and switches tools without adding an object. **Shift+F10** opens the same menu when the canvas has focus and no object is selected. Right-click an object for its existing editing actions.
+- **Properties** follows the drawing tool or objects selected with Move. Marquee shows selected-area dimensions and a crop action. Rectangles show corner controls; text shows font and text size; images show opacity; blur shows strength. Mixed object selections show only shared properties, and text/fill color previews use the object's actual color. Stroke widths and text sizes can exceed the slider range through the adjacent textbox.
+- Right-click the image background with no objects selected to choose **Move**, **Marquee**, **Rectangle**, **Ellipse**, **Line**, **Arrow**, **Text**, **Pen**, **Highlight**, **Blur**, or **Fill bucket**. The menu marks the active tool and switches tools without adding an object. **Shift+F10** opens the same menu when the canvas has focus and no object is selected. Right-click an object for its existing editing actions.
 - Right-click a layer to rename it, move it up or down in the stack, or choose a color label. **Custom color…** opens a color picker with a hex entry. Layer changes support undo and redo.
 - Right-click an object inside a layer to move it up or down within that layer. Object order is saved and supports undo and redo.
 - Right-click an object on the editor canvas or in the layer list to duplicate, show/hide, arrange, move to another visible layer, or delete it. Keyboard shortcuts are shown in the menu.
@@ -32,7 +32,9 @@ SnapStudio is in active development. The current codebase includes the main capt
 - Create a transparent canvas with **New** or **Ctrl+N**, then choose its width and height. The checkerboard shows transparency in the editor; PNG export preserves it.
 - Selection, move, resize, style controls, opacity, presets, undo, and redo.
 - Text boxes fit their content. Resize handles scale the text instead of cropping it, and text or size edits refit the box. Choose an installed system font under **Font** for new or selected text; the choice is saved and used in Copy and export. Type sizes beyond the slider range when needed. Copying selected text preserves the visible text and transparency.
-- With the selection tool, drag a dotted rectangle to select every visible object it overlaps. **Shift-click** or **Ctrl-click** toggles individual objects; **Shift-drag** adds to the selection, **Ctrl-drag** toggles overlapping objects, **Ctrl+A** selects all visible objects, and **Escape** clears the selection or cancels a drag. Drag a selected object to move the selection together. Keyboard movement, duplicate, delete, visibility, style, arrange, and move-to-layer actions apply to the selection with one undo step. Select one object to use its resize handles.
+- **Marquee (M)** draws an animated black-and-white selection border anywhere on the image, including over existing objects. Overlapping visible objects are selected for group actions. Drag inside the existing marquee, or use arrow keys (Shift for ten pixels), to move only its boundary; image pixels and objects stay in place. **Ctrl+A** selects the whole canvas, including empty areas. Hold **Shift** while drawing a new selection to make a square, **Alt** to draw from its center, or **Space** while dragging to reposition it. With a selection already present, Shift-drag adds objects and Ctrl-drag toggles overlapping objects. Copy and Crop use the selected rectangle.
+- **Move (V)** clicks an object to select it and drags selected objects together. **Shift-click** or **Ctrl-click** adds or removes individual objects. Drag an empty area to select overlapping objects. **Ctrl+A** selects every visible object; Shift-dragging objects constrains movement to one axis. Resize handles appear for one selected object. Switching between M and V keeps the selected area and objects. Keyboard movement, duplicate, delete, visibility, style, arrange, and move-to-layer actions apply to the selected objects with one undo step. Clicking an object in Layers switches to Move.
+- **Ctrl+D** deselects; **Ctrl+J** duplicates the selected objects. **Escape** cancels a drag and restores its previous selection, or clears the selection when idle. Text fields retain their normal editing shortcuts.
 - Hold **Ctrl** and scroll the mouse wheel over the editor to zoom in or out at the pointer. Scrolling without Ctrl keeps the normal canvas scrolling behavior.
 - The dotted selection rectangle stays visible after drawing. Use **Crop** to keep that exact area, including padding around multiple selected objects. The rectangle follows group moves and stays aligned while zooming; cropping keeps the objects inside the area and can be undone.
 - Crop and resize, including pixel or percentage resize with optional aspect-ratio lock.
@@ -68,7 +70,8 @@ Keys are shown beside each tool icon. Shortcuts apply outside text fields and di
 
 | Shortcut | Tool |
 | --- | --- |
-| M or V | Select / move |
+| M | Rectangular marquee |
+| V | Move objects |
 | U | Rectangle |
 | O | Ellipse |
 | L | Line |
@@ -89,7 +92,8 @@ Select an object on the canvas or in the layer list first. Text fields keep thei
 | --- | --- |
 | Arrow keys | Move by 1 image pixel |
 | Shift+Arrow | Move by 10 image pixels |
-| Ctrl+D | Duplicate |
+| Ctrl+J | Duplicate selected objects |
+| Ctrl+D | Deselect |
 | Ctrl+H | Hide or show |
 | Delete | Delete the selected object |
 | Ctrl+Page Up / Page Down | Bring forward / send backward within its layer |

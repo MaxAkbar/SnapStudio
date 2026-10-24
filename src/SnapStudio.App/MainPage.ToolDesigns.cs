@@ -19,7 +19,7 @@ public sealed partial class MainPage
     private bool _toolDesignDialogIsOpen;
     private static readonly AnnotationKind[] DesignKinds = [AnnotationKind.Rectangle, AnnotationKind.Ellipse, AnnotationKind.Line,
         AnnotationKind.Arrow, AnnotationKind.Text, AnnotationKind.Highlight, AnnotationKind.Blur, AnnotationKind.Pen, AnnotationKind.Fill];
-    private static string ToolShortcut(int? index) => index switch { null => "M", 0 => "U", 1 => "O", 2 => "L", 3 => "A", 4 => "T", 5 => "H", 6 => "B", 7 => "P", 8 => "G", _ => "" };
+    private static string ToolShortcut(int? index) => index switch { null => "M", -1 => "V", 0 => "U", 1 => "O", 2 => "L", 3 => "A", 4 => "T", 5 => "H", 6 => "B", 7 => "P", 8 => "G", _ => "" };
     private static string ToolName(AnnotationKind kind) => kind switch { AnnotationKind.Highlight => "Highlighter", AnnotationKind.Fill => "Fill bucket", _ => kind.ToString() };
 
     private void UpdateToolDesignBadges()
@@ -242,7 +242,7 @@ public sealed partial class MainPage
         if (_canvasDragMode != CanvasDragMode.None || !TryHandleApplicationShortcut(args, sender.Key != VirtualKey.C || ViewModel.CanCropToSelection)) return;
         if (sender.Key == VirtualKey.D) { ShowDesignLibrary(); return; }
         if (sender.Key == VirtualKey.C) { await ViewModel.CropToSelectedAnnotationAsync(CancellationToken.None); UpdateBindingsFromViewModel(); FitCurrentCanvas(); return; }
-        int? index = sender.Key switch { VirtualKey.U => 0, VirtualKey.O => 1, VirtualKey.L => 2, VirtualKey.A => 3,
+        int? index = sender.Key switch { VirtualKey.V => -1, VirtualKey.U => 0, VirtualKey.O => 1, VirtualKey.L => 2, VirtualKey.A => 3,
             VirtualKey.T => 4, VirtualKey.H => 5, VirtualKey.B => 6, VirtualKey.P => 7, VirtualKey.G => 8, _ => null };
         SelectCanvasTool(index);
     }

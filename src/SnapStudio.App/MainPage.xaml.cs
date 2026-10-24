@@ -41,6 +41,7 @@ public sealed partial class MainPage : Page
 
     private CanvasDragMode _canvasDragMode;
     private Guid _annotationDragId;
+    private bool _annotationDragHasMoved;
     private AnnotationBoundsHandle _annotationDragHandle = AnnotationBoundsHandle.Move;
     private RectD _annotationDragOriginalSourceBounds;
     private PointD _annotationDragStartSourcePoint;
@@ -69,6 +70,7 @@ public sealed partial class MainPage : Page
     {
         InitializeComponent();
         Loaded += (_, _) => ApplyAppTheme();
+        Unloaded += (_, _) => StopMarqueeAnimation();
         ActualThemeChanged += (_, _) =>
         {
             UpdateAnnotationToolbarSelection();
@@ -82,6 +84,7 @@ public sealed partial class MainPage : Page
     {
         None,
         SelectObjects,
+        MoveMarquee,
         DrawAnnotation,
         DrawPen,
         MoveAnnotation,
@@ -649,6 +652,7 @@ public sealed partial class MainPage : Page
     {
         if (sender is Button { DataContext: AnnotationOverlayItem item })
         {
+            ViewModel.UseMoveTool();
             CanvasScrollViewer.Focus(FocusState.Programmatic);
             if (IsObjectModifierDown(VirtualKey.Shift) || IsObjectModifierDown(VirtualKey.Control)) ViewModel.ToggleAnnotationSelection(item.Id);
             else ViewModel.SelectAnnotation(item.Id);
@@ -1464,11 +1468,13 @@ public sealed partial class MainPage : Page
         SelectCanvasTool(null);
     }
 
+    private void MoveToolButton_Click(object sender, RoutedEventArgs e) => SelectCanvasTool(-1);
+
     private void AnnotationOverlay_Tapped(
         object sender,
         Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
     {
-        if (IsPenToolActive || IsFillToolActive) return;
+        if (!ViewModel.IsMoveToolActive) return;
         if (sender is Microsoft.UI.Xaml.FrameworkElement
             {
                 DataContext: AnnotationOverlayItem item
@@ -1490,10 +1496,10 @@ public sealed partial class MainPage : Page
         object sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        if (IsPenToolActive || IsFillToolActive) return;
+        if (!ViewModel.IsMoveToolActive) return;
         if (sender is FrameworkElement { DataContext: AnnotationOverlayItem item })
         {
-            if (ViewModel.IsSelectionToolActive && e.GetCurrentPoint(CanvasSurface).Properties.IsLeftButtonPressed
+            if (e.GetCurrentPoint(CanvasSurface).Properties.IsLeftButtonPressed
                 && (e.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift) || e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control)))
             {
                 ViewModel.ToggleAnnotationSelection(item.Id);
@@ -1509,6 +1515,7 @@ public sealed partial class MainPage : Page
         object sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (!ViewModel.IsMoveToolActive) return;
         if (sender is not FrameworkElement
             {
                 DataContext: AnnotationOverlayItem item,
@@ -1527,8 +1534,7 @@ public sealed partial class MainPage : Page
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         if (_canvasDragMode != CanvasDragMode.None
-            || !ViewModel.HasCurrentDocument
-            || (!IsPenToolActive && !IsFillToolActive && IsAnnotationInteraction(e.OriginalSource)))
+            || !ViewModel.HasCurrentDocument)
         {
             return;
         }
@@ -1543,14 +1549,25 @@ public sealed partial class MainPage : Page
         if (ViewModel.IsSelectionToolActive)
         {
             _marqueeOriginalSelection = ViewModel.SelectedAnnotationIds.ToArray();
-            _marqueeOriginalBounds = ViewModel.PersistentSelectionSourceBounds;
-            _marqueeSelectionMode = e.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift) ? AnnotationSelectionMode.Add
+            _marqueeOriginalBounds = ViewModel.MarqueeSourceBounds;
+            _marqueeSelectionMode = e.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift) && ViewModel.HasCanvasSelection ? AnnotationSelectionMode.Add
                 : e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control) ? AnnotationSelectionMode.Toggle : AnnotationSelectionMode.Replace;
-            if (_marqueeSelectionMode == AnnotationSelectionMode.Replace) ViewModel.ClearAnnotationSelection();
             _annotationDragStart = ClampToCanvas(pointerPoint.Position);
+            if (ViewModel.IsMarqueeToolActive && _marqueeSelectionMode == AnnotationSelectionMode.Replace
+                && _marqueeOriginalBounds is RectD sourceArea
+                && new Rect(sourceArea.X * ViewModel.CanvasZoom, sourceArea.Y * ViewModel.CanvasZoom, sourceArea.Width * ViewModel.CanvasZoom, sourceArea.Height * ViewModel.CanvasZoom).Contains(_annotationDragStart))
+            {
+                _canvasDragMode = CanvasDragMode.MoveMarquee;
+                CanvasSurface.CapturePointer(e.Pointer);
+                e.Handled = true;
+                return;
+            }
+            if (_marqueeSelectionMode == AnnotationSelectionMode.Replace) ViewModel.ClearAnnotationSelection();
+            _marqueeLastPointer = _annotationDragStart;
+            _marqueePreviewBounds = null;
             _canvasDragMode = CanvasDragMode.SelectObjects;
             CanvasSurface.CapturePointer(e.Pointer);
-            ShowSelectionMarquee(_annotationDragStart);
+            ShowSelectionMarquee(_annotationDragStart, e.KeyModifiers);
             e.Handled = true;
             return;
         }
@@ -1608,8 +1625,9 @@ public sealed partial class MainPage : Page
 
         if (_canvasDragMode == CanvasDragMode.SelectObjects)
         {
-            ShowSelectionMarquee(currentPoint);
+            ShowSelectionMarquee(currentPoint, e.KeyModifiers);
         }
+        else if (_canvasDragMode == CanvasDragMode.MoveMarquee) ShowMovingMarquee(currentPoint);
         else if (_canvasDragMode == CanvasDragMode.DrawPen)
         {
             foreach (Microsoft.UI.Input.PointerPoint sample in e.GetIntermediatePoints(CanvasSurface).OrderBy(point => point.Timestamp))
@@ -1644,11 +1662,23 @@ public sealed partial class MainPage : Page
 
         if (_canvasDragMode == CanvasDragMode.SelectObjects)
         {
-            RectD marqueeBounds = CreateDisplayBounds(_annotationDragStart, currentPoint);
+            ShowSelectionMarquee(currentPoint, e.KeyModifiers);
+            RectD marqueeBounds = _marqueePreviewBounds ?? default;
             AnnotationSelectionMode mode = _marqueeSelectionMode;
             EndCanvasDrag(e);
-            if (marqueeBounds.Width >= MinimumDragDisplaySize || marqueeBounds.Height >= MinimumDragDisplaySize)
+            if (marqueeBounds.Width >= ViewModel.CanvasZoom && marqueeBounds.Height >= ViewModel.CanvasZoom)
                 ViewModel.SelectAnnotationsInCanvasBounds(marqueeBounds, mode);
+            else if (mode != AnnotationSelectionMode.Replace) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
+            UpdateBindingsFromViewModel();
+            return;
+        }
+
+        if (_canvasDragMode == CanvasDragMode.MoveMarquee)
+        {
+            double dx = (currentPoint.X - _annotationDragStart.X) / ViewModel.CanvasZoom;
+            double dy = (currentPoint.Y - _annotationDragStart.Y) / ViewModel.CanvasZoom;
+            EndCanvasDrag(e);
+            ViewModel.MoveMarquee(dx, dy);
             UpdateBindingsFromViewModel();
             return;
         }
@@ -1707,7 +1737,7 @@ public sealed partial class MainPage : Page
     {
         if (_canvasDragMode != CanvasDragMode.None)
         {
-            if (_canvasDragMode == CanvasDragMode.SelectObjects) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
+            if (_canvasDragMode is CanvasDragMode.SelectObjects or CanvasDragMode.MoveMarquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
             EndCanvasDrag(e);
         }
     }
@@ -1716,7 +1746,7 @@ public sealed partial class MainPage : Page
     {
         if (_canvasDragMode != CanvasDragMode.None)
         {
-            if (_canvasDragMode == CanvasDragMode.SelectObjects) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
+            if (_canvasDragMode is CanvasDragMode.SelectObjects or CanvasDragMode.MoveMarquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
             EndCanvasDrag(e);
         }
     }
@@ -1911,7 +1941,7 @@ public sealed partial class MainPage : Page
             _ => CreateRectangleAnnotationElement(item)
         };
 
-        if (item.IsSelected && ViewModel.SelectedAnnotationCount > 1 && element is Panel panel)
+        if (item.ShowTransformHandles && item.IsSelected && ViewModel.SelectedAnnotationCount > 1 && element is Panel panel)
         {
             panel.Children.Add(CreateSelectionOutline(item));
         }
@@ -1926,7 +1956,7 @@ public sealed partial class MainPage : Page
         AutomationProperties.SetName(element, CreateAnnotationAutomationName(item));
         AutomationProperties.SetHelpText(
             element,
-            "Annotation overlay. Use the pointer to select, move, or resize it.");
+            "Annotation overlay. Use V to select, move, or resize this object. M selects an area.");
     }
 
     private static string CreateAnnotationAutomationName(AnnotationOverlayItem item)
@@ -1998,7 +2028,7 @@ public sealed partial class MainPage : Page
 
     private void AddBoxResizeHandles(Grid root, AnnotationOverlayItem item)
     {
-        if (item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
+        if (item.ShowTransformHandles && item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
         {
             root.Children.Add(CreateResizeHandle(
                 AnnotationBoundsHandle.TopLeft,
@@ -2200,7 +2230,7 @@ public sealed partial class MainPage : Page
             IsHitTestVisible = false
         });
 
-        if (item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
+        if (item.ShowTransformHandles && item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
         {
             root.Children.Add(CreateResizeHandle(
                 AnnotationBoundsHandle.TopLeft,
@@ -2281,17 +2311,17 @@ public sealed partial class MainPage : Page
         var hitTarget = new Border
         {
             Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)),
-            BorderBrush = item.IsSelected
+            BorderBrush = item.ShowTransformHandles && item.IsSelected
                 ? new SolidColorBrush(Color.FromArgb(220, 255, 255, 255))
                 : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
-            BorderThickness = item.IsSelected ? new Thickness(1) : new Thickness(0),
+            BorderThickness = item.ShowTransformHandles && item.IsSelected ? new Thickness(1) : new Thickness(0),
             DataContext = item
         };
         hitTarget.PointerPressed += AnnotationBody_PointerPressed;
         hitTarget.Tapped += AnnotationOverlay_Tapped;
         root.Children.Add(hitTarget);
 
-        if (item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
+        if (item.ShowTransformHandles && item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
         {
             root.Children.Add(CreateResizeHandle(
                 AnnotationBoundsHandle.TopLeft,
@@ -2386,7 +2416,7 @@ public sealed partial class MainPage : Page
 
         root.Children.Add(body);
 
-        if (item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
+        if (item.ShowTransformHandles && item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
         {
             root.Children.Add(CreateResizeHandle(
                 AnnotationBoundsHandle.TopLeft,
@@ -2483,7 +2513,7 @@ public sealed partial class MainPage : Page
             });
         }
 
-        if (item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
+        if (item.ShowTransformHandles && item.IsSelected && ViewModel.SelectedAnnotationCount == 1)
         {
             root.Children.Add(CreateEndpointMarker(
                 item.StartX,
@@ -2644,11 +2674,11 @@ public sealed partial class MainPage : Page
         _annotationDragHandle = handle;
         _annotationDragOriginalSourceBounds = originalSourceBounds;
         _annotationDragStartSourcePoint = dragStartSourcePoint;
+        _annotationDragStart = displayPoint;
+        _annotationDragHasMoved = false;
         _annotationDragBounds = ViewModel.GetSelectedAnnotationBounds();
         _annotationDragMarqueeBounds = ViewModel.PersistentSelectionSourceBounds;
         CanvasSurface.CapturePointer(e.Pointer);
-        SetDraggedAnnotationVisibility(Visibility.Collapsed);
-        ShowAnnotationEditPreview(displayPoint, e);
         e.Handled = true;
     }
 
@@ -2656,6 +2686,12 @@ public sealed partial class MainPage : Page
         Point currentDisplayPoint,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (!_annotationDragHasMoved)
+        {
+            if (CalculateDistance(_annotationDragStart, currentDisplayPoint) < MinimumDragDisplaySize) return;
+            _annotationDragHasMoved = true;
+            SetDraggedAnnotationVisibility(Visibility.Collapsed);
+        }
         IReadOnlyDictionary<Guid, RectD> bounds = CreateSelectionDragBounds(currentDisplayPoint, IsShiftPressed(e));
         AnnotationDragPreview.Children.Clear();
         foreach (var pair in bounds)
@@ -2667,6 +2703,8 @@ public sealed partial class MainPage : Page
         Point currentDisplayPoint,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        ShowAnnotationEditPreview(currentDisplayPoint, e);
+        if (!_annotationDragHasMoved) { EndCanvasDrag(e); UpdateBindingsFromViewModel(); return; }
         IReadOnlyDictionary<Guid, RectD> editedBounds = CreateSelectionDragBounds(currentDisplayPoint, IsShiftPressed(e));
         string displayName = _annotationDragHandle == AnnotationBoundsHandle.Move
             ? "Move Annotation"
@@ -2706,6 +2744,8 @@ public sealed partial class MainPage : Page
         SetDraggedAnnotationVisibility(Visibility.Visible);
         _canvasDragMode = CanvasDragMode.None;
         _annotationDragId = Guid.Empty;
+        _annotationDragHasMoved = false;
+        _marqueePreviewBounds = null;
         _annotationDragHandle = AnnotationBoundsHandle.Move;
         _annotationDragOriginalSourceBounds = default;
         _annotationDragStartSourcePoint = default;
@@ -2821,7 +2861,9 @@ public sealed partial class MainPage : Page
     private void UpdateAnnotationToolbarSelection()
     {
         UpdateToolDesignBadges();
-        UpdateToolButtonAppearance(SelectionToolButton, ViewModel.IsSelectionToolActive);
+        UpdateToolButtonAppearance(SelectionToolButton, ViewModel.IsMarqueeToolActive);
+        UpdateToolButtonAppearance(MoveToolButton, ViewModel.IsMoveToolActive);
+        CanvasSurface.UpdateCursor(ViewModel.IsMarqueeToolActive, ViewModel.IsMoveToolActive);
         UpdateAnnotationToolButton(RectangleToolButton, 0);
         UpdateAnnotationToolButton(EllipseToolButton, 1);
         UpdateAnnotationToolButton(LineToolButton, 2);
@@ -2927,19 +2969,4 @@ public sealed partial class MainPage : Page
         return annotationKind is AnnotationKind.Line or AnnotationKind.Arrow;
     }
 
-    private static bool IsAnnotationInteraction(object originalSource)
-    {
-        var element = originalSource as FrameworkElement;
-        while (element is not null)
-        {
-            if (element.DataContext is AnnotationOverlayItem)
-            {
-                return true;
-            }
-
-            element = element.Parent as FrameworkElement;
-        }
-
-        return false;
-    }
 }

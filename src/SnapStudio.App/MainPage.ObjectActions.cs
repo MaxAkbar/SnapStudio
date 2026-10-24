@@ -21,7 +21,7 @@ public sealed partial class MainPage
         if (_canvasDragMode != CanvasDragMode.None || !TryHandleApplicationShortcut(args, ViewModel.HasSelectedAnnotation)) return;
         ObjectAction action = sender.Key switch
         {
-            VirtualKey.D => ObjectAction.Duplicate,
+            VirtualKey.J => ObjectAction.Duplicate,
             VirtualKey.H => ObjectAction.ToggleVisibility,
             VirtualKey.Delete => ObjectAction.Delete,
             VirtualKey.PageUp => sender.Modifiers.HasFlag(VirtualKeyModifiers.Shift) ? ObjectAction.Front : ObjectAction.Forward,
@@ -34,7 +34,7 @@ public sealed partial class MainPage
     {
         if (_canvasDragMode != CanvasDragMode.None)
         {
-            bool marquee = _canvasDragMode == CanvasDragMode.SelectObjects;
+            bool marquee = _canvasDragMode is CanvasDragMode.SelectObjects or CanvasDragMode.MoveMarquee;
             EndCanvasDrag();
             if (marquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
             args.Handled = true;
@@ -47,9 +47,18 @@ public sealed partial class MainPage
         UpdateBindingsFromViewModel();
     }
 
+    private void DeselectKeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (!TryHandleApplicationShortcut(args, ViewModel.HasCanvasSelection || _canvasDragMode != CanvasDragMode.None)) return;
+        if (_canvasDragMode != CanvasDragMode.None) EndCanvasDrag();
+        _objectContextMenu?.Hide();
+        ViewModel.ClearAnnotationSelection();
+        UpdateBindingsFromViewModel();
+    }
+
     private async void CanvasScrollViewer_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (_canvasDragMode != CanvasDragMode.None || !ViewModel.HasSelectedAnnotation || ShouldIgnoreApplicationShortcut()
+        if (_canvasDragMode != CanvasDragMode.None || !ViewModel.HasCanvasSelection || ShouldIgnoreApplicationShortcut()
             || IsObjectModifierDown(VirtualKey.Menu)) return;
         if (IsObjectModifierDown(VirtualKey.Control))
         {
@@ -75,6 +84,12 @@ public sealed partial class MainPage
         if (x == 0 && y == 0) return;
         e.Handled = true;
         int step = IsObjectModifierDown(VirtualKey.Shift) ? 10 : 1;
+        if (ViewModel.IsMarqueeToolActive && ViewModel.MarqueeSourceBounds.HasValue)
+        {
+            ViewModel.MoveMarquee(x * step, y * step);
+            UpdateBindingsFromViewModel();
+            return;
+        }
         await RunSelectedObjectOperationAsync(token => ViewModel.NudgeSelectedAnnotationAsync(x * step, y * step, token));
     }
 
@@ -140,7 +155,7 @@ public sealed partial class MainPage
         var selectedItems = ViewModel.AnnotationLayers.SelectMany(layer => layer.Objects).Where(candidate => candidate.IsSelected).ToArray();
         menu.Items.Add(new MenuFlyoutItem { Text = multiple ? $"{ViewModel.SelectedAnnotationCount} objects selected" : item.LayerLabel, IsEnabled = false });
         menu.Items.Add(new MenuFlyoutSeparator());
-        menu.Items.Add(CreateObjectMenuAction("Duplicate", "Ctrl+D", ObjectAction.Duplicate));
+        menu.Items.Add(CreateObjectMenuAction("Duplicate", "Ctrl+J", ObjectAction.Duplicate));
         menu.Items.Add(CreateObjectMenuAction(selectedItems.All(candidate => candidate.IsVisible) ? (multiple ? "Hide objects" : "Hide object") : (multiple ? "Show objects" : "Show object"), "Ctrl+H", ObjectAction.ToggleVisibility));
         var arrange = new MenuFlyoutSubItem { Text = "Arrange within layer" };
         arrange.Items.Add(CreateObjectMenuAction("Bring forward", "Ctrl+PgUp", ObjectAction.Forward, selectedItems.Any(candidate => candidate.CanMoveUp)));

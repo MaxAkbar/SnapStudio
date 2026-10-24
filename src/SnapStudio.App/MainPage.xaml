@@ -202,7 +202,8 @@
         <KeyboardAccelerator Key="Enter" Modifiers="Control" Invoked="AddAnnotationKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="Delete" Modifiers="Control" Invoked="DeleteAnnotationKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="Delete" Invoked="ObjectActionKeyboardAccelerator_Invoked"/>
-        <KeyboardAccelerator Key="D" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="J" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="D" Modifiers="Control" Invoked="DeselectKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="SelectAllObjectsKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="H" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="Escape" Invoked="ClearObjectSelectionKeyboardAccelerator_Invoked"/>
@@ -927,13 +928,20 @@
                             VerticalScrollBarVisibility="Hidden"
                             AutomationProperties.Name="Editing tools">
                             <StackPanel Spacing="3" Padding="6,8" HorizontalAlignment="Center">
+                                <Button x:Name="MoveToolButton" Click="MoveToolButton_Click"
+                                    Style="{StaticResource EditorToolButtonStyle}"
+                                    AutomationProperties.Name="Move tool"
+                                    AutomationProperties.HelpText="Select, move, and resize objects. Shift-click adds or removes objects."
+                                    ToolTipService.ToolTip="Move (V)">
+                                    <controls:ToolButtonContent Kind="Move" Shortcut="V"/>
+                                </Button>
                                 <Button
                                     x:Name="SelectionToolButton"
-                                    AutomationProperties.HelpText="Drag a dotted rectangle to select overlapping objects. Shift-click adds or removes objects."
-                                    AutomationProperties.Name="Select annotations"
+                                    AutomationProperties.HelpText="Drag anywhere to select an area without moving objects. Drag inside the marquee to move its boundary."
+                                    AutomationProperties.Name="Marquee selection tool"
                                     Click="SelectionToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
-                                    ToolTipService.ToolTip="Select (M / V)">
+                                    ToolTipService.ToolTip="Rectangular marquee (M)">
                                     <controls:ToolButtonContent Kind="Select" Shortcut="M"/>
                                 </Button>
                                 <Button
@@ -1047,7 +1055,7 @@
                     </Border>
                     <Border
                         Grid.Row="3"
-                        AutomationProperties.HelpText="Drag a selection rectangle to select overlapping objects. Shift-click adds or removes objects. Right-click the image background with no objects selected to choose a tool. Hold Ctrl and scroll the mouse wheel to zoom at the pointer."
+                            AutomationProperties.HelpText="Use M to select an area and move its boundary. Use V to select, move, and resize objects. Right-click the image background with no objects selected to choose a tool. Hold Ctrl and scroll the mouse wheel to zoom at the pointer."
                         AutomationProperties.Name="Editor canvas"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
@@ -1072,7 +1080,7 @@
                                 ZoomMode="Disabled"
                                 Margin="30,52,30,80">
                                 <Grid MinWidth="{x:Bind CanvasScrollViewer.ViewportWidth, Mode=OneWay}" MinHeight="{x:Bind CanvasScrollViewer.ViewportHeight, Mode=OneWay}" Background="Transparent" PointerWheelChanged="CanvasContent_PointerWheelChanged">
-                                    <Grid
+                                    <controls:EditorSurface
                                         x:Name="CanvasSurface"
                                         Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}"
                                         Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
@@ -1100,7 +1108,7 @@
                                                 x:Name="SelectionMarquee"
                                                 Stroke="Black"
                                                 StrokeThickness="1"
-                                                StrokeDashArray="2,2"
+                                                StrokeDashArray="4,4"
                                                 Visibility="Collapsed"
                                                 AutomationProperties.Name="Object selection rectangle" />
                                             <Polyline
@@ -1115,7 +1123,7 @@
                                             </Polyline>
                                             <Ellipse x:Name="PenDotPreview" Visibility="Collapsed"/>
                                         </Canvas>
-                                    </Grid>
+                                    </controls:EditorSurface>
                                 </Grid>
                             </ScrollViewer>
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6" Visibility="{x:Bind ViewModel.CanvasPlaceholderVisibility, Mode=OneWay}">
@@ -1147,7 +1155,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Drag objects to move · Ctrl + scroll to zoom" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
+                                <TextBlock Text="M select area · V move objects · Ctrl + scroll to zoom" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
                                     <Border
                                         Grid.Column="1"
                                         Background="{ThemeResource WorkspaceCommandBrush}"
@@ -1814,6 +1822,7 @@
                                         Text="{x:Bind ViewModel.AnnotationText, Mode=OneWay}" />
                                     <Expander
                                         Header="More properties"
+                                        Visibility="{x:Bind ViewModel.AnnotationMorePropertiesVisibility, Mode=OneWay}"
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Stretch"
                                         Padding="0"

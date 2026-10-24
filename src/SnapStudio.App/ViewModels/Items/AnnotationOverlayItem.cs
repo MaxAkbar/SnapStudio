@@ -14,10 +14,12 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
     internal int VisualVersion { get; private set; }
     public StrokePattern Pattern { get; private set; }
     public DoubleCollection StrokeDashes => [.. ToolDesigns.DashArray(Pattern)];
+    public bool ShowTransformHandles { get; private set; } = true;
 
     internal void UpdateFrom(AnnotationOverlayItem next)
     {
-        bool drawingChanged = Pattern != next.Pattern || Kind != next.Kind || Width != next.Width || Height != next.Height
+        bool drawingChanged = (ShowTransformHandles != next.ShowTransformHandles && (IsSelected || next.IsSelected))
+            || Pattern != next.Pattern || Kind != next.Kind || Width != next.Width || Height != next.Height
             || StartX != next.StartX || StartY != next.StartY || EndX != next.EndX || EndY != next.EndY
             || Text != next.Text || !SameColor(StrokeBrush, next.StrokeBrush) || !SameColor(FillBrush, next.FillBrush)
             || !SameColor(TextBrush, next.TextBrush) || StrokeThicknessValue != next.StrokeThicknessValue
@@ -35,6 +37,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         StrokePoints = next.StrokePoints; FillRectangles = next.FillRectangles;
         CanMoveUp = next.CanMoveUp; CanMoveDown = next.CanMoveDown;
         Pattern = next.Pattern;
+        ShowTransformHandles = next.ShowTransformHandles;
         if (drawingChanged) VisualVersion++;
         if (rowChanged) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
@@ -164,7 +167,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
 
     public string ObjectAutomationName => $"Select {LayerLabel} object";
 
-    public string ObjectSelectionHelpText => $"{LayerLabel}. Right-click for object actions. Use arrow keys to move, Shift+Arrow for ten pixels, Ctrl+D to duplicate, and Delete to remove.";
+    public string ObjectSelectionHelpText => $"{LayerLabel}. Right-click for object actions. Use V and arrow keys to move, Shift+Arrow for ten pixels, Ctrl+J to duplicate, and Delete to remove.";
 
     public string ObjectVisibilityAutomationName => IsVisible
         ? $"Hide {LayerLabel} object"
@@ -179,7 +182,8 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         double zoom,
         Guid? selectedAnnotationId,
         bool canMoveUp = false,
-        bool canMoveDown = false)
+        bool canMoveDown = false,
+        bool showTransformHandles = true)
     {
         ArgumentNullException.ThrowIfNull(annotation);
 
@@ -215,6 +219,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         {
             Image = annotation.Image,
             Pattern = annotation.Style.Pattern,
+            ShowTransformHandles = showTransformHandles,
             FontFamily = SystemFontCatalog.ResolveFamily(annotation.Style.FontFamily),
             CanMoveUp = canMoveUp,
             CanMoveDown = canMoveDown,

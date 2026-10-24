@@ -59,11 +59,11 @@ public sealed partial class MainPage : INotifyPropertyChanged
     public string WorkspaceObjectLabel => ViewModel.AnnotationPropertiesTitle;
 
     public string WorkspaceToolKind => ViewModel.IsSelectionToolActive
-        ? "Select"
+        ? (ViewModel.IsMarqueeToolActive ? "Select" : "Move")
         : ViewModel.ActiveAnnotationKind.ToString();
 
     public string WorkspaceToolHint => ViewModel.IsSelectionToolActive
-        ? "Drag a marquee to select objects"
+        ? (ViewModel.IsMarqueeToolActive ? "Drag to select an area · V to move objects" : "Click or drag objects · M to select an area")
         : ViewModel.ActiveAnnotationKind switch
         {
             AnnotationKind.Fill => "Click an object or image area to fill",
