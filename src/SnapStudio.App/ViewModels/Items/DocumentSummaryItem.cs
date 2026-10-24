@@ -28,9 +28,6 @@ public sealed record DocumentSummaryItem(
         DocumentSummary summary,
         string? thumbnailPath = null)
     {
-        string detail = summary.AnnotationCount == 1
-            ? "1 annotation"
-            : $"{summary.AnnotationCount} annotations";
         string sourceLabel = CreateSourceLabel(summary.SourceKind);
 
         string? resolvedThumbnailPath = thumbnailPath ?? summary.ThumbnailPath;
@@ -38,7 +35,7 @@ public sealed record DocumentSummaryItem(
             summary.Id.ToString(),
             summary.Title,
             summary.ModifiedAtUtc.LocalDateTime.ToString("g"),
-            $"{sourceLabel} - {detail}",
+            CreateDetail(summary),
             NormalizeSourceKind(summary.SourceKind),
             sourceLabel,
             summary.SourceImagePath,
@@ -60,12 +57,22 @@ public sealed record DocumentSummaryItem(
         };
     }
 
-    private static string NormalizeSourceKind(string sourceKind)
+    internal static string NormalizeSourceKind(string sourceKind)
     {
         return string.IsNullOrWhiteSpace(sourceKind)
             ? "capture"
             : sourceKind.Trim().Replace(" ", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
     }
+
+    internal static bool MatchesSearch(DocumentSummary summary, string searchText)
+    {
+        return new[] { summary.Title, CreateDetail(summary), CreateSourceLabel(summary.SourceKind),
+            NormalizeSourceKind(summary.SourceKind), summary.ModifiedAtUtc.LocalDateTime.ToString("g"), Path.GetFileName(summary.SourceImagePath) }
+            .Any(value => value?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true);
+    }
+
+    private static string CreateDetail(DocumentSummary summary) =>
+        $"{CreateSourceLabel(summary.SourceKind)} - {(summary.AnnotationCount == 1 ? "1 annotation" : $"{summary.AnnotationCount} annotations")}";
 
     private static BitmapImage? CreateThumbnailImageSource(string? thumbnailPath)
     {

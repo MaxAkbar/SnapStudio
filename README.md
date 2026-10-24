@@ -14,7 +14,7 @@ SnapStudio is in active development. The current codebase includes the main capt
 - Adjustable region selection before capture.
 - **New capture → Display** lets you choose a connected monitor. **Full Screen (all displays)** captures the complete desktop in one image, preserving monitor positions. **Window** provides a searchable, refreshable list of open windows.
 - With **Include cursor** enabled, still captures keep the screenshot clean and add the visible pointer as an image object in a **Mouse pointer** layer. Select it to move or resize it, or hide/delete it independently. The pointer stays editable after saving and reopening; clipboard copies and exports include visible objects.
-- Local workspace with recent captures, thumbnails, search, filters, rename, duplicate, folder open, remove from history, and move to recycle bin.
+- Local workspace with capture history in pages of ten, thumbnails, search, filters, rename, duplicate, folder open, remove from history, and move to recycle bin. Use the arrows below the history to browse pages; search covers all captures, and new captures return to page 1.
 - Editable annotations: rectangle, ellipse, line, arrow, text, freehand pen, highlight, and blur. Use the dashed-square Selection tool to select, move, and resize objects.
 - Right-click a layer to rename it, move it up or down in the stack, or choose a color label. **Custom color…** opens a color picker with a hex entry. Layer changes support undo and redo.
 - Right-click an object inside a layer to move it up or down within that layer. Object order is saved and supports undo and redo.

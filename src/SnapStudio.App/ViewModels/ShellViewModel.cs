@@ -125,7 +125,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     private readonly string _recoverySessionId = string.Empty;
     private readonly AnnotationSelectionState _annotationSelection = new();
     private readonly AnnotationLayerWorkspace _layerWorkspace = new();
-    private readonly List<DocumentSummaryItem> _allRecentDocuments = [];
+    private readonly List<DocumentSummary> _allRecentDocuments = [];
     private readonly DocumentThumbnailRefreshCoordinator _recentThumbnailRefresh = new();
     private readonly CancellationTokenSource _recentThumbnailRefreshCancellation = new();
     private CancellationTokenSource? _messageLoopCancellation;
@@ -2684,13 +2684,15 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     public void SearchRecentDocuments(string searchText)
     {
         _historySearchText = searchText?.Trim() ?? string.Empty;
-        ApplyRecentDocumentFilter();
+        _historyPagination.Reset();
+        ApplyRecentDocumentFilter(refreshThumbnails: true);
     }
 
     public void UpdateHistoryFilter(int filterIndex)
     {
         HistoryFilterIndex = filterIndex;
-        ApplyRecentDocumentFilter();
+        _historyPagination.Reset();
+        ApplyRecentDocumentFilter(refreshThumbnails: true);
     }
 
     public async Task RenameCurrentDocumentAsync(CancellationToken cancellationToken)
@@ -4364,17 +4366,15 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         IReadOnlyList<DocumentSummary> summaries = await _documentCatalog
-            .GetRecentAsync(25, cancellationToken)
+            .GetRecentAsync(int.MaxValue, cancellationToken)
             .ConfigureAwait(true);
 
+        // Keep only metadata for the full history; create image controls and thumbnails for the visible page.
+        var previousIds = _allRecentDocuments.Select(document => document.Id).ToHashSet();
+        if (summaries.Any(summary => !previousIds.Contains(summary.Id))) _historyPagination.Reset();
         _allRecentDocuments.Clear();
-        foreach (DocumentSummary summary in summaries)
-        {
-            _allRecentDocuments.Add(DocumentSummaryItem.FromSummary(summary));
-        }
-
-        ApplyRecentDocumentFilter();
-        QueueRecentThumbnailRefresh(summaries);
+        _allRecentDocuments.AddRange(summaries);
+        ApplyRecentDocumentFilter(refreshThumbnails: true);
     }
 
     private void QueueRecentThumbnailRefresh(IReadOnlyList<DocumentSummary> summaries)
@@ -4492,10 +4492,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         string thumbnailPath)
     {
         int index = _allRecentDocuments.FindIndex(
-            document => string.Equals(
-                document.Id,
-                summary.Id.ToString(),
-                StringComparison.OrdinalIgnoreCase));
+            document => document.Id == summary.Id);
         if (index < 0
             || string.Equals(
                 _allRecentDocuments[index].ThumbnailPath,
@@ -4505,76 +4502,75 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
-        _allRecentDocuments[index] = DocumentSummaryItem.FromSummary(summary, thumbnailPath);
-        ApplyRecentDocumentFilter();
+        _allRecentDocuments[index] = summary with { ThumbnailPath = thumbnailPath };
+        for (int pageIndex = 0; pageIndex < RecentDocuments.Count; pageIndex++)
+        {
+            if (RecentDocuments[pageIndex].Id == summary.Id.ToString())
+            {
+                RecentDocuments[pageIndex] = DocumentSummaryItem.FromSummary(summary, thumbnailPath);
+                break;
+            }
+        }
     }
 
     private void RemoveRecentDocument(DocumentId documentId)
     {
-        string id = documentId.ToString();
         int removedCount = _allRecentDocuments.RemoveAll(
-            document => string.Equals(document.Id, id, StringComparison.OrdinalIgnoreCase));
+            document => document.Id == documentId);
         if (removedCount > 0)
         {
             ApplyRecentDocumentFilter();
         }
     }
 
-    private void ApplyRecentDocumentFilter()
+    private void ApplyRecentDocumentFilter(bool refreshThumbnails = false)
     {
         RecentDocuments.Clear();
 
-        IEnumerable<DocumentSummaryItem> documents = _allRecentDocuments.Where(MatchesHistoryFilter);
+        IEnumerable<DocumentSummary> documents = _allRecentDocuments.Where(MatchesHistoryFilter);
         if (!string.IsNullOrWhiteSpace(_historySearchText))
         {
             documents = documents.Where(MatchesHistorySearch);
         }
 
-        foreach (DocumentSummaryItem document in documents)
+        DocumentSummary[] matches = documents.ToArray();
+        _historyPagination.UpdateCount(matches.Length);
+        DocumentSummary[] page = matches.Skip(_historyPagination.Offset).Take(HistoryPageSize).ToArray();
+        foreach (DocumentSummary document in page)
         {
-            RecentDocuments.Add(document);
+            RecentDocuments.Add(DocumentSummaryItem.FromSummary(document));
         }
+        NotifyHistoryPaginationChanged();
+        if (refreshThumbnails) QueueRecentThumbnailRefresh(page);
     }
 
-    private bool MatchesHistoryFilter(DocumentSummaryItem document)
+    private bool MatchesHistoryFilter(DocumentSummary document)
     {
+        string sourceKind = DocumentSummaryItem.NormalizeSourceKind(document.SourceKind);
         return HistoryFilter switch
         {
             DocumentHistoryFilter.Captures => string.Equals(
-                document.SourceKind,
+                sourceKind,
                 "capture",
                 StringComparison.OrdinalIgnoreCase),
             DocumentHistoryFilter.Imports => string.Equals(
-                document.SourceKind,
+                sourceKind,
                 "import",
                 StringComparison.OrdinalIgnoreCase)
-                || string.Equals(document.SourceKind, "clipboard", StringComparison.OrdinalIgnoreCase),
+                || string.Equals(sourceKind, "clipboard", StringComparison.OrdinalIgnoreCase),
             DocumentHistoryFilter.Scrolling => string.Equals(
-                document.SourceKind,
+                sourceKind,
                 "scrollingcapture",
                 StringComparison.OrdinalIgnoreCase),
             DocumentHistoryFilter.Duplicates => string.Equals(
-                document.SourceKind,
+                sourceKind,
                 "duplicate",
                 StringComparison.OrdinalIgnoreCase),
             _ => true
         };
     }
 
-    private bool MatchesHistorySearch(DocumentSummaryItem document)
-    {
-        return ContainsSearchText(document.Title)
-            || ContainsSearchText(document.Detail)
-            || ContainsSearchText(document.SourceLabel)
-            || ContainsSearchText(document.SourceKind)
-            || ContainsSearchText(document.ModifiedLabel)
-            || ContainsSearchText(Path.GetFileName(document.SourceImagePath));
-    }
-
-    private bool ContainsSearchText(string? value)
-    {
-        return value?.Contains(_historySearchText, StringComparison.OrdinalIgnoreCase) == true;
-    }
+    private bool MatchesHistorySearch(DocumentSummary document) => DocumentSummaryItem.MatchesSearch(document, _historySearchText);
 
     private static IReadOnlyCollection<CaptureTargetKind> ResolveAllowedTargets(CaptureMode captureMode)
     {

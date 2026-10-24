@@ -493,6 +493,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" MinHeight="80" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Grid ColumnSpacing="4">
@@ -911,8 +912,9 @@
                 </Expander>
 
                 <ListView
+                    x:Name="CaptureHistoryList"
                     Grid.Row="6"
-                    AutomationProperties.HelpText="Select a capture to open it in the editor."
+                    AutomationProperties.HelpText="Select a capture to open it in the editor. Use Previous and Next below to browse older captures, ten per page."
                     AutomationProperties.Name="Capture history"
                     ItemsSource="{x:Bind ViewModel.RecentDocuments}"
                     SelectionChanged="RecentDocuments_SelectionChanged"
@@ -981,8 +983,46 @@
                     </ListView.ItemTemplate>
                 </ListView>
 
+                <StackPanel Grid.Row="7" Spacing="4" AutomationProperties.Name="Capture history pages">
+                    <TextBlock
+                        Text="{x:Bind ViewModel.HistoryRangeLabel, Mode=OneWay}"
+                        FontSize="11"
+                        Foreground="{StaticResource SnapMutedBrush}"
+                        HorizontalAlignment="Center" />
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="36" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="36" />
+                        </Grid.ColumnDefinitions>
+                        <Button
+                            AutomationProperties.Name="Previous captures page"
+                            Click="PreviousHistoryPage_Click"
+                            IsEnabled="{x:Bind ViewModel.CanShowPreviousHistoryPage, Mode=OneWay}"
+                            ToolTipService.ToolTip="Previous page"
+                            Style="{StaticResource ToolIconButtonStyle}">
+                            <FontIcon Glyph="&#xE76B;" FontSize="12" />
+                        </Button>
+                        <TextBlock
+                            Grid.Column="1"
+                            Text="{x:Bind ViewModel.HistoryPageLabel, Mode=OneWay}"
+                            FontSize="12"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                        <Button
+                            Grid.Column="2"
+                            AutomationProperties.Name="Next captures page"
+                            Click="NextHistoryPage_Click"
+                            IsEnabled="{x:Bind ViewModel.CanShowNextHistoryPage, Mode=OneWay}"
+                            ToolTipService.ToolTip="Next page"
+                            Style="{StaticResource ToolIconButtonStyle}">
+                            <FontIcon Glyph="&#xE76C;" FontSize="12" />
+                        </Button>
+                    </Grid>
+                </StackPanel>
+
                 <Button
-                    Grid.Row="7"
+                    Grid.Row="8"
                     AutomationProperties.Name="Settings"
                     Click="SettingsButton_Click"
                     HorizontalAlignment="Stretch"

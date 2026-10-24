@@ -454,6 +454,7 @@ public sealed partial class MainPage : Page
     {
         ViewModel.SearchRecentDocuments(sender.Text);
         UpdateBindingsFromViewModel();
+        ScrollCaptureHistoryToStart();
     }
 
     private void HistoryFilter_SelectionChanged(
@@ -469,6 +470,7 @@ public sealed partial class MainPage : Page
         {
             ViewModel.UpdateHistoryFilter(comboBox.SelectedIndex);
             UpdateBindingsFromViewModel();
+            ScrollCaptureHistoryToStart();
         }
     }
 
@@ -478,6 +480,8 @@ public sealed partial class MainPage : Page
     {
         if (sender is ListView { SelectedItem: DocumentSummaryItem item })
         {
+            // Replacing a thumbnail must not reopen the current document and clear its undo history.
+            if (item.Id == ViewModel.CurrentDocumentId?.ToString()) return;
             await ViewModel.OpenDocumentAsync(item.Id, CancellationToken.None);
             UpdateBindingsFromViewModel();
             FitCurrentCanvas();
