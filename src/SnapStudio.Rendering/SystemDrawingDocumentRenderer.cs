@@ -214,6 +214,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             StrokePoints = [.. annotation.StrokePoints],
             FillRectangles = [.. annotation.FillRectangles],
             Image = annotation.Image?.DeepCopy(),
+            Vector = annotation.Vector,
             Style = annotation.Style with
             {
                 StrokeThickness = Math.Max(annotation.Kind == AnnotationKind.Text ? 0.1 : 1, annotation.Style.StrokeThickness * scale),
@@ -230,6 +231,9 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     {
         switch (annotation.Kind)
         {
+            case AnnotationKind.Vector:
+                if (annotation.Vector is not null) SvgRasterizer.Draw(graphics, annotation.Vector.Svg, ToRectangleF(annotation.Bounds), annotation.Style.Opacity);
+                break;
             case AnnotationKind.Image:
                 DrawImageObject(graphics, annotation);
                 break;

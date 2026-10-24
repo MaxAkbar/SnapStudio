@@ -39,7 +39,7 @@ public sealed class ToolDesignTests
     {
         using var workspace = TemporaryWorkspace.Create();
         string path = Path.Combine(workspace.Path, "designs.json");
-        foreach (string json in new[] { "{\"schemaVersion\":2,\"designs\":[]}", "{\"schemaVersion\":1,\"designs\":null}" })
+        foreach (string json in new[] { "{\"schemaVersion\":3,\"designs\":[]}", "{\"schemaVersion\":1,\"designs\":null}" })
         {
             File.WriteAllText(path, json);
             await Assert.ThrowsExactlyAsync<InvalidDataException>(() => JsonToolDesignStore.ReadPackAsync(path, CancellationToken.None));
@@ -66,7 +66,7 @@ public sealed class ToolDesignTests
         var document = new CaptureDocument { SchemaVersion = 6 };
         document.Annotations.Add(new AnnotationObject { Kind = AnnotationKind.Rectangle, LayerId = document.Layers[0].Id });
         DocumentLayers.EnsureInitialized(document);
-        Assert.AreEqual(7, document.SchemaVersion);
+        Assert.AreEqual(CaptureDocument.CurrentSchemaVersion, document.SchemaVersion);
         Assert.AreEqual(StrokePattern.Solid, document.Annotations[0].Style.Pattern);
         string json = JsonSerializer.Serialize(AnnotationStyle.Default);
         using JsonDocument parsed = JsonDocument.Parse(json);

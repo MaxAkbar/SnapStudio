@@ -56,7 +56,7 @@ public static class DocumentLayers
             }
         }
 
-        if (document.SchemaVersion is 2 or 3 or 4 or 5 or 6)
+        if (document.SchemaVersion is 2 or 3 or 4 or 5 or 6 or 7)
         {
             document.SchemaVersion = CaptureDocument.CurrentSchemaVersion;
         }
@@ -111,6 +111,13 @@ public static class DocumentLayers
             else if (annotation.Kind == AnnotationKind.Fill)
             {
                 AreaFill.Validate(annotation);
+            }
+            else if (annotation.Kind == AnnotationKind.Vector)
+            {
+                if (annotation.Vector is null || !double.IsFinite(annotation.Bounds.X) || !double.IsFinite(annotation.Bounds.Y)
+                    || !double.IsFinite(annotation.Bounds.Width) || !double.IsFinite(annotation.Bounds.Height) || annotation.Bounds.Width <= 0 || annotation.Bounds.Height <= 0)
+                    throw new InvalidDataException("A vector object must contain SVG artwork and valid bounds.");
+                SvgShape.Normalize(annotation.Vector.Svg);
             }
             else if (annotation.Kind == AnnotationKind.Image)
             {

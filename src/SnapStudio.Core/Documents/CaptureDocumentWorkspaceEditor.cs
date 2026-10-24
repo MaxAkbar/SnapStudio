@@ -77,6 +77,7 @@ public static class CaptureDocumentWorkspaceEditor
                 StrokePoints = [.. annotation.StrokePoints],
                 FillRectangles = [.. annotation.FillRectangles],
                 Image = annotation.Image?.DeepCopy(),
+                Vector = annotation.Vector,
                 Style = annotation.Style
             })
             .ToList();

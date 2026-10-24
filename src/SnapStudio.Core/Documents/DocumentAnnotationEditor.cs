@@ -129,6 +129,7 @@ public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
             StrokePoints = [.. annotation.StrokePoints],
             FillRectangles = [.. annotation.FillRectangles],
             Image = annotation.Image?.DeepCopy(),
+            Vector = annotation.Vector,
             Style = annotation.Style
         };
         await editStack.ExecuteAsync(document, new AddAnnotationCommand(copy, "Duplicate Object"), cancellationToken).ConfigureAwait(false);

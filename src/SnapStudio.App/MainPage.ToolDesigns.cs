@@ -18,14 +18,14 @@ public sealed partial class MainPage
     private Flyout? _toolDesignDrawer;
     private bool _toolDesignDialogIsOpen;
     private static readonly AnnotationKind[] DesignKinds = [AnnotationKind.Rectangle, AnnotationKind.Ellipse, AnnotationKind.Line,
-        AnnotationKind.Arrow, AnnotationKind.Text, AnnotationKind.Highlight, AnnotationKind.Blur, AnnotationKind.Pen, AnnotationKind.Fill];
-    private static string ToolShortcut(int? index) => index switch { null => "M", -1 => "V", 0 => "U", 1 => "O", 2 => "L", 3 => "A", 4 => "T", 5 => "H", 6 => "B", 7 => "P", 8 => "G", _ => "" };
-    private static string ToolName(AnnotationKind kind) => kind switch { AnnotationKind.Highlight => "Highlighter", AnnotationKind.Fill => "Fill bucket", _ => kind.ToString() };
+        AnnotationKind.Arrow, AnnotationKind.Text, AnnotationKind.Highlight, AnnotationKind.Blur, AnnotationKind.Pen, AnnotationKind.Fill, AnnotationKind.Vector];
+    private static string ToolShortcut(int? index) => index switch { null => "M", -1 => "V", 0 => "U", 1 => "O", 2 => "L", 3 => "A", 4 => "T", 5 => "H", 6 => "B", 7 => "P", 8 => "G", 9 => "K", _ => "" };
+    private static string ToolName(AnnotationKind kind) => kind switch { AnnotationKind.Highlight => "Highlighter", AnnotationKind.Fill => "Fill bucket", AnnotationKind.Vector => "Custom shapes", _ => kind.ToString() };
 
     private void UpdateToolDesignBadges()
     {
         Button[] buttons = [RectangleToolButton, EllipseToolButton, LineToolButton, ArrowToolButton, TextToolButton,
-            HighlightToolButton, BlurToolButton, PenToolButton, FillToolButton];
+            HighlightToolButton, BlurToolButton, PenToolButton, FillToolButton, CustomShapeToolButton];
         for (int index = 0; index < buttons.Length; index++)
             if (buttons[index].Content is ToolButtonContent badge)
             {
@@ -47,24 +47,35 @@ public sealed partial class MainPage
         HideToolDesignDrawer();
         var content = new StackPanel { Width = 290, Spacing = 10 };
         content.Children.Add(new TextBlock { Text = $"{ToolName(kind)} designs · {ToolShortcut(ViewModels.ShellViewModel.ToolIndex(kind))}", FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-        var defaults = new Button { Content = "Default / solid", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var defaults = new Button { Content = kind == AnnotationKind.Vector ? "Default shape" : "Default / solid", HorizontalAlignment = HorizontalAlignment.Stretch };
         defaults.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UseDefaultToolDesign(kind); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
         content.Children.Add(defaults);
         var list = new StackPanel { Spacing = 6 };
         foreach (ToolDesign design in ViewModel.GetToolDesigns(kind))
         {
-            var preview = new AnnotationToolIcon { Kind = kind.ToString(), Pattern = design.Style.Pattern, Width = 24, Height = 24 };
+            UIElement preview = design.Svg is { } svg ? new SvgThumbnail(svg) : new AnnotationToolIcon { Kind = kind.ToString(), Pattern = design.Style.Pattern, Width = 24, Height = 24 };
             var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
             row.Children.Add(preview); row.Children.Add(new TextBlock { Text = design.Name, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 220 });
             var button = new Button { Content = row, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left };
             AutomationProperties.SetName(button, $"Use {design.Name} design");
             button.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UseToolDesign(design); PropertiesSectionExpander.IsExpanded = true; UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+            button.ContextRequested += (_, args) =>
+            {
+                args.Handled = true;
+                var menu = new MenuFlyout(); var editSvg = new MenuFlyoutItem { Text = ViewModel.IsBuiltInDesign(design.Id) ? "Design SVG copy…" : "Edit SVG…" };
+                editSvg.Click += async (_, _) => await EditSvgToolAsync(design, kind); menu.Items.Add(editSvg); menu.ShowAt(button);
+            };
             list.Children.Add(button);
         }
         content.Children.Add(new ScrollViewer { Content = list, MaxHeight = 320, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
-        var create = new Button { Content = "Create design…", HorizontalAlignment = HorizontalAlignment.Stretch };
-        create.Click += async (_, _) => await EditToolDesignAsync(null, kind);
+        var create = new Button { Content = "Design SVG…", HorizontalAlignment = HorizontalAlignment.Stretch };
+        create.Click += async (_, _) => await EditSvgToolAsync(null, kind);
         content.Children.Add(create);
+        if (kind != AnnotationKind.Vector)
+        {
+            var style = new Button { Content = "Save a style preset…", HorizontalAlignment = HorizontalAlignment.Stretch };
+            style.Click += async (_, _) => await EditToolDesignAsync(null, kind); content.Children.Add(style);
+        }
         OpenToolDrawer(anchor, content);
     }
 
@@ -82,15 +93,24 @@ public sealed partial class MainPage
         HideToolDesignDrawer();
         var content = new StackPanel { Width = 330, Spacing = 10 };
         content.Children.Add(new TextBlock { Text = "Design tools", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-        content.Children.Add(new TextBlock { Text = "Create reusable styles for existing tools, or import a SnapStudio design file.", TextWrapping = TextWrapping.Wrap, FontSize = 12 });
+        content.Children.Add(new TextBlock { Text = "Draw custom SVG artwork, edit paths, or start from an existing tool in its drawer.", TextWrapping = TextWrapping.Wrap, FontSize = 12 });
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-        var create = new Button { Content = "New design…" };
-        create.Click += async (_, _) => await EditToolDesignAsync(null, ViewModel.ActiveAnnotationKind);
-        var import = new Button { Content = "Import…" };
+        var create = new Button { Content = "New SVG tool…" };
+        create.Click += async (_, _) => await EditSvgToolAsync(null, AnnotationKind.Vector);
+        var importSvg = new Button { Content = "Import SVG…" };
+        importSvg.Click += async (_, _) => await RunToolDesignUiActionAsync(async () =>
+        {
+            HideToolDesignDrawer();
+            if (await ViewModel.ChooseSvgFileAsync(CancellationToken.None) is { } file)
+                await EditSvgToolAsync(null, AnnotationKind.Vector, file.Svg, file.Name);
+        });
+        actions.Children.Add(create); actions.Children.Add(importSvg); content.Children.Add(actions);
+        var packs = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var import = new Button { Content = "Import library…" };
         import.Click += async (_, _) => { HideToolDesignDrawer(); await RunToolDesignUiActionAsync(() => ViewModel.ImportToolDesignsAsync(CancellationToken.None)); ShowDesignLibrary(); };
-        var export = new Button { Content = "Export…", IsEnabled = ViewModel.SavedToolDesigns.Count > 0 };
+        var export = new Button { Content = "Export library…", IsEnabled = ViewModel.SavedToolDesigns.Count > 0 };
         export.Click += async (_, _) => { HideToolDesignDrawer(); await RunToolDesignUiActionAsync(() => ViewModel.ExportToolDesignsAsync(CancellationToken.None)); };
-        actions.Children.Add(create); actions.Children.Add(import); actions.Children.Add(export); content.Children.Add(actions);
+        packs.Children.Add(import); packs.Children.Add(export); content.Children.Add(packs);
         var search = new TextBox { PlaceholderText = "Search saved designs…" }; AutomationProperties.SetName(search, "Search tool designs"); content.Children.Add(search);
         var rows = new StackPanel { Spacing = 6 };
         void Populate()
@@ -99,11 +119,18 @@ public sealed partial class MainPage
             foreach (ToolDesign design in ViewModel.SavedToolDesigns.Where(item => $"{item.Name} {ToolName(item.Kind)}".Contains(search.Text.Trim(), StringComparison.OrdinalIgnoreCase)).OrderBy(item => item.Name))
             {
                 var row = new Grid { ColumnSpacing = 6 }; row.ColumnDefinitions.Add(new()); row.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
-                var use = new Button { Content = $"{design.Name}\n{ToolName(design.Kind)} · {design.Style.Pattern}", HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left };
+                var label = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+                if (design.Svg is { } svg) label.Children.Add(new SvgThumbnail(svg));
+                label.Children.Add(new TextBlock { Text = $"{design.Name}\n{ToolName(design.Kind)} · {(design.Svg is null ? design.Style.Pattern.ToString() : "SVG")}", MaxWidth = 220, TextTrimming = TextTrimming.CharacterEllipsis });
+                var use = new Button { Content = label, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left };
                 use.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UseToolDesign(design); UpdateBindingsFromViewModel(); };
                 var edit = new Button { Content = "…" }; Grid.SetColumn(edit, 1);
                 var menu = new MenuFlyout();
-                var modify = new MenuFlyoutItem { Text = "Edit design…" }; modify.Click += async (_, _) => await EditToolDesignAsync(design, design.Kind); menu.Items.Add(modify);
+                var modify = new MenuFlyoutItem { Text = "Edit SVG…" }; modify.Click += async (_, _) => await EditSvgToolAsync(design, design.Kind); menu.Items.Add(modify);
+                if (design.Svg is null)
+                {
+                    var style = new MenuFlyoutItem { Text = "Edit style preset…" }; style.Click += async (_, _) => await EditToolDesignAsync(design, design.Kind); menu.Items.Add(style);
+                }
                 var remove = new MenuFlyoutItem { Text = "Remove design…" };
                 remove.Click += async (_, _) =>
                 {
@@ -142,7 +169,7 @@ public sealed partial class MainPage
             if (existing is null && kind == AnnotationKind.Text && ViewModel.ActiveAnnotationKind != AnnotationKind.Text)
                 initial = initial with { StrokeThickness = 24, Text = initial.Stroke };
             var name = new TextBox { Header = "Design name", Text = existing?.Name ?? $"{ToolName(kind)} design", MaxLength = 80 };
-            var tool = new ComboBox { Header = "Base tool", ItemsSource = DesignKinds.Select(ToolName).ToArray(), SelectedIndex = ViewModels.ShellViewModel.ToolIndex(kind), HorizontalAlignment = HorizontalAlignment.Stretch };
+            var tool = new ComboBox { Header = "Base tool", ItemsSource = DesignKinds.Where(item => item != AnnotationKind.Vector).Select(ToolName).ToArray(), SelectedIndex = ViewModels.ShellViewModel.ToolIndex(kind), HorizontalAlignment = HorizontalAlignment.Stretch };
             var pattern = new ComboBox { Header = "Line style", ItemsSource = new[] { "Solid", "Dashed", "Dotted", "Dash dot" }, SelectedIndex = (int)initial.Pattern, HorizontalAlignment = HorizontalAlignment.Stretch };
             var width = new TextBox { Header = "Stroke width", Text = initial.StrokeThickness.ToString(CultureInfo.CurrentCulture), InputScope = new InputScope { Names = { new InputScopeName(InputScopeNameValue.Number) } } };
             var corners = new TextBox { Header = "Corner radius", Text = initial.CornerRadius.ToString(CultureInfo.CurrentCulture) };
@@ -243,7 +270,7 @@ public sealed partial class MainPage
         if (sender.Key == VirtualKey.D) { ShowDesignLibrary(); return; }
         if (sender.Key == VirtualKey.C) { await ViewModel.CropToSelectedAnnotationAsync(CancellationToken.None); UpdateBindingsFromViewModel(); FitCurrentCanvas(); return; }
         int? index = sender.Key switch { VirtualKey.V => -1, VirtualKey.U => 0, VirtualKey.O => 1, VirtualKey.L => 2, VirtualKey.A => 3,
-            VirtualKey.T => 4, VirtualKey.H => 5, VirtualKey.B => 6, VirtualKey.P => 7, VirtualKey.G => 8, _ => null };
+            VirtualKey.T => 4, VirtualKey.H => 5, VirtualKey.B => 6, VirtualKey.P => 7, VirtualKey.G => 8, VirtualKey.K => 9, _ => null };
         SelectCanvasTool(index);
     }
 

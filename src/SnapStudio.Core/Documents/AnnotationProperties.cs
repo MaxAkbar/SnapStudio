@@ -28,7 +28,7 @@ public static class AnnotationProperties
         AnnotationKind.Text => AnnotationProperty.Color | AnnotationProperty.TextSize | AnnotationProperty.Opacity
             | AnnotationProperty.Font | AnnotationProperty.TextContent,
         AnnotationKind.Highlight or AnnotationKind.Fill => AnnotationProperty.Color | AnnotationProperty.Opacity,
-        AnnotationKind.Image => AnnotationProperty.Opacity,
+        AnnotationKind.Image or AnnotationKind.Vector => AnnotationProperty.Opacity,
         AnnotationKind.Blur => AnnotationProperty.BlurStrength,
         _ => AnnotationProperty.None
     };

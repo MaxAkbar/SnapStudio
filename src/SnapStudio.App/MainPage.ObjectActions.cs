@@ -146,7 +146,7 @@ public sealed partial class MainPage
     private void ShowObjectContextMenu(AnnotationOverlayItem item, Point position)
     {
         CanvasScrollViewer.Focus(FocusState.Programmatic);
-        ViewModel.UseSelectionTool();
+        ViewModel.UseMoveTool();
         if (!ViewModel.SelectedAnnotationIds.Contains(item.Id)) ViewModel.SelectAnnotation(item.Id);
         item = GetSelectedObjectItem() ?? item;
         _objectContextMenu?.Hide();
@@ -155,6 +155,12 @@ public sealed partial class MainPage
         var selectedItems = ViewModel.AnnotationLayers.SelectMany(layer => layer.Objects).Where(candidate => candidate.IsSelected).ToArray();
         menu.Items.Add(new MenuFlyoutItem { Text = multiple ? $"{ViewModel.SelectedAnnotationCount} objects selected" : item.LayerLabel, IsEnabled = false });
         menu.Items.Add(new MenuFlyoutSeparator());
+        if (!multiple && ViewModel.CanEditSelectedVector)
+        {
+            var editSvg = new MenuFlyoutItem { Text = "Edit SVG…" };
+            editSvg.Click += async (_, _) => { menu.Hide(); await EditSelectedVectorAsync(); };
+            menu.Items.Add(editSvg);
+        }
         menu.Items.Add(CreateObjectMenuAction("Duplicate", "Ctrl+J", ObjectAction.Duplicate));
         menu.Items.Add(CreateObjectMenuAction(selectedItems.All(candidate => candidate.IsVisible) ? (multiple ? "Hide objects" : "Hide object") : (multiple ? "Show objects" : "Show object"), "Ctrl+H", ObjectAction.ToggleVisibility));
         var arrange = new MenuFlyoutSubItem { Text = "Arrange within layer" };

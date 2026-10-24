@@ -1937,7 +1937,7 @@ public sealed partial class MainPage : Page
             AnnotationKind.Ellipse => CreateEllipseAnnotationElement(item),
             AnnotationKind.Pen => CreatePenAnnotationElement(item),
             AnnotationKind.Fill => CreateFillAnnotationElement(item),
-            AnnotationKind.Image => CreateImageAnnotationElement(item),
+            AnnotationKind.Image or AnnotationKind.Vector => CreateImageAnnotationElement(item),
             _ => CreateRectangleAnnotationElement(item)
         };
 
@@ -1974,6 +1974,7 @@ public sealed partial class MainPage : Page
             AnnotationKind.Pen => "pen stroke",
             AnnotationKind.Fill => "filled region",
             AnnotationKind.Image => TrimAutomationText(item.Text),
+            AnnotationKind.Vector => "SVG shape, " + item.LayerLabel,
             _ => "annotation"
         };
         return $"{selectedPrefix}{kind} annotation, {Math.Round(item.Width)} by {Math.Round(item.Height)}";
@@ -2873,6 +2874,7 @@ public sealed partial class MainPage : Page
         UpdateAnnotationToolButton(BlurToolButton, 6);
         UpdateAnnotationToolButton(PenToolButton, 7);
         UpdateAnnotationToolButton(FillToolButton, 8);
+        UpdateAnnotationToolButton(CustomShapeToolButton, 9);
     }
 
     private void UpdateAnnotationToolButton(Button button, int toolIndex)

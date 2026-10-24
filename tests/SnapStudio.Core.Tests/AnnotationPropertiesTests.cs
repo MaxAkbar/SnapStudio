@@ -15,6 +15,7 @@ public sealed class AnnotationPropertiesTests
     [DataRow(AnnotationKind.Highlight, AnnotationProperty.Color | AnnotationProperty.Opacity)]
     [DataRow(AnnotationKind.Fill, AnnotationProperty.Color | AnnotationProperty.Opacity)]
     [DataRow(AnnotationKind.Image, AnnotationProperty.Opacity)]
+    [DataRow(AnnotationKind.Vector, AnnotationProperty.Opacity)]
     [DataRow(AnnotationKind.Blur, AnnotationProperty.BlurStrength)]
     public void For_ExposesOnlyPropertiesUsedByEachKind(AnnotationKind kind, AnnotationProperty expected)
     {

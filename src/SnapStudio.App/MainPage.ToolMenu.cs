@@ -15,7 +15,7 @@ public sealed partial class MainPage
         (string name, int? index)[] tools =
         [
             ("Move", -1), ("Marquee", null), ("Rectangle", 0), ("Ellipse", 1), ("Line", 2), ("Arrow", 3),
-            ("Text", 4), ("Pen", 7), ("Highlight", 5), ("Blur", 6), ("Fill bucket", 8)
+            ("Text", 4), ("Pen", 7), ("Highlight", 5), ("Blur", 6), ("Fill bucket", 8), ("Custom shapes", 9)
         ];
         foreach ((string name, int? index) in tools)
         {

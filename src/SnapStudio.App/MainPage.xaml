@@ -223,6 +223,7 @@
         <KeyboardAccelerator Key="H" Invoked="ToolKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="B" Invoked="ToolKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="G" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="K" Invoked="ToolKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="C" Invoked="ToolKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="D" Invoked="ToolKeyboardAccelerator_Invoked"/>
     </Page.KeyboardAccelerators>
@@ -1034,6 +1035,11 @@
                                     ToolTipService.ToolTip="Fill bucket (G)">
                                     <controls:ToolButtonContent Kind="Fill" Shortcut="G"/>
                                 </Button>
+                                <Button x:Name="CustomShapeToolButton" ContextRequested="ToolDesignButton_ContextRequested"
+                                    AutomationProperties.Name="Custom shapes tool" Click="AnnotationToolButton_Click"
+                                    Style="{StaticResource EditorToolButtonStyle}" Tag="9" ToolTipService.ToolTip="Custom shapes (K)">
+                                    <controls:ToolButtonContent Kind="Vector" Shortcut="K"/>
+                                </Button>
                                 <Button
                                     AccessKey="C"
                                     AutomationProperties.HelpText="Crop the current capture to the selection rectangle, keeping objects inside the selected area."
@@ -1820,6 +1826,8 @@
                                         LostFocus="AnnotationText_LostFocus"
                                         IsEnabled="{x:Bind ViewModel.CanEditAnnotationText, Mode=OneWay}"
                                         Text="{x:Bind ViewModel.AnnotationText, Mode=OneWay}" />
+                                    <Button Content="Edit SVG…" Click="EditSelectedVector_Click" HorizontalAlignment="Stretch"
+                                        Visibility="{x:Bind ViewModel.SelectedVectorControlsVisibility, Mode=OneWay}"/>
                                     <Expander
                                         Header="More properties"
                                         Visibility="{x:Bind ViewModel.AnnotationMorePropertiesVisibility, Mode=OneWay}"

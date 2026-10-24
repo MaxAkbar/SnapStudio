@@ -1,5 +1,6 @@
 using SnapStudio.Core.Documents;
 using SnapStudio.Storage;
+using SnapStudio.Core.Primitives;
 using Microsoft.UI.Xaml;
 
 namespace SnapStudio.App.ViewModels;
@@ -19,6 +20,11 @@ public sealed partial class ShellViewModel
         && (HasSelectedAnnotation ? _currentDocument!.Annotations.Where(item => SelectedAnnotationIds.Contains(item.Id)).All(item => ToolDesigns.SupportsPattern(item.Kind)) : !IsSelectionToolActive)
             ? Visibility.Visible : Visibility.Collapsed;
     public IReadOnlyList<ToolDesign> SavedToolDesigns => _savedToolDesigns;
+    public ToolDesign? ActiveSvgToolDesign => _chosenToolDesigns.GetValueOrDefault(ActiveToolFamily) is { Svg: not null } chosen ? chosen
+        : ActiveToolFamily == AnnotationKind.Vector ? ToolDesigns.BuiltIns.First(item => item.Kind == AnnotationKind.Vector) : null;
+    public bool CanEditSelectedVector => SelectedAnnotationCount == 1 && GetSelectedAnnotation()?.Vector is not null;
+    public Visibility SelectedVectorControlsVisibility => CanEditSelectedVector && !IsMarqueeToolActive ? Visibility.Visible : Visibility.Collapsed;
+    public AnnotationVector? SelectedVector => CanEditSelectedVector ? GetSelectedAnnotation()?.Vector : null;
     public IEnumerable<ToolDesign> GetToolDesigns(AnnotationKind kind) => ToolDesigns.BuiltIns.Concat(_savedToolDesigns)
         .Where(item => item.Kind == kind).OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase);
     public StrokePattern GetToolPattern(AnnotationKind kind) => _chosenToolDesigns.GetValueOrDefault(kind)?.Style.Pattern ?? StrokePattern.Solid;
@@ -46,7 +52,7 @@ public sealed partial class ShellViewModel
     {
         AnnotationKind.Rectangle => 0, AnnotationKind.Ellipse => 1, AnnotationKind.Line => 2, AnnotationKind.Arrow => 3,
         AnnotationKind.Text => 4, AnnotationKind.Highlight => 5, AnnotationKind.Blur => 6, AnnotationKind.Pen => 7,
-        AnnotationKind.Fill => 8, _ => throw new ArgumentException("This object is not a drawing tool.")
+        AnnotationKind.Fill => 8, AnnotationKind.Vector => 9, _ => throw new ArgumentException("This object is not a drawing tool.")
     };
 
     public void UseDefaultToolDesign(AnnotationKind kind)
@@ -60,7 +66,7 @@ public sealed partial class ShellViewModel
     {
         AnnotationPattern = StrokePattern.Solid;
         _annotationDesignFill = SnapStudio.Core.Primitives.ColorRgba.Transparent;
-        if (!_chosenToolDesigns.TryGetValue(ActiveAnnotationKind, out ToolDesign? design)) return;
+        if (!_chosenToolDesigns.TryGetValue(ActiveToolFamily, out ToolDesign? design)) return;
         AnnotationStyle style = design.Style;
         SelectAnnotationColor(design.Kind switch { AnnotationKind.Text => style.Text,
             AnnotationKind.Highlight or AnnotationKind.Fill => style.Fill, _ => style.Stroke });
@@ -102,7 +108,7 @@ public sealed partial class ShellViewModel
             bool refreshDefault = false;
             foreach (AnnotationKind kind in _chosenToolDesigns.Where(pair => pair.Value.Id == validated.Id).Select(pair => pair.Key).ToArray())
             {
-                if (kind == validated.Kind) { _chosenToolDesigns[kind] = validated; refreshDefault |= ActiveAnnotationKind == kind && !HasSelectedAnnotation; }
+                if (kind == validated.Kind) { _chosenToolDesigns[kind] = validated; refreshDefault |= ActiveToolFamily == kind && !HasSelectedAnnotation; }
                 else _chosenToolDesigns.Remove(kind);
             }
             if (refreshDefault) ApplyRememberedToolDesign();
@@ -165,5 +171,40 @@ public sealed partial class ShellViewModel
     private void EnsureToolDesignLibraryLoaded()
     {
         if (_toolDesignLoadFailure is not null) throw new InvalidOperationException($"The existing design library could not be loaded and has been preserved. {_toolDesignLoadFailure}");
+    }
+
+    public async Task UpdateSelectedVectorAsync(string svg, CancellationToken token)
+    {
+        if (CurrentDocumentId is { } documentId && SelectedAnnotationId is { } id && CanEditSelectedVector)
+            await UpdateVectorAsync(documentId, id, svg, token).ConfigureAwait(true);
+    }
+
+    public async Task UpdateVectorAsync(DocumentId documentId, Guid annotationId, string svg, CancellationToken token)
+    {
+        if (_currentDocument?.Id != documentId || _editCommandStack is null
+            || _currentDocument.Annotations.FirstOrDefault(item => item.Id == annotationId) is not { Kind: AnnotationKind.Vector, Vector: not null } item)
+            throw new InvalidOperationException("The SVG object is no longer open. Reopen it before editing.");
+        var after = item.Vector with { Svg = SvgShape.Normalize(svg) };
+        if (after == item.Vector) return;
+        await _editCommandStack.ExecuteAsync(_currentDocument, new UpdateAnnotationVectorCommand(item.Id, item.Vector, after), token).ConfigureAwait(true);
+        RefreshAnnotationOverlays(); NotifyEditorStateChanged();
+        await SaveCurrentDocumentAsync("SVG object updated.", token).ConfigureAwait(true);
+    }
+
+    public async Task<(string Svg, string Name)?> ChooseSvgFileAsync(CancellationToken token)
+    {
+        string? path = _toolDesignFilePicker is null ? null : await _toolDesignFilePicker.PickSvgImportAsync(token).ConfigureAwait(true);
+        if (path is null) return null;
+        if (new FileInfo(path).Length > SvgShape.MaximumCharacters) throw new InvalidDataException("Choose an SVG smaller than 1 MB.");
+        string svg = SvgShape.Normalize(await File.ReadAllTextAsync(path, token).ConfigureAwait(true));
+        string name = Path.GetFileNameWithoutExtension(path);
+        return (svg, name.Length > 80 ? name[..80] : name);
+    }
+
+    public async Task ExportSvgAsync(string svg, CancellationToken token)
+    {
+        string normalized = SvgShape.Normalize(svg);
+        string? path = _toolDesignFilePicker is null ? null : await _toolDesignFilePicker.PickSvgExportAsync(token).ConfigureAwait(true);
+        if (path is not null) await File.WriteAllTextAsync(path, normalized, token).ConfigureAwait(true);
     }
 }

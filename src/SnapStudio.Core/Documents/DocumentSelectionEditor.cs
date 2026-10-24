@@ -29,6 +29,7 @@ public sealed class DocumentSelectionEditor(IEditCommandStack editStack)
             Text = item.Text,
             Style = item.Style,
             Image = item.Image?.DeepCopy(),
+            Vector = item.Vector,
             StrokePoints = [.. item.StrokePoints],
             FillRectangles = [.. item.FillRectangles]
         }).ToArray();

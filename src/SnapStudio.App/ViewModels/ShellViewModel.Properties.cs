@@ -23,7 +23,7 @@ public sealed partial class ShellViewModel
     public Visibility AnnotationSelectionControlsVisibility => IsSelectionToolActive && (IsMarqueeToolActive && MarqueeSourceBounds.HasValue || !HasSelectedAnnotation) ? Visibility.Visible : Visibility.Collapsed;
     public Visibility AnnotationSelectionCropVisibility => IsSelectionToolActive && CanCropToSelection && (IsMarqueeToolActive || !HasSelectedAnnotation) ? Visibility.Visible : Visibility.Collapsed;
     public Visibility AnnotationMultipleSelectionVisibility => SelectedAnnotationCount > 1 && CurrentAnnotationProperties != AnnotationProperty.None ? Visibility.Visible : Visibility.Collapsed;
-    public Visibility AnnotationPresetControlsVisibility => !HasSelectedAnnotation && !IsSelectionToolActive ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AnnotationPresetControlsVisibility => !HasSelectedAnnotation && !IsSelectionToolActive && ActiveAnnotationKind != AnnotationKind.Vector ? Visibility.Visible : Visibility.Collapsed;
     public Visibility AnnotationMorePropertiesVisibility => AnnotationPatternControlsVisibility == Visibility.Visible
         || AnnotationCornerStyleControlsVisibility == Visibility.Visible || AnnotationPresetControlsVisibility == Visibility.Visible
         ? Visibility.Visible : Visibility.Collapsed;
@@ -38,7 +38,7 @@ public sealed partial class ShellViewModel
     public string AnnotationPropertiesTitle => IsMarqueeToolActive && MarqueeSourceBounds.HasValue ? "Marquee" : SelectedAnnotationCount > 1 ? $"{SelectedAnnotationCount} objects selected"
         : GetSelectedAnnotation() is { } selected ? selected.Kind switch
         {
-            AnnotationKind.Image => "Image", AnnotationKind.Fill => "Filled region",
+            AnnotationKind.Image => "Image", AnnotationKind.Vector => selected.Vector?.Name ?? "SVG shape", AnnotationKind.Fill => "Filled region",
             AnnotationKind.Highlight => "Highlighter", _ => selected.Kind.ToString()
         } : ActiveAnnotationToolLabel;
 

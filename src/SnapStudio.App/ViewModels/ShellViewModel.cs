@@ -1089,7 +1089,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 return;
             }
 
-            _annotationToolIndex = Math.Clamp(value, 0, 8);
+            _annotationToolIndex = Math.Clamp(value, 0, 9);
             OnPropertyChanged(nameof(AnnotationToolIndex));
             OnPropertyChanged(nameof(ActiveAnnotationKind));
             OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
@@ -1098,7 +1098,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
     }
 
-    public AnnotationKind ActiveAnnotationKind => AnnotationToolIndex switch
+    public AnnotationKind ActiveAnnotationKind => ActiveSvgToolDesign is not null ? AnnotationKind.Vector : ActiveToolFamily;
+
+    public AnnotationKind ActiveToolFamily => AnnotationToolIndex switch
     {
         1 => AnnotationKind.Ellipse,
         2 => AnnotationKind.Line,
@@ -1108,10 +1110,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         6 => AnnotationKind.Blur,
         7 => AnnotationKind.Pen,
         8 => AnnotationKind.Fill,
+        9 => AnnotationKind.Vector,
         _ => AnnotationKind.Rectangle
     };
 
-    public string ActiveAnnotationToolLabel => IsSelectionToolActive ? (IsMarqueeToolActive ? "Marquee" : "Move") : ActiveAnnotationKind switch
+    public string ActiveAnnotationToolLabel => IsSelectionToolActive ? (IsMarqueeToolActive ? "Marquee" : "Move") : ActiveSvgToolDesign?.Name ?? ActiveAnnotationKind switch
     {
         AnnotationKind.Ellipse => "Ellipse",
         AnnotationKind.Line => "Line",
@@ -1121,6 +1124,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         AnnotationKind.Blur => "Blur",
         AnnotationKind.Pen => "Pen",
         AnnotationKind.Fill => "Fill bucket",
+        AnnotationKind.Vector => "Custom shape",
         _ => "Rectangle"
     };
 
@@ -5852,6 +5856,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             StrokePoints = [.. annotation.StrokePoints],
             FillRectangles = [.. annotation.FillRectangles],
             Image = copyImageBytes ? annotation.Image?.DeepCopy() : annotation.Image,
+            Vector = annotation.Vector,
             Style = annotation.Style
         };
     }
@@ -5887,6 +5892,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             Kind = annotationKind,
             Bounds = NormalizeAndClampSourceBounds(document, sourceBounds, annotationKind),
             Text = annotationKind == AnnotationKind.Text ? AnnotationText : null,
+            Vector = annotationKind == AnnotationKind.Vector && ActiveSvgToolDesign is { Svg: not null } design ? new(design.Svg, design.Name) : null,
             Style = CreateAnnotationStyle(annotationKind)
         };
         if (annotationKind == AnnotationKind.Text)
@@ -6035,6 +6041,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
         return annotationKind switch
         {
+            AnnotationKind.Vector => new AnnotationStyle(ColorRgba.Transparent, ColorRgba.Transparent, ColorRgba.Black, 1, opacity),
             AnnotationKind.Fill => new AnnotationStyle(ColorRgba.Transparent, color, ColorRgba.Black, 1, opacity),
             AnnotationKind.Text => new AnnotationStyle(
                 ColorRgba.Transparent,
@@ -6165,7 +6172,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 AnnotationPresetIndex = 0;
                 break;
         }
-        _chosenToolDesigns.Remove(ActiveAnnotationKind);
+        _chosenToolDesigns.Remove(ActiveToolFamily);
         _annotationDesignFill = ColorRgba.Transparent;
     }
 

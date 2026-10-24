@@ -24,7 +24,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
             || Text != next.Text || !SameColor(StrokeBrush, next.StrokeBrush) || !SameColor(FillBrush, next.FillBrush)
             || !SameColor(TextBrush, next.TextBrush) || StrokeThicknessValue != next.StrokeThicknessValue
             || CornerRadius != next.CornerRadius || FontSize != next.FontSize || FontFamily != next.FontFamily
-            || Opacity != next.Opacity || IsSelected != next.IsSelected || !ReferenceEquals(Image, next.Image)
+            || Opacity != next.Opacity || IsSelected != next.IsSelected || Vector != next.Vector || !ReferenceEquals(Image, next.Image)
             || !StrokePoints.SequenceEqual(next.StrokePoints) || !FillRectangles.SequenceEqual(next.FillRectangles);
         bool rowChanged = Kind != next.Kind || Text != next.Text || IsVisible != next.IsVisible
             || IsSelected != next.IsSelected || CanMoveUp != next.CanMoveUp || CanMoveDown != next.CanMoveDown;
@@ -34,6 +34,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         TextBrush = next.TextBrush; StrokeThickness = next.StrokeThickness; StrokeThicknessValue = next.StrokeThicknessValue;
         CornerRadius = next.CornerRadius; FontSize = next.FontSize; FontFamily = next.FontFamily; Opacity = next.Opacity;
         IsVisible = next.IsVisible; IsSelected = next.IsSelected; Image = next.Image;
+        Vector = next.Vector;
         StrokePoints = next.StrokePoints; FillRectangles = next.FillRectangles;
         CanMoveUp = next.CanMoveUp; CanMoveDown = next.CanMoveDown;
         Pattern = next.Pattern;
@@ -46,6 +47,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         first is SolidColorBrush a && second is SolidColorBrush b && a.Color == b.Color;
 
     public AnnotationImage? Image { get; private set; }
+    public AnnotationVector? Vector { get; private set; }
 
     public string FontFamily { get; private set; } = AnnotationStyle.DefaultFontFamily;
 
@@ -144,7 +146,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
 
     public bool IsSelected { get; private set; }
 
-    public string LayerLabel => Kind is AnnotationKind.Text or AnnotationKind.Image
+    public string LayerLabel => Kind == AnnotationKind.Vector ? Vector?.Name ?? "SVG shape" : Kind is AnnotationKind.Text or AnnotationKind.Image
         ? Text
         : Kind == AnnotationKind.Highlight ? "Highlighter" : Kind.ToString();
 
@@ -156,6 +158,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         AnnotationKind.Ellipse => "○",
         AnnotationKind.Text => "T",
         AnnotationKind.Image => "\u2196",
+        AnnotationKind.Vector => "◇",
         AnnotationKind.Highlight => "▤",
         AnnotationKind.Blur => "◌",
         AnnotationKind.Pen => "✎",
@@ -217,7 +220,9 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
             annotation.IsVisible,
             isSelected)
         {
-            Image = annotation.Image,
+            Vector = annotation.Vector,
+            Image = annotation.Kind == AnnotationKind.Vector && annotation.Vector is not null
+                ? SvgRasterizer.Preview(annotation.Vector.Svg, Math.Max(1, bounds.Width * zoom), Math.Max(1, bounds.Height * zoom)) : annotation.Image,
             Pattern = annotation.Style.Pattern,
             ShowTransformHandles = showTransformHandles,
             FontFamily = SystemFontCatalog.ResolveFamily(annotation.Style.FontFamily),

@@ -6,6 +6,24 @@ namespace SnapStudio.Platform.Windows;
 
 public sealed class WindowsToolDesignFilePicker(nint ownerWindowHandle) : IToolDesignFilePicker
 {
+    public async Task<string?> PickSvgImportAsync(CancellationToken cancellationToken)
+    {
+        if (ownerWindowHandle == 0) return null;
+        var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary };
+        picker.FileTypeFilter.Add(".svg");
+        InitializeWithWindow.Initialize(picker, ownerWindowHandle);
+        return (await picker.PickSingleFileAsync().AsTask(cancellationToken))?.Path;
+    }
+
+    public async Task<string?> PickSvgExportAsync(CancellationToken cancellationToken)
+    {
+        if (ownerWindowHandle == 0) return null;
+        var picker = new FileSavePicker { SuggestedFileName = "SnapStudio shape", DefaultFileExtension = ".svg" };
+        picker.FileTypeChoices.Add("SVG vector artwork", [".svg"]);
+        InitializeWithWindow.Initialize(picker, ownerWindowHandle);
+        return (await picker.PickSaveFileAsync().AsTask(cancellationToken))?.Path;
+    }
+
     public async Task<string?> PickImportAsync(CancellationToken cancellationToken)
     {
         if (ownerWindowHandle == 0) return null;

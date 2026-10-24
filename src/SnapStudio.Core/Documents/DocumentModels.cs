@@ -14,7 +14,8 @@ public enum AnnotationKind
     Blur,
     Pen,
     Fill,
-    Image
+    Image,
+    Vector
 }
 
 public enum DestructiveOperationKind
@@ -27,7 +28,7 @@ public enum DestructiveOperationKind
 
 public sealed class CaptureDocument
 {
-    public const int CurrentSchemaVersion = 7;
+    public const int CurrentSchemaVersion = 8;
 
     public DocumentId Id { get; set; } = DocumentId.New();
 
@@ -75,6 +76,7 @@ public sealed class AnnotationObject
     public List<RectD> FillRectangles { get; set; } = [];
 
     public AnnotationImage? Image { get; set; }
+    public AnnotationVector? Vector { get; set; }
 
     public AnnotationStyle Style { get; set; } = AnnotationStyle.Default;
 }
@@ -84,6 +86,8 @@ public sealed record AnnotationImage(int Width, int Height, byte[] PngBytes)
 {
     public AnnotationImage DeepCopy() => this with { PngBytes = [.. PngBytes] };
 }
+
+public sealed record AnnotationVector(string Svg, string Name = "Custom shape");
 
 public enum LayerColorLabel
 {
