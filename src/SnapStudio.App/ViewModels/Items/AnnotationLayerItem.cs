@@ -60,6 +60,8 @@ public sealed class AnnotationLayerItem(
 
     public bool IsExpanded => isExpanded;
 
+    public bool IsActive => isActive;
+
     public string VisibilityAutomationName => layer.IsVisible ? $"Hide {Name} layer" : $"Show {Name} layer";
 
     public string MoveAutomationName => $"Move selected object to {Name}";
@@ -70,11 +72,4 @@ public sealed class AnnotationLayerItem(
         ? Visibility.Visible
         : Visibility.Collapsed;
 
-    public Brush BackgroundBrush => isActive
-        ? new SolidColorBrush(Color.FromArgb(255, 46, 65, 81))
-        : new SolidColorBrush(Color.FromArgb(255, 37, 40, 48));
-
-    public Brush BorderBrush => isActive
-        ? new SolidColorBrush(Color.FromArgb(255, 83, 110, 133))
-        : new SolidColorBrush(Color.FromArgb(255, 55, 63, 73));
 }

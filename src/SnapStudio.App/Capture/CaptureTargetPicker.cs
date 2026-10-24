@@ -60,6 +60,7 @@ public sealed class CaptureTargetPicker(Func<XamlRoot?> getRoot) : IWindowsCaptu
         var dialog = new ContentDialog
         {
             XamlRoot = root,
+            RequestedTheme = (root.Content as FrameworkElement)?.ActualTheme ?? ElementTheme.Default,
             Title = title,
             Content = content,
             PrimaryButtonText = "Capture",

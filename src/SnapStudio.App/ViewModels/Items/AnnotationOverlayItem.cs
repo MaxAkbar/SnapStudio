@@ -127,14 +127,6 @@ public sealed class AnnotationOverlayItem
         _ => "•"
     };
 
-    public Brush LayerBackgroundBrush => IsSelected
-        ? new SolidColorBrush(Color.FromArgb(255, 39, 52, 65))
-        : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
-
-    public Brush LayerBorderBrush => IsSelected
-        ? new SolidColorBrush(Color.FromArgb(255, 66, 80, 101))
-        : new SolidColorBrush(Color.FromArgb(255, 55, 63, 73));
-
     public Visibility HiddenVisibility => IsVisible ? Visibility.Collapsed : Visibility.Visible;
 
     public string ObjectAutomationName => $"Select {LayerLabel} object";

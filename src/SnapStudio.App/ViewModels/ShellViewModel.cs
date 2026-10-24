@@ -972,9 +972,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public bool CanDuplicateCurrentDocument => HasCurrentDocument;
 
-    public bool CanDeleteCurrentDocument => HasCurrentDocument;
+    public bool CanDeleteCurrentDocument => HasCurrentDocument && CanManageCaptureHistory;
 
-    public bool CanMoveCurrentCaptureToTrash => HasCurrentDocument
+    public bool CanMoveCurrentCaptureToTrash => HasCurrentDocument && CanManageCaptureHistory
         && _fileTrashService is not null
         && _currentDocument?.SourceImage.Path is { Length: > 0 } path
         && File.Exists(path);
@@ -1721,6 +1721,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     public void OpenFirstRunSetup()
     {
         SettingsSurfaceIsFirstRun = false;
+        SettingsThemeIndex = (int)ThemePreference;
         FirstRunCaptureHotkeyIndex = CaptureHotkeyIndex;
         FirstRunIncludeCursor = IncludeCursor;
         FirstRunCopyCapturesToClipboard = CopyCapturesToClipboard;
@@ -1838,6 +1839,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             CopyCapturesToClipboard = FirstRunCopyCapturesToClipboard,
             FirstRunCompleted = true,
             StorageBackend = storageBackend,
+            Theme = (ApplicationThemePreference)SettingsThemeIndex,
             FeatureFlags = updatedFeatureFlags
         };
 
@@ -1846,6 +1848,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             .ConfigureAwait(true);
 
         IncludeCursor = FirstRunIncludeCursor;
+        ThemePreference = updatedSettings.Theme;
         CopyCapturesToClipboard = FirstRunCopyCapturesToClipboard;
         FirstRunSetupIsOpen = false;
 
@@ -2732,32 +2735,29 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         StatusText = "Duplicated capture.";
     }
 
-    public async Task DeleteCurrentDocumentAsync(CancellationToken cancellationToken)
+    public Task DeleteCurrentDocumentAsync(CancellationToken cancellationToken) =>
+        _currentDocumentId is DocumentId id
+            ? RemoveCaptureFromHistoryAsync(id.ToString(), cancellationToken) : Task.CompletedTask;
+
+    public Task MoveCurrentCaptureToTrashAsync(CancellationToken cancellationToken) =>
+        _currentDocumentId is DocumentId id
+            ? MoveCaptureToTrashAsync(id.ToString(), cancellationToken) : Task.CompletedTask;
+
+    private async Task MoveCaptureToTrashCoreAsync(DocumentId documentId, CancellationToken cancellationToken)
     {
-        if (_currentDocumentId is not DocumentId currentDocumentId
-            || _documentRepository is null)
+        if (_documentRepository is null || _fileTrashService is null)
         {
             return;
         }
 
-        await DeleteCurrentDocumentRecordAsync(
-                currentDocumentId,
-                "Removed capture from history.",
-                cancellationToken)
-            .ConfigureAwait(true);
-    }
-
-    public async Task MoveCurrentCaptureToTrashAsync(CancellationToken cancellationToken)
-    {
-        if (_currentDocumentId is not DocumentId currentDocumentId
-            || _currentDocument is null
-            || _documentRepository is null
-            || _fileTrashService is null)
+        CaptureDocument? document = _currentDocumentId == documentId ? _currentDocument
+            : await _documentRepository.GetAsync(documentId, cancellationToken).ConfigureAwait(true);
+        if (document is null)
         {
+            StatusText = "The capture is no longer available.";
             return;
         }
-
-        string sourceImagePath = _currentDocument.SourceImage.Path;
+        string sourceImagePath = document.SourceImage.Path;
         if (string.IsNullOrWhiteSpace(sourceImagePath) || !File.Exists(sourceImagePath))
         {
             StatusText = "Source image file could not be found.";
@@ -2769,7 +2769,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         if (await SourceImageIsReferencedByAnotherDocumentAsync(
-                currentDocumentId,
+                documentId,
                 sourceImagePath,
                 cancellationToken)
             .ConfigureAwait(true))
@@ -2796,8 +2796,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
-        bool deleted = await DeleteCurrentDocumentRecordAsync(
-                currentDocumentId,
+        bool deleted = await DeleteDocumentRecordAsync(
+                documentId,
                 "Moved capture to recycle bin.",
                 cancellationToken)
             .ConfigureAwait(true);
@@ -2811,8 +2811,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
     }
 
-    private async Task<bool> DeleteCurrentDocumentRecordAsync(
-        DocumentId currentDocumentId,
+    private async Task<bool> DeleteDocumentRecordAsync(
+        DocumentId documentId,
         string successStatus,
         CancellationToken cancellationToken)
     {
@@ -2822,7 +2822,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         bool deleted = await _documentRepository
-            .DeleteAsync(currentDocumentId, cancellationToken)
+            .DeleteAsync(documentId, cancellationToken)
             .ConfigureAwait(true);
 
         if (!deleted)
@@ -2831,10 +2831,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return false;
         }
 
-        RemoveRecentDocument(currentDocumentId);
-        await ClearCurrentDocumentAsync(cancellationToken).ConfigureAwait(true);
+        bool wasCurrent = _currentDocumentId == documentId;
+        RemoveRecentDocument(documentId);
+        if (wasCurrent) await ClearCurrentDocumentAsync(cancellationToken).ConfigureAwait(true);
         await RefreshRecentDocumentsAsync(cancellationToken).ConfigureAwait(true);
-        await OpenMostRecentDocumentAsync(cancellationToken).ConfigureAwait(true);
+        if (wasCurrent) await OpenMostRecentDocumentAsync(cancellationToken).ConfigureAwait(true);
         StatusText = successStatus;
         return true;
     }
@@ -4840,6 +4841,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void ApplyImportedSettings(ApplicationSettings settings)
     {
+        InitializeTheme(settings);
         CaptureHotkeyIndex = ResolveCaptureHotkeyIndex(settings.CaptureHotkey);
         IncludeCursor = settings.IncludeCursorByDefault;
         CopyCapturesToClipboard = settings.CopyCapturesToClipboard;
@@ -4988,6 +4990,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void InitializeFirstRunSetup(ApplicationSettings settings)
     {
+        InitializeTheme(settings);
         FirstRunStorageRoot = settings.StorageRoot;
         FirstRunStorageBackendIndex = ResolveStorageBackendIndex(settings.StorageBackend);
         FirstRunCaptureHotkeyIndex = ResolveCaptureHotkeyIndex(settings.CaptureHotkey);

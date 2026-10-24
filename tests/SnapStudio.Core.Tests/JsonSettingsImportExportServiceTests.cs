@@ -18,6 +18,7 @@ public sealed class JsonSettingsImportExportServiceTests
             SchemaVersion = 1,
             CaptureHotkey = "Ctrl+Shift+S",
             StorageBackend = ApplicationStorageBackend.Database,
+            Theme = ApplicationThemePreference.Light,
             FirstRunCompleted = true
         };
         string exportPath = Path.Combine(workspace.Path, "SnapStudio-settings.json");
@@ -35,6 +36,10 @@ public sealed class JsonSettingsImportExportServiceTests
         Assert.AreEqual(ApplicationSettings.CurrentSchemaVersion, exported?.SchemaVersion);
         Assert.AreEqual("Ctrl+Shift+S", exported?.CaptureHotkey);
         Assert.AreEqual(ApplicationStorageBackend.Database, exported?.StorageBackend);
+        Assert.AreEqual(ApplicationThemePreference.Light, exported?.Theme);
+        SettingsImportResult imported = await service.ImportAsync(exportPath, CancellationToken.None);
+        Assert.IsTrue(imported.Succeeded);
+        Assert.AreEqual(ApplicationThemePreference.Light, imported.Settings?.Theme);
         Assert.Contains(
             """
               "storageBackend": "Database"

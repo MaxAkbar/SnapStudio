@@ -19,7 +19,9 @@ public sealed record ApplicationSettings(
     ApplicationStorageBackend StorageBackend,
     Dictionary<string, bool> FeatureFlags)
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
+
+    public ApplicationThemePreference Theme { get; init; } = ApplicationThemePreference.Dark;
 
     public ApplicationSettings()
         : this(

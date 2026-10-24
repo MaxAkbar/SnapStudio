@@ -95,9 +95,9 @@ public sealed partial class MainPage : INotifyPropertyChanged
 
     public SolidColorBrush WorkspaceRoundedCornersBrush => WorkspaceCornerBrush(ViewModel.AnnotationCornerStyleIndex == 1);
 
-    private static SolidColorBrush WorkspaceCornerBrush(bool selected) => new(selected
-        ? Color.FromArgb(255, 59, 70, 84)
-        : Color.FromArgb(0, 0, 0, 0));
+    private SolidColorBrush WorkspaceCornerBrush(bool selected) => selected
+        ? (SolidColorBrush)Resources["SnapAccentMutedBrush"]
+        : new(Color.FromArgb(0, 0, 0, 0));
 
     private async void WorkspaceCorners_Click(object sender, RoutedEventArgs e)
     {

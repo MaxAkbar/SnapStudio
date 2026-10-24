@@ -22,7 +22,7 @@ public sealed partial class MainPage
         {
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot,
+                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
                 Title = "Paste image",
                 Content = new TextBlock
                 {

@@ -68,6 +68,12 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         InitializeComponent();
+        Loaded += (_, _) => ApplyAppTheme();
+        ActualThemeChanged += (_, _) =>
+        {
+            UpdateAnnotationToolbarSelection();
+            NotifyWorkspacePresentationChanged();
+        };
     }
 
     public ShellViewModel ViewModel { get; private set; } = ShellViewModel.Empty;
@@ -126,8 +132,9 @@ public sealed partial class MainPage : Page
             DispatcherQueue,
             services.HistoryFolderStore);
         SubscribeAnnotationOverlays(ViewModel);
-        ViewModel.PropertyChanged += (_, _) =>
+        ViewModel.PropertyChanged += (_, args) =>
         {
+            if (args.PropertyName == nameof(ShellViewModel.ThemePreference)) ApplyAppTheme();
             UpdateBindingsFromViewModel();
             RefreshAnnotationCanvas();
         };
@@ -479,6 +486,7 @@ public sealed partial class MainPage : Page
         object sender,
         SelectionChangedEventArgs e)
     {
+        if (_isUpdatingBindings || !ViewModel.CanManageCaptureHistory) return;
         if (sender is ListView { SelectedItem: DocumentSummaryItem item })
         {
             // Replacing a thumbnail must not reopen the current document and clear its undo history.
@@ -519,7 +527,7 @@ public sealed partial class MainPage : Page
             AutomationProperties.SetName(name, "Layer name");
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot,
+                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
                 Title = "Rename layer",
                 Content = name,
                 PrimaryButtonText = "Rename",
@@ -587,7 +595,7 @@ public sealed partial class MainPage : Page
             AutomationProperties.SetHelpText(picker, $"Choose a color label for {item.Name}.");
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot,
+                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
                 Title = $"Color for {item.Name}",
                 Content = picker,
                 PrimaryButtonText = "Apply",
@@ -705,18 +713,15 @@ public sealed partial class MainPage : Page
         object sender,
         Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        await ViewModel.DeleteCurrentDocumentAsync(CancellationToken.None);
-        UpdateBindingsFromViewModel();
-        FitCurrentCanvas();
+        await RunCaptureHistoryUiActionAsync(() => ViewModel.DeleteCurrentDocumentAsync(CancellationToken.None));
     }
 
     private async void MoveCurrentCaptureToTrashButton_Click(
         object sender,
         Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        await ViewModel.MoveCurrentCaptureToTrashAsync(CancellationToken.None);
-        UpdateBindingsFromViewModel();
-        FitCurrentCanvas();
+        if (ViewModel.CurrentDocumentId is { } id)
+            await ConfirmDeleteCaptureImageAsync(id.ToString(), ViewModel.CurrentDocumentTitle);
     }
 
     private async void OpenButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -785,7 +790,7 @@ public sealed partial class MainPage : Page
             content.Children.Add(errorText);
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot,
+                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
                 Title = "New image",
                 Content = content,
                 PrimaryButtonText = "Create",
@@ -1223,7 +1228,7 @@ public sealed partial class MainPage : Page
         {
             var confirmation = new ContentDialog
             {
-                XamlRoot = XamlRoot,
+                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
                 Title = $"Delete {layerName}?",
                 Content = $"This layer contains {objectCount} object{(objectCount == 1 ? string.Empty : "s")}. "
                     + "Deleting the layer also removes its objects. You can undo this action.",
@@ -1865,6 +1870,8 @@ public sealed partial class MainPage : Page
             || _pasteImageDialogIsOpen
             || _layerRenameDialogIsOpen
             || _layerColorDialogIsOpen
+            || _historyFolderDialogIsOpen
+            || _captureDeleteDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen
             || IsEditableFocusedElement(FocusManager.GetFocusedElement(XamlRoot));
     }
@@ -2815,10 +2822,7 @@ public sealed partial class MainPage : Page
 
     private void UpdateAnnotationToolbarSelection()
     {
-        SelectionToolButton.Background = ViewModel.IsSelectionToolActive
-            ? (Brush)Resources["SnapAccentMutedBrush"] : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
-        SelectionToolButton.BorderBrush = ViewModel.IsSelectionToolActive
-            ? new SolidColorBrush(Color.FromArgb(255, 73, 105, 129)) : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+        UpdateToolButtonAppearance(SelectionToolButton, ViewModel.IsSelectionToolActive);
         UpdateAnnotationToolButton(RectangleToolButton, 0);
         UpdateAnnotationToolButton(EllipseToolButton, 1);
         UpdateAnnotationToolButton(LineToolButton, 2);
@@ -2833,15 +2837,20 @@ public sealed partial class MainPage : Page
     private void UpdateAnnotationToolButton(Button button, int toolIndex)
     {
         bool isActive = !ViewModel.IsSelectionToolActive && ViewModel.AnnotationToolIndex == toolIndex;
+        UpdateToolButtonAppearance(button, isActive);
+    }
+
+    private void UpdateToolButtonAppearance(Button button, bool isActive)
+    {
         button.Background = isActive
             ? (Brush)Resources["SnapAccentMutedBrush"]
             : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         button.BorderBrush = isActive
-            ? new SolidColorBrush(Color.FromArgb(255, 73, 105, 129))
+            ? (Brush)Resources["WorkspaceLayerSelectedBorderBrush"]
             : new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         button.Foreground = isActive
-            ? new SolidColorBrush(Color.FromArgb(255, 166, 220, 255))
-            : new SolidColorBrush(Color.FromArgb(255, 164, 174, 186));
+            ? (Brush)Resources["SnapAccentBrush"]
+            : (Brush)Resources["WorkspaceSecondaryTextBrush"];
     }
 
     private bool ShouldIgnoreControlEvent()

@@ -8,6 +8,9 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <controls:XamlControlsResources />
+                <!-- Popup dialogs have their own resource roots. Share the workspace
+                     palette here as well as in the editor's local resources. -->
+                <ResourceDictionary Source="Controls/WorkspaceStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

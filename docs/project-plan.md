@@ -225,6 +225,8 @@ Candidates:
 
 ### Workspace
 
+- Settings → Appearance → Theme switches between Dark, Light, and Use system setting when saved, without reopening the document or clearing selection, zoom, or undo. Check title bar, fields, tool selection, layer/object selection, capture rows, menus, dialogs, and dotted canvas in both themes. Restart preserves the choice; older settings keep Dark. Import/export preserves the theme. Use system setting follows Windows appearance, including changes while running.
+- Dialogs share the workspace palette: check New image, Paste, layer rename/color, folder management, and capture-target pickers for charcoal surfaces, blue primary actions and focus/selection states in Dark. Check settings toggles and footer, disabled actions, and readable selected text. Repeat in Light to catch dark color leaks.
 - New captures appear in history immediately.
 - Thumbnails update after annotations and destructive edits.
 - Multiple annotations appear in thumbnails.
@@ -234,6 +236,8 @@ Candidates:
 - Open containing folder selects or opens the current source location when possible.
 - Remove from history keeps the source image file.
 - Move to recycle bin removes history and moves the source image to the Windows recycle bin.
+- Right-click a capture, including one other than the open image: **Remove from recent captures** keeps its file; **Delete image (Recycle Bin)…** asks for confirmation. Cancel leaves the file and entry intact. Removing another capture preserves the open image, selection, zoom, and undo history.
+- These actions work in folder/search views and later pages; counts and pagination update after removal. A missing image disables recycling but still allows history removal. A shared source or failed recycle keeps the capture entry and file intact.
 - Selected capture properties show width, height, and file size.
 
 ### Resize

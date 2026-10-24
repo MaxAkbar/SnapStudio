@@ -9,29 +9,18 @@
     x:Class="SnapStudio.App.MainPage"
     AutomationProperties.Name="SnapStudio workspace"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    RequestedTheme="Dark"
     mc:Ignorable="d"
     FontFamily="Segoe UI"
     FontSize="12"
-    Foreground="#EEF0F4">
+    Foreground="{ThemeResource TextFillColorPrimaryBrush}">
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Controls/WorkspaceStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <SolidColorBrush x:Key="SnapBackgroundBrush" Color="#17191E"/>
-            <SolidColorBrush x:Key="SnapSurfaceBrush" Color="#1E2026"/>
-            <SolidColorBrush x:Key="SnapPanelBrush" Color="#202228"/>
-            <SolidColorBrush x:Key="SnapPanelAltBrush" Color="#282B32"/>
-            <SolidColorBrush x:Key="SnapStrokeBrush" Color="#34373F"/>
-            <SolidColorBrush x:Key="SnapMutedBrush" Color="#969BA8"/>
-            <SolidColorBrush x:Key="SnapAccentBrush" Color="#88D2FA"/>
-            <SolidColorBrush x:Key="SnapAccentMutedBrush" Color="#293E4C"/>
-            <SolidColorBrush x:Key="SnapPrimaryBrush" Color="#0879D0"/>
-            <SolidColorBrush x:Key="SidebarSectionStrokeBrush" Color="#34373F"/>
             <Style x:Key="SidebarSectionBorderStyle" TargetType="Border">
-                <Setter Property="Background" Value="{StaticResource SnapPanelBrush}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource SidebarSectionStrokeBrush}"/>
+                <Setter Property="Background" Value="{ThemeResource SnapPanelBrush}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource SidebarSectionStrokeBrush}"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                 <Setter Property="CornerRadius" Value="0"/>
                 <Setter Property="Padding" Value="0"/>
@@ -39,12 +28,12 @@
             <Style x:Key="SidebarSectionHeadingStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="11"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="Foreground" Value="#E3EBF5"/>
+                <Setter Property="Foreground" Value="{ThemeResource WorkspaceHeadingBrush}"/>
             </Style>
             <Style x:Key="TopCommandButtonStyle" TargetType="Button" BasedOn="{StaticResource WorkspaceCommandButtonStyle}">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Foreground" Value="#C5C9D2"/>
+                <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryTextBrush}"/>
                 <Setter Property="Height" Value="34"/>
                 <Setter Property="Padding" Value="12,0"/>
                 <Setter Property="FontSize" Value="12"/>
@@ -56,12 +45,12 @@
                 <Setter Property="Height" Value="40"/>
                 <Setter Property="Padding" Value="8,0"/>
                 <Setter Property="FontSize" Value="11"/>
-                <Setter Property="Foreground" Value="#D8DEE7"/>
+                <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryTextBrush}"/>
             </Style>
             <Style x:Key="PrimaryTopCommandButtonStyle" TargetType="Button" BasedOn="{StaticResource WorkspaceCommandButtonStyle}">
-                <Setter Property="Background" Value="#313741"/>
-                <Setter Property="BorderBrush" Value="#475361"/>
-                <Setter Property="Foreground" Value="#F2F5F9"/>
+                <Setter Property="Background" Value="{ThemeResource WorkspacePrimaryCommandBrush}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource WorkspacePrimaryCommandBorderBrush}"/>
+                <Setter Property="Foreground" Value="{ThemeResource WorkspacePrimaryCommandTextBrush}"/>
             </Style>
             <Style x:Key="ExportTopCommandButtonStyle" TargetType="Button" BasedOn="{StaticResource WorkspacePrimaryButtonStyle}"/>
             <Style x:Key="ToolIconButtonStyle" TargetType="Button" BasedOn="{StaticResource WorkspaceIconButtonStyle}"/>
@@ -86,7 +75,7 @@
                 <Setter Property="MinWidth" Value="24"/>
                 <Setter Property="MinHeight" Value="24"/>
                 <Setter Property="Padding" Value="0"/>
-                <Setter Property="BorderBrush" Value="{StaticResource SnapStrokeBrush}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource SnapStrokeBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="12"/>
             </Style>
@@ -110,12 +99,12 @@
             </Style>
             <Style TargetType="TextBox" BasedOn="{StaticResource WorkspaceTextBoxStyle}"/>
             <Style TargetType="ComboBox" BasedOn="{StaticResource WorkspaceComboBoxStyle}"/>
-            <SolidColorBrush Color="#475363" x:Key="SliderTrackFill"/>
-            <SolidColorBrush Color="#88D2FA" x:Key="SliderTrackValueFill"/>
-            <SolidColorBrush Color="#88D2FA" x:Key="SliderThumbBackground"/>
-            <SolidColorBrush Color="#B2E2FF" x:Key="SliderThumbBackgroundPointerOver"/>
-            <SolidColorBrush Color="#88D2FA" x:Key="SliderThumbBackgroundPressed"/>
-            <SolidColorBrush Color="#88D2FA" x:Key="SliderTrackValueFillPointerOver"/>
+            <SolidColorBrush Color="{ThemeResource WorkspaceFieldBorderColor}" x:Key="SliderTrackFill"/>
+            <SolidColorBrush Color="{ThemeResource WorkspaceAccentColor}" x:Key="SliderTrackValueFill"/>
+            <SolidColorBrush Color="{ThemeResource WorkspaceAccentColor}" x:Key="SliderThumbBackground"/>
+            <SolidColorBrush Color="{ThemeResource WorkspaceAccentHoverColor}" x:Key="SliderThumbBackgroundPointerOver"/>
+            <SolidColorBrush Color="{ThemeResource WorkspaceAccentColor}" x:Key="SliderThumbBackgroundPressed"/>
+            <SolidColorBrush Color="{ThemeResource WorkspaceAccentColor}" x:Key="SliderTrackValueFillPointerOver"/>
             <Style x:Key="WorkspaceCaptureItemStyle" TargetType="ListViewItem">
                 <Setter Property="Padding" Value="0"/>
                 <Setter Property="Margin" Value="0,0,0,4"/>
@@ -131,32 +120,32 @@
                                         <VisualState x:Name="Normal"/>
                                         <VisualState x:Name="PointerOver">
                                             <VisualState.Setters>
-                                                <Setter Target="RowFrame.Background" Value="#2A2D35"/>
+                                                <Setter Target="RowFrame.Background" Value="{ThemeResource WorkspaceRowHoverBrush}"/>
                                             </VisualState.Setters>
                                         </VisualState>
                                         <VisualState x:Name="Pressed">
                                             <VisualState.Setters>
-                                                <Setter Target="RowFrame.Background" Value="#303B49"/>
+                                                <Setter Target="RowFrame.Background" Value="{ThemeResource WorkspaceRowPressedBrush}"/>
                                             </VisualState.Setters>
                                         </VisualState>
                                         <VisualState x:Name="Selected">
                                             <VisualState.Setters>
-                                                <Setter Target="RowFrame.Background" Value="#2B3541"/>
-                                                <Setter Target="RowFrame.BorderBrush" Value="#4B6377"/>
+                                                <Setter Target="RowFrame.Background" Value="{ThemeResource WorkspaceRowSelectedBrush}"/>
+                                                <Setter Target="RowFrame.BorderBrush" Value="{ThemeResource WorkspaceRowSelectedBorderBrush}"/>
                                                 <Setter Target="SelectionIndicator.Visibility" Value="Visible"/>
                                             </VisualState.Setters>
                                         </VisualState>
                                         <VisualState x:Name="PointerOverSelected">
                                             <VisualState.Setters>
-                                                <Setter Target="RowFrame.Background" Value="#303D4C"/>
-                                                <Setter Target="RowFrame.BorderBrush" Value="#5E7C96"/>
+                                                <Setter Target="RowFrame.Background" Value="{ThemeResource WorkspaceRowSelectedHoverBrush}"/>
+                                                <Setter Target="RowFrame.BorderBrush" Value="{ThemeResource WorkspaceRowSelectedHoverBorderBrush}"/>
                                                 <Setter Target="SelectionIndicator.Visibility" Value="Visible"/>
                                             </VisualState.Setters>
                                         </VisualState>
                                         <VisualState x:Name="PressedSelected">
                                             <VisualState.Setters>
-                                                <Setter Target="RowFrame.Background" Value="#334453"/>
-                                                <Setter Target="RowFrame.BorderBrush" Value="#5E7C96"/>
+                                                <Setter Target="RowFrame.Background" Value="{ThemeResource WorkspaceRowSelectedPressedBrush}"/>
+                                                <Setter Target="RowFrame.BorderBrush" Value="{ThemeResource WorkspaceRowSelectedHoverBorderBrush}"/>
                                                 <Setter Target="SelectionIndicator.Visibility" Value="Visible"/>
                                             </VisualState.Setters>
                                         </VisualState>
@@ -185,7 +174,7 @@
                                     Visibility="Collapsed"
                                     Width="2"
                                     CornerRadius="2"
-                                    Background="#8BCEFA"
+                                    Background="{ThemeResource WorkspaceAccentBrush}"
                                     HorizontalAlignment="Left"
                                     Margin="0,12" />
                             </Grid>
@@ -231,8 +220,8 @@
         <Border
             Grid.Row="0"
             Padding="20,0"
-            Background="{StaticResource SnapPanelBrush}"
-            BorderBrush="{StaticResource SnapStrokeBrush}"
+            Background="{ThemeResource SnapPanelBrush}"
+            BorderBrush="{ThemeResource SnapStrokeBrush}"
             BorderThickness="0,0,0,1"
             Height="64">
             <Grid ColumnSpacing="12">
@@ -473,7 +462,7 @@
                 </Button>
             </Grid>
         </Border>
-        <Grid x:Name="MainContentGrid" Grid.Row="1" Background="{StaticResource SnapBackgroundBrush}">
+        <Grid x:Name="MainContentGrid" Grid.Row="1" Background="{ThemeResource SnapBackgroundBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="HistoryColumn" Width="268" MinWidth="52"/>
                     <ColumnDefinition x:Name="HistorySplitterColumn" Width="4"/>
@@ -484,8 +473,8 @@
             <Grid
                 x:Name="HistoryPane"
                 Grid.Column="0"
-                Background="{StaticResource SnapPanelBrush}"
-                BorderBrush="{StaticResource SnapStrokeBrush}"
+                Background="{ThemeResource SnapPanelBrush}"
+                BorderBrush="{ThemeResource SnapStrokeBrush}"
                 BorderThickness="0,0,1,0">
                 <Grid x:Name="HistoryExpandedView" Padding="0" RowSpacing="0" SizeChanged="HistoryExpandedView_SizeChanged">
                     <Grid.RowDefinitions>
@@ -576,8 +565,8 @@
                                                 IsEnabled="{x:Bind ViewModel.CanManageHistoryFolders, Mode=OneWay}"
                                                 ToolTipService.ToolTip="{x:Bind ViewModel.SelectedHistoryFolder.Description, Mode=OneWay}"
                                                 x:Name="HistoryFolderPicker"
-                                                Background="#29343E"
-                                                BorderBrush="#4C6172">
+                                                Background="{ThemeResource WorkspaceFolderBadgeBrush}"
+                                                BorderBrush="{ThemeResource WorkspaceFolderBadgeBorderBrush}">
                                                 <ComboBox.ItemTemplate>
                                                     <DataTemplate x:DataType="items:HistoryFolderItem">
                                                         <TextBlock
@@ -629,8 +618,8 @@
                                             MinHeight="34"
                                             QueryIcon="Find"
                                             Height="34"
-                                            Background="#1B1D23"
-                                            BorderBrush="#3B3F48"
+                                            Background="{ThemeResource WorkspaceSearchBrush}"
+                                            BorderBrush="{ThemeResource WorkspaceFieldBorderBrush}"
                                             CornerRadius="6" />
                                     </StackPanel>
                                 </Grid>
@@ -670,12 +659,12 @@
                                             VerticalAlignment="Center"
                                             Grid.Column="1"
                                             CharacterSpacing="100"
-                                            Foreground="#8E95A3" />
+                                            Foreground="{ThemeResource WorkspaceMutedBrush}" />
                                         <Border
                                             Grid.Column="2"
                                             Padding="4,1"
                                             CornerRadius="4"
-                                            Background="#30343D"
+                                            Background="{ThemeResource WorkspaceCommandBrush}"
                                             Margin="7,0,0,0"
                                             VerticalAlignment="Center">
                                             <TextBlock Text="{x:Bind WorkspaceCaptureCount, Mode=OneWay}" FontSize="9" VerticalAlignment="Center"/>
@@ -715,6 +704,7 @@
                                     Grid.Row="0"
                                     AutomationProperties.HelpText="Select a capture to open it in the editor. Use Previous and Next below to browse older captures, ten per page."
                                     AutomationProperties.Name="Capture history"
+                                    IsEnabled="{x:Bind ViewModel.CanManageCaptureHistory, Mode=OneWay}"
                                     ItemsSource="{x:Bind ViewModel.RecentDocuments}"
                                     SelectionChanged="RecentDocuments_SelectionChanged"
                                     SelectionMode="Single"
@@ -725,7 +715,7 @@
                                                 Padding="9"
                                                 ContextRequested="CaptureHistoryItem_ContextRequested"
                                                 Background="Transparent"
-                                                BorderBrush="{StaticResource SnapStrokeBrush}"
+                                                BorderBrush="{ThemeResource SnapStrokeBrush}"
                                                 BorderThickness="0"
                                                 CornerRadius="5"
                                                 MinHeight="67">
@@ -739,9 +729,9 @@
                                                         Height="42"
                                                         HorizontalAlignment="Left"
                                                         VerticalAlignment="Center"
-                                                        Background="{StaticResource SnapPanelAltBrush}"
+                                                        Background="{ThemeResource SnapPanelAltBrush}"
                                                         CornerRadius="4"
-                                                        BorderBrush="#484C54"
+                                                        BorderBrush="{ThemeResource WorkspaceBorderHoverBrush}"
                                                         BorderThickness="1">
                                                         <Grid>
                                                             <Image Source="{x:Bind ThumbnailImageSource}" Stretch="UniformToFill" Visibility="{x:Bind ThumbnailVisibility}"/>
@@ -749,7 +739,7 @@
                                                                 Kind="Image"
                                                                 Width="16"
                                                                 Height="16"
-                                                                Foreground="{StaticResource SnapMutedBrush}"
+                                                                Foreground="{ThemeResource SnapMutedBrush}"
                                                                 Visibility="{x:Bind ThumbnailFallbackVisibility}" />
                                                         </Grid>
                                                     </Border>
@@ -762,7 +752,7 @@
                                                         <TextBlock
                                                             Grid.Row="1"
                                                             FontSize="9"
-                                                            Foreground="{StaticResource SnapMutedBrush}"
+                                                            Foreground="{ThemeResource SnapMutedBrush}"
                                                             Text="{x:Bind Detail}"
                                                             TextTrimming="CharacterEllipsis" />
                                                     </Grid>
@@ -771,7 +761,7 @@
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                 </ListView>
-                                <Border Grid.Row="1" BorderBrush="{StaticResource SidebarSectionStrokeBrush}" BorderThickness="0,1,0,0" Padding="0">
+                                <Border Grid.Row="1" BorderBrush="{ThemeResource SidebarSectionStrokeBrush}" BorderThickness="0,1,0,0" Padding="0">
                                     <StackPanel Spacing="0" AutomationProperties.Name="Capture history pages">
                                         <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.FolderImportProgressVisibility, Mode=OneWay}">
                                             <ProgressBar IsIndeterminate="True" AutomationProperties.Name="Folder import progress"/>
@@ -783,7 +773,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{x:Bind WorkspaceRangeLabel, Mode=OneWay}" FontSize="9" Foreground="{StaticResource SnapMutedBrush}" HorizontalAlignment="Left"/>
+                                            <TextBlock Text="{x:Bind WorkspaceRangeLabel, Mode=OneWay}" FontSize="9" Foreground="{ThemeResource SnapMutedBrush}" HorizontalAlignment="Left"/>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                                                 <Button
                                                     AutomationProperties.Name="Previous captures page"
@@ -817,7 +807,7 @@
                         Grid.Row="2"
                         Height="48"
                         Padding="12,0"
-                        BorderBrush="{StaticResource SnapStrokeBrush}"
+                        BorderBrush="{ThemeResource SnapStrokeBrush}"
                         BorderThickness="0,1,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -842,7 +832,7 @@
                             FontSize="8"
                             VerticalAlignment="Center"
                             Grid.Column="1"
-                            Foreground="#7F8997" />
+                            Foreground="{ThemeResource WorkspaceMutedBrush}" />
                     </Grid>
                 </Grid>
                 <Grid x:Name="HistoryCollapsedView" Padding="8,18" Visibility="Collapsed">
@@ -870,19 +860,19 @@
                 ToolTipService.ToolTip="Drag to resize layers and captures pane">
                 <controls:ResizeSplitter.Template>
                     <ControlTemplate TargetType="controls:ResizeSplitter">
-                        <Grid Background="{StaticResource SnapSurfaceBrush}">
+                        <Grid Background="{ThemeResource SnapSurfaceBrush}">
                             <Border
                                 Width="2"
                                 Height="44"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                Background="{StaticResource SnapStrokeBrush}"
+                                Background="{ThemeResource SnapStrokeBrush}"
                                 CornerRadius="1" />
                         </Grid>
                     </ControlTemplate>
                 </controls:ResizeSplitter.Template>
             </controls:ResizeSplitter>
-            <Grid Grid.Column="2" Background="{StaticResource SnapSurfaceBrush}">
+            <Grid Grid.Column="2" Background="{ThemeResource SnapSurfaceBrush}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -902,7 +892,7 @@
                         Severity="{x:Bind ViewModel.CaptureNoticeSeverity, Mode=OneWay}"
                         Title="{x:Bind ViewModel.CaptureNoticeTitle, Mode=OneWay}"
                         Grid.ColumnSpan="2" />
-                    <Border Grid.Row="3" Background="{StaticResource SnapSurfaceBrush}" BorderBrush="{StaticResource SnapStrokeBrush}" BorderThickness="0,0,1,0">
+                    <Border Grid.Row="3" Background="{ThemeResource SnapSurfaceBrush}" BorderBrush="{ThemeResource SnapStrokeBrush}" BorderThickness="0,0,1,0">
                         <ScrollViewer
                             HorizontalScrollMode="Disabled"
                             HorizontalScrollBarVisibility="Disabled"
@@ -1028,13 +1018,13 @@
                         AutomationProperties.Name="Editor canvas"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Background="{StaticResource SnapBackgroundBrush}"
+                        Background="{ThemeResource SnapBackgroundBrush}"
                         Grid.Column="1"
                         Margin="0"
                         CornerRadius="0"
                         BorderThickness="0">
                         <Grid>
-                            <controls:WorkspaceBackdrop/>
+                            <controls:WorkspaceBackdrop BackgroundColor="{ThemeResource WorkspaceBackgroundColor}" DotColor="{ThemeResource WorkspaceDotColor}"/>
                             <ScrollViewer
                                 x:Name="CanvasScrollViewer"
                                 IsTabStop="True"
@@ -1097,25 +1087,25 @@
                             </ScrollViewer>
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6" Visibility="{x:Bind ViewModel.CanvasPlaceholderVisibility, Mode=OneWay}">
                                 <TextBlock HorizontalAlignment="Center" FontSize="18" FontWeight="SemiBold" Text="{x:Bind ViewModel.CurrentDocumentTitle, Mode=OneWay}"/>
-                                <TextBlock HorizontalAlignment="Center" Foreground="{StaticResource SnapMutedBrush}" Text="{x:Bind ViewModel.CurrentDocumentDetail, Mode=OneWay}"/>
+                                <TextBlock HorizontalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}" Text="{x:Bind ViewModel.CurrentDocumentDetail, Mode=OneWay}"/>
                             </StackPanel>
                             <Grid VerticalAlignment="Top" Margin="30,24,30,0" IsHitTestVisible="False">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Canvas" FontSize="9" VerticalAlignment="Center" Foreground="#707A89"/>
+                                <TextBlock Text="Canvas" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
                                 <TextBlock
                                     Text="{x:Bind ViewModel.CurrentDocumentSizeLabel, Mode=OneWay}"
                                     FontSize="9"
                                     VerticalAlignment="Center"
                                     Grid.Column="1"
-                                    Foreground="#707A89" />
+                                    Foreground="{ThemeResource WorkspaceMutedBrush}" />
                             </Grid>
                             <Border
                                 Padding="0"
                                 Background="Transparent"
-                                BorderBrush="{StaticResource SnapStrokeBrush}"
+                                BorderBrush="{ThemeResource SnapStrokeBrush}"
                                 BorderThickness="0"
                                 VerticalAlignment="Bottom"
                                 Margin="28,0,22,22">
@@ -1124,11 +1114,11 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Drag objects to move · Ctrl + scroll to zoom" FontSize="9" VerticalAlignment="Center" Foreground="#687381"/>
+                                    <TextBlock Text="Drag objects to move · Ctrl + scroll to zoom" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
                                     <Border
                                         Grid.Column="1"
-                                        Background="#262A32"
-                                        BorderBrush="#404650"
+                                        Background="{ThemeResource WorkspaceCommandBrush}"
+                                        BorderBrush="{ThemeResource WorkspaceFieldBorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="7"
                                         Padding="4">
@@ -1199,8 +1189,8 @@
                         Grid.Row="1"
                         Grid.ColumnSpan="2"
                         Padding="20,0,12,0"
-                        Background="#22252C"
-                        BorderBrush="{StaticResource SnapStrokeBrush}"
+                        Background="{ThemeResource WorkspacePanelAltBrush}"
+                        BorderBrush="{ThemeResource SnapStrokeBrush}"
                         BorderThickness="0,0,0,1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -1216,16 +1206,16 @@
                                 TextTrimming="CharacterEllipsis"
                                 MaxWidth="430" />
                             <Border
-                                BorderBrush="#424750"
+                                BorderBrush="{ThemeResource WorkspaceFieldBorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="3"
                                 Padding="4,1"
                                 VerticalAlignment="Center">
-                                <TextBlock Text="{x:Bind WorkspaceFileType, Mode=OneWay}" FontSize="8" VerticalAlignment="Center" Foreground="#929CAA"/>
+                                <TextBlock Text="{x:Bind WorkspaceFileType, Mode=OneWay}" FontSize="8" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
                             </Border>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                            <TextBlock Text="On your device" FontSize="9" VerticalAlignment="Center" Foreground="#869388"/>
+                            <TextBlock Text="On your device" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
                             <Button AutomationProperties.Name="Manage current capture" ToolTipService.ToolTip="Rename, duplicate, move, or remove this capture" Style="{StaticResource SidebarIconButtonStyle}">
                                 <controls:WorkspaceIcon Kind="More" Width="16" Height="16"/>
                                 <Button.Flyout>
@@ -1344,8 +1334,8 @@
                         Grid.Row="2"
                         Grid.ColumnSpan="2"
                         Padding="16,0,12,0"
-                        Background="{StaticResource SnapSurfaceBrush}"
-                        BorderBrush="{StaticResource SnapStrokeBrush}"
+                        Background="{ThemeResource SnapSurfaceBrush}"
+                        BorderBrush="{ThemeResource SnapStrokeBrush}"
                         BorderThickness="0,0,0,1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -1362,7 +1352,7 @@
                             VerticalAlignment="Center"
                             Grid.Column="1"
                             Margin="16,0,8,0"
-                            Foreground="#737E8E"
+                            Foreground="{ThemeResource WorkspaceMutedBrush}"
                             TextTrimming="CharacterEllipsis" />
                         <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center" Grid.Column="2">
                             <Button
@@ -1431,13 +1421,13 @@
                 ToolTipService.ToolTip="Drag to resize tools pane">
                 <controls:ResizeSplitter.Template>
                     <ControlTemplate TargetType="controls:ResizeSplitter">
-                        <Grid Background="{StaticResource SnapSurfaceBrush}">
+                        <Grid Background="{ThemeResource SnapSurfaceBrush}">
                             <Border
                                 Width="2"
                                 Height="44"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                Background="{StaticResource SnapStrokeBrush}"
+                                Background="{ThemeResource SnapStrokeBrush}"
                                 CornerRadius="1" />
                         </Grid>
                     </ControlTemplate>
@@ -1446,8 +1436,8 @@
             <Grid
                 x:Name="RightControlsPane"
                 Grid.Column="4"
-                Background="{StaticResource SnapPanelBrush}"
-                BorderBrush="{StaticResource SnapStrokeBrush}"
+                Background="{ThemeResource SnapPanelBrush}"
+                BorderBrush="{ThemeResource SnapStrokeBrush}"
                 BorderThickness="1,0,0,0">
                 <Grid x:Name="RightControlsExpandedView" Padding="0" RowSpacing="0">
                     <Grid.RowDefinitions>
@@ -1459,7 +1449,7 @@
                         Margin="0,0,12,14"
                         Height="54"
                         Padding="16,0"
-                        BorderBrush="{StaticResource SnapStrokeBrush}"
+                        BorderBrush="{ThemeResource SnapStrokeBrush}"
                         BorderThickness="0,0,0,1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -1507,19 +1497,19 @@
                                 x:Name="PropertiesSectionExpanderScroll">
                                 <StackPanel Spacing="4">
                                     <StackPanel Spacing="7" Margin="0,0,0,8">
-                                        <TextBlock Text="Selected object / tool" FontSize="9" VerticalAlignment="Center" Foreground="#838E9E"/>
+                                        <TextBlock Text="Selected object / tool" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
                                         <Border
                                             Height="31"
                                             Padding="9,0"
-                                            Background="#272A31"
-                                            BorderBrush="#3C414A"
+                                            Background="{ThemeResource WorkspaceFieldBrush}"
+                                            BorderBrush="{ThemeResource WorkspaceFieldBorderBrush}"
                                             BorderThickness="1"
                                             CornerRadius="5">
                                             <TextBlock
                                                 Text="{x:Bind WorkspaceObjectLabel, Mode=OneWay}"
                                                 FontSize="11"
                                                 VerticalAlignment="Center"
-                                                Foreground="#C5CEDA"
+                                                Foreground="{ThemeResource WorkspaceSecondaryTextBrush}"
                                                 TextTrimming="CharacterEllipsis" />
                                         </Border>
                                     </StackPanel>
@@ -1529,7 +1519,7 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{x:Bind ViewModel.AnnotationSizeHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{StaticResource SnapMutedBrush}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.AnnotationSizeHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
                                         <Button
                                             AutomationProperties.HelpText="Open the custom annotation color picker."
                                             AutomationProperties.Name="Custom annotation color"
@@ -1564,7 +1554,7 @@
                                                 Height="26"
                                                 Padding="5,0"
                                                 FontSize="10" />
-                                            <TextBlock Text="px" FontSize="9" VerticalAlignment="Center" Foreground="#7C8797"/>
+                                            <TextBlock Text="px" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
                                         </StackPanel>
                                     </Grid>
                                     <StackPanel
@@ -1635,7 +1625,7 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Fill" FontSize="10" VerticalAlignment="Center" Foreground="{StaticResource SnapMutedBrush}"/>
+                                        <TextBlock Text="Fill" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
                                         <Button
                                             Style="{StaticResource WorkspaceCommandButtonStyle}"
                                             Click="WorkspaceFill_Click"
@@ -1653,7 +1643,7 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Opacity" FontSize="10" VerticalAlignment="Center" Foreground="{StaticResource SnapMutedBrush}"/>
+                                        <TextBlock Text="Opacity" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
                                         <Slider
                                             AutomationProperties.HelpText="Set annotation opacity."
                                             AutomationProperties.Name="Annotation opacity"
@@ -1679,7 +1669,7 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Corner style" FontSize="10" VerticalAlignment="Center" Foreground="{StaticResource SnapMutedBrush}"/>
+                                        <TextBlock Text="Corner style" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
                                         <Grid Grid.Column="1">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -1700,7 +1690,7 @@
                                                     Height="10"
                                                     RadiusX="0"
                                                     RadiusY="0"
-                                                    Stroke="#B8D8ED"
+                                                    Stroke="{ThemeResource WorkspaceAccentBrush}"
                                                     StrokeThickness="1.5" />
                                             </Button>
                                             <Button
@@ -1718,7 +1708,7 @@
                                                     Height="10"
                                                     RadiusX="3"
                                                     RadiusY="3"
-                                                    Stroke="#B8D8ED"
+                                                    Stroke="{ThemeResource WorkspaceAccentBrush}"
                                                     StrokeThickness="1.5" />
                                             </Button>
                                         </Grid>
@@ -1856,7 +1846,7 @@
                                                 Padding="4,1"
                                                 CornerRadius="4"
                                                 VerticalAlignment="Center"
-                                                Background="{StaticResource SnapPanelAltBrush}"
+                                                Background="{ThemeResource SnapPanelAltBrush}"
                                                 Margin="7,0,0,0">
                                                 <TextBlock FontSize="10" Text="{x:Bind ViewModel.AnnotationLayerCount, Mode=OneWay}"/>
                                             </Border>
@@ -2000,11 +1990,14 @@
                                                             </MenuFlyoutSubItem>
                                                         </MenuFlyout>
                                                     </Grid.ContextFlyout>
-                                                    <Border
+                                                    <controls:WorkspaceSelectionFrame
+                                                        IsSelected="{x:Bind IsActive}"
+                                                        NormalBackground="{ThemeResource WorkspaceLayerBrush}"
+                                                        SelectedBackground="{ThemeResource WorkspaceLayerSelectedBrush}"
+                                                        NormalBorderBrush="{ThemeResource WorkspaceLayerBorderBrush}"
+                                                        SelectedBorderBrush="{ThemeResource WorkspaceLayerSelectedBorderBrush}"
                                                         Height="46"
                                                         VerticalAlignment="Top"
-                                                        Background="{x:Bind BackgroundBrush}"
-                                                        BorderBrush="{x:Bind BorderBrush}"
                                                         BorderThickness="1"
                                                         CornerRadius="4" />
                                                     <Border
@@ -2039,7 +2032,7 @@
                                                                 <Button AutomationProperties.Name="{x:Bind VisibilityAutomationName}" Click="AnnotationLayerVisibility_Click" Style="{StaticResource LayerRowIconButtonStyle}" ToolTipService.ToolTip="{x:Bind VisibilityAutomationName}">
                                                                     <Grid Width="18" Height="18">
                                                                         <controls:WorkspaceIcon Kind="Eye" Width="16" Height="16"/>
-                                                                        <Path Data="M 1,1 L 17,17" Stroke="{StaticResource SnapMutedBrush}" StrokeThickness="2" Visibility="{x:Bind HiddenVisibility}"/>
+                                                                        <Path Data="M 1,1 L 17,17" Stroke="{ThemeResource SnapMutedBrush}" StrokeThickness="2" Visibility="{x:Bind HiddenVisibility}"/>
                                                                     </Grid>
                                                                 </Button>
                                                                 <Button
@@ -2057,8 +2050,8 @@
                                                                         <Border
                                                                             Height="28"
                                                                             VerticalAlignment="Center"
-                                                                            Background="{StaticResource SnapSurfaceBrush}"
-                                                                            BorderBrush="{x:Bind BorderBrush}"
+                                                                            Background="{ThemeResource SnapSurfaceBrush}"
+                                                                            BorderBrush="{ThemeResource WorkspaceLayerBorderBrush}"
                                                                             BorderThickness="1"
                                                                             CornerRadius="3">
                                                                             <controls:WorkspaceIcon Kind="Folder" Width="16" Height="16" Foreground="{x:Bind IndicatorBrush}"/>
@@ -2070,7 +2063,7 @@
                                                                                 Text="{x:Bind Name}"
                                                                                 TextTrimming="CharacterEllipsis"
                                                                                 TextWrapping="NoWrap" />
-                                                                            <TextBlock FontSize="8" Foreground="{StaticResource SnapMutedBrush}" Text="{x:Bind ObjectCount}"/>
+                                                                            <TextBlock FontSize="8" Foreground="{ThemeResource SnapMutedBrush}" Text="{x:Bind ObjectCount}"/>
                                                                         </StackPanel>
                                                                     </Grid>
                                                                 </Button>
@@ -2094,23 +2087,26 @@
                                                                             <ColumnDefinition Width="30"/>
                                                                             <ColumnDefinition Width="*"/>
                                                                         </Grid.ColumnDefinitions>
-                                                                        <Border
+                                                                        <controls:WorkspaceSelectionFrame
                                                                             Grid.ColumnSpan="2"
-                                                                            Background="{x:Bind LayerBackgroundBrush}"
-                                                                            BorderBrush="{x:Bind LayerBorderBrush}"
+                                                                            IsSelected="{x:Bind IsSelected}"
+                                                                            NormalBackground="Transparent"
+                                                                            SelectedBackground="{ThemeResource WorkspaceObjectSelectedBrush}"
+                                                                            NormalBorderBrush="{ThemeResource WorkspaceLayerBorderBrush}"
+                                                                            SelectedBorderBrush="{ThemeResource WorkspaceLayerSelectedBorderBrush}"
                                                                             BorderThickness="1"
                                                                             CornerRadius="3" />
                                                                         <Border
                                                                             Width="3"
                                                                             Height="24"
                                                                             HorizontalAlignment="Left"
-                                                                            Background="{StaticResource SnapAccentBrush}"
+                                                                            Background="{ThemeResource SnapAccentBrush}"
                                                                             CornerRadius="2"
                                                                             Visibility="{x:Bind SelectionVisibility}" />
                                                                         <Button AutomationProperties.Name="{x:Bind ObjectVisibilityAutomationName}" Click="AnnotationObjectVisibility_Click" Style="{StaticResource LayerRowIconButtonStyle}" ToolTipService.ToolTip="{x:Bind ObjectVisibilityAutomationName}">
                                                                             <Grid Width="18" Height="18">
                                                                                 <controls:WorkspaceIcon Kind="Eye" Width="16" Height="16"/>
-                                                                                <Path Data="M 1,1 L 17,17" Stroke="{StaticResource SnapMutedBrush}" StrokeThickness="2" Visibility="{x:Bind HiddenVisibility}"/>
+                                                                                <Path Data="M 1,1 L 17,17" Stroke="{ThemeResource SnapMutedBrush}" StrokeThickness="2" Visibility="{x:Bind HiddenVisibility}"/>
                                                                             </Grid>
                                                                         </Button>
                                                                         <Button
@@ -2125,7 +2121,7 @@
                                                                                     <ColumnDefinition Width="24"/>
                                                                                     <ColumnDefinition Width="*"/>
                                                                                 </Grid.ColumnDefinitions>
-                                                                                <TextBlock Foreground="{StaticResource SnapAccentBrush}" Text="{x:Bind LayerGlyph}"/>
+                                                                                <TextBlock Foreground="{ThemeResource SnapAccentBrush}" Text="{x:Bind LayerGlyph}"/>
                                                                                 <TextBlock
                                                                                     Grid.Column="1"
                                                                                     FontSize="10"
@@ -2145,14 +2141,14 @@
                                         <ListView.Footer>
                                             <Border
                                                 Padding="8,0"
-                                                Background="#252830"
+                                                Background="{ThemeResource WorkspaceLayerBrush}"
                                                 CornerRadius="6"
                                                 Visibility="{x:Bind ViewModel.CanvasImageVisibility, Mode=OneWay}"
                                                 Height="46"
                                                 Margin="0,3,0,0">
                                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                                     <controls:WorkspaceIcon Kind="Image" Width="16" Height="16"/>
-                                                    <TextBlock Text="Original capture" FontSize="8" VerticalAlignment="Center" Foreground="#A3ADBC"/>
+                                                    <TextBlock Text="Original capture" FontSize="8" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
                                                     <controls:WorkspaceIcon Kind="Lock" Width="11" Height="11"/>
                                                 </StackPanel>
                                             </Border>
@@ -2163,7 +2159,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
-                                        Foreground="{StaticResource SnapMutedBrush}"
+                                        Foreground="{ThemeResource SnapMutedBrush}"
                                         Text="{x:Bind ViewModel.AnnotationLayersEmptyMessage, Mode=OneWay}"
                                         TextAlignment="Center"
                                         TextWrapping="Wrap"
@@ -2193,18 +2189,18 @@
                                 x:Name="ImageDetailsExpanderScroll">
                                 <StackPanel Spacing="10">
                                     <StackPanel AutomationProperties.Name="Selected capture properties" Spacing="10">
-                                        <TextBlock Foreground="{StaticResource SnapMutedBrush}" Text="Image size"/>
+                                        <TextBlock Foreground="{ThemeResource SnapMutedBrush}" Text="Image size"/>
                                         <Grid ColumnSpacing="10">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Spacing="4">
-                                                <TextBlock FontSize="12" Foreground="{StaticResource SnapMutedBrush}" Text="W"/>
+                                                <TextBlock FontSize="12" Foreground="{ThemeResource SnapMutedBrush}" Text="W"/>
                                                 <TextBlock
                                                     AutomationProperties.Name="Selected capture width"
                                                     FontSize="12"
-                                                    Foreground="{StaticResource SnapMutedBrush}"
+                                                    Foreground="{ThemeResource SnapMutedBrush}"
                                                     Text="{x:Bind ViewModel.CurrentDocumentWidthLabel, Mode=OneWay}"
                                                     TextTrimming="CharacterEllipsis" />
                                                 <NumberBox
@@ -2217,11 +2213,11 @@
                                                     Value="{x:Bind ViewModel.ResizeWidth, Mode=TwoWay}" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Spacing="4">
-                                                <TextBlock FontSize="12" Foreground="{StaticResource SnapMutedBrush}" Text="H"/>
+                                                <TextBlock FontSize="12" Foreground="{ThemeResource SnapMutedBrush}" Text="H"/>
                                                 <TextBlock
                                                     AutomationProperties.Name="Selected capture height"
                                                     FontSize="12"
-                                                    Foreground="{StaticResource SnapMutedBrush}"
+                                                    Foreground="{ThemeResource SnapMutedBrush}"
                                                     Text="{x:Bind ViewModel.CurrentDocumentHeightLabel, Mode=OneWay}"
                                                     TextTrimming="CharacterEllipsis" />
                                                 <NumberBox
@@ -2237,19 +2233,19 @@
                                         <TextBlock
                                             AutomationProperties.Name="Selected capture file size"
                                             FontSize="12"
-                                            Foreground="{StaticResource SnapMutedBrush}"
+                                            Foreground="{ThemeResource SnapMutedBrush}"
                                             Text="{x:Bind ViewModel.CurrentDocumentFileSizeLabel, Mode=OneWay}"
                                             TextTrimming="CharacterEllipsis" />
                                         <TextBlock
                                             AutomationProperties.Name="Selected capture file name"
                                             FontSize="12"
-                                            Foreground="{StaticResource SnapMutedBrush}"
+                                            Foreground="{ThemeResource SnapMutedBrush}"
                                             Text="{x:Bind ViewModel.CurrentDocumentFileNameLabel, Mode=OneWay}"
                                             TextTrimming="CharacterEllipsis" />
                                         <TextBlock
                                             AutomationProperties.Name="Selected capture file location"
                                             FontSize="12"
-                                            Foreground="{StaticResource SnapMutedBrush}"
+                                            Foreground="{ThemeResource SnapMutedBrush}"
                                             Text="{x:Bind ViewModel.CurrentDocumentLocationLabel, Mode=OneWay}"
                                             TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
@@ -2289,7 +2285,7 @@
                                             <TextBlock Text="Copy Text"/>
                                         </StackPanel>
                                     </Button>
-                                    <Rectangle Height="1" Fill="{StaticResource SnapStrokeBrush}"/>
+                                    <Rectangle Height="1" Fill="{ThemeResource SnapStrokeBrush}"/>
                                 </StackPanel>
                             </ScrollViewer>
                         </Expander>
@@ -2353,7 +2349,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
                         <controls:WorkspaceIcon Kind="Lock" Width="11" Height="11"/>
-                        <TextBlock Text="Your originals stay untouched." FontSize="9" VerticalAlignment="Center" Foreground="#768396"/>
+                        <TextBlock Text="Your originals stay untouched." FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
                     </StackPanel>
                 </Grid>
                 <Grid x:Name="RightControlsCollapsedView" Padding="8,18" Visibility="Collapsed">
@@ -2373,8 +2369,8 @@
         <Grid
             Grid.Row="2"
             Padding="15,0"
-            Background="#1E2026"
-            BorderBrush="{StaticResource SnapStrokeBrush}"
+            Background="{ThemeResource WorkspaceSurfaceBrush}"
+            BorderBrush="{ThemeResource SnapStrokeBrush}"
             BorderThickness="0,1,0,0"
             ColumnSpacing="12"
             Height="29">
@@ -2382,12 +2378,12 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock FontSize="9" Foreground="#7B8799" Text="{x:Bind ViewModel.StatusText}" TextTrimming="CharacterEllipsis"/>
+            <TextBlock FontSize="9" Foreground="{ThemeResource WorkspaceMutedBrush}" Text="{x:Bind ViewModel.StatusText}" TextTrimming="CharacterEllipsis"/>
             <TextBlock
                 Grid.Column="1"
                 HorizontalAlignment="Right"
                 FontSize="9"
-                Foreground="#7B8799"
+                Foreground="{ThemeResource WorkspaceMutedBrush}"
                 Text="Only on your device"
                 TextTrimming="CharacterEllipsis"
                 ToolTipService.ToolTip="{x:Bind ViewModel.CurrentDocumentFooterLabel, Mode=OneWay}" />
@@ -2395,7 +2391,7 @@
         <Grid
             Grid.RowSpan="3"
             Padding="24"
-            Background="#D9000000"
+            Background="{ThemeResource WorkspaceScrimBrush}"
             Canvas.ZIndex="10"
             Visibility="{x:Bind ViewModel.FirstRunSetupVisibility, Mode=OneWay}">
             <Border
@@ -2403,8 +2399,8 @@
                 MaxHeight="760"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                Background="{ThemeResource SnapPanelBrush}"
+                BorderBrush="{ThemeResource SnapStrokeBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
                 <Grid>
@@ -2420,7 +2416,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Spacing="2">
                             <TextBlock FontSize="22" FontWeight="SemiBold" Text="{x:Bind ViewModel.SettingsPanelTitle, Mode=OneWay}"/>
-                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Feature changes apply after restart."/>
+                            <TextBlock Foreground="{ThemeResource SnapMutedBrush}" Text="Theme changes apply when saved. Feature changes apply after restart." TextWrapping="Wrap"/>
                         </StackPanel>
                         <Button
                             Grid.Column="1"
@@ -2434,6 +2430,17 @@
                     </Grid>
                     <ScrollViewer Grid.Row="1" Padding="24,4,24,20" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Enabled">
                         <StackPanel Spacing="24">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Appearance" FontSize="16" FontWeight="SemiBold"/>
+                                <ComboBox Header="Theme" Width="280" HorizontalAlignment="Left"
+                                          AutomationProperties.Name="Settings theme"
+                                          AutomationProperties.HelpText="Choose Dark, Light, or Use system setting. Save to apply without restarting."
+                                          SelectedIndex="{x:Bind ViewModel.SettingsThemeIndex, Mode=TwoWay}">
+                                    <ComboBoxItem Content="Dark"/>
+                                    <ComboBoxItem Content="Light"/>
+                                    <ComboBoxItem Content="Use system setting"/>
+                                </ComboBox>
+                            </StackPanel>
                             <Grid ColumnSpacing="32">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -2546,7 +2553,8 @@
                     <Grid
                         Grid.Row="2"
                         Padding="24,16"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        Background="{ThemeResource SnapSurfaceBrush}"
+                        BorderBrush="{ThemeResource SnapStrokeBrush}"
                         BorderThickness="0,1,0,0"
                         ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
@@ -2586,6 +2594,7 @@
                             AutomationProperties.HelpText="{x:Bind ViewModel.SettingsPrimaryActionHelpText, Mode=OneWay}"
                             AutomationProperties.Name="{x:Bind ViewModel.SettingsPrimaryActionAutomationName, Mode=OneWay}"
                             Click="CompleteFirstRunSetupButton_Click"
+                            Style="{StaticResource WorkspacePrimaryButtonStyle}"
                             HorizontalAlignment="Right">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <SymbolIcon Symbol="Accept"/>

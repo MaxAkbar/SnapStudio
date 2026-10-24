@@ -18,7 +18,8 @@ public sealed class JsonSettingsStoreTests
             CaptureHotkey = "Ctrl+Shift+S",
             IncludeCursorByDefault = false,
             CopyCapturesToClipboard = true,
-            FirstRunCompleted = true
+            FirstRunCompleted = true,
+            Theme = ApplicationThemePreference.Light
         };
 
         await store.SaveAsync(settings, CancellationToken.None);
@@ -29,6 +30,7 @@ public sealed class JsonSettingsStoreTests
         Assert.IsFalse(loaded.IncludeCursorByDefault);
         Assert.IsTrue(loaded.CopyCapturesToClipboard);
         Assert.IsTrue(loaded.FirstRunCompleted);
+        Assert.AreEqual(ApplicationThemePreference.Light, loaded.Theme);
         Assert.AreEqual(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
         Assert.IsTrue(loaded.FeatureFlags["Capture.WgcStill"]);
     }
@@ -68,6 +70,7 @@ public sealed class JsonSettingsStoreTests
         Assert.IsTrue(loaded.FirstRunCompleted);
         Assert.AreEqual(ApplicationStorageBackend.FileSystem, loaded.StorageBackend);
         Assert.IsFalse(loaded.FeatureFlags["Editor.BlurTool"]);
+        Assert.AreEqual(ApplicationThemePreference.Dark, loaded.Theme);
         Assert.IsTrue(loaded.FeatureFlags["Custom.Experimental"]);
         Assert.IsTrue(loaded.FeatureFlags["Capture.WgcStill"]);
         Assert.Contains(
@@ -160,5 +163,39 @@ public sealed class JsonSettingsStoreTests
 
         Assert.AreEqual(ApplicationStorageBackend.Database, loaded.StorageBackend);
         Assert.AreEqual(@"D:\Captures", loaded.StorageRoot);
+    }
+
+    [TestMethod]
+    [DataRow(ApplicationThemePreference.Dark)]
+    [DataRow(ApplicationThemePreference.Light)]
+    [DataRow(ApplicationThemePreference.System)]
+    public async Task ThemePreference_PersistsAcrossStoreInstances(ApplicationThemePreference theme)
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        string path = Path.Combine(workspace.Path, "settings.json");
+        ApplicationSettings defaults = ApplicationSettings.CreateDefault(workspace.Path);
+        await new JsonSettingsStore(path, defaults).SaveAsync(defaults with { Theme = theme }, CancellationToken.None);
+
+        ApplicationSettings loaded = await new JsonSettingsStore(path, defaults).LoadAsync(CancellationToken.None);
+
+        Assert.AreEqual(theme, loaded.Theme);
+    }
+
+    [TestMethod]
+    public async Task LoadAsync_LegacySettingsKeepDarkThemeAndInvalidThemeUsesDefault()
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        string path = Path.Combine(workspace.Path, "settings.json");
+        ApplicationSettings defaults = ApplicationSettings.CreateDefault(workspace.Path);
+        var store = new JsonSettingsStore(path, defaults);
+        await File.WriteAllTextAsync(path, """{"schemaVersion":3,"storageRoot":"D:\\Captures"}""");
+
+        ApplicationSettings legacy = await store.LoadAsync(CancellationToken.None);
+
+        Assert.AreEqual(ApplicationThemePreference.Dark, legacy.Theme);
+        Assert.AreEqual(@"D:\Captures", legacy.StorageRoot);
+        Assert.Contains("\"theme\": \"Dark\"", await File.ReadAllTextAsync(path));
+        await File.WriteAllTextAsync(path, """{"schemaVersion":4,"theme":99}""");
+        Assert.AreEqual(ApplicationThemePreference.Dark, (await store.LoadAsync(CancellationToken.None)).Theme);
     }
 }

@@ -9,6 +9,7 @@ namespace SnapStudio.App;
 public sealed partial class MainPage
 {
     private bool _historyFolderDialogIsOpen;
+    private bool _captureDeleteDialogIsOpen;
 
     private void HistoryFolder_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -95,7 +96,7 @@ public sealed partial class MainPage
             AutomationProperties.SetName(picker, "Destination capture folder");
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot, Title = "Move capture to folder", Content = picker,
+                XamlRoot = XamlRoot, RequestedTheme = ActualTheme, Title = "Move capture to folder", Content = picker,
                 PrimaryButtonText = "Move", CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Primary
             };
             if (await dialog.ShowAsync() == ContentDialogResult.Primary && picker.SelectedItem is HistoryFolderItem folder)
@@ -105,10 +106,16 @@ public sealed partial class MainPage
 
     private void CaptureHistoryItem_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
     {
-        if (!ViewModel.CanManageHistoryFolders || sender is not FrameworkElement { DataContext: DocumentSummaryItem capture } element) return;
+        if (!ViewModel.CanManageCaptureHistory || sender is not FrameworkElement { DataContext: DocumentSummaryItem capture } element) return;
+        CreateCaptureHistoryMenu(capture).ShowAt(element);
+        args.Handled = true;
+    }
+
+    private MenuFlyout CreateCaptureHistoryMenu(DocumentSummaryItem capture)
+    {
         var menu = new MenuFlyout();
         menu.Items.Add(new MenuFlyoutItem { Text = capture.Title, IsEnabled = false });
-        var move = new MenuFlyoutSubItem { Text = "Move to folder" };
+        var move = new MenuFlyoutSubItem { Text = "Move to folder", IsEnabled = ViewModel.CanManageHistoryFolders };
         Guid? current = ViewModel.GetCaptureHistoryFolderId(capture.Id);
         foreach (HistoryFolderItem folder in ViewModel.HistoryFolders.Where(folder => folder.IsUnfiled || folder.Id.HasValue))
         {
@@ -117,13 +124,69 @@ public sealed partial class MainPage
             move.Items.Add(item);
         }
         menu.Items.Add(move);
-        menu.ShowAt(element);
-        args.Handled = true;
+        menu.Items.Add(new MenuFlyoutSeparator());
+        var remove = new MenuFlyoutItem { Text = "Remove from recent captures", Icon = new SymbolIcon(Symbol.Remove) };
+        const string removeHelp = "Remove this capture from the list and keep its image file.";
+        ToolTipService.SetToolTip(remove, removeHelp);
+        AutomationProperties.SetHelpText(remove, removeHelp);
+        remove.Click += async (_, _) => await RunCaptureHistoryUiActionAsync(
+            () => ViewModel.RemoveCaptureFromHistoryAsync(capture.Id, CancellationToken.None));
+        menu.Items.Add(remove);
+        var delete = new MenuFlyoutItem
+        {
+            Text = "Delete image (Recycle Bin)…", Icon = new SymbolIcon(Symbol.Delete),
+            IsEnabled = ViewModel.CanRecycleCaptureImage(capture.Id)
+        };
+        const string deleteHelp = "Move this capture's image file to the Recycle Bin and remove it from the list.";
+        ToolTipService.SetToolTip(delete, deleteHelp);
+        AutomationProperties.SetHelpText(delete, deleteHelp);
+        delete.Click += async (_, _) => await ConfirmDeleteCaptureImageAsync(capture.Id, capture.Title);
+        menu.Items.Add(delete);
+        return menu;
+    }
+
+    private async Task RunCaptureHistoryUiActionAsync(Func<Task> action)
+    {
+        var previousDocumentId = ViewModel.CurrentDocumentId;
+        try { await action(); }
+        catch (Exception exception) { ViewModel.ShowCaptureHistoryError(exception.Message); }
+        finally
+        {
+            UpdateBindingsFromViewModel();
+            if (ViewModel.CurrentDocumentId != previousDocumentId) FitCurrentCanvas();
+        }
+    }
+
+    private async Task ConfirmDeleteCaptureImageAsync(string captureId, string title)
+    {
+        if (_captureDeleteDialogIsOpen || _historyFolderDialogIsOpen || _newImageDialogIsOpen
+            || _pasteImageDialogIsOpen || _layerRenameDialogIsOpen || _layerColorDialogIsOpen
+            || !ViewModel.CanRecycleCaptureImage(captureId)) return;
+        _captureDeleteDialogIsOpen = true;
+        try
+        {
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
+                Title = "Delete image?",
+                Content = new TextBlock
+                {
+                    Text = $"Move the image file for ‘{title}’ to the Recycle Bin and remove this capture from the list?\n\nTo keep the file, cancel and choose Remove from recent captures.",
+                    TextWrapping = TextWrapping.Wrap
+                },
+                PrimaryButtonText = "Move to Recycle Bin", CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close
+            };
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                await RunCaptureHistoryUiActionAsync(() => ViewModel.MoveCaptureToTrashAsync(captureId, CancellationToken.None));
+        }
+        catch (Exception exception) { ViewModel.ShowCaptureHistoryError(exception.Message); }
+        finally { _captureDeleteDialogIsOpen = false; }
     }
 
     private async Task RunHistoryFolderDialogAsync(Func<Task> action)
     {
-        if (_historyFolderDialogIsOpen || _newImageDialogIsOpen || _pasteImageDialogIsOpen
+        if (_historyFolderDialogIsOpen || _captureDeleteDialogIsOpen || _newImageDialogIsOpen || _pasteImageDialogIsOpen
             || _layerRenameDialogIsOpen || _layerColorDialogIsOpen || !ViewModel.CanManageHistoryFolders) return;
         _historyFolderDialogIsOpen = true;
         try { await action(); }
@@ -149,7 +212,7 @@ public sealed partial class MainPage
         content.Children.Add(error);
         var dialog = new ContentDialog
         {
-            XamlRoot = XamlRoot, Title = title, Content = content,
+            XamlRoot = XamlRoot, RequestedTheme = ActualTheme, Title = title, Content = content,
             PrimaryButtonText = title == "Import folder" ? "Import" : title == "Add folder" ? "Add folder" : "Save",
             CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Primary
         };

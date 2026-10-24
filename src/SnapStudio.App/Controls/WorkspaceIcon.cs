@@ -21,6 +21,7 @@ public sealed class WorkspaceIcon : UserControl
         Width = 24;
         Height = 24;
         IsHitTestVisible = false;
+        Loaded += (_, _) => IconForeground.InheritFromOwner(this);
         Content = new Viewbox { Child = _canvas, Stretch = Stretch.Uniform };
         Draw();
     }

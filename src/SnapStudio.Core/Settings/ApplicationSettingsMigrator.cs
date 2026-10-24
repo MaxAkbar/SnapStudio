@@ -14,6 +14,8 @@ public sealed class ApplicationSettingsMigrator : ISettingsMigrator
         ApplicationStorageBackend storageBackend = ResolveStorageBackend(
             settings.StorageBackend,
             defaultSettings.StorageBackend);
+        ApplicationThemePreference theme = Enum.IsDefined(settings.Theme)
+            ? settings.Theme : defaultSettings.Theme;
         Dictionary<string, bool> featureFlags = MergeFeatureFlags(
             settings.FeatureFlags,
             defaultSettings.FeatureFlags);
@@ -22,6 +24,7 @@ public sealed class ApplicationSettingsMigrator : ISettingsMigrator
             || !string.Equals(settings.StorageRoot, storageRoot, StringComparison.Ordinal)
             || !string.Equals(settings.CaptureHotkey, captureHotkey, StringComparison.Ordinal)
             || settings.StorageBackend != storageBackend
+            || settings.Theme != theme
             || !FeatureFlagsEqual(settings.FeatureFlags, featureFlags);
 
         ApplicationSettings migrated = settings with
@@ -30,6 +33,7 @@ public sealed class ApplicationSettingsMigrator : ISettingsMigrator
             StorageRoot = storageRoot,
             CaptureHotkey = captureHotkey,
             StorageBackend = storageBackend,
+            Theme = theme,
             FeatureFlags = featureFlags
         };
 

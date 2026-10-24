@@ -2,7 +2,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Merge into the workspace page after XamlControlsResources. Native control
+    <!-- Merge after XamlControlsResources in the app and workspace page. Native control
          templates keep their input, selection, flyout, focus and automation behavior.
          Palette resources also supply their hover, pressed and disabled states. -->
     <ResourceDictionary.ThemeDictionaries>
@@ -29,6 +29,84 @@
             <Color x:Key="WorkspaceTransparentColor">#00000000</Color>
             <Color x:Key="WorkspaceHeaderHoverColor">#0AFFFFFF</Color>
             <Color x:Key="WorkspaceHeaderPressedColor">#14FFFFFF</Color>
+            <Color x:Key="WorkspaceBackgroundColor">#17191E</Color>
+            <Color x:Key="WorkspaceDotColor">#282C34</Color>
+            <Color x:Key="WorkspaceSurfaceColor">#1E2026</Color>
+            <Color x:Key="WorkspacePanelAltColor">#282B32</Color>
+            <Color x:Key="WorkspaceSecondaryTextColor">#C5C9D2</Color>
+            <Color x:Key="WorkspaceHeadingColor">#E3EBF5</Color>
+            <Color x:Key="WorkspaceAccentMutedColor">#293E4C</Color>
+            <Color x:Key="WorkspacePrimaryColor">#0879D0</Color>
+            <Color x:Key="WorkspacePrimaryCommandColor">#313741</Color>
+            <Color x:Key="WorkspacePrimaryCommandBorderColor">#475361</Color>
+            <Color x:Key="WorkspacePrimaryCommandTextColor">#F2F5F9</Color>
+            <Color x:Key="WorkspaceRowHoverColor">#2A2D35</Color>
+            <Color x:Key="WorkspaceRowPressedColor">#303B49</Color>
+            <Color x:Key="WorkspaceRowSelectedColor">#2B3541</Color>
+            <Color x:Key="WorkspaceRowSelectedBorderColor">#4B6377</Color>
+            <Color x:Key="WorkspaceRowSelectedHoverColor">#303D4C</Color>
+            <Color x:Key="WorkspaceRowSelectedHoverBorderColor">#5E7C96</Color>
+            <Color x:Key="WorkspaceRowSelectedPressedColor">#334453</Color>
+            <Color x:Key="WorkspaceFolderBadgeColor">#29343E</Color>
+            <Color x:Key="WorkspaceFolderBadgeBorderColor">#4C6172</Color>
+            <Color x:Key="WorkspaceSearchColor">#1B1D23</Color>
+            <Color x:Key="WorkspaceLayerColor">#252830</Color>
+            <Color x:Key="WorkspaceLayerBorderColor">#373F49</Color>
+            <Color x:Key="WorkspaceLayerSelectedColor">#2E4151</Color>
+            <Color x:Key="WorkspaceLayerSelectedBorderColor">#536E85</Color>
+            <Color x:Key="WorkspaceObjectSelectedColor">#273441</Color>
+            <Color x:Key="WorkspaceScrimColor">#D9000000</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+            <Color x:Key="WorkspacePanelColor">#FFFFFF</Color>
+            <Color x:Key="WorkspaceCommandColor">#EDF1F6</Color>
+            <Color x:Key="WorkspaceCommandHoverColor">#E2E9F1</Color>
+            <Color x:Key="WorkspaceCommandPressedColor">#D5DFEB</Color>
+            <Color x:Key="WorkspaceBorderColor">#CCD3DE</Color>
+            <Color x:Key="WorkspaceBorderHoverColor">#8C9AAE</Color>
+            <Color x:Key="WorkspaceTextColor">#202937</Color>
+            <Color x:Key="WorkspaceMutedColor">#596578</Color>
+            <Color x:Key="WorkspaceDisabledColor">#7C8797</Color>
+            <Color x:Key="WorkspaceIconHoverColor">#E7EDF5</Color>
+            <Color x:Key="WorkspaceFieldColor">#F6F8FB</Color>
+            <Color x:Key="WorkspaceFieldHoverColor">#EDF2F8</Color>
+            <Color x:Key="WorkspaceFieldFocusedColor">#FFFFFF</Color>
+            <Color x:Key="WorkspaceFieldBorderColor">#B9C3D1</Color>
+            <Color x:Key="WorkspaceAccentColor">#0067AD</Color>
+            <Color x:Key="WorkspaceAccentHoverColor">#005A99</Color>
+            <Color x:Key="WorkspaceAccentPressedColor">#004C82</Color>
+            <Color x:Key="WorkspaceOnAccentColor">#FFFFFF</Color>
+            <Color x:Key="WorkspaceDisabledBackgroundColor">#EFF2F6</Color>
+            <Color x:Key="WorkspaceTransparentColor">#00000000</Color>
+            <Color x:Key="WorkspaceHeaderHoverColor">#08000000</Color>
+            <Color x:Key="WorkspaceHeaderPressedColor">#12000000</Color>
+            <Color x:Key="WorkspaceBackgroundColor">#E9EDF2</Color>
+            <Color x:Key="WorkspaceDotColor">#C7CFDA</Color>
+            <Color x:Key="WorkspaceSurfaceColor">#F8FAFC</Color>
+            <Color x:Key="WorkspacePanelAltColor">#F1F4F8</Color>
+            <Color x:Key="WorkspaceSecondaryTextColor">#3E4A5B</Color>
+            <Color x:Key="WorkspaceHeadingColor">#2B3748</Color>
+            <Color x:Key="WorkspaceAccentMutedColor">#E1F0FC</Color>
+            <Color x:Key="WorkspacePrimaryColor">#006CC5</Color>
+            <Color x:Key="WorkspacePrimaryCommandColor">#E6EEF7</Color>
+            <Color x:Key="WorkspacePrimaryCommandBorderColor">#B7C9DD</Color>
+            <Color x:Key="WorkspacePrimaryCommandTextColor">#1F3C5A</Color>
+            <Color x:Key="WorkspaceRowHoverColor">#F0F5FA</Color>
+            <Color x:Key="WorkspaceRowPressedColor">#DCEAF7</Color>
+            <Color x:Key="WorkspaceRowSelectedColor">#DFEEFD</Color>
+            <Color x:Key="WorkspaceRowSelectedBorderColor">#87ACCD</Color>
+            <Color x:Key="WorkspaceRowSelectedHoverColor">#D3E7FA</Color>
+            <Color x:Key="WorkspaceRowSelectedHoverBorderColor">#568DBB</Color>
+            <Color x:Key="WorkspaceRowSelectedPressedColor">#C3DDF5</Color>
+            <Color x:Key="WorkspaceFolderBadgeColor">#E8F2FA</Color>
+            <Color x:Key="WorkspaceFolderBadgeBorderColor">#B6CFE1</Color>
+            <Color x:Key="WorkspaceSearchColor">#F7F9FC</Color>
+            <Color x:Key="WorkspaceLayerColor">#F4F6FA</Color>
+            <Color x:Key="WorkspaceLayerBorderColor">#CDD5E1</Color>
+            <Color x:Key="WorkspaceLayerSelectedColor">#DDEDFC</Color>
+            <Color x:Key="WorkspaceLayerSelectedBorderColor">#6492B9</Color>
+            <Color x:Key="WorkspaceObjectSelectedColor">#E5F1FD</Color>
+            <Color x:Key="WorkspaceScrimColor">#660E1A2A</Color>
         </ResourceDictionary>
         <ResourceDictionary x:Key="HighContrast">
             <StaticResource x:Key="WorkspacePanelColor" ResourceKey="SystemColorWindowColor"/>
@@ -53,8 +131,87 @@
             <StaticResource x:Key="WorkspaceTransparentColor" ResourceKey="SystemColorWindowColor"/>
             <StaticResource x:Key="WorkspaceHeaderHoverColor" ResourceKey="SystemColorHighlightColor"/>
             <StaticResource x:Key="WorkspaceHeaderPressedColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceBackgroundColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceDotColor" ResourceKey="SystemColorWindowTextColor"/>
+            <StaticResource x:Key="WorkspaceSurfaceColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspacePanelAltColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceSecondaryTextColor" ResourceKey="SystemColorWindowTextColor"/>
+            <StaticResource x:Key="WorkspaceHeadingColor" ResourceKey="SystemColorWindowTextColor"/>
+            <StaticResource x:Key="WorkspaceAccentMutedColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspacePrimaryColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspacePrimaryCommandColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspacePrimaryCommandBorderColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspacePrimaryCommandTextColor" ResourceKey="SystemColorHighlightTextColor"/>
+            <StaticResource x:Key="WorkspaceRowHoverColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceRowPressedColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceRowSelectedColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceRowSelectedBorderColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceRowSelectedHoverColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceRowSelectedHoverBorderColor" ResourceKey="SystemColorWindowTextColor"/>
+            <StaticResource x:Key="WorkspaceRowSelectedPressedColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceFolderBadgeColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceFolderBadgeBorderColor" ResourceKey="SystemColorWindowTextColor"/>
+            <StaticResource x:Key="WorkspaceSearchColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceLayerColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceLayerBorderColor" ResourceKey="SystemColorWindowTextColor"/>
+            <StaticResource x:Key="WorkspaceLayerSelectedColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceLayerSelectedBorderColor" ResourceKey="SystemColorHighlightColor"/>
+            <StaticResource x:Key="WorkspaceObjectSelectedColor" ResourceKey="SystemColorWindowColor"/>
+            <StaticResource x:Key="WorkspaceScrimColor" ResourceKey="SystemColorWindowColor"/>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
+
+    <SolidColorBrush x:Key="WorkspaceCommandHoverBrush" Color="{ThemeResource WorkspaceCommandHoverColor}"/>
+    <SolidColorBrush x:Key="WorkspaceCommandPressedBrush" Color="{ThemeResource WorkspaceCommandPressedColor}"/>
+    <SolidColorBrush x:Key="WorkspaceBorderHoverBrush" Color="{ThemeResource WorkspaceBorderHoverColor}"/>
+    <SolidColorBrush x:Key="WorkspaceDisabledBrush" Color="{ThemeResource WorkspaceDisabledColor}"/>
+    <SolidColorBrush x:Key="WorkspaceIconHoverBrush" Color="{ThemeResource WorkspaceIconHoverColor}"/>
+    <SolidColorBrush x:Key="WorkspaceFieldBrush" Color="{ThemeResource WorkspaceFieldColor}"/>
+    <SolidColorBrush x:Key="WorkspaceFieldHoverBrush" Color="{ThemeResource WorkspaceFieldHoverColor}"/>
+    <SolidColorBrush x:Key="WorkspaceFieldFocusedBrush" Color="{ThemeResource WorkspaceFieldFocusedColor}"/>
+    <SolidColorBrush x:Key="WorkspaceFieldBorderBrush" Color="{ThemeResource WorkspaceFieldBorderColor}"/>
+    <SolidColorBrush x:Key="WorkspaceAccentHoverBrush" Color="{ThemeResource WorkspaceAccentHoverColor}"/>
+    <SolidColorBrush x:Key="WorkspaceAccentPressedBrush" Color="{ThemeResource WorkspaceAccentPressedColor}"/>
+    <SolidColorBrush x:Key="WorkspaceDisabledBackgroundBrush" Color="{ThemeResource WorkspaceDisabledBackgroundColor}"/>
+    <SolidColorBrush x:Key="WorkspaceTransparentBrush" Color="{ThemeResource WorkspaceTransparentColor}"/>
+    <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="{ThemeResource WorkspaceBackgroundColor}"/>
+    <SolidColorBrush x:Key="WorkspaceDotBrush" Color="{ThemeResource WorkspaceDotColor}"/>
+    <SolidColorBrush x:Key="WorkspaceSurfaceBrush" Color="{ThemeResource WorkspaceSurfaceColor}"/>
+    <SolidColorBrush x:Key="WorkspacePanelAltBrush" Color="{ThemeResource WorkspacePanelAltColor}"/>
+    <SolidColorBrush x:Key="WorkspaceSecondaryTextBrush" Color="{ThemeResource WorkspaceSecondaryTextColor}"/>
+    <SolidColorBrush x:Key="WorkspaceHeadingBrush" Color="{ThemeResource WorkspaceHeadingColor}"/>
+    <SolidColorBrush x:Key="WorkspaceAccentMutedBrush" Color="{ThemeResource WorkspaceAccentMutedColor}"/>
+    <SolidColorBrush x:Key="WorkspacePrimaryBrush" Color="{ThemeResource WorkspacePrimaryColor}"/>
+    <SolidColorBrush x:Key="WorkspacePrimaryCommandBrush" Color="{ThemeResource WorkspacePrimaryCommandColor}"/>
+    <SolidColorBrush x:Key="WorkspacePrimaryCommandBorderBrush" Color="{ThemeResource WorkspacePrimaryCommandBorderColor}"/>
+    <SolidColorBrush x:Key="WorkspacePrimaryCommandTextBrush" Color="{ThemeResource WorkspacePrimaryCommandTextColor}"/>
+    <SolidColorBrush x:Key="WorkspaceRowHoverBrush" Color="{ThemeResource WorkspaceRowHoverColor}"/>
+    <SolidColorBrush x:Key="WorkspaceRowPressedBrush" Color="{ThemeResource WorkspaceRowPressedColor}"/>
+    <SolidColorBrush x:Key="WorkspaceRowSelectedBrush" Color="{ThemeResource WorkspaceRowSelectedColor}"/>
+    <SolidColorBrush x:Key="WorkspaceRowSelectedBorderBrush" Color="{ThemeResource WorkspaceRowSelectedBorderColor}"/>
+    <SolidColorBrush x:Key="WorkspaceRowSelectedHoverBrush" Color="{ThemeResource WorkspaceRowSelectedHoverColor}"/>
+    <SolidColorBrush x:Key="WorkspaceRowSelectedHoverBorderBrush" Color="{ThemeResource WorkspaceRowSelectedHoverBorderColor}"/>
+    <SolidColorBrush x:Key="WorkspaceRowSelectedPressedBrush" Color="{ThemeResource WorkspaceRowSelectedPressedColor}"/>
+    <SolidColorBrush x:Key="WorkspaceFolderBadgeBrush" Color="{ThemeResource WorkspaceFolderBadgeColor}"/>
+    <SolidColorBrush x:Key="WorkspaceFolderBadgeBorderBrush" Color="{ThemeResource WorkspaceFolderBadgeBorderColor}"/>
+    <SolidColorBrush x:Key="WorkspaceSearchBrush" Color="{ThemeResource WorkspaceSearchColor}"/>
+    <SolidColorBrush x:Key="WorkspaceLayerBrush" Color="{ThemeResource WorkspaceLayerColor}"/>
+    <SolidColorBrush x:Key="WorkspaceLayerBorderBrush" Color="{ThemeResource WorkspaceLayerBorderColor}"/>
+    <SolidColorBrush x:Key="WorkspaceLayerSelectedBrush" Color="{ThemeResource WorkspaceLayerSelectedColor}"/>
+    <SolidColorBrush x:Key="WorkspaceLayerSelectedBorderBrush" Color="{ThemeResource WorkspaceLayerSelectedBorderColor}"/>
+    <SolidColorBrush x:Key="WorkspaceObjectSelectedBrush" Color="{ThemeResource WorkspaceObjectSelectedColor}"/>
+    <SolidColorBrush x:Key="WorkspaceScrimBrush" Color="{ThemeResource WorkspaceScrimColor}"/>
+    <SolidColorBrush x:Key="SnapBackgroundBrush" Color="{ThemeResource WorkspaceBackgroundColor}"/>
+    <SolidColorBrush x:Key="SnapSurfaceBrush" Color="{ThemeResource WorkspaceSurfaceColor}"/>
+    <SolidColorBrush x:Key="SnapPanelBrush" Color="{ThemeResource WorkspacePanelColor}"/>
+    <SolidColorBrush x:Key="SnapPanelAltBrush" Color="{ThemeResource WorkspacePanelAltColor}"/>
+    <SolidColorBrush x:Key="SnapStrokeBrush" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="SnapMutedBrush" Color="{ThemeResource WorkspaceMutedColor}"/>
+    <SolidColorBrush x:Key="SnapAccentBrush" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="SnapAccentMutedBrush" Color="{ThemeResource WorkspaceAccentMutedColor}"/>
+    <SolidColorBrush x:Key="SnapPrimaryBrush" Color="{ThemeResource WorkspacePrimaryColor}"/>
+    <SolidColorBrush x:Key="SidebarSectionStrokeBrush" Color="{ThemeResource WorkspaceBorderColor}"/>
+
 
     <SolidColorBrush x:Key="WorkspacePanelBrush" Color="{ThemeResource WorkspacePanelColor}"/>
     <SolidColorBrush x:Key="WorkspaceCommandBrush" Color="{ThemeResource WorkspaceCommandColor}"/>
@@ -150,6 +307,37 @@
     <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="{ThemeResource WorkspaceCommandColor}"/>
     <SolidColorBrush x:Key="ComboBoxDropDownForeground" Color="{ThemeResource WorkspaceTextColor}"/>
     <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="{ThemeResource WorkspaceBorderColor}"/>
+
+    <!-- Native dialog templates and controls use the same palette as the editor. -->
+    <SolidColorBrush x:Key="ContentDialogForeground" Color="{ThemeResource WorkspaceTextColor}"/>
+    <SolidColorBrush x:Key="ContentDialogBackground" Color="{ThemeResource WorkspaceSurfaceColor}"/>
+    <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="{ThemeResource WorkspacePanelColor}"/>
+    <SolidColorBrush x:Key="ContentDialogBorderBrush" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="ContentDialogSeparatorBorderBrush" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="TextControlSelectionHighlightColor" Color="{ThemeResource WorkspacePrimaryColor}"/>
+    <SolidColorBrush x:Key="NumberBoxPopupBackground" Color="{ThemeResource WorkspaceCommandColor}"/>
+    <SolidColorBrush x:Key="NumberBoxPopupBorderBrush" Color="{ThemeResource WorkspaceBorderColor}"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="{ThemeResource WorkspaceAccentHoverColor}"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="{ThemeResource WorkspaceAccentPressedColor}"/>
+    <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="{ThemeResource WorkspaceAccentHoverColor}"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed" Color="{ThemeResource WorkspaceAccentPressedColor}"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeChecked" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPointerOver" Color="{ThemeResource WorkspaceAccentHoverColor}"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPressed" Color="{ThemeResource WorkspaceAccentPressedColor}"/>
+    <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundChecked" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedPressed" Color="{ThemeResource WorkspaceOnAccentColor}"/>
+    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="{ThemeResource WorkspaceRowSelectedColor}"/>
+    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="{ThemeResource WorkspaceRowSelectedHoverColor}"/>
+    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="{ThemeResource WorkspaceRowSelectedPressedColor}"/>
+    <SolidColorBrush x:Key="ListViewItemSelectionIndicatorBrush" Color="{ThemeResource WorkspaceAccentColor}"/>
+    <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPointerOverBrush" Color="{ThemeResource WorkspaceAccentHoverColor}"/>
+    <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPressedBrush" Color="{ThemeResource WorkspaceAccentPressedColor}"/>
     <SolidColorBrush x:Key="WorkspaceHeaderHoverBrush" Color="{ThemeResource WorkspaceHeaderHoverColor}"/>
     <SolidColorBrush x:Key="WorkspaceHeaderPressedBrush" Color="{ThemeResource WorkspaceHeaderPressedColor}"/>
     <x:Double x:Key="ComboBoxMinHeight">30</x:Double>

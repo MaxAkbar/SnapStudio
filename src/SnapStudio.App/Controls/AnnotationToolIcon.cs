@@ -22,6 +22,7 @@ public sealed class AnnotationToolIcon : UserControl
         Width = 24;
         Height = 24;
         IsHitTestVisible = false;
+        Loaded += (_, _) => IconForeground.InheritFromOwner(this);
         Content = new Viewbox { Child = _canvas };
         Draw();
     }

@@ -18,6 +18,8 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
         AppWindow.SetIcon("Assets/AppIcon.ico");
+        ThemeRoot.ActualThemeChanged += (_, _) => UpdateTitleBarColors();
+        ThemeRoot.Loaded += (_, _) => UpdateTitleBarColors();
 
         App? app = Application.Current as App;
         _services = AppServices.CreateDefault(
@@ -28,6 +30,21 @@ public sealed partial class MainWindow : Window
             new CaptureTargetPicker(() => RootFrame.XamlRoot));
         Closed += MainWindow_Closed;
         RootFrame.Navigate(typeof(MainPage), _services);
+    }
+
+    private void UpdateTitleBarColors()
+    {
+        bool dark = ThemeRoot.ActualTheme == ElementTheme.Dark;
+        AppWindow.TitleBar.ButtonForegroundColor = dark ? Microsoft.UI.Colors.White : Microsoft.UI.Colors.Black;
+        AppWindow.TitleBar.ButtonInactiveForegroundColor = Microsoft.UI.Colors.Gray;
+        AppWindow.TitleBar.ButtonHoverForegroundColor = dark ? Microsoft.UI.Colors.White : Microsoft.UI.Colors.Black;
+        AppWindow.TitleBar.ButtonPressedForegroundColor = dark ? Microsoft.UI.Colors.White : Microsoft.UI.Colors.Black;
+        AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
+        AppWindow.TitleBar.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        AppWindow.TitleBar.ButtonHoverBackgroundColor = dark
+            ? Windows.UI.Color.FromArgb(255, 52, 55, 63) : Windows.UI.Color.FromArgb(255, 226, 231, 238);
+        AppWindow.TitleBar.ButtonPressedBackgroundColor = dark
+            ? Windows.UI.Color.FromArgb(255, 42, 45, 52) : Windows.UI.Color.FromArgb(255, 211, 220, 230);
     }
 
     private async void MainWindow_Closed(object sender, WindowEventArgs args)
