@@ -16,6 +16,9 @@ public sealed class AnnotationToolIcon : UserControl
         new PropertyMetadata("Select", (sender, _) => ((AnnotationToolIcon)sender).Draw()));
 
     private readonly Canvas _canvas = new() { Width = 24, Height = 24 };
+    public static readonly DependencyProperty PatternProperty = DependencyProperty.Register(nameof(Pattern), typeof(StrokePattern),
+        typeof(AnnotationToolIcon), new PropertyMetadata(StrokePattern.Solid, (sender, _) => ((AnnotationToolIcon)sender).Draw()));
+    public StrokePattern Pattern { get => (StrokePattern)GetValue(PatternProperty); set => SetValue(PatternProperty, value); }
 
     public AnnotationToolIcon()
     {
@@ -38,6 +41,14 @@ public sealed class AnnotationToolIcon : UserControl
         _canvas.Children.Clear();
         switch (Kind)
         {
+            case "Design":
+                Line(new Point(4, 18), new Point(16, 6), new Point(20, 10), new Point(8, 22), new Point(3, 23), new Point(4, 18));
+                Line(new Point(4, 2), new Point(22, 20));
+                break;
+            case "Crop":
+                Line(new Point(6, 2), new Point(6, 18), new Point(22, 18));
+                Line(new Point(2, 6), new Point(18, 6), new Point(18, 22));
+                break;
             case "Select":
             case "Rectangle":
                 var rectangle = new Rectangle { Width = 18, Height = Kind == "Select" ? 18 : 14, RadiusX = 1, RadiusY = 1 };
@@ -103,6 +114,7 @@ public sealed class AnnotationToolIcon : UserControl
     private void Add(Shape shape, double left = 0, double top = 0)
     {
         shape.StrokeThickness = 1.7;
+        if (Kind != "Select") shape.StrokeDashArray = [.. ToolDesigns.DashArray(Pattern)];
         shape.SetBinding(Shape.StrokeProperty, new Binding { Source = this, Path = new PropertyPath(nameof(Foreground)) });
         Canvas.SetLeft(shape, left);
         Canvas.SetTop(shape, top);

@@ -57,6 +57,8 @@ public sealed record AppServices(
     NamedPipeEditorMessageServer EditorMessageServer)
 {
     public IHistoryFolderStore? HistoryFolderStore { get; init; }
+    public IToolDesignStore? ToolDesignStore { get; init; }
+    public IToolDesignFilePicker? ToolDesignFilePicker { get; init; }
 
     public static AppServices CreateDefault(
         nint ownerWindowHandle = 0,
@@ -192,7 +194,9 @@ public sealed record AppServices(
             screenRecordingService,
             new NamedPipeEditorMessageServer(NamedPipeEditorMessageDefaults.PipeName))
         {
-            HistoryFolderStore = historyFolderStore
+            HistoryFolderStore = historyFolderStore,
+            ToolDesignStore = new JsonToolDesignStore(Path.Combine(appDataRoot, "tool-designs.json")),
+            ToolDesignFilePicker = new WindowsToolDesignFilePicker(ownerWindowHandle)
         };
     }
 

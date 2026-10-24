@@ -61,10 +61,11 @@
                 <Setter Property="MinHeight" Value="0"/>
             </Style>
             <Style x:Key="EditorToolButtonStyle" TargetType="Button" BasedOn="{StaticResource WorkspaceIconButtonStyle}">
-                <Setter Property="Width" Value="36"/>
-                <Setter Property="Height" Value="36"/>
-                <Setter Property="MinWidth" Value="36"/>
-                <Setter Property="MinHeight" Value="36"/>
+                <Setter Property="Width" Value="38"/>
+                <Setter Property="Height" Value="40"/>
+                <Setter Property="MinWidth" Value="38"/>
+                <Setter Property="MinHeight" Value="40"/>
+                <Setter Property="Padding" Value="2"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="Transparent"/>
                 <Setter Property="CornerRadius" Value="6"/>
@@ -210,6 +211,19 @@
         <KeyboardAccelerator Key="PageUp" Modifiers="Control,Shift" Invoked="ObjectActionKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="PageDown" Modifiers="Control,Shift" Invoked="ObjectActionKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="F8" Invoked="FocusWorkspaceKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="M" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="V" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="U" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="O" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="L" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="A" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="T" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="P" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="H" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="B" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="G" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="C" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="D" Invoked="ToolKeyboardAccelerator_Invoked"/>
     </Page.KeyboardAccelerators>
     <Grid>
         <Grid.RowDefinitions>
@@ -904,6 +918,8 @@
                         Title="{x:Bind ViewModel.CaptureNoticeTitle, Mode=OneWay}"
                         Grid.ColumnSpan="2" />
                     <Border Grid.Row="3" Background="{ThemeResource SnapSurfaceBrush}" BorderBrush="{ThemeResource SnapStrokeBrush}" BorderThickness="0,0,1,0">
+                        <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <ScrollViewer
                             HorizontalScrollMode="Disabled"
                             HorizontalScrollBarVisibility="Disabled"
@@ -917,98 +933,98 @@
                                     AutomationProperties.Name="Select annotations"
                                     Click="SelectionToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
-                                    ToolTipService.ToolTip="Select">
-                                    <controls:AnnotationToolIcon Kind="Select" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Select (M / V)">
+                                    <controls:ToolButtonContent Kind="Select" Shortcut="M"/>
                                 </Button>
                                 <Button
-                                    x:Name="RectangleToolButton"
+                                    x:Name="RectangleToolButton" ContextRequested="ToolDesignButton_ContextRequested"
                                     AutomationProperties.HelpText="Select the rectangle annotation tool."
                                     AutomationProperties.Name="Rectangle tool"
                                     Click="AnnotationToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
                                     Tag="0"
-                                    ToolTipService.ToolTip="Rectangle">
-                                    <controls:AnnotationToolIcon Kind="Rectangle" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Rectangle (U)">
+                                    <controls:ToolButtonContent Kind="Rectangle" Shortcut="U"/>
                                 </Button>
                                 <Button
-                                    x:Name="EllipseToolButton"
+                                    x:Name="EllipseToolButton" ContextRequested="ToolDesignButton_ContextRequested"
                                     AutomationProperties.HelpText="Select the ellipse annotation tool."
                                     AutomationProperties.Name="Ellipse tool"
                                     Click="AnnotationToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
                                     Tag="1"
-                                    ToolTipService.ToolTip="Ellipse">
-                                    <controls:AnnotationToolIcon Kind="Ellipse" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Ellipse (O)">
+                                    <controls:ToolButtonContent Kind="Ellipse" Shortcut="O"/>
                                 </Button>
                                 <Button
-                                    x:Name="LineToolButton"
+                                    x:Name="LineToolButton" ContextRequested="ToolDesignButton_ContextRequested"
                                     AutomationProperties.HelpText="Select the line annotation tool."
                                     AutomationProperties.Name="Line tool"
                                     Click="AnnotationToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
                                     Tag="2"
-                                    ToolTipService.ToolTip="Line">
-                                    <controls:AnnotationToolIcon Kind="Line" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Line (L)">
+                                    <controls:ToolButtonContent Kind="Line" Shortcut="L"/>
                                 </Button>
                                 <Button
-                                    x:Name="ArrowToolButton"
+                                    x:Name="ArrowToolButton" ContextRequested="ToolDesignButton_ContextRequested"
                                     AutomationProperties.HelpText="Select the arrow annotation tool."
                                     AutomationProperties.Name="Arrow tool"
                                     Click="AnnotationToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
                                     Tag="3"
-                                    ToolTipService.ToolTip="Arrow">
-                                    <controls:AnnotationToolIcon Kind="Arrow" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Arrow (A)">
+                                    <controls:ToolButtonContent Kind="Arrow" Shortcut="A"/>
                                 </Button>
                                 <Button
-                                    x:Name="TextToolButton"
+                                    x:Name="TextToolButton" ContextRequested="ToolDesignButton_ContextRequested"
                                     AutomationProperties.HelpText="Select the text annotation tool."
                                     AutomationProperties.Name="Text tool"
                                     Click="AnnotationToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
                                     Tag="4"
-                                    ToolTipService.ToolTip="Text">
-                                    <controls:AnnotationToolIcon Kind="Text" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Text (T)">
+                                    <controls:ToolButtonContent Kind="Text" Shortcut="T"/>
                                 </Button>
                                 <Button
-                                    x:Name="PenToolButton"
+                                    x:Name="PenToolButton" ContextRequested="ToolDesignButton_ContextRequested"
                                     AutomationProperties.HelpText="Draw freehand on the canvas using the selected color and width."
                                     AutomationProperties.Name="Pen tool"
                                     Click="AnnotationToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
                                     Tag="7"
-                                    ToolTipService.ToolTip="Pen — draw freehand">
-                                    <controls:AnnotationToolIcon Kind="Pen" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Pen (P) — draw freehand">
+                                    <controls:ToolButtonContent Kind="Pen" Shortcut="P"/>
                                 </Button>
                                 <Button
-                                    x:Name="HighlightToolButton"
+                                    x:Name="HighlightToolButton" ContextRequested="ToolDesignButton_ContextRequested"
                                     AutomationProperties.HelpText="Select the highlight annotation tool."
                                     AutomationProperties.Name="Highlight tool"
                                     Click="AnnotationToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
                                     Tag="5"
-                                    ToolTipService.ToolTip="Highlight">
-                                    <controls:AnnotationToolIcon Kind="Highlight" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Highlight (H)">
+                                    <controls:ToolButtonContent Kind="Highlight" Shortcut="H"/>
                                 </Button>
                                 <Button
-                                    x:Name="BlurToolButton"
+                                    x:Name="BlurToolButton" ContextRequested="ToolDesignButton_ContextRequested"
                                     AutomationProperties.HelpText="Select the blur annotation tool."
                                     AutomationProperties.Name="Blur tool"
                                     Click="AnnotationToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
                                     Tag="6"
-                                    ToolTipService.ToolTip="Blur">
-                                    <controls:AnnotationToolIcon Kind="Blur" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Blur (B)">
+                                    <controls:ToolButtonContent Kind="Blur" Shortcut="B"/>
                                 </Button>
                                 <Button
-                                    x:Name="FillToolButton"
+                                    x:Name="FillToolButton" ContextRequested="ToolDesignButton_ContextRequested"
                                     AutomationProperties.HelpText="Click inside a rectangle or ellipse to change its fill. Click an image area to add a connected fill to the selected layer."
                                     AutomationProperties.Name="Fill bucket tool"
                                     Click="AnnotationToolButton_Click"
                                     Style="{StaticResource EditorToolButtonStyle}"
                                     Tag="8"
-                                    ToolTipService.ToolTip="Fill bucket">
-                                    <controls:AnnotationToolIcon Kind="Fill" Width="19" Height="19"/>
+                                    ToolTipService.ToolTip="Fill bucket (G)">
+                                    <controls:ToolButtonContent Kind="Fill" Shortcut="G"/>
                                 </Button>
                                 <Button
                                     AccessKey="C"
@@ -1017,11 +1033,17 @@
                                     Click="CropButton_Click"
                                     IsEnabled="{x:Bind ViewModel.CanCropToSelection, Mode=OneWay}"
                                     Style="{StaticResource EditorToolButtonStyle}"
-                                    ToolTipService.ToolTip="Crop">
-                                    <controls:WorkspaceIcon Kind="Crop" Width="16" Height="16"/>
+                                    ToolTipService.ToolTip="Crop (C)">
+                                    <controls:ToolButtonContent Kind="Crop" Shortcut="C"/>
                                 </Button>
                             </StackPanel>
                         </ScrollViewer>
+                        <Button x:Name="DesignToolButton" Grid.Row="1" Click="DesignToolButton_Click" HorizontalAlignment="Center"
+                            AutomationProperties.Name="Design tools" ToolTipService.ToolTip="Create or import tool designs (D)"
+                            Style="{StaticResource EditorToolButtonStyle}" Height="50" Margin="0,5,0,8">
+                            <StackPanel Spacing="0"><controls:ToolButtonContent Kind="Design" Shortcut="D"/><TextBlock Text="Design" FontSize="8" HorizontalAlignment="Center"/></StackPanel>
+                        </Button>
+                        </Grid>
                     </Border>
                     <Border
                         Grid.Row="3"
@@ -1537,13 +1559,53 @@
                                     <TextBlock Text="Only shared properties are shown. Select one object to edit its other properties."
                                         TextWrapping="Wrap" FontSize="10" Margin="0,4,0,8" Foreground="{ThemeResource SnapMutedBrush}"
                                         Visibility="{x:Bind ViewModel.AnnotationMultipleSelectionVisibility, Mode=OneWay}"/>
-                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationAppearanceControlsVisibility, Mode=OneWay}">
+                                    <Grid ColumnSpacing="8" RowSpacing="2" Margin="0,2,0,6"
+                                        Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{x:Bind ViewModel.AnnotationSizeHeader, Mode=OneWay}" FontSize="10"
+                                            VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Grid.Column="1">
+                                            <TextBox
+                                                x:Name="AnnotationSizeTextBox"
+                                                AutomationProperties.HelpText="Enter a stroke width in pixels or a text size. Valid numbers apply immediately and can exceed the slider range."
+                                                AutomationProperties.Name="Annotation size value"
+                                                InputScope="Number"
+                                                Text="{x:Bind ViewModel.AnnotationSizeText, Mode=OneWay}"
+                                                TextChanged="AnnotationSizeText_TextChanged"
+                                                LostFocus="AnnotationSizeText_LostFocus"
+                                                Width="80"
+                                                MinWidth="0"
+                                                MinHeight="28"
+                                                Height="28"
+                                                Padding="7,0"
+                                                FontSize="11" />
+                                            <TextBlock Text="px" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
+                                        </StackPanel>
+                                        <Slider
+                                            x:Name="AnnotationSizeSlider"
+                                            Grid.Row="1" Grid.ColumnSpan="2"
+                                            AutomationProperties.HelpText="Adjust common sizes with the slider. Use the adjacent textbox for larger values."
+                                            AutomationProperties.Name="Annotation size slider"
+                                            Maximum="{x:Bind ViewModel.AnnotationSizeMaximum, Mode=OneWay}"
+                                            Minimum="1"
+                                            StepFrequency="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
+                                            Value="{x:Bind ViewModel.AnnotationSizeSliderValue, Mode=OneWay}"
+                                            ValueChanged="AnnotationStrokeSize_ValueChanged"
+                                            Height="28" MinHeight="0"/>
+                                    </Grid>
+                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{x:Bind ViewModel.AnnotationPrimaryPropertyHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.AnnotationColorHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
                                         <Button
                                             AutomationProperties.HelpText="Open the custom annotation color picker."
                                             AutomationProperties.Name="Custom annotation color"
@@ -1565,23 +1627,6 @@
                                                 <TextBlock Text="{x:Bind WorkspaceColorHex, Mode=OneWay}" FontSize="9" VerticalAlignment="Center" CharacterSpacing="30"/>
                                             </StackPanel>
                                         </Button>
-                                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Grid.Column="2"
-                                            Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}">
-                                            <TextBox
-                                                AutomationProperties.HelpText="Enter a stroke width in pixels or a text size. Valid numbers apply immediately; both can exceed the slider range."
-                                                AutomationProperties.Name="Annotation size value"
-                                                InputScope="Number"
-                                                Text="{x:Bind ViewModel.AnnotationSizeText, Mode=OneWay}"
-                                                TextChanged="AnnotationSizeText_TextChanged"
-                                                LostFocus="AnnotationSizeText_LostFocus"
-                                                Width="40"
-                                                MinWidth="0"
-                                                MinHeight="26"
-                                                Height="26"
-                                                Padding="5,0"
-                                                FontSize="10" />
-                                            <TextBlock Text="px" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
-                                        </StackPanel>
                                     </Grid>
                                     <StackPanel
                                         AutomationProperties.HelpText="Choose the annotation stroke color."
@@ -1768,7 +1813,7 @@
                                         IsEnabled="{x:Bind ViewModel.CanEditAnnotationText, Mode=OneWay}"
                                         Text="{x:Bind ViewModel.AnnotationText, Mode=OneWay}" />
                                     <Expander
-                                        Header="More tool options"
+                                        Header="More properties"
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Stretch"
                                         Padding="0"
@@ -1776,16 +1821,12 @@
                                         Style="{StaticResource WorkspaceExpanderStyle}"
                                         FontSize="9">
                                         <StackPanel Spacing="10">
-                                            <Slider
-                                                AutomationProperties.HelpText="Set annotation stroke thickness or text size."
-                                                AutomationProperties.Name="Annotation size"
-                                                Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}"
-                                                Header="{x:Bind ViewModel.AnnotationSizeHeader, Mode=OneWay}"
-                                                Maximum="{x:Bind ViewModel.AnnotationSizeMaximum, Mode=OneWay}"
-                                                Minimum="1"
-                                                StepFrequency="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
-                                                Value="{x:Bind ViewModel.AnnotationSizeSliderValue, Mode=OneWay}"
-                                                ValueChanged="AnnotationStrokeSize_ValueChanged" />
+                                            <ComboBox Header="Line style" AutomationProperties.Name="Annotation line style"
+                                                SelectedIndex="{x:Bind ViewModel.AnnotationPatternIndex, Mode=OneWay}"
+                                                SelectionChanged="AnnotationPattern_SelectionChanged"
+                                                Visibility="{x:Bind ViewModel.AnnotationPatternControlsVisibility, Mode=OneWay}">
+                                                <ComboBoxItem Content="Solid"/><ComboBoxItem Content="Dashed"/><ComboBoxItem Content="Dotted"/><ComboBoxItem Content="Dash dot"/>
+                                            </ComboBox>
                                             <ComboBox
                                                 AutomationProperties.HelpText="Choose whether rectangle annotations use sharp or rounded corners."
                                                 AutomationProperties.Name="Rectangle corner style"
@@ -1810,23 +1851,6 @@
                                                 <ComboBoxItem Content="Text label"/>
                                                 <ComboBoxItem Content="Highlighter"/>
                                                 <ComboBoxItem Content="Blur region"/>
-                                            </ComboBox>
-                                            <ComboBox
-                                                AutomationProperties.HelpText="Choose the annotation tool used for new annotations."
-                                                AutomationProperties.Name="Annotation tool"
-                                                Header="Tool"
-                                                SelectedIndex="{x:Bind ViewModel.AnnotationToolSelectionIndex, Mode=OneWay}"
-                                                SelectionChanged="AnnotationTool_SelectionChanged">
-                                                <ComboBoxItem Content="Selection"/>
-                                                <ComboBoxItem Content="Rectangle"/>
-                                                <ComboBoxItem Content="Ellipse"/>
-                                                <ComboBoxItem Content="Line"/>
-                                                <ComboBoxItem Content="Arrow"/>
-                                                <ComboBoxItem Content="Text"/>
-                                                <ComboBoxItem Content="Highlight"/>
-                                                <ComboBoxItem Content="Blur"/>
-                                                <ComboBoxItem Content="Pen"/>
-                                                <ComboBoxItem Content="Fill bucket"/>
                                             </ComboBox>
                                         </StackPanel>
                                     </Expander>

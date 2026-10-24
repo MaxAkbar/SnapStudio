@@ -56,7 +56,7 @@ public static class DocumentLayers
             }
         }
 
-        if (document.SchemaVersion is 2 or 3 or 4 or 5)
+        if (document.SchemaVersion is 2 or 3 or 4 or 5 or 6)
         {
             document.SchemaVersion = CaptureDocument.CurrentSchemaVersion;
         }
@@ -95,6 +95,9 @@ public static class DocumentLayers
             {
                 throw new InvalidDataException("The document contains a missing, empty, or duplicate annotation ID.");
             }
+
+            if (annotation.Style is null || !Enum.IsDefined(annotation.Style.Pattern))
+                throw new InvalidDataException("The annotation stroke pattern is invalid.");
 
             if (annotation.LayerId is not Guid layerId || !layerIds.Contains(layerId))
             {

@@ -21,6 +21,7 @@ SnapStudio is in active development. The current codebase includes the main capt
 - With the folder dropdown open, right-click a folder or group for **Rename…** and **Remove … (keep captures)**. Removing a mapped folder stops its mapping; removing either kind returns its captures to **Unfiled** and keeps the image files and editable documents. **All captures** and **Unfiled** remain available.
 - Choose **Dark**, **Light**, or **Use system setting** under **Settings → Appearance → Theme**, then **Save** to apply it without restarting. The choice is remembered and included in settings imports and exports. Existing settings keep the dark theme.
 - Editable annotations: rectangle, ellipse, line, arrow, text, freehand pen, highlight, and blur. Use the dashed-square Selection tool to select, move, and resize objects.
+- **Design** at the bottom of the tool rail creates, edits, imports, and exports reusable styles for existing tools. Tools with designs show an arrow; click to open their design drawer, or right-click any drawing tool to create a design. Rectangle, ellipse, line, arrow, and pen include dashed and dotted variants. Designs can save color, fill, width or text size, opacity, corners, and font where applicable. Existing objects retain their own editable styles. Import a SnapStudio JSON design pack, such as [the example pack](docs/tool-designs.sample.json); export shares your saved designs. Styles and line patterns survive reopening and are included in Copy and export.
 - **Properties** follows the selected object or drawing tool. Select with no objects chosen shows selection guidance and a crop action for a selected area. Rectangles show corner controls; text shows font and text size; images show opacity; blur shows strength. Mixed object selections show only shared properties, and text/fill color previews use the object's actual color.
 - Right-click the image background with no objects selected to choose **Select**, **Rectangle**, **Ellipse**, **Line**, **Arrow**, **Text**, **Pen**, **Highlight**, **Blur**, or **Fill bucket**. The menu marks the active tool and switches tools without adding an object. **Shift+F10** opens the same menu when the canvas has focus and no object is selected. Right-click an object for its existing editing actions.
 - Right-click a layer to rename it, move it up or down in the stack, or choose a color label. **Custom color…** opens a color picker with a hex entry. Layer changes support undo and redo.
@@ -60,6 +61,25 @@ Get the first preview from [GitHub Releases](https://github.com/MaxAkbar/SnapStu
 On Windows 11 x64, download `SnapStudio-0.1.0-alpha.1-win-x64-portable.zip`, extract the entire ZIP, and run `SnapStudio.App.exe`. The portable build includes .NET and the Windows App SDK runtime. Captures and settings are saved under your local Windows profile.
 
 This is an unsigned alpha preview. OCR, scrolling capture, and screen recording are disabled by default. See the [release notes](docs/releases/v0.1.0-alpha.1.md) for validation and package limitations.
+
+## Tool shortcuts
+
+Keys are shown beside each tool icon. Shortcuts apply outside text fields and dialogs. Clicking a tool with an arrow opens its designs; its shortcut activates the last design chosen for that tool.
+
+| Shortcut | Tool |
+| --- | --- |
+| M or V | Select / move |
+| U | Rectangle |
+| O | Ellipse |
+| L | Line |
+| A | Arrow |
+| T | Text |
+| P | Pen |
+| H | Highlighter |
+| B | Blur |
+| G | Fill bucket |
+| C | Crop to the selected area |
+| D | Design library |
 
 ## Object shortcuts
 

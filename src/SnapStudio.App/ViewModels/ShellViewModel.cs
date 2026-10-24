@@ -228,7 +228,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         IScreenRecordingService screenRecordingService,
         NamedPipeEditorMessageServer editorMessageServer,
         DispatcherQueue dispatcherQueue,
-        IHistoryFolderStore? historyFolderStore = null)
+        IHistoryFolderStore? historyFolderStore = null,
+        IToolDesignStore? toolDesignStore = null,
+        IToolDesignFilePicker? toolDesignFilePicker = null)
     {
         _settingsStore = settingsStore;
         _settingsImportExportService = settingsImportExportService;
@@ -266,6 +268,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         _editorMessageServer = editorMessageServer;
         _dispatcherQueue = dispatcherQueue;
         _historyFolderStore = historyFolderStore;
+        _toolDesignStore = toolDesignStore;
+        _toolDesignFilePicker = toolDesignFilePicker;
         _hotkeyService.HotkeyPressed += HotkeyService_HotkeyPressed;
     }
 
@@ -1032,8 +1036,6 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public bool IsSelectionToolActive { get; private set; } = true;
 
-    public int AnnotationToolSelectionIndex => IsSelectionToolActive ? 0 : AnnotationToolIndex + 1;
-
     public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive
         && ActiveAnnotationKind is not (AnnotationKind.Pen or AnnotationKind.Fill);
 
@@ -1058,7 +1060,6 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     {
         IsSelectionToolActive = true;
         OnPropertyChanged(nameof(IsSelectionToolActive));
-        OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
         OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
         OnPropertyChanged(nameof(FillToleranceControlsVisibility));
@@ -1078,7 +1079,6 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
             _annotationToolIndex = Math.Clamp(value, 0, 8);
             OnPropertyChanged(nameof(AnnotationToolIndex));
-            OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
             OnPropertyChanged(nameof(ActiveAnnotationKind));
             OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
             OnPropertyChanged(nameof(CanAddActiveAnnotation));
@@ -1493,7 +1493,6 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     {
         IsSelectionToolActive = false;
         OnPropertyChanged(nameof(IsSelectionToolActive));
-        OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
         OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
         _annotationSelection.Clear();
@@ -1512,7 +1511,6 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         {
             IsSelectionToolActive = false;
             OnPropertyChanged(nameof(IsSelectionToolActive));
-            OnPropertyChanged(nameof(AnnotationToolSelectionIndex));
             OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
             OnPropertyChanged(nameof(CanAddActiveAnnotation));
         }
@@ -1667,6 +1665,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         StorageRoot = settings.StorageRoot;
         StorageBackend = settings.StorageBackend;
         InitializeFirstRunSetup(settings);
+        await LoadToolDesignsAsync(cancellationToken).ConfigureAwait(true);
         await _documentWorkspaceBootstrapper
             .EnsureInitializedAsync(cancellationToken)
             .ConfigureAwait(true);
@@ -5485,6 +5484,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         AnnotationStrokeThickness = annotation.Style.StrokeThickness;
         AnnotationCornerRadius = annotation.Style.CornerRadius;
         AnnotationOpacity = annotation.Style.Opacity;
+        AnnotationPattern = annotation.Style.Pattern;
+        _annotationDesignFill = annotation.Style.Fill;
         SyncAnnotationFontFromSelection();
         if (annotation.Kind == AnnotationKind.Text)
         {
@@ -5989,6 +5990,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         return first.Stroke == second.Stroke
             && first.Fill == second.Fill
             && first.Text == second.Text
+            && first.Pattern == second.Pattern
             && string.Equals(first.FontFamily, second.FontFamily, StringComparison.OrdinalIgnoreCase)
             && Math.Abs(first.StrokeThickness - second.StrokeThickness) < tolerance
             && Math.Abs(first.CornerRadius - second.CornerRadius) < tolerance
@@ -6037,11 +6039,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 opacity),
             _ => new AnnotationStyle(
                 color,
-                ColorRgba.Transparent,
+                annotationKind is AnnotationKind.Rectangle or AnnotationKind.Ellipse ? _annotationDesignFill : ColorRgba.Transparent,
                 ColorRgba.Black,
                 AnnotationStrokeThickness,
                 opacity,
-                annotationKind == AnnotationKind.Rectangle ? AnnotationCornerRadius : 0)
+                annotationKind == AnnotationKind.Rectangle ? AnnotationCornerRadius : 0) { Pattern = AnnotationPattern }
         };
     }
 
@@ -6074,6 +6076,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             _ => before with
             {
                 Stroke = color,
+                Pattern = AnnotationPattern,
                 StrokeThickness = AnnotationStrokeThickness,
                 Opacity = AnnotationOpacity,
                 CornerRadius = annotationKind == AnnotationKind.Rectangle
@@ -6085,7 +6088,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private double ResolveAnnotationOpacity(AnnotationKind annotationKind)
     {
-        if (_annotationSelection.HasSelection || Math.Abs(AnnotationOpacity - 1) >= 0.01)
+        if (_annotationSelection.HasSelection || _chosenToolDesigns.ContainsKey(annotationKind) || Math.Abs(AnnotationOpacity - 1) >= 0.01)
         {
             return AnnotationOpacity;
         }
@@ -6100,6 +6103,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void ApplyAnnotationPresetDefaults(int presetIndex)
     {
+        AnnotationPattern = StrokePattern.Solid;
         switch (presetIndex)
         {
             case 1:
@@ -6144,6 +6148,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 AnnotationPresetIndex = 0;
                 break;
         }
+        _chosenToolDesigns.Remove(ActiveAnnotationKind);
+        _annotationDesignFill = ColorRgba.Transparent;
     }
 
     private static string ResolveAnnotationPresetName(int presetIndex)
@@ -6169,7 +6175,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         AnnotationKind annotationKind,
         ColorRgba selectedColor)
     {
-        if (_annotationSelection.HasSelection || AnnotationStrokeIndex != 0)
+        if (_annotationSelection.HasSelection || _chosenToolDesigns.ContainsKey(annotationKind) || AnnotationStrokeIndex != 0)
         {
             return selectedColor;
         }
@@ -6211,6 +6217,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 AnnotationOpacity = 1;
                 break;
         }
+        ApplyRememberedToolDesign();
     }
 
     private ColorRgba ResolveStyleColor()

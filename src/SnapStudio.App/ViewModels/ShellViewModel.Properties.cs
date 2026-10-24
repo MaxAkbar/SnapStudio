@@ -25,10 +25,7 @@ public sealed partial class ShellViewModel
     public Visibility AnnotationMultipleSelectionVisibility => SelectedAnnotationCount > 1 ? Visibility.Visible : Visibility.Collapsed;
     public Visibility AnnotationPresetControlsVisibility => !HasSelectedAnnotation && !IsSelectionToolActive ? Visibility.Visible : Visibility.Collapsed;
     public string AnnotationOpacityHeader => HasAnnotationProperty(AnnotationProperty.BlurStrength) ? "Blur strength" : "Opacity";
-    public string AnnotationPrimaryPropertyHeader => HasAnnotationProperty(AnnotationProperty.StrokeWidth | AnnotationProperty.TextSize)
-        ? AnnotationSizeHeader : AnnotationColorHeader;
-
-    private string AnnotationColorHeader => SelectedAnnotationCount > 1 ? "Color" : ActiveOrSelectedAnnotationKind switch
+    public string AnnotationColorHeader => SelectedAnnotationCount > 1 ? "Color" : ActiveOrSelectedAnnotationKind switch
     {
         AnnotationKind.Text => "Text color",
         AnnotationKind.Fill or AnnotationKind.Highlight => "Fill color",

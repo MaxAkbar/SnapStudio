@@ -23,6 +23,7 @@ public sealed partial class MainPage
             var item = new RadioMenuFlyoutItem
             {
                 Text = name, GroupName = group,
+                KeyboardAcceleratorTextOverride = ToolShortcut(index),
                 IsChecked = index.HasValue ? !ViewModel.IsSelectionToolActive && ViewModel.AnnotationToolIndex == index
                     : ViewModel.IsSelectionToolActive
             };
@@ -48,6 +49,7 @@ public sealed partial class MainPage
 
     private void SelectCanvasTool(int? toolIndex)
     {
+        HideToolDesignDrawer();
         _objectContextMenu?.Hide();
         if (toolIndex is int index) ViewModel.UpdateAnnotationTool(index);
         else ViewModel.UseSelectionTool();

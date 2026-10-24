@@ -286,7 +286,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     private static void DrawPenStroke(Graphics graphics, AnnotationObject annotation)
     {
         PointF[] points = FreehandStroke.GetPoints(annotation).Select(point => new PointF((float)point.X, (float)point.Y)).ToArray();
-        using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity);
+        using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity, annotation.Style.Pattern);
         pen.StartCap = LineCap.Round;
         pen.EndCap = LineCap.Round;
         pen.LineJoin = LineJoin.Round;
@@ -306,7 +306,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     {
         RectangleF rectangle = ToRectangleF(annotation.Bounds);
         using Brush fill = CreateBrush(annotation.Style.Fill, annotation.Style.Opacity);
-        using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity);
+        using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity, annotation.Style.Pattern);
         using GraphicsPath? roundedPath = CreateRoundedRectanglePath(rectangle, annotation.Style.CornerRadius);
 
         if (annotation.Style.Fill.A > 0)
@@ -358,7 +358,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     {
         RectangleF rectangle = ToRectangleF(annotation.Bounds);
         using Brush fill = CreateBrush(annotation.Style.Fill, annotation.Style.Opacity);
-        using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity);
+        using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity, annotation.Style.Pattern);
 
         if (annotation.Style.Fill.A > 0)
         {
@@ -377,7 +377,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     {
         PointF start = new((float)annotation.Bounds.X, (float)annotation.Bounds.Y);
         PointF end = new((float)annotation.Bounds.Right, (float)annotation.Bounds.Bottom);
-        using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity);
+        using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity, annotation.Style.Pattern);
 
         graphics.DrawLine(pen, start, end);
     }
@@ -398,6 +398,15 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
         }
 
         using Brush brush = CreateBrush(annotation.Style.Stroke, annotation.Style.Opacity);
+        if (annotation.Style.Pattern != StrokePattern.Solid)
+        {
+            PointF neck = new((points[2].X + points[4].X) / 2, (points[2].Y + points[4].Y) / 2);
+            using Pen pen = CreatePen(annotation.Style.Stroke, annotation.Style.StrokeThickness, annotation.Style.Opacity, annotation.Style.Pattern);
+            pen.StartCap = LineCap.Flat; pen.EndCap = LineCap.Flat;
+            graphics.DrawLine(pen, new PointF((float)annotation.Bounds.X, (float)annotation.Bounds.Y), neck);
+            graphics.FillPolygon(brush, [points[2], points[3], points[4]]);
+            return;
+        }
         graphics.FillPolygon(brush, points);
     }
 
@@ -566,14 +575,17 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
     private static Pen CreatePen(
         ColorRgba color,
         double thickness,
-        double opacity)
+        double opacity,
+        StrokePattern pattern = StrokePattern.Solid)
     {
-        return new Pen(ToDrawingColor(color, opacity), (float)Math.Max(1, thickness))
+        var pen = new Pen(ToDrawingColor(color, opacity), (float)Math.Max(1, thickness))
         {
             StartCap = LineCap.Round,
             EndCap = LineCap.Round,
             LineJoin = LineJoin.Round
         };
+        if (pattern != StrokePattern.Solid) pen.DashPattern = ToolDesigns.DashArray(pattern).Select(value => (float)value).ToArray();
+        return pen;
     }
 
     private static Brush CreateBrush(ColorRgba color, double opacity)

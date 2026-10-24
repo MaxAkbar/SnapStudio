@@ -12,10 +12,12 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
     internal int VisualVersion { get; private set; }
+    public StrokePattern Pattern { get; private set; }
+    public DoubleCollection StrokeDashes => [.. ToolDesigns.DashArray(Pattern)];
 
     internal void UpdateFrom(AnnotationOverlayItem next)
     {
-        bool drawingChanged = Kind != next.Kind || Width != next.Width || Height != next.Height
+        bool drawingChanged = Pattern != next.Pattern || Kind != next.Kind || Width != next.Width || Height != next.Height
             || StartX != next.StartX || StartY != next.StartY || EndX != next.EndX || EndY != next.EndY
             || Text != next.Text || !SameColor(StrokeBrush, next.StrokeBrush) || !SameColor(FillBrush, next.FillBrush)
             || !SameColor(TextBrush, next.TextBrush) || StrokeThicknessValue != next.StrokeThicknessValue
@@ -32,6 +34,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         IsVisible = next.IsVisible; IsSelected = next.IsSelected; Image = next.Image;
         StrokePoints = next.StrokePoints; FillRectangles = next.FillRectangles;
         CanMoveUp = next.CanMoveUp; CanMoveDown = next.CanMoveDown;
+        Pattern = next.Pattern;
         if (drawingChanged) VisualVersion++;
         if (rowChanged) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
@@ -211,6 +214,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
             isSelected)
         {
             Image = annotation.Image,
+            Pattern = annotation.Style.Pattern,
             FontFamily = SystemFontCatalog.ResolveFamily(annotation.Style.FontFamily),
             CanMoveUp = canMoveUp,
             CanMoveDown = canMoveDown,

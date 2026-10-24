@@ -130,7 +130,9 @@ public sealed partial class MainPage : Page
             services.ScreenRecordingService,
             services.EditorMessageServer,
             DispatcherQueue,
-            services.HistoryFolderStore);
+            services.HistoryFolderStore,
+            services.ToolDesignStore,
+            services.ToolDesignFilePicker);
         SubscribeAnnotationOverlays(ViewModel);
         ViewModel.PropertyChanged += (_, args) =>
         {
@@ -1267,24 +1269,6 @@ public sealed partial class MainPage : Page
         FitCurrentCanvas();
     }
 
-    private void AnnotationTool_SelectionChanged(
-        object sender,
-        SelectionChangedEventArgs e)
-    {
-        if (ShouldIgnoreControlEvent())
-        {
-            return;
-        }
-
-        if (sender is ComboBox { SelectedIndex: >= 0 } comboBox)
-        {
-            if (comboBox.SelectedIndex == ViewModel.AnnotationToolSelectionIndex) return;
-            if (comboBox.SelectedIndex == 0) ViewModel.UseSelectionTool();
-            else ViewModel.UpdateAnnotationTool(comboBox.SelectedIndex - 1);
-            UpdateBindingsFromViewModel();
-        }
-    }
-
     private void AnnotationToolButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         if (sender is not Button button
@@ -1295,6 +1279,8 @@ public sealed partial class MainPage : Page
         }
 
         SelectCanvasTool(toolIndex);
+        AnnotationKind kind = DesignKinds[toolIndex];
+        if (ViewModel.GetToolDesigns(kind).Any()) ShowToolDesignDrawer(button, kind);
     }
 
     private void AnnotationPreset_SelectionChanged(
@@ -1872,6 +1858,7 @@ public sealed partial class MainPage : Page
             || _captureDeleteDialogIsOpen
             || _captureRenameDialogIsOpen
             || _captureTagsDialogIsOpen
+            || _toolDesignDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen
             || IsEditableFocusedElement(FocusManager.GetFocusedElement(XamlRoot));
     }
@@ -1986,8 +1973,8 @@ public sealed partial class MainPage : Page
 
         var body = new Border
         {
-            Background = item.FillBrush,
-            BorderBrush = item.StrokeBrush,
+            Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
             BorderThickness = item.StrokeThickness,
             CornerRadius = new CornerRadius(item.CornerRadius),
             Margin = item.Kind == AnnotationKind.Rectangle ? new Thickness(-item.StrokeThicknessValue / 2) : new Thickness(0),
@@ -1996,6 +1983,14 @@ public sealed partial class MainPage : Page
         body.PointerPressed += AnnotationBody_PointerPressed;
         body.Tapped += AnnotationOverlay_Tapped;
         root.Children.Add(body);
+
+        root.Children.Add(new Microsoft.UI.Xaml.Shapes.Rectangle
+        {
+            Fill = item.FillBrush, Stroke = item.StrokeBrush, StrokeThickness = item.StrokeThicknessValue,
+            StrokeDashArray = item.StrokeDashes, RadiusX = item.CornerRadius, RadiusY = item.CornerRadius,
+            Margin = item.Kind == AnnotationKind.Rectangle ? new Thickness(-item.StrokeThicknessValue / 2) : new Thickness(0),
+            IsHitTestVisible = false
+        });
 
         AddBoxResizeHandles(root, item);
         return root;
@@ -2154,6 +2149,7 @@ public sealed partial class MainPage : Page
             {
                 Points = CreatePenPointCollection(item.StrokePoints),
                 Stroke = item.StrokeBrush,
+                StrokeDashArray = item.StrokeDashes,
                 StrokeThickness = item.StrokeThicknessValue,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
@@ -2200,6 +2196,7 @@ public sealed partial class MainPage : Page
             Fill = item.FillBrush,
             Stroke = item.StrokeBrush,
             StrokeThickness = item.StrokeThicknessValue,
+            StrokeDashArray = item.StrokeDashes,
             IsHitTestVisible = false
         });
 
@@ -2481,6 +2478,7 @@ public sealed partial class MainPage : Page
                 Y2 = item.EndY,
                 Stroke = item.StrokeBrush,
                 StrokeThickness = item.StrokeThicknessValue,
+                StrokeDashArray = item.StrokeDashes,
                 IsHitTestVisible = false
             });
         }
@@ -2502,7 +2500,7 @@ public sealed partial class MainPage : Page
         return root;
     }
 
-    private Microsoft.UI.Xaml.Shapes.Polygon CreateArrowElement(AnnotationOverlayItem item)
+    private FrameworkElement CreateArrowElement(AnnotationOverlayItem item)
     {
         var points = new PointCollection();
         foreach (PointD point in ArrowGeometry.CreateOutline(
@@ -2512,6 +2510,18 @@ public sealed partial class MainPage : Page
             points.Add(new Point(point.X, point.Y));
         }
 
+        if (item.Pattern != StrokePattern.Solid && points.Count == 7)
+        {
+            var drawing = new Canvas { IsHitTestVisible = false };
+            Point neck = new((points[2].X + points[4].X) / 2, (points[2].Y + points[4].Y) / 2);
+            drawing.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
+            {
+                X1 = item.StartX, Y1 = item.StartY, X2 = neck.X, Y2 = neck.Y,
+                Stroke = item.StrokeBrush, StrokeThickness = item.StrokeThicknessValue, StrokeDashArray = item.StrokeDashes
+            });
+            drawing.Children.Add(new Microsoft.UI.Xaml.Shapes.Polygon { Points = [points[2], points[3], points[4]], Fill = item.StrokeBrush });
+            return drawing;
+        }
         return new Microsoft.UI.Xaml.Shapes.Polygon
         {
             Points = points,
@@ -2810,6 +2820,7 @@ public sealed partial class MainPage : Page
 
     private void UpdateAnnotationToolbarSelection()
     {
+        UpdateToolDesignBadges();
         UpdateToolButtonAppearance(SelectionToolButton, ViewModel.IsSelectionToolActive);
         UpdateAnnotationToolButton(RectangleToolButton, 0);
         UpdateAnnotationToolButton(EllipseToolButton, 1);
