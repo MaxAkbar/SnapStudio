@@ -47,7 +47,7 @@ public enum DocumentHistoryFilter
     Duplicates
 }
 
-public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChanged, IDisposable
+public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPropertyChanged, IDisposable
 {
     private bool _fillInProgress;
     private int _documentChangeVersion;
@@ -377,7 +377,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public bool CanDeleteSelectedAnnotation => HasSelectedAnnotation && HasCurrentDocument;
 
-    public bool CanCropToSelection => HasSelectedAnnotation && HasCurrentDocument;
+    public bool CanCropToSelection => HasCurrentDocument && SourceSelectionBounds is { Width: >= 2, Height: >= 2 };
 
     public bool OcrIsEnabled => _featureFlags?.IsEnabled(OcrFeatureFlag) == true;
 
@@ -1064,7 +1064,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
         OnPropertyChanged(nameof(FillToleranceControlsVisibility));
-        StatusText = "Selection: choose an object to move or resize it.";
+        StatusText = "Selection: drag a rectangle to select objects. Shift-click adds or removes an object.";
     }
 
     public int AnnotationToolIndex
@@ -1100,7 +1100,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         _ => AnnotationKind.Rectangle
     };
 
-    public string ActiveAnnotationToolLabel => IsSelectionToolActive ? "Selection" : ActiveAnnotationKind switch
+    public string ActiveAnnotationToolLabel => SelectedAnnotationCount > 1 ? $"{SelectedAnnotationCount} objects selected" : IsSelectionToolActive ? "Selection" : ActiveAnnotationKind switch
     {
         AnnotationKind.Ellipse => "Ellipse",
         AnnotationKind.Line => "Line",
@@ -1113,8 +1113,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         _ => "Rectangle"
     };
 
-    private AnnotationKind ActiveOrSelectedAnnotationKind => GetSelectedAnnotation()?.Kind
-        ?? ActiveAnnotationKind;
+    private AnnotationKind ActiveOrSelectedAnnotationKind => (SelectedAnnotationCount > 1
+        ? _currentDocument?.Annotations.FirstOrDefault(item => SelectedAnnotationIds.Contains(item.Id) && item.Kind != AnnotationKind.Image)?.Kind
+        : null) ?? GetSelectedAnnotation()?.Kind ?? ActiveAnnotationKind;
 
     public int AnnotationStrokeIndex
     {
@@ -1386,7 +1387,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
         MarkAnnotationPresetCustom();
         AnnotationStrokeIndex = strokeIndex;
-        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
+        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken, SelectionStyleAspect.Color)
             .ConfigureAwait(true);
     }
 
@@ -1400,7 +1401,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         MarkAnnotationPresetCustom();
         _customAnnotationColor = new ColorRgba(red, green, blue, alpha);
         AnnotationStrokeIndex = AnnotationStrokeCustomIndex;
-        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
+        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken, SelectionStyleAspect.Color)
             .ConfigureAwait(true);
     }
 
@@ -1410,7 +1411,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     {
         MarkAnnotationPresetCustom();
         AnnotationStrokeThickness = strokeThickness;
-        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
+        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken, SelectionStyleAspect.Width)
             .ConfigureAwait(true);
     }
 
@@ -1422,7 +1423,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             || !double.IsFinite(value) || value < 1) return;
         MarkAnnotationPresetCustom();
         SetAnnotationStrokeThickness(value, preserveInputText: true);
-        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken).ConfigureAwait(true);
+        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken, SelectionStyleAspect.Width).ConfigureAwait(true);
     }
 
     public async Task UpdateAnnotationCornerStyleAsync(
@@ -1438,7 +1439,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         AnnotationCornerRadius = cornerStyleIndex == AnnotationCornerStyleRoundedIndex
             ? AnnotationCornerRadiusDefault
             : 0;
-        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
+        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken, SelectionStyleAspect.Corners)
             .ConfigureAwait(true);
     }
 
@@ -1448,7 +1449,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     {
         MarkAnnotationPresetCustom();
         AnnotationOpacity = opacity;
-        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken)
+        await ApplySelectedAnnotationStyleAsync("Style Annotation", cancellationToken, SelectionStyleAspect.Opacity)
             .ConfigureAwait(true);
     }
 
@@ -1456,6 +1457,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         string text,
         CancellationToken cancellationToken)
     {
+        if (SelectedAnnotationCount > 1) return;
         AnnotationText = text;
 
         if (_currentDocument is null
@@ -1488,7 +1490,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             AnnotationText,
             cancellationToken).ConfigureAwait(true);
 
-        _annotationSelection.Select(_currentDocument, annotation.Id);
+        if (!SelectedAnnotationIds.Contains(annotation.Id)) _annotationSelection.Select(_currentDocument, annotation.Id);
         await SaveCurrentDocumentAsync("Edit Text complete.", cancellationToken)
             .ConfigureAwait(true);
     }
@@ -3329,9 +3331,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
     {
         AnnotationObject? annotation = _currentDocument?.Annotations
             .FirstOrDefault(candidate => candidate.Id == annotationId);
-        return annotation is null
+        return annotation is null || !DocumentLayers.IsEffectivelyVisible(_currentDocument!, annotation)
             ? null
-            : AnnotationOverlayItem.FromAnnotation(CloneAnnotation(annotation, sourceBounds), _canvasViewport.Zoom, null);
+            : AnnotationOverlayItem.FromAnnotation(CloneAnnotation(annotation, sourceBounds, copyImageBytes: false), _canvasViewport.Zoom, null);
     }
 
     public RectD? CreateEditedAnnotationBounds(
@@ -3425,7 +3427,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             displayName,
             cancellationToken).ConfigureAwait(true);
 
-        _annotationSelection.Select(_currentDocument, annotationId);
+        if (!SelectedAnnotationIds.Contains(annotationId)) _annotationSelection.Select(_currentDocument, annotationId);
+        // Commit the visual position before saving so release never shows the old bounds.
+        RefreshAnnotationOverlays();
+        NotifyEditorStateChanged();
         await SaveCurrentDocumentAsync($"{displayName} complete.", cancellationToken)
             .ConfigureAwait(true);
     }
@@ -3483,7 +3488,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public void ClearAnnotationSelection()
     {
-        if (!_annotationSelection.HasSelection)
+        if (!HasCanvasSelection)
         {
             return;
         }
@@ -3497,6 +3502,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public async Task DeleteSelectedAnnotationAsync(CancellationToken cancellationToken)
     {
+        if (SelectedAnnotationCount > 1)
+        {
+            await EditSelectionAsync((editor, document, ids) => editor.RemoveAsync(document, ids, cancellationToken), "Objects deleted.", cancellationToken, clearSelection: true);
+            return;
+        }
         if (_currentDocument is null
             || _documentRepository is null
             || _annotationEditor is null
@@ -3526,6 +3536,15 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public async Task DuplicateSelectedAnnotationAsync(CancellationToken cancellationToken)
     {
+        if (SelectedAnnotationCount > 1)
+        {
+            if (_currentDocument is null || _editCommandStack is null || _documentRepository is null) return;
+            var copies = await new DocumentSelectionEditor(_editCommandStack).DuplicateAsync(_currentDocument, SelectedAnnotationIds, cancellationToken);
+            _annotationSelection.SelectMany(_currentDocument, copies.Select(item => item.Id));
+            RefreshSelection();
+            await SaveCurrentDocumentAsync("Objects duplicated.", cancellationToken);
+            return;
+        }
         if (_currentDocument is null || _documentRepository is null || _annotationEditor is null
             || GetSelectedAnnotation() is not AnnotationObject annotation) return;
         AnnotationObject copy = await _annotationEditor.DuplicateAsync(_currentDocument, annotation, cancellationToken).ConfigureAwait(true);
@@ -3535,6 +3554,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public async Task NudgeSelectedAnnotationAsync(double deltaX, double deltaY, CancellationToken cancellationToken)
     {
+        if (SelectedAnnotationCount > 1)
+        {
+            await EditSelectionAsync((editor, document, ids) => editor.NudgeAsync(document, ids, deltaX, deltaY, cancellationToken), "Objects moved.", cancellationToken);
+            return;
+        }
         if (_currentDocument is null || _documentRepository is null || _annotationEditor is null
             || GetSelectedAnnotation() is not AnnotationObject annotation) return;
         if (await _annotationEditor.NudgeAsync(_currentDocument, annotation, deltaX, deltaY, cancellationToken).ConfigureAwait(true))
@@ -3546,6 +3570,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public async Task ArrangeSelectedAnnotationAsync(bool bringToFront, CancellationToken cancellationToken)
     {
+        if (SelectedAnnotationCount > 1)
+        {
+            await ArrangeSelectionAsync(bringToFront ? 1 : -1, true, cancellationToken);
+            return;
+        }
         if (_currentDocument is null || _documentRepository is null || _annotationEditor is null
             || GetSelectedAnnotation() is not AnnotationObject annotation) return;
         if (await _annotationEditor.ArrangeInLayerAsync(_currentDocument, annotation, bringToFront, cancellationToken).ConfigureAwait(true))
@@ -3706,6 +3735,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     public async Task MoveAnnotationInLayerAsync(Guid annotationId, int direction, CancellationToken cancellationToken)
     {
+        if (SelectedAnnotationCount > 1 && SelectedAnnotationIds.Contains(annotationId))
+        {
+            await ArrangeSelectionAsync(direction, false, cancellationToken);
+            return;
+        }
         if (_currentDocument is null || _documentRepository is null || _annotationEditor is null)
         {
             return;
@@ -3718,7 +3752,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
-        _annotationSelection.Select(_currentDocument, annotationId);
+        if (!SelectedAnnotationIds.Contains(annotationId)) _annotationSelection.Select(_currentDocument, annotationId);
         _layerWorkspace.SelectAnnotation(annotation);
         SyncStyleControlsFromSelectedAnnotation();
         await SaveCurrentDocumentAsync(direction > 0 ? "Object moved up." : "Object moved down.", cancellationToken)
@@ -3729,6 +3763,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         Guid layerId,
         CancellationToken cancellationToken)
     {
+        if (SelectedAnnotationCount > 1)
+        {
+            await EditSelectionAsync((editor, document, ids) => editor.MoveToLayerAsync(document, ids, layerId, cancellationToken), "Objects moved to layer.", cancellationToken);
+            return;
+        }
         if (_currentDocument is null
             || _documentRepository is null
             || _editCommandStack is null
@@ -3768,9 +3807,10 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             return;
         }
 
-        if (nextVisibility == false && GetSelectedAnnotation()?.LayerId == layerId)
+        if (nextVisibility == false)
         {
-            _annotationSelection.Clear();
+            _annotationSelection.SelectMany(_currentDocument, _currentDocument.Annotations
+                .Where(annotation => SelectedAnnotationIds.Contains(annotation.Id) && annotation.LayerId != layerId).Select(annotation => annotation.Id));
         }
 
         await SaveCurrentDocumentAsync(
@@ -3814,25 +3854,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             || _documentRepository is null
             || _editCommandStack is null
             || _documentRasterEditor is null
-            || _annotationSelection.SelectedAnnotationId is not Guid selectedId)
+            || SourceSelectionBounds is not RectD cropBounds)
         {
             return;
         }
 
-        AnnotationObject? cropAnnotation = _currentDocument.Annotations
-            .FirstOrDefault(annotation => annotation.Id == selectedId);
-        if (cropAnnotation is null)
-        {
-            _annotationSelection.Clear();
-            RefreshAnnotationOverlays();
-            NotifyEditorStateChanged();
-            return;
-        }
-
-        RectD cropBounds = NormalizeAndClampSourceBounds(
-            _currentDocument,
-            cropAnnotation.Bounds,
-            AnnotationKind.Rectangle);
         if (cropBounds.Width < 2 || cropBounds.Height < 2)
         {
             StatusText = "Crop selection is too small.";
@@ -3858,8 +3884,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         List<DestructiveEditOperation> beforeOperations = [.. _currentDocument.DestructiveOperations];
         List<AnnotationObject> afterAnnotations = TransformAnnotationsForCrop(
             _currentDocument.Annotations,
-            cropBounds,
-            cropAnnotation.Id);
+            cropBounds);
         List<DestructiveEditOperation> afterOperations =
         [
             ..beforeOperations,
@@ -5266,8 +5291,14 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     private async Task ApplySelectedAnnotationStyleAsync(
         string displayName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        SelectionStyleAspect aspect = SelectionStyleAspect.All)
     {
+        if (SelectedAnnotationCount > 1)
+        {
+            await ApplySelectionStyleAsync(aspect, cancellationToken);
+            return;
+        }
         if (_currentDocument is null
             || _documentRepository is null
             || _annotationEditor is null
@@ -5301,7 +5332,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             displayName,
             cancellationToken).ConfigureAwait(true);
 
-        _annotationSelection.Select(_currentDocument, annotation.Id);
+        if (!SelectedAnnotationIds.Contains(annotation.Id)) _annotationSelection.Select(_currentDocument, annotation.Id);
         RefreshAnnotationOverlays();
         NotifyEditorStateChanged();
         await SaveCurrentDocumentAsync($"{displayName} complete.", cancellationToken)
@@ -5325,7 +5356,7 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         _layerWorkspace.Refresh(
             _currentDocument,
             _canvasViewport.Zoom,
-            _annotationSelection.SelectedAnnotationId,
+            _annotationSelection.SelectedAnnotationIds,
             _canvasViewport.HasSource);
 
         OnPropertyChanged(nameof(AnnotationLayerCount));
@@ -5381,6 +5412,11 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         OnPropertyChanged(nameof(UndoToolTip));
         OnPropertyChanged(nameof(RedoToolTip));
         OnPropertyChanged(nameof(HasSelectedAnnotation));
+        OnPropertyChanged(nameof(HasCanvasSelection));
+        OnPropertyChanged(nameof(SelectionDisplayBounds));
+        OnPropertyChanged(nameof(SelectedAnnotationCount));
+        OnPropertyChanged(nameof(CanEditAnnotationText));
+        OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
         OnPropertyChanged(nameof(CanDeleteSelectedAnnotation));
         OnPropertyChanged(nameof(CanCropToSelection));
         OnPropertyChanged(nameof(CanCopyRecognizedText));
@@ -5646,19 +5682,13 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     private static List<AnnotationObject> TransformAnnotationsForCrop(
         IReadOnlyCollection<AnnotationObject> annotations,
-        RectD cropBounds,
-        Guid cropAnnotationId)
+        RectD cropBounds)
     {
         RectD normalizedCropBounds = Normalize(cropBounds);
         var transformed = new List<AnnotationObject>();
 
         foreach (AnnotationObject annotation in annotations)
         {
-            if (annotation.Id == cropAnnotationId)
-            {
-                continue;
-            }
-
             AnnotationObject? next = TransformAnnotationForCrop(annotation, normalizedCropBounds);
             if (next is not null)
             {
@@ -5687,17 +5717,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
         }
         if (annotation.Kind is AnnotationKind.Line or AnnotationKind.Arrow)
         {
-            PointD start = ClampPointToBounds(
-                new PointD(annotation.Bounds.X, annotation.Bounds.Y),
-                cropBounds);
-            PointD end = ClampPointToBounds(
-                new PointD(annotation.Bounds.Right, annotation.Bounds.Bottom),
-                cropBounds);
-            RectD bounds = new(
-                start.X - cropBounds.X,
-                start.Y - cropBounds.Y,
-                end.X - start.X,
-                end.Y - start.Y);
+            if (AnnotationBoundsEditor.ClipLine(annotation.Bounds, cropBounds) is not RectD clipped) return null;
+            RectD bounds = clipped with { X = clipped.X - cropBounds.X, Y = clipped.Y - cropBounds.Y };
 
             return Math.Sqrt(bounds.Width * bounds.Width + bounds.Height * bounds.Height) < 1
                 ? null
@@ -5748,7 +5769,8 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
 
     private static AnnotationObject CloneAnnotation(
         AnnotationObject annotation,
-        RectD bounds)
+        RectD bounds,
+        bool copyImageBytes = true)
     {
         return new AnnotationObject
         {
@@ -5760,18 +5782,9 @@ public sealed class ShellViewModel : IEditorMessageHandler, INotifyPropertyChang
             Text = annotation.Text,
             StrokePoints = [.. annotation.StrokePoints],
             FillRectangles = [.. annotation.FillRectangles],
-            Image = annotation.Image?.DeepCopy(),
+            Image = copyImageBytes ? annotation.Image?.DeepCopy() : annotation.Image,
             Style = annotation.Style
         };
-    }
-
-    private static PointD ClampPointToBounds(
-        PointD point,
-        RectD bounds)
-    {
-        return new PointD(
-            Math.Clamp(point.X, bounds.X, bounds.Right),
-            Math.Clamp(point.Y, bounds.Y, bounds.Bottom));
     }
 
     private AnnotationObject CreateCenteredAnnotation(

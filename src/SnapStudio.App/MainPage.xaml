@@ -158,6 +158,7 @@
             Invoked="DeleteAnnotationKeyboardAccelerator_Invoked" />
         <KeyboardAccelerator Key="Delete" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
         <KeyboardAccelerator Key="D" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
+        <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="SelectAllObjectsKeyboardAccelerator_Invoked" />
         <KeyboardAccelerator Key="H" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
         <KeyboardAccelerator Key="Escape" Invoked="ClearObjectSelectionKeyboardAccelerator_Invoked" />
         <KeyboardAccelerator Key="PageUp" Modifiers="Control" Invoked="ObjectActionKeyboardAccelerator_Invoked" />
@@ -1074,7 +1075,7 @@
                                     Spacing="8">
                                     <Button
                                         x:Name="SelectionToolButton"
-                                        AutomationProperties.HelpText="Use pointer selection on the canvas."
+                                        AutomationProperties.HelpText="Drag a dotted rectangle to select overlapping objects. Shift-click adds or removes objects."
                                         AutomationProperties.Name="Select annotations"
                                         Click="SelectionToolButton_Click"
                                         Style="{StaticResource EditorToolButtonStyle}"
@@ -1173,7 +1174,7 @@
                                     </Button>
                                     <Button
                                         AccessKey="C"
-                                        AutomationProperties.HelpText="Crop the current capture to the selected annotation bounds."
+                                        AutomationProperties.HelpText="Crop the current capture to the selection rectangle, keeping objects inside the selected area."
                                         AutomationProperties.Name="Crop to selected annotation"
                                         Click="CropButton_Click"
                                         IsEnabled="{x:Bind ViewModel.CanCropToSelection, Mode=OneWay}"
@@ -1283,7 +1284,7 @@
 
                     <Border
                         Grid.Row="3"
-                        AutomationProperties.HelpText="Shows the current capture and its annotations. Hold Ctrl and scroll the mouse wheel to zoom at the pointer."
+                        AutomationProperties.HelpText="Drag a selection rectangle to select overlapping objects. Shift-click adds or removes objects. Hold Ctrl and scroll the mouse wheel to zoom at the pointer."
                         AutomationProperties.Name="Editor canvas"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
@@ -1335,6 +1336,9 @@
                                             Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
                                             IsHitTestVisible="False">
                                             <Canvas x:Name="AnnotationDragPreview" />
+                                            <Rectangle x:Name="SelectionMarqueeUnderlay" Stroke="White" StrokeThickness="1" Visibility="Collapsed" />
+                                            <Rectangle x:Name="SelectionMarquee" Stroke="Black" StrokeThickness="1" StrokeDashArray="2,2" Visibility="Collapsed"
+                                                AutomationProperties.Name="Object selection rectangle" />
                                             <Polyline
                                                 x:Name="PenStrokePreview"
                                                 StrokeStartLineCap="Round"
@@ -1677,6 +1681,7 @@
                             AutomationProperties.Name="Annotation text"
                             Header="Text"
                             LostFocus="AnnotationText_LostFocus"
+                            IsEnabled="{x:Bind ViewModel.CanEditAnnotationText, Mode=OneWay}"
                             Text="{x:Bind ViewModel.AnnotationText, Mode=OneWay}" />
 
                         <Rectangle

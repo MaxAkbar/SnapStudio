@@ -23,7 +23,9 @@ SnapStudio is in active development. The current codebase includes the main capt
 - Paste a clipboard image over the open image as a new editable layer with **Paste** or **Ctrl+V**. The pasted image keeps its transparency and can be moved or resized independently. Use the arrow beside Paste and choose **Paste as new image**, or press **Ctrl+Shift+V**, to open it as a separate document. With no image open, **Ctrl+V** creates a new document.
 - Create a transparent canvas with **New** or **Ctrl+N**, then choose its width and height. The checkerboard shows transparency in the editor; PNG export preserves it.
 - Selection, move, resize, style controls, opacity, presets, undo, and redo.
+- With the selection tool, drag a dotted rectangle to select every visible object it overlaps. **Shift-click** or **Ctrl-click** toggles individual objects; **Shift-drag** adds to the selection, **Ctrl-drag** toggles overlapping objects, **Ctrl+A** selects all visible objects, and **Escape** clears the selection or cancels a drag. Drag a selected object to move the selection together. Keyboard movement, duplicate, delete, visibility, style, arrange, and move-to-layer actions apply to the selection with one undo step. Select one object to use its resize handles.
 - Hold **Ctrl** and scroll the mouse wheel over the editor to zoom in or out at the pointer. Scrolling without Ctrl keeps the normal canvas scrolling behavior.
+- The dotted selection rectangle stays visible after drawing. Use **Crop** to keep that exact area, including padding around multiple selected objects. The rectangle follows group moves and stays aligned while zooming; cropping keeps the objects inside the area and can be undone.
 - Crop and resize, including pixel or percentage resize with optional aspect-ratio lock.
 - Export to PNG, JPEG, PDF, and source image.
 - Optional OCR, scrolling capture, and screen recording lanes behind feature flags and readiness gates.

@@ -268,7 +268,7 @@ internal sealed class AnnotationLayerWorkspace
     public void Refresh(
         CaptureDocument? document,
         double zoom,
-        Guid? selectedAnnotationId,
+        IReadOnlySet<Guid> selectedAnnotationIds,
         bool hasSource)
     {
         Overlays.Clear();
@@ -287,7 +287,7 @@ internal sealed class AnnotationLayerWorkspace
             AnnotationOverlayItem item = AnnotationOverlayItem.FromAnnotation(
                 annotation,
                 zoom,
-                selectedAnnotationId,
+                selectedAnnotationIds.Contains(annotation.Id) ? annotation.Id : null,
                 index < annotations.Length - 1 && annotations[index + 1].LayerId == annotation.LayerId,
                 index > 0 && annotations[index - 1].LayerId == annotation.LayerId);
             if (DocumentLayers.IsEffectivelyVisible(document, annotation))
@@ -315,8 +315,7 @@ internal sealed class AnnotationLayerWorkspace
                 layer,
                 items ?? [],
                 ActiveLayerId == layer.Id,
-                selectedAnnotationId is Guid annotationId
-                    && document.Annotations.Any(annotation => annotation.Id == annotationId
+                document.Annotations.Any(annotation => selectedAnnotationIds.Contains(annotation.Id)
                         && annotation.LayerId != layer.Id),
                 !_collapsedLayerIds.Contains(layer.Id),
                 index < document.Layers.Count - 1,

@@ -32,9 +32,17 @@ public sealed partial class MainPage
 
     private void ClearObjectSelectionKeyboardAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
+        if (_canvasDragMode != CanvasDragMode.None)
+        {
+            bool marquee = _canvasDragMode == CanvasDragMode.SelectObjects;
+            EndCanvasDrag();
+            if (marquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
+            args.Handled = true;
+            return;
+        }
         // Escape first dismisses an open menu, retaining its selected object.
         if (_objectContextMenu is not null || _canvasDragMode != CanvasDragMode.None
-            || !TryHandleApplicationShortcut(args, ViewModel.HasSelectedAnnotation)) return;
+            || !TryHandleApplicationShortcut(args, ViewModel.HasCanvasSelection)) return;
         ViewModel.ClearAnnotationSelection();
         UpdateBindingsFromViewModel();
     }
@@ -116,19 +124,21 @@ public sealed partial class MainPage
     {
         CanvasScrollViewer.Focus(FocusState.Programmatic);
         ViewModel.UseSelectionTool();
-        ViewModel.SelectAnnotation(item.Id);
+        if (!ViewModel.SelectedAnnotationIds.Contains(item.Id)) ViewModel.SelectAnnotation(item.Id);
         item = GetSelectedObjectItem() ?? item;
         _objectContextMenu?.Hide();
         var menu = new MenuFlyout();
-        menu.Items.Add(new MenuFlyoutItem { Text = item.LayerLabel, IsEnabled = false });
+        bool multiple = ViewModel.SelectedAnnotationCount > 1;
+        var selectedItems = ViewModel.AnnotationLayers.SelectMany(layer => layer.Objects).Where(candidate => candidate.IsSelected).ToArray();
+        menu.Items.Add(new MenuFlyoutItem { Text = multiple ? $"{ViewModel.SelectedAnnotationCount} objects selected" : item.LayerLabel, IsEnabled = false });
         menu.Items.Add(new MenuFlyoutSeparator());
         menu.Items.Add(CreateObjectMenuAction("Duplicate", "Ctrl+D", ObjectAction.Duplicate));
-        menu.Items.Add(CreateObjectMenuAction(item.IsVisible ? "Hide object" : "Show object", "Ctrl+H", ObjectAction.ToggleVisibility));
+        menu.Items.Add(CreateObjectMenuAction(selectedItems.All(candidate => candidate.IsVisible) ? (multiple ? "Hide objects" : "Hide object") : (multiple ? "Show objects" : "Show object"), "Ctrl+H", ObjectAction.ToggleVisibility));
         var arrange = new MenuFlyoutSubItem { Text = "Arrange within layer" };
-        arrange.Items.Add(CreateObjectMenuAction("Bring forward", "Ctrl+PgUp", ObjectAction.Forward, item.CanMoveUp));
-        arrange.Items.Add(CreateObjectMenuAction("Send backward", "Ctrl+PgDn", ObjectAction.Backward, item.CanMoveDown));
-        arrange.Items.Add(CreateObjectMenuAction("Bring to front", "Ctrl+Shift+PgUp", ObjectAction.Front, item.CanMoveUp));
-        arrange.Items.Add(CreateObjectMenuAction("Send to back", "Ctrl+Shift+PgDn", ObjectAction.Back, item.CanMoveDown));
+        arrange.Items.Add(CreateObjectMenuAction("Bring forward", "Ctrl+PgUp", ObjectAction.Forward, selectedItems.Any(candidate => candidate.CanMoveUp)));
+        arrange.Items.Add(CreateObjectMenuAction("Send backward", "Ctrl+PgDn", ObjectAction.Backward, selectedItems.Any(candidate => candidate.CanMoveDown)));
+        arrange.Items.Add(CreateObjectMenuAction("Bring to front", "Ctrl+Shift+PgUp", ObjectAction.Front, selectedItems.Any(candidate => candidate.CanMoveUp)));
+        arrange.Items.Add(CreateObjectMenuAction("Send to back", "Ctrl+Shift+PgDn", ObjectAction.Back, selectedItems.Any(candidate => candidate.CanMoveDown)));
         menu.Items.Add(arrange);
         var layers = new MenuFlyoutSubItem { Text = "Move to layer" };
         foreach (AnnotationLayerItem layer in ViewModel.AnnotationLayers)
@@ -157,10 +167,10 @@ public sealed partial class MainPage
     private Task RunObjectActionAsync(ObjectAction action) => RunSelectedObjectOperationAsync(token => action switch
     {
         ObjectAction.Duplicate => ViewModel.DuplicateSelectedAnnotationAsync(token),
-        ObjectAction.ToggleVisibility => ViewModel.SelectedAnnotationId is Guid id ? ViewModel.ToggleAnnotationVisibilityAsync(id, token) : Task.CompletedTask,
+        ObjectAction.ToggleVisibility => ViewModel.ToggleSelectedAnnotationsVisibilityAsync(token),
         ObjectAction.Delete => ViewModel.DeleteSelectedAnnotationAsync(token),
-        ObjectAction.Forward => ViewModel.SelectedAnnotationId is Guid id ? ViewModel.MoveAnnotationInLayerAsync(id, 1, token) : Task.CompletedTask,
-        ObjectAction.Backward => ViewModel.SelectedAnnotationId is Guid id ? ViewModel.MoveAnnotationInLayerAsync(id, -1, token) : Task.CompletedTask,
+        ObjectAction.Forward => ViewModel.ArrangeSelectionAsync(1, false, token),
+        ObjectAction.Backward => ViewModel.ArrangeSelectionAsync(-1, false, token),
         ObjectAction.Front => ViewModel.ArrangeSelectedAnnotationAsync(true, token),
         _ => ViewModel.ArrangeSelectedAnnotationAsync(false, token)
     });
@@ -168,14 +178,14 @@ public sealed partial class MainPage
     private async Task RunSelectedObjectOperationAsync(Func<CancellationToken, Task> operation)
     {
         var documentId = ViewModel.CurrentDocumentId;
-        Guid? objectId = ViewModel.SelectedAnnotationId;
-        if (objectId is null) return;
+        Guid[] objectIds = ViewModel.SelectedAnnotationIds.ToArray();
+        if (objectIds.Length == 0) return;
         _objectContextMenu?.Hide();
         await _objectActionGate.WaitAsync();
         try
         {
             // Queued arrow repeats must never act on a different selection or document.
-            if (ViewModel.CurrentDocumentId != documentId || ViewModel.SelectedAnnotationId != objectId || ShouldIgnoreApplicationShortcut()) return;
+            if (ViewModel.CurrentDocumentId != documentId || !ViewModel.SelectedAnnotationIds.SetEquals(objectIds) || ShouldIgnoreApplicationShortcut()) return;
             await operation(CancellationToken.None);
             UpdateBindingsFromViewModel();
             if (!ShouldIgnoreApplicationShortcut()) CanvasScrollViewer.Focus(FocusState.Programmatic);

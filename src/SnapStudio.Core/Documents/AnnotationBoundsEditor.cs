@@ -21,6 +21,48 @@ public static class AnnotationBoundsEditor
 {
     public const double MinimumSize = 4;
 
+    public static RectD? ClipLine(RectD line, RectD rectangle)
+    {
+        RectD clip = Normalize(rectangle);
+        double start = 0, end = 1;
+        if (!ClipEdge(-line.Width, line.X - clip.X, ref start, ref end)
+            || !ClipEdge(line.Width, clip.Right - line.X, ref start, ref end)
+            || !ClipEdge(-line.Height, line.Y - clip.Y, ref start, ref end)
+            || !ClipEdge(line.Height, clip.Bottom - line.Y, ref start, ref end)) return null;
+        double startX = line.X + start * line.Width, startY = line.Y + start * line.Height;
+        return new RectD(startX, startY, line.X + end * line.Width - startX, line.Y + end * line.Height - startY);
+    }
+
+    private static bool ClipEdge(double direction, double distance, ref double start, ref double end)
+    {
+        if (direction == 0) return distance >= 0;
+        double fraction = distance / direction;
+        if (direction < 0) start = Math.Max(start, fraction);
+        else end = Math.Min(end, fraction);
+        return start <= end;
+    }
+
+    public static RectD CombinedBounds(IEnumerable<RectD> bounds)
+    {
+        RectD[] rectangles = bounds.Select(Normalize).ToArray();
+        if (rectangles.Length == 0) return default;
+        double left = rectangles.Min(rectangle => rectangle.X);
+        double top = rectangles.Min(rectangle => rectangle.Y);
+        return new RectD(left, top, rectangles.Max(rectangle => rectangle.Right) - left, rectangles.Max(rectangle => rectangle.Bottom) - top);
+    }
+
+    public static IReadOnlyDictionary<Guid, RectD> MoveSelection(IReadOnlyDictionary<Guid, RectD> originalBounds, double deltaX, double deltaY, SizeD sourceSize)
+    {
+        if (!double.IsFinite(deltaX) || !double.IsFinite(deltaY)) throw new ArgumentOutOfRangeException(nameof(deltaX));
+        RectD group = CombinedBounds(originalBounds.Values);
+        RectD moved = Nudge(group, deltaX, deltaY, sourceSize);
+        return originalBounds.ToDictionary(pair => pair.Key, pair => pair.Value with
+        {
+            X = pair.Value.X + moved.X - group.X,
+            Y = pair.Value.Y + moved.Y - group.Y
+        });
+    }
+
     public static RectD Move(
         RectD bounds,
         double deltaX,
