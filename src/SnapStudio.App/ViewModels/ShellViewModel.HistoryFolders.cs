@@ -305,11 +305,14 @@ public sealed partial class ShellViewModel
         {
             var counts = _allRecentDocuments.GroupBy(document => _historyFolders.GetFolderId(document.Id) ?? Guid.Empty)
                 .ToDictionary(group => group.Key, group => group.Count());
-            HistoryFolders.Clear();
-            HistoryFolders.Add(new(null, "All captures", _allRecentDocuments.Count));
-            HistoryFolders.Add(new(null, "Unfiled", counts.GetValueOrDefault(Guid.Empty), true));
+            var items = new List<HistoryFolderItem>
+            {
+                new(null, "All captures", _allRecentDocuments.Count),
+                new(null, "Unfiled", counts.GetValueOrDefault(Guid.Empty), true)
+            };
             foreach (HistoryFolder folder in _historyFolders.Folders.OrderBy(folder => folder.Name, StringComparer.OrdinalIgnoreCase))
-                HistoryFolders.Add(new(folder.Id, folder.Name, counts.GetValueOrDefault(folder.Id), SourcePath: folder.SourcePath));
+                items.Add(new(folder.Id, folder.Name, counts.GetValueOrDefault(folder.Id), SourcePath: folder.SourcePath));
+            CollectionUpdates.Synchronize(HistoryFolders, items);
             NotifyHistoryFolderStateChanged();
         }
         finally { _refreshingHistoryFolders = false; }

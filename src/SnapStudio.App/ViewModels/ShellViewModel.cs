@@ -4508,7 +4508,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     {
         int index = _allRecentDocuments.FindIndex(
             document => document.Id == summary.Id);
-        if (index < 0
+        if (index < 0 || _allRecentDocuments[index].ModifiedAtUtc != summary.ModifiedAtUtc
             || string.Equals(
                 _allRecentDocuments[index].ThumbnailPath,
                 thumbnailPath,
@@ -4517,12 +4517,12 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
-        _allRecentDocuments[index] = summary with { ThumbnailPath = thumbnailPath };
+        _allRecentDocuments[index] = _allRecentDocuments[index] with { ThumbnailPath = thumbnailPath };
         for (int pageIndex = 0; pageIndex < RecentDocuments.Count; pageIndex++)
         {
             if (RecentDocuments[pageIndex].Id == summary.Id.ToString())
             {
-                RecentDocuments[pageIndex] = DocumentSummaryItem.FromSummary(summary, thumbnailPath);
+                RecentDocuments[pageIndex].UpdateFromSummary(_allRecentDocuments[index]);
                 break;
             }
         }
@@ -4540,8 +4540,6 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void ApplyRecentDocumentFilter(bool refreshThumbnails = false)
     {
-        RecentDocuments.Clear();
-
         IEnumerable<DocumentSummary> documents = _allRecentDocuments.Where(MatchesHistoryFolder).Where(MatchesHistoryFilter);
         if (!string.IsNullOrWhiteSpace(_historySearchText))
         {
@@ -4551,10 +4549,15 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         DocumentSummary[] matches = documents.ToArray();
         _historyPagination.UpdateCount(matches.Length);
         DocumentSummary[] page = matches.Skip(_historyPagination.Offset).Take(HistoryPageSize).ToArray();
+        var existing = RecentDocuments.ToDictionary(item => item.Id);
+        var items = new List<DocumentSummaryItem>();
         foreach (DocumentSummary document in page)
         {
-            RecentDocuments.Add(DocumentSummaryItem.FromSummary(document));
+            if (existing.TryGetValue(document.Id.ToString(), out DocumentSummaryItem? item)) item.UpdateFromSummary(document);
+            else item = DocumentSummaryItem.FromSummary(document);
+            items.Add(item);
         }
+        CollectionUpdates.Synchronize(RecentDocuments, items);
         NotifyHistoryPaginationChanged();
         if (refreshThumbnails) QueueRecentThumbnailRefresh(page);
     }
@@ -5409,6 +5412,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             _annotationSelection.SelectedAnnotationIds,
             _canvasViewport.HasSource);
 
+        OnPropertyChanged(nameof(AnnotationOverlays));
         OnPropertyChanged(nameof(AnnotationLayerCount));
         OnPropertyChanged(nameof(AnnotationLayersEmptyVisibility));
         OnPropertyChanged(nameof(AnnotationLayersEmptyMessage));

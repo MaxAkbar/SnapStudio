@@ -12,6 +12,7 @@ namespace SnapStudio.App.ViewModels;
 internal sealed class AnnotationLayerWorkspace
 {
     private readonly HashSet<Guid> _collapsedLayerIds = [];
+    private readonly Dictionary<Guid, AnnotationOverlayItem> _objects = [];
 
     public ObservableCollection<AnnotationOverlayItem> Overlays { get; } = [];
 
@@ -28,6 +29,7 @@ internal sealed class AnnotationLayerWorkspace
     public void ClearDocument()
     {
         ActiveLayerId = null;
+        _objects.Clear();
         Overlays.Clear();
         Layers.Clear();
     }
@@ -271,28 +273,35 @@ internal sealed class AnnotationLayerWorkspace
         IReadOnlySet<Guid> selectedAnnotationIds,
         bool hasSource)
     {
-        Overlays.Clear();
-        Layers.Clear();
-
         if (document is null || !hasSource)
         {
+            _objects.Clear();
+            Overlays.Clear();
+            Layers.Clear();
+            if (document is null) ActiveLayerId = null;
             return;
         }
 
         var itemsByLayer = new Dictionary<Guid, List<AnnotationOverlayItem>>();
+        var overlays = new List<AnnotationOverlayItem>();
         AnnotationObject[] annotations = DocumentLayers.InPaintOrder(document).ToArray();
+        var retainedIds = annotations.Select(annotation => annotation.Id).ToHashSet();
+        foreach (Guid removed in _objects.Keys.Where(id => !retainedIds.Contains(id)).ToArray()) _objects.Remove(removed);
         for (int index = 0; index < annotations.Length; index++)
         {
             AnnotationObject annotation = annotations[index];
-            AnnotationOverlayItem item = AnnotationOverlayItem.FromAnnotation(
+            AnnotationOverlayItem next = AnnotationOverlayItem.FromAnnotation(
                 annotation,
                 zoom,
                 selectedAnnotationIds.Contains(annotation.Id) ? annotation.Id : null,
                 index < annotations.Length - 1 && annotations[index + 1].LayerId == annotation.LayerId,
                 index > 0 && annotations[index - 1].LayerId == annotation.LayerId);
+            if (!_objects.TryGetValue(annotation.Id, out AnnotationOverlayItem? item))
+                _objects[annotation.Id] = item = next;
+            else item.UpdateFrom(next);
             if (DocumentLayers.IsEffectivelyVisible(document, annotation))
             {
-                Overlays.Add(item);
+                overlays.Add(item);
             }
 
             if (annotation.LayerId is Guid layerId)
@@ -307,19 +316,24 @@ internal sealed class AnnotationLayerWorkspace
             }
         }
 
+        var existingLayers = Layers.ToDictionary(layer => layer.Id);
+        var layers = new List<AnnotationLayerItem>();
         for (int index = document.Layers.Count - 1; index >= 0; index--)
         {
             AnnotationLayer layer = document.Layers[index];
             itemsByLayer.TryGetValue(layer.Id, out List<AnnotationOverlayItem>? items);
-            Layers.Add(new AnnotationLayerItem(
-                layer,
+            if (!existingLayers.TryGetValue(layer.Id, out AnnotationLayerItem? item)) item = new AnnotationLayerItem(layer);
+            item.Update(layer,
                 items ?? [],
                 ActiveLayerId == layer.Id,
                 document.Annotations.Any(annotation => selectedAnnotationIds.Contains(annotation.Id)
                         && annotation.LayerId != layer.Id),
                 !_collapsedLayerIds.Contains(layer.Id),
                 index < document.Layers.Count - 1,
-                index > 0));
+                index > 0);
+            layers.Add(item);
         }
+        CollectionUpdates.Synchronize(Layers, layers);
+        CollectionUpdates.Synchronize(Overlays, overlays);
     }
 }

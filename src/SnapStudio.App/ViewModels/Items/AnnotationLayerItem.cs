@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml;
 using SnapStudio.Core.Documents;
@@ -6,45 +8,55 @@ using Windows.UI;
 
 namespace SnapStudio.App.ViewModels.Items;
 
-public sealed class AnnotationLayerItem(
-    AnnotationLayer layer,
-    IReadOnlyList<AnnotationOverlayItem> objects,
-    bool isActive,
-    bool canMoveSelectedHere,
-    bool isExpanded,
-    bool canMoveUp,
-    bool canMoveDown)
+public sealed class AnnotationLayerItem : INotifyPropertyChanged
 {
-    public Guid Id => layer.Id;
+    private sealed record State(string Name, bool IsVisible, LayerColorLabel ColorLabel, ColorRgba? CustomColor,
+        bool IsActive, bool CanMoveSelectedHere, bool IsExpanded, bool CanMoveUp, bool CanMoveDown);
+    private State _state = new(string.Empty, true, LayerColorLabel.None, null, false, false, true, false, false);
+    private readonly SolidColorBrush _indicatorBrush = new();
 
-    public string Name => layer.Name;
+    public AnnotationLayerItem(AnnotationLayer layer) => Id = layer.Id;
+    public event PropertyChangedEventHandler? PropertyChanged;
+    public Guid Id { get; }
+    public string Name => _state.Name;
+    public ObservableCollection<AnnotationOverlayItem> Objects { get; } = [];
 
-    public IReadOnlyList<AnnotationOverlayItem> Objects => objects;
+    internal void Update(AnnotationLayer layer, IReadOnlyList<AnnotationOverlayItem> objects, bool isActive,
+        bool canMoveSelectedHere, bool isExpanded, bool canMoveUp, bool canMoveDown)
+    {
+        var next = new State(layer.Name, layer.IsVisible, layer.ColorLabel, layer.CustomColor,
+            isActive, canMoveSelectedHere, isExpanded, canMoveUp, canMoveDown);
+        bool changed = next != _state || Objects.Count != objects.Count;
+        _state = next;
+        CollectionUpdates.Synchronize(Objects, objects);
+        _indicatorBrush.Color = IndicatorColor;
+        if (changed) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
+    }
 
-    public string ObjectCount => $"{objects.Count} object{(objects.Count == 1 ? string.Empty : "s")}";
+    public string ObjectCount => $"{Objects.Count} object{(Objects.Count == 1 ? string.Empty : "s")}";
 
     public string SelectionAutomationName => $"Select {Name} layer";
 
     public string TreeAutomationName => $"{Name}, {ObjectCount}";
 
-    private string ColorLabelText => layer.CustomColor is ColorRgba color
-        ? $"Custom #{color.R:X2}{color.G:X2}{color.B:X2}" : layer.ColorLabel.ToString();
+    private string ColorLabelText => _state.CustomColor is ColorRgba color
+        ? $"Custom #{color.R:X2}{color.G:X2}{color.B:X2}" : _state.ColorLabel.ToString();
 
-    public string SelectionHelpText => $"{Name}, {ObjectCount}. {(isActive ? "Selected layer." : "Select this layer to add objects here.")} Color label: {ColorLabelText}. Right-click for layer options.";
+    public string SelectionHelpText => $"{Name}, {ObjectCount}. {(IsActive ? "Selected layer." : "Select this layer to add objects here.")} Color label: {ColorLabelText}. Right-click for layer options.";
 
-    public Visibility IndicatorVisibility => isActive || layer.ColorLabel != LayerColorLabel.None || layer.CustomColor is not null
+    public Visibility IndicatorVisibility => IsActive || _state.ColorLabel != LayerColorLabel.None || _state.CustomColor is not null
         ? Visibility.Visible : Visibility.Collapsed;
 
-    public bool CanMoveUp => canMoveUp;
+    public bool CanMoveUp => _state.CanMoveUp;
 
-    public bool CanMoveDown => canMoveDown;
+    public bool CanMoveDown => _state.CanMoveDown;
 
     public string ColorMenuText => $"Color label: {ColorLabelText}";
 
-    public Brush IndicatorBrush => new SolidColorBrush(IndicatorColor);
+    public Brush IndicatorBrush => _indicatorBrush;
 
-    public Color IndicatorColor => layer.CustomColor is ColorRgba custom
-        ? Color.FromArgb(255, custom.R, custom.G, custom.B) : layer.ColorLabel switch
+    public Color IndicatorColor => _state.CustomColor is ColorRgba custom
+        ? Color.FromArgb(255, custom.R, custom.G, custom.B) : _state.ColorLabel switch
         {
             LayerColorLabel.Red => Color.FromArgb(255, 239, 112, 112),
             LayerColorLabel.Orange => Color.FromArgb(255, 245, 169, 91),
@@ -56,17 +68,17 @@ public sealed class AnnotationLayerItem(
             _ => Color.FromArgb(255, 76, 194, 255)
         };
 
-    public Visibility HiddenVisibility => layer.IsVisible ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility HiddenVisibility => _state.IsVisible ? Visibility.Collapsed : Visibility.Visible;
 
-    public bool IsExpanded => isExpanded;
+    public bool IsExpanded => _state.IsExpanded;
 
-    public bool IsActive => isActive;
+    public bool IsActive => _state.IsActive;
 
-    public string VisibilityAutomationName => layer.IsVisible ? $"Hide {Name} layer" : $"Show {Name} layer";
+    public string VisibilityAutomationName => _state.IsVisible ? $"Hide {Name} layer" : $"Show {Name} layer";
 
     public string MoveAutomationName => $"Move selected object to {Name}";
 
-    public bool CanMoveSelectedHere => canMoveSelectedHere && layer.IsVisible;
+    public bool CanMoveSelectedHere => _state.CanMoveSelectedHere && _state.IsVisible;
 
     public Visibility MoveVisibility => CanMoveSelectedHere
         ? Visibility.Visible

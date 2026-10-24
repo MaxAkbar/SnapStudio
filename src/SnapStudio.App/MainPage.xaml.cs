@@ -136,7 +136,9 @@ public sealed partial class MainPage : Page
         {
             if (args.PropertyName == nameof(ShellViewModel.ThemePreference)) ApplyAppTheme();
             UpdateBindingsFromViewModel();
-            RefreshAnnotationCanvas();
+            if (args.PropertyName is nameof(ShellViewModel.AnnotationOverlays) or nameof(ShellViewModel.CanvasImageSource)
+                or nameof(ShellViewModel.CanvasDisplayWidth) or nameof(ShellViewModel.CanvasDisplayHeight))
+                RefreshAnnotationCanvas();
         };
 
         await ViewModel.LoadAsync(CancellationToken.None);
@@ -1909,19 +1911,7 @@ public sealed partial class MainPage : Page
 
     private void RefreshAnnotationCanvas()
     {
-        AnnotationCanvas.Children.Clear();
-
-        foreach (AnnotationOverlayItem item in ViewModel.AnnotationOverlays)
-        {
-            FrameworkElement annotationElement = CreateAnnotationElement(item);
-            if (_annotationDragBounds.ContainsKey(item.Id))
-            {
-                annotationElement.Visibility = Visibility.Collapsed;
-            }
-            Canvas.SetLeft(annotationElement, item.Left);
-            Canvas.SetTop(annotationElement, item.Top);
-            AnnotationCanvas.Children.Add(annotationElement);
-        }
+        SynchronizeAnnotationCanvas();
     }
 
     private FrameworkElement CreateAnnotationElement(AnnotationOverlayItem item)

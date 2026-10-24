@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using SnapStudio.Core.Documents;
@@ -7,19 +8,48 @@ using Windows.UI;
 
 namespace SnapStudio.App.ViewModels.Items;
 
-public sealed class AnnotationOverlayItem
+public sealed class AnnotationOverlayItem : INotifyPropertyChanged
 {
-    public AnnotationImage? Image { get; private init; }
+    public event PropertyChangedEventHandler? PropertyChanged;
+    internal int VisualVersion { get; private set; }
 
-    public string FontFamily { get; private init; } = AnnotationStyle.DefaultFontFamily;
+    internal void UpdateFrom(AnnotationOverlayItem next)
+    {
+        bool drawingChanged = Kind != next.Kind || Width != next.Width || Height != next.Height
+            || StartX != next.StartX || StartY != next.StartY || EndX != next.EndX || EndY != next.EndY
+            || Text != next.Text || !SameColor(StrokeBrush, next.StrokeBrush) || !SameColor(FillBrush, next.FillBrush)
+            || !SameColor(TextBrush, next.TextBrush) || StrokeThicknessValue != next.StrokeThicknessValue
+            || CornerRadius != next.CornerRadius || FontSize != next.FontSize || FontFamily != next.FontFamily
+            || Opacity != next.Opacity || IsSelected != next.IsSelected || !ReferenceEquals(Image, next.Image)
+            || !StrokePoints.SequenceEqual(next.StrokePoints) || !FillRectangles.SequenceEqual(next.FillRectangles);
+        bool rowChanged = Kind != next.Kind || Text != next.Text || IsVisible != next.IsVisible
+            || IsSelected != next.IsSelected || CanMoveUp != next.CanMoveUp || CanMoveDown != next.CanMoveDown;
+        Left = next.Left; Top = next.Top; Width = next.Width; Height = next.Height;
+        StartX = next.StartX; StartY = next.StartY; EndX = next.EndX; EndY = next.EndY;
+        Kind = next.Kind; Text = next.Text; StrokeBrush = next.StrokeBrush; FillBrush = next.FillBrush;
+        TextBrush = next.TextBrush; StrokeThickness = next.StrokeThickness; StrokeThicknessValue = next.StrokeThicknessValue;
+        CornerRadius = next.CornerRadius; FontSize = next.FontSize; FontFamily = next.FontFamily; Opacity = next.Opacity;
+        IsVisible = next.IsVisible; IsSelected = next.IsSelected; Image = next.Image;
+        StrokePoints = next.StrokePoints; FillRectangles = next.FillRectangles;
+        CanMoveUp = next.CanMoveUp; CanMoveDown = next.CanMoveDown;
+        if (drawingChanged) VisualVersion++;
+        if (rowChanged) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
+    }
 
-    public IReadOnlyList<PointD> StrokePoints { get; private init; } = [];
+    private static bool SameColor(Brush first, Brush second) =>
+        first is SolidColorBrush a && second is SolidColorBrush b && a.Color == b.Color;
 
-    public IReadOnlyList<RectD> FillRectangles { get; private init; } = [];
+    public AnnotationImage? Image { get; private set; }
 
-    public bool CanMoveUp { get; private init; }
+    public string FontFamily { get; private set; } = AnnotationStyle.DefaultFontFamily;
 
-    public bool CanMoveDown { get; private init; }
+    public IReadOnlyList<PointD> StrokePoints { get; private set; } = [];
+
+    public IReadOnlyList<RectD> FillRectangles { get; private set; } = [];
+
+    public bool CanMoveUp { get; private set; }
+
+    public bool CanMoveDown { get; private set; }
     private AnnotationOverlayItem(
         AnnotationKind kind,
         Guid id,
@@ -66,47 +96,47 @@ public sealed class AnnotationOverlayItem
         IsSelected = isSelected;
     }
 
-    public AnnotationKind Kind { get; }
+    public AnnotationKind Kind { get; private set; }
 
     public Guid Id { get; }
 
-    public double Left { get; }
+    public double Left { get; private set; }
 
-    public double Top { get; }
+    public double Top { get; private set; }
 
-    public double Width { get; }
+    public double Width { get; private set; }
 
-    public double Height { get; }
+    public double Height { get; private set; }
 
-    public double StartX { get; }
+    public double StartX { get; private set; }
 
-    public double StartY { get; }
+    public double StartY { get; private set; }
 
-    public double EndX { get; }
+    public double EndX { get; private set; }
 
-    public double EndY { get; }
+    public double EndY { get; private set; }
 
-    public string Text { get; }
+    public string Text { get; private set; }
 
-    public Brush StrokeBrush { get; }
+    public Brush StrokeBrush { get; private set; }
 
-    public Brush FillBrush { get; }
+    public Brush FillBrush { get; private set; }
 
-    public Brush TextBrush { get; }
+    public Brush TextBrush { get; private set; }
 
-    public Thickness StrokeThickness { get; }
+    public Thickness StrokeThickness { get; private set; }
 
-    public double StrokeThicknessValue { get; }
+    public double StrokeThicknessValue { get; private set; }
 
-    public double CornerRadius { get; }
+    public double CornerRadius { get; private set; }
 
-    public double FontSize { get; }
+    public double FontSize { get; private set; }
 
-    public double Opacity { get; }
+    public double Opacity { get; private set; }
 
-    public bool IsVisible { get; }
+    public bool IsVisible { get; private set; }
 
-    public bool IsSelected { get; }
+    public bool IsSelected { get; private set; }
 
     public string LayerLabel => Kind is AnnotationKind.Text or AnnotationKind.Image
         ? Text
