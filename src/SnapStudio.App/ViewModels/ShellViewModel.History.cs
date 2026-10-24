@@ -13,7 +13,8 @@ public sealed partial class ShellViewModel
     public bool CanShowNextHistoryPage => _historyPagination.CanMoveNext;
     public string HistoryPageLabel => $"Page {HistoryPageNumber} of {HistoryPageCount}";
     public string HistoryRangeLabel => _historyPagination.TotalCount == 0
-        ? _allRecentDocuments.Count == 0 ? "No captures yet" : "No matching captures"
+        ? _allRecentDocuments.Count == 0 ? "No captures yet"
+            : !_allRecentDocuments.Any(MatchesHistoryFolder) ? "This folder is empty" : "No matching captures"
         : _historyPagination.TotalCount == 1 ? "1 capture"
         : $"{_historyPagination.Offset + 1}–{_historyPagination.Offset + RecentDocuments.Count} of {_historyPagination.TotalCount} captures";
 

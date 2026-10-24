@@ -29,6 +29,8 @@ public interface IRegionSelectionService
 public interface IImageImportService
 {
     Task<CaptureOutcome> ImportAsync(CancellationToken cancellationToken);
+
+    Task<CaptureOutcome> ImportFileAsync(string path, CancellationToken cancellationToken);
 }
 
 public interface IScreenPreviewService

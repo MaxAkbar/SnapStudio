@@ -123,7 +123,8 @@ public sealed partial class MainPage : Page
             services.ScrollingCaptureService,
             services.ScreenRecordingService,
             services.EditorMessageServer,
-            DispatcherQueue);
+            DispatcherQueue,
+            services.HistoryFolderStore);
         SubscribeAnnotationOverlays(ViewModel);
         ViewModel.PropertyChanged += (_, _) =>
         {

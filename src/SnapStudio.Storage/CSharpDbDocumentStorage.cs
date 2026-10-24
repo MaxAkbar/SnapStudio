@@ -53,7 +53,7 @@ public sealed class CSharpDbDocumentCatalog : IDocumentCatalog
         CancellationToken cancellationToken) => _store.GetRecentAsync(maximumCount, cancellationToken);
 }
 
-public sealed class CSharpDbDocumentStore
+public sealed partial class CSharpDbDocumentStore
 {
     private const string DatabaseFileName = "snapstudio-documents.db";
     private const string CreateDocumentsTableSql = """
@@ -377,6 +377,9 @@ public sealed class CSharpDbDocumentStore
                 [],
                 cancellationToken).ConfigureAwait(false);
 
+            await ExecuteNonQueryAsync(connection, transaction: null,
+                "CREATE TABLE IF NOT EXISTS history_folders (id INTEGER PRIMARY KEY, state_json TEXT NOT NULL)",
+                [], cancellationToken).ConfigureAwait(false);
             _schemaInitialized = true;
         }
         finally

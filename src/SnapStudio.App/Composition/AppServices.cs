@@ -56,6 +56,8 @@ public sealed record AppServices(
     IScreenRecordingService ScreenRecordingService,
     NamedPipeEditorMessageServer EditorMessageServer)
 {
+    public IHistoryFolderStore? HistoryFolderStore { get; init; }
+
     public static AppServices CreateDefault(
         nint ownerWindowHandle = 0,
         IRegionSelectionService? regionSelection = null,
@@ -74,7 +76,7 @@ public sealed record AppServices(
             .GetResult();
         string storageRoot = settings.StorageRoot;
 
-        (IDocumentRepository documentRepository, IDocumentCatalog documentCatalog) =
+        (IDocumentRepository documentRepository, IDocumentCatalog documentCatalog, IHistoryFolderStore historyFolderStore) =
             CreateDocumentStorage(settings);
         var diagnosticLog = new FileDiagnosticLog(Path.Combine(appDataRoot, "Logs", "snapstudio.jsonl"));
         crashRecoveryJournal ??= CreateCrashRecoveryJournal(appDataRoot);
@@ -188,7 +190,10 @@ public sealed record AppServices(
             scrollingCaptureService,
             scrollingStitcher,
             screenRecordingService,
-            new NamedPipeEditorMessageServer(NamedPipeEditorMessageDefaults.PipeName));
+            new NamedPipeEditorMessageServer(NamedPipeEditorMessageDefaults.PipeName))
+        {
+            HistoryFolderStore = historyFolderStore
+        };
     }
 
     internal static string ResolveAppDataRoot()
@@ -207,7 +212,7 @@ public sealed record AppServices(
         return new FileCrashRecoveryJournal(Path.Combine(appDataRoot, "Logs", "recovery.jsonl"));
     }
 
-    private static (IDocumentRepository Repository, IDocumentCatalog Catalog) CreateDocumentStorage(
+    private static (IDocumentRepository Repository, IDocumentCatalog Catalog, IHistoryFolderStore Folders) CreateDocumentStorage(
         ApplicationSettings settings)
     {
         return settings.StorageBackend switch
@@ -215,17 +220,19 @@ public sealed record AppServices(
             ApplicationStorageBackend.Database => CreateDatabaseDocumentStorage(settings.StorageRoot),
             _ => (
                 new FileSystemDocumentRepository(settings.StorageRoot),
-                new FileSystemDocumentCatalog(settings.StorageRoot))
+                new FileSystemDocumentCatalog(settings.StorageRoot),
+                new CSharpDbDocumentStore(settings.StorageRoot))
         };
     }
 
-    private static (IDocumentRepository Repository, IDocumentCatalog Catalog) CreateDatabaseDocumentStorage(
+    private static (IDocumentRepository Repository, IDocumentCatalog Catalog, IHistoryFolderStore Folders) CreateDatabaseDocumentStorage(
         string storageRoot)
     {
         var store = new CSharpDbDocumentStore(storageRoot);
         return (
             new CSharpDbDocumentRepository(store),
-            new CSharpDbDocumentCatalog(store));
+            new CSharpDbDocumentCatalog(store),
+            store);
     }
 
     private static ICaptureTargetSelector CreateCaptureTargetSelector(

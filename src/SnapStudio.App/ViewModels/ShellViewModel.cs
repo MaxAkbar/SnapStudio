@@ -227,7 +227,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         IScrollingCaptureService scrollingCaptureService,
         IScreenRecordingService screenRecordingService,
         NamedPipeEditorMessageServer editorMessageServer,
-        DispatcherQueue dispatcherQueue)
+        DispatcherQueue dispatcherQueue,
+        IHistoryFolderStore? historyFolderStore = null)
     {
         _settingsStore = settingsStore;
         _settingsImportExportService = settingsImportExportService;
@@ -264,6 +265,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         _screenRecordingService = screenRecordingService;
         _editorMessageServer = editorMessageServer;
         _dispatcherQueue = dispatcherQueue;
+        _historyFolderStore = historyFolderStore;
         _hotkeyService.HotkeyPressed += HotkeyService_HotkeyPressed;
     }
 
@@ -1678,6 +1680,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             .EnsureInitializedAsync(cancellationToken)
             .ConfigureAwait(true);
 
+        await LoadHistoryFoldersAsync(cancellationToken).ConfigureAwait(true);
         await RefreshRecentDocumentsAsync(cancellationToken).ConfigureAwait(true);
         await OpenMostRecentDocumentAsync(cancellationToken).ConfigureAwait(true);
 
@@ -4371,9 +4374,20 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
         // Keep only metadata for the full history; create image controls and thumbnails for the visible page.
         var previousIds = _allRecentDocuments.Select(document => document.Id).ToHashSet();
-        if (summaries.Any(summary => !previousIds.Contains(summary.Id))) _historyPagination.Reset();
+        DocumentSummary[] added = summaries.Where(summary => !previousIds.Contains(summary.Id)).ToArray();
+        if (added.Length > 0)
+        {
+            _historyPagination.Reset();
+            // A new unfiled capture must remain visible when a named folder is selected.
+            if (!_historyFolderOperationInProgress && added.Any(summary => !MatchesHistoryFolder(summary)))
+            {
+                _selectedHistoryFolderId = null;
+                _historyUnfiledOnly = false;
+            }
+        }
         _allRecentDocuments.Clear();
         _allRecentDocuments.AddRange(summaries);
+        RefreshHistoryFolderItems();
         ApplyRecentDocumentFilter(refreshThumbnails: true);
     }
 
@@ -4527,7 +4541,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     {
         RecentDocuments.Clear();
 
-        IEnumerable<DocumentSummary> documents = _allRecentDocuments.Where(MatchesHistoryFilter);
+        IEnumerable<DocumentSummary> documents = _allRecentDocuments.Where(MatchesHistoryFolder).Where(MatchesHistoryFilter);
         if (!string.IsNullOrWhiteSpace(_historySearchText))
         {
             documents = documents.Where(MatchesHistorySearch);
@@ -4948,6 +4962,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         _captureInProgress = isInProgress;
+        NotifyHistoryFolderStateChanged();
         OnPropertyChanged(nameof(CanCreateImage));
         OnPropertyChanged(nameof(CanPasteImageAsLayer));
         OnPropertyChanged(nameof(CanOpenImageFile));
@@ -4963,6 +4978,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         _screenRecordingOperationInProgress = isInProgress;
+        NotifyHistoryFolderStateChanged();
         OnPropertyChanged(nameof(CanCreateImage));
         OnPropertyChanged(nameof(CanPasteImageAsLayer));
         OnPropertyChanged(nameof(CanOpenImageFile));
@@ -5407,6 +5423,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void NotifyDocumentWorkspaceStateChanged()
     {
+        OnPropertyChanged(nameof(CanMoveCurrentCaptureToHistoryFolder));
         OnPropertyChanged(nameof(HasCurrentDocument));
         OnPropertyChanged(nameof(CanPasteImageAsLayer));
         OnPropertyChanged(nameof(CanRenameCurrentDocument));
@@ -5422,6 +5439,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void NotifyScreenRecordingStateChanged()
     {
+        NotifyHistoryFolderStateChanged();
         OnPropertyChanged(nameof(CanCreateImage));
         OnPropertyChanged(nameof(CanPasteImageAsLayer));
         OnPropertyChanged(nameof(CanOpenImageFile));

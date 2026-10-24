@@ -57,9 +57,15 @@ public sealed class WindowsImageImportService : IImageImportService
                 "Open cancelled."));
         }
 
+        return await ImportFileAsync(file.Path, cancellationToken).ConfigureAwait(true);
+    }
+
+    public Task<CaptureOutcome> ImportFileAsync(string path, CancellationToken cancellationToken) => Task.Run(() =>
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         try
         {
-            return CaptureOutcome.Success(CreateCaptureFromFile(file.Path));
+            return CaptureOutcome.Success(CreateCaptureFromFile(path));
         }
         catch (Exception exception) when (
             exception is ArgumentException
@@ -72,7 +78,7 @@ public sealed class WindowsImageImportService : IImageImportService
                 $"The selected image could not be opened: {exception.Message}",
                 exception));
         }
-    }
+    }, cancellationToken);
 
     private CaptureResult CreateCaptureFromFile(string sourcePath)
     {
@@ -82,14 +88,17 @@ public sealed class WindowsImageImportService : IImageImportService
         string copiedPath = Path.Combine(
             _sourceImageDirectory,
             $"import-{Guid.NewGuid():N}{extension}");
+        // Validate before copying so a broken image does not leave an unused source file.
+        using var bitmap = new Bitmap(sourcePath);
+        int width = bitmap.Width;
+        int height = bitmap.Height;
         File.Copy(sourcePath, copiedPath, overwrite: false);
-        using var bitmap = new Bitmap(copiedPath);
 
         DateTimeOffset importedAtUtc = DateTimeOffset.UtcNow;
         return new CaptureResult(
             CaptureId.New(),
             importedAtUtc,
-            new ImageAsset(copiedPath, bitmap.Width, bitmap.Height, ImagePixelFormat.Bgra32),
+            new ImageAsset(copiedPath, width, height, ImagePixelFormat.Bgra32),
             new Dictionary<string, string>
             {
                 ["title"] = Path.GetFileNameWithoutExtension(sourcePath),
