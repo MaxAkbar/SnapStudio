@@ -318,6 +318,7 @@ public sealed partial class ShellViewModel
     private void NotifyHistoryFolderStateChanged()
     {
         OnPropertyChanged(nameof(CanManageCaptureHistory));
+        OnPropertyChanged(nameof(CanEditCurrentCaptureTags));
         OnPropertyChanged(nameof(CanDeleteCurrentDocument));
         OnPropertyChanged(nameof(CanMoveCurrentCaptureToTrash));
         OnPropertyChanged(nameof(HistoryFolderIndex));

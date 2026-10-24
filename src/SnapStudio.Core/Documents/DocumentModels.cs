@@ -149,7 +149,10 @@ public sealed record DocumentSummary(
     string SourceImagePath,
     int AnnotationCount,
     string? ThumbnailPath = null,
-    string SourceKind = "capture");
+    string SourceKind = "capture")
+{
+    public IReadOnlyList<string> Tags { get; init; } = [];
+}
 
 public sealed record DocumentThumbnailRequest(
     DocumentId DocumentId,

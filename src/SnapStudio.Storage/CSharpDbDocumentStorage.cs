@@ -65,7 +65,8 @@ public sealed partial class CSharpDbDocumentStore
             source_image_path TEXT NOT NULL,
             annotation_count INTEGER NOT NULL,
             source_kind TEXT NOT NULL,
-            document_json TEXT NOT NULL
+            document_json TEXT NOT NULL,
+            tags_json TEXT NOT NULL DEFAULT '[]'
         )
         """;
 
@@ -217,7 +218,8 @@ public sealed partial class CSharpDbDocumentStore
                 source_image_path,
                 annotation_count,
                 source_kind,
-                document_json
+                document_json,
+                tags_json
             ) VALUES (
                 @id,
                 @createdAtUtc,
@@ -226,7 +228,8 @@ public sealed partial class CSharpDbDocumentStore
                 @sourceImagePath,
                 @annotationCount,
                 @sourceKind,
-                @documentJson
+                @documentJson,
+                @tagsJson
             )
             """,
             [
@@ -237,7 +240,8 @@ public sealed partial class CSharpDbDocumentStore
                 new("@sourceImagePath", document.SourceImage.Path),
                 new("@annotationCount", document.Annotations.Count),
                 new("@sourceKind", sourceKind),
-                new("@documentJson", documentJson)
+                new("@documentJson", documentJson),
+                new("@tagsJson", JsonSerializer.Serialize(DocumentTags.Read(document)))
             ],
             cancellationToken).ConfigureAwait(false);
 
@@ -289,12 +293,12 @@ public sealed partial class CSharpDbDocumentStore
         await using (DbCommand read = connection.CreateCommand())
         {
             read.Transaction = transaction;
-            read.CommandText = "SELECT id, created_at_utc, modified_at_utc, title, source_image_path, annotation_count, source_kind, document_json FROM documents WHERE id <> @id";
+            read.CommandText = "SELECT id, created_at_utc, modified_at_utc, title, source_image_path, annotation_count, source_kind, document_json, tags_json FROM documents WHERE id <> @id";
             AddParameter(read, "@id", id.ToString());
             await using DbDataReader reader = await read.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                var values = new object[8];
+                var values = new object[9];
                 reader.GetValues(values);
                 remaining.Add(values);
             }
@@ -304,9 +308,9 @@ public sealed partial class CSharpDbDocumentStore
         foreach (object[] row in remaining)
         {
             await ExecuteNonQueryAsync(connection, transaction,
-                "INSERT INTO documents (id, created_at_utc, modified_at_utc, title, source_image_path, annotation_count, source_kind, document_json) VALUES (@id, @created, @modified, @title, @path, @count, @kind, @json)",
+                "INSERT INTO documents (id, created_at_utc, modified_at_utc, title, source_image_path, annotation_count, source_kind, document_json, tags_json) VALUES (@id, @created, @modified, @title, @path, @count, @kind, @json, @tags)",
                 [new("@id", row[0]), new("@created", row[1]), new("@modified", row[2]), new("@title", row[3]),
-                 new("@path", row[4]), new("@count", row[5]), new("@kind", row[6]), new("@json", row[7])], cancellationToken).ConfigureAwait(false);
+                 new("@path", row[4]), new("@count", row[5]), new("@kind", row[6]), new("@json", row[7]), new("@tags", row[8])], cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -333,7 +337,8 @@ public sealed partial class CSharpDbDocumentStore
                 modified_at_utc,
                 source_image_path,
                 annotation_count,
-                source_kind
+                source_kind,
+                tags_json
             FROM documents
             ORDER BY modified_at_utc DESC, created_at_utc DESC
             """;
@@ -380,6 +385,19 @@ public sealed partial class CSharpDbDocumentStore
             await ExecuteNonQueryAsync(connection, transaction: null,
                 "CREATE TABLE IF NOT EXISTS history_folders (id INTEGER PRIMARY KEY, state_json TEXT NOT NULL)",
                 [], cancellationToken).ConfigureAwait(false);
+
+            // Add a compact catalog projection without loading image objects from document_json during searches.
+            bool hasTagsColumn;
+            await using (DbCommand columns = connection.CreateCommand())
+            {
+                columns.CommandText = "SELECT * FROM documents LIMIT 0";
+                await using DbDataReader reader = await columns.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                hasTagsColumn = Enumerable.Range(0, reader.FieldCount).Any(index => reader.GetName(index) == "tags_json");
+            }
+            if (!hasTagsColumn)
+                await ExecuteNonQueryAsync(connection, transaction: null,
+                    "ALTER TABLE documents ADD COLUMN tags_json TEXT NOT NULL DEFAULT '[]'",
+                    [], cancellationToken).ConfigureAwait(false);
             _schemaInitialized = true;
         }
         finally
@@ -467,7 +485,7 @@ public sealed partial class CSharpDbDocumentStore
             reader.GetString(4),
             Convert.ToInt32(reader.GetValue(5), CultureInfo.InvariantCulture),
             thumbnailPath,
-            reader.GetString(6));
+            reader.GetString(6)) { Tags = DocumentTags.ReadJson(reader.GetString(7)) };
     }
 
     private static string ResolveTitle(CaptureDocument document)

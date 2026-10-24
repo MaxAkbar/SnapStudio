@@ -14,6 +14,10 @@ public sealed record DocumentSummaryItem(
     string SourceImagePath,
     string? ThumbnailPath)
 {
+    public IReadOnlyList<string> Tags { get; init; } = [];
+    public string TagsLabel => string.Join("  ", Tags.Select(tag => $"#{tag}"));
+    public Visibility TagsVisibility => Tags.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+
     public BitmapImage? ThumbnailImageSource { get; } = CreateThumbnailImageSource(ThumbnailPath);
 
     public Visibility ThumbnailVisibility => ThumbnailImageSource is null
@@ -39,7 +43,7 @@ public sealed record DocumentSummaryItem(
             NormalizeSourceKind(summary.SourceKind),
             sourceLabel,
             summary.SourceImagePath,
-            resolvedThumbnailPath);
+            resolvedThumbnailPath) { Tags = summary.Tags };
     }
 
     private static string CreateSourceLabel(string sourceKind)
@@ -66,9 +70,12 @@ public sealed record DocumentSummaryItem(
 
     internal static bool MatchesSearch(DocumentSummary summary, string searchText)
     {
+        if (searchText.StartsWith('#'))
+            return summary.Tags.Any(tag => string.Equals(tag, searchText[1..].Trim(), StringComparison.OrdinalIgnoreCase));
         return new[] { summary.Title, CreateDetail(summary), CreateSourceLabel(summary.SourceKind),
             NormalizeSourceKind(summary.SourceKind), summary.ModifiedAtUtc.LocalDateTime.ToString("g"), Path.GetFileName(summary.SourceImagePath) }
-            .Any(value => value?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true);
+            .Any(value => value?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true)
+            || summary.Tags.Any(tag => tag.Contains(searchText, StringComparison.OrdinalIgnoreCase));
     }
 
     private static string CreateDetail(DocumentSummary summary) =>

@@ -172,6 +172,9 @@ public sealed partial class MainPage
         var rename = new MenuFlyoutItem { Text = "Rename…", Icon = new SymbolIcon(Symbol.Edit) };
         rename.Click += async (_, _) => await RenameHistoryCaptureAsync(capture);
         menu.Items.Add(rename);
+        var tags = new MenuFlyoutItem { Text = "Edit tags…", Icon = new SymbolIcon(Symbol.Tag) };
+        tags.Click += async (_, _) => await EditCaptureTagsAsync(capture.Id, capture.Title);
+        menu.Items.Add(tags);
         var duplicate = new MenuFlyoutItem { Text = "Duplicate", Icon = new SymbolIcon(Symbol.Copy) };
         duplicate.Click += async (_, _) => await RunCaptureHistoryUiActionAsync(
             () => ViewModel.DuplicateCaptureAsync(capture.Id, CancellationToken.None));
@@ -220,7 +223,7 @@ public sealed partial class MainPage
 
     private async Task RenameHistoryCaptureAsync(DocumentSummaryItem capture)
     {
-        if (_captureRenameDialogIsOpen || _captureDeleteDialogIsOpen || _historyFolderDialogIsOpen
+        if (_captureTagsDialogIsOpen || _captureRenameDialogIsOpen || _captureDeleteDialogIsOpen || _historyFolderDialogIsOpen
             || _newImageDialogIsOpen || _pasteImageDialogIsOpen || _layerRenameDialogIsOpen
             || _layerColorDialogIsOpen || !ViewModel.CanManageCaptureHistory) return;
         _captureRenameDialogIsOpen = true;
@@ -266,7 +269,7 @@ public sealed partial class MainPage
 
     private async Task ConfirmDeleteCaptureImageAsync(string captureId, string title)
     {
-        if (_captureDeleteDialogIsOpen || _captureRenameDialogIsOpen || _historyFolderDialogIsOpen || _newImageDialogIsOpen
+        if (_captureTagsDialogIsOpen || _captureDeleteDialogIsOpen || _captureRenameDialogIsOpen || _historyFolderDialogIsOpen || _newImageDialogIsOpen
             || _pasteImageDialogIsOpen || _layerRenameDialogIsOpen || _layerColorDialogIsOpen
             || !ViewModel.CanRecycleCaptureImage(captureId)) return;
         _captureDeleteDialogIsOpen = true;
@@ -293,7 +296,7 @@ public sealed partial class MainPage
 
     private async Task RunHistoryFolderDialogAsync(Func<Task> action)
     {
-        if (_historyFolderDialogIsOpen || _captureDeleteDialogIsOpen || _captureRenameDialogIsOpen || _newImageDialogIsOpen || _pasteImageDialogIsOpen
+        if (_captureTagsDialogIsOpen || _historyFolderDialogIsOpen || _captureDeleteDialogIsOpen || _captureRenameDialogIsOpen || _newImageDialogIsOpen || _pasteImageDialogIsOpen
             || _layerRenameDialogIsOpen || _layerColorDialogIsOpen || !ViewModel.CanManageHistoryFolders) return;
         _historyFolderDialogIsOpen = true;
         try { await action(); }

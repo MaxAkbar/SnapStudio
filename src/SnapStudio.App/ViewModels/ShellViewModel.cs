@@ -5426,6 +5426,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void NotifyDocumentWorkspaceStateChanged()
     {
+        OnPropertyChanged(nameof(CanEditCurrentCaptureTags));
         OnPropertyChanged(nameof(CanMoveCurrentCaptureToHistoryFolder));
         OnPropertyChanged(nameof(HasCurrentDocument));
         OnPropertyChanged(nameof(CanPasteImageAsLayer));
@@ -6299,6 +6300,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void UpdateCurrentDocumentProperties(CaptureDocument? document)
     {
+        OnPropertyChanged(nameof(CurrentCaptureTagsLabel));
         if (document is null)
         {
             CurrentDocumentWidthLabel = "-";

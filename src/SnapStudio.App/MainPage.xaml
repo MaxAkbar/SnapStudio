@@ -617,9 +617,9 @@
                                             </Button>
                                         </Grid>
                                         <AutoSuggestBox
-                                            AutomationProperties.HelpText="Filter the capture history list by title, source, date, or file name."
+                                            AutomationProperties.HelpText="Search captures by title, tags, source, date, or file name. Use #tag for an exact tag match."
                                             AutomationProperties.Name="Search capture history"
-                                            PlaceholderText="Search captures..."
+                                            PlaceholderText="Search captures or #tags..."
                                             TextChanged="HistorySearch_TextChanged"
                                             FontSize="11"
                                             MinHeight="34"
@@ -754,6 +754,7 @@
                                                         <Grid.RowDefinitions>
                                                             <RowDefinition Height="Auto"/>
                                                             <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
                                                         </Grid.RowDefinitions>
                                                         <TextBlock FontWeight="SemiBold" Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" FontSize="11"/>
                                                         <TextBlock
@@ -762,6 +763,9 @@
                                                             Foreground="{ThemeResource SnapMutedBrush}"
                                                             Text="{x:Bind Detail}"
                                                             TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Grid.Row="2" FontSize="9" Foreground="{ThemeResource WorkspaceAccentBrush}"
+                                                            Text="{x:Bind TagsLabel}" Visibility="{x:Bind TagsVisibility}"
+                                                            ToolTipService.ToolTip="{x:Bind TagsLabel}" TextTrimming="CharacterEllipsis" />
                                                     </Grid>
                                                 </Grid>
                                             </Border>
@@ -1223,10 +1227,10 @@
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <TextBlock Text="On your device" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
-                            <Button AutomationProperties.Name="Manage current capture" ToolTipService.ToolTip="Rename, duplicate, move, or remove this capture" Style="{StaticResource SidebarIconButtonStyle}">
+                            <Button AutomationProperties.Name="Manage current capture" ToolTipService.ToolTip="Rename, tag, duplicate, move, or remove this capture" Style="{StaticResource SidebarIconButtonStyle}">
                                 <controls:WorkspaceIcon Kind="More" Width="16" Height="16"/>
                                 <Button.Flyout>
-                                    <Flyout>
+                                    <Flyout x:Name="CurrentCaptureActionsFlyout">
                                         <StackPanel Spacing="8" Width="240">
                                             <TextBox
                                                 AutomationProperties.HelpText="Edit the selected capture title."
@@ -1235,6 +1239,10 @@
                                                 PlaceholderText="Capture title"
                                                 Text="{x:Bind ViewModel.WorkspaceTitleText, Mode=OneWay}"
                                                 TextChanged="WorkspaceTitle_TextChanged" />
+                                            <Button Content="Edit tags…" Click="EditCurrentCaptureTags_Click"
+                                                AutomationProperties.Name="Edit current capture tags"
+                                                IsEnabled="{x:Bind ViewModel.CanEditCurrentCaptureTags, Mode=OneWay}"
+                                                HorizontalAlignment="Stretch"/>
                                             <Grid ColumnSpacing="4">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
@@ -2196,6 +2204,14 @@
                                 x:Name="ImageDetailsExpanderScroll">
                                 <StackPanel Spacing="10">
                                     <StackPanel AutomationProperties.Name="Selected capture properties" Spacing="10">
+                                        <Grid ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Tags" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                            <Button Grid.Column="1" Content="Edit…" Click="EditCurrentCaptureTags_Click"
+                                                AutomationProperties.Name="Edit image tags" IsEnabled="{x:Bind ViewModel.CanEditCurrentCaptureTags, Mode=OneWay}"
+                                                Style="{StaticResource WorkspaceCommandButtonStyle}"/>
+                                        </Grid>
+                                        <TextBlock Text="{x:Bind ViewModel.CurrentCaptureTagsLabel, Mode=OneWay}" TextWrapping="Wrap" FontSize="12"/>
                                         <TextBlock Foreground="{ThemeResource SnapMutedBrush}" Text="Image size"/>
                                         <Grid ColumnSpacing="10">
                                             <Grid.ColumnDefinitions>
