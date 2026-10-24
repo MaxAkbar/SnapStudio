@@ -1528,16 +1528,26 @@
                                                 TextTrimming="CharacterEllipsis" />
                                         </Border>
                                     </StackPanel>
-                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}">
+                                    <TextBlock Text="{x:Bind ViewModel.AnnotationSelectionDescription, Mode=OneWay}"
+                                        TextWrapping="Wrap" FontSize="11" Margin="0,4,0,8" Foreground="{ThemeResource SnapMutedBrush}"
+                                        Visibility="{x:Bind ViewModel.AnnotationSelectionControlsVisibility, Mode=OneWay}"/>
+                                    <Button Content="Crop selected area" Click="CropButton_Click" HorizontalAlignment="Stretch"
+                                        IsEnabled="{x:Bind ViewModel.CanCropToSelection, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.AnnotationSelectionCropVisibility, Mode=OneWay}"/>
+                                    <TextBlock Text="Only shared properties are shown. Select one object to edit its other properties."
+                                        TextWrapping="Wrap" FontSize="10" Margin="0,4,0,8" Foreground="{ThemeResource SnapMutedBrush}"
+                                        Visibility="{x:Bind ViewModel.AnnotationMultipleSelectionVisibility, Mode=OneWay}"/>
+                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationAppearanceControlsVisibility, Mode=OneWay}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{x:Bind ViewModel.AnnotationSizeHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.AnnotationPrimaryPropertyHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
                                         <Button
                                             AutomationProperties.HelpText="Open the custom annotation color picker."
                                             AutomationProperties.Name="Custom annotation color"
+                                            Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}"
                                             ToolTipService.ToolTip="Custom color"
                                             Style="{StaticResource WorkspaceCommandButtonStyle}"
                                             Height="28"
@@ -1547,7 +1557,7 @@
                                             Grid.Column="1">
                                             <Button.Flyout>
                                                 <Flyout>
-                                                    <ColorPicker AutomationProperties.HelpText="Choose a custom annotation color." AutomationProperties.Name="Custom annotation color picker" ColorChanged="AnnotationCustomColor_ColorChanged" IsAlphaEnabled="False"/>
+                                                    <ColorPicker AutomationProperties.HelpText="Choose a custom annotation color." AutomationProperties.Name="Custom annotation color picker" Color="{x:Bind WorkspaceAnnotationColor, Mode=OneWay}" ColorChanged="AnnotationCustomColor_ColorChanged" IsAlphaEnabled="False"/>
                                                 </Flyout>
                                             </Button.Flyout>
                                             <StackPanel Orientation="Horizontal" Spacing="7">
@@ -1555,7 +1565,8 @@
                                                 <TextBlock Text="{x:Bind WorkspaceColorHex, Mode=OneWay}" FontSize="9" VerticalAlignment="Center" CharacterSpacing="30"/>
                                             </StackPanel>
                                         </Button>
-                                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Grid.Column="2">
+                                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Grid.Column="2"
+                                            Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}">
                                             <TextBox
                                                 AutomationProperties.HelpText="Enter a stroke width in pixels or a text size. Valid numbers apply immediately; both can exceed the slider range."
                                                 AutomationProperties.Name="Annotation size value"
@@ -1575,6 +1586,7 @@
                                     <StackPanel
                                         AutomationProperties.HelpText="Choose the annotation stroke color."
                                         AutomationProperties.Name="Annotation color"
+                                        Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}"
                                         Orientation="Horizontal"
                                         Spacing="9"
                                         HorizontalAlignment="Right"
@@ -1635,7 +1647,7 @@
                                             MinHeight="17"
                                             CornerRadius="9" />
                                     </StackPanel>
-                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}">
+                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationFillControlsVisibility, Mode=OneWay}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -1652,16 +1664,16 @@
                                             <TextBlock Text="Fill bucket" FontSize="9" VerticalAlignment="Center"/>
                                         </Button>
                                     </Grid>
-                                    <Grid ColumnSpacing="8" MinHeight="38">
+                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationOpacityControlsVisibility, Mode=OneWay}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Opacity" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.AnnotationOpacityHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
                                         <Slider
                                             AutomationProperties.HelpText="Set annotation opacity."
-                                            AutomationProperties.Name="Annotation opacity"
+                                            AutomationProperties.Name="{x:Bind ViewModel.AnnotationOpacityHeader, Mode=OneWay}"
                                             Maximum="1"
                                             Minimum="0.1"
                                             StepFrequency="0.05"
@@ -1749,7 +1761,7 @@
                                         Visibility="{x:Bind ViewModel.FillToleranceControlsVisibility, Mode=OneWay}" />
                                     <TextBox
                                         AutomationProperties.HelpText="Edit the selected text annotation."
-                                        Visibility="{x:Bind ViewModel.AnnotationFontControlsVisibility, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.AnnotationTextControlsVisibility, Mode=OneWay}"
                                         AutomationProperties.Name="Annotation text"
                                         Header="Text"
                                         LostFocus="AnnotationText_LostFocus"
@@ -1767,6 +1779,7 @@
                                             <Slider
                                                 AutomationProperties.HelpText="Set annotation stroke thickness or text size."
                                                 AutomationProperties.Name="Annotation size"
+                                                Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}"
                                                 Header="{x:Bind ViewModel.AnnotationSizeHeader, Mode=OneWay}"
                                                 Maximum="{x:Bind ViewModel.AnnotationSizeMaximum, Mode=OneWay}"
                                                 Minimum="1"
@@ -1786,6 +1799,7 @@
                                             <ComboBox
                                                 AutomationProperties.HelpText="Choose a common annotation preset for new annotations."
                                                 AutomationProperties.Name="Annotation preset"
+                                                Visibility="{x:Bind ViewModel.AnnotationPresetControlsVisibility, Mode=OneWay}"
                                                 Header="Preset"
                                                 SelectedIndex="{x:Bind ViewModel.AnnotationPresetIndex, Mode=OneWay}"
                                                 SelectionChanged="AnnotationPreset_SelectionChanged">

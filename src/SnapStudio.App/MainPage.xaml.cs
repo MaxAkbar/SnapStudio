@@ -1419,6 +1419,7 @@ public sealed partial class MainPage : Page
         }
 
         Color color = args.NewColor;
+        if (color == WorkspaceAnnotationColor) return;
         await ViewModel.UpdateAnnotationCustomColorAsync(
             color.R,
             color.G,

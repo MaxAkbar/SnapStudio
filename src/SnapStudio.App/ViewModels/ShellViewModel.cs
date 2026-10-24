@@ -1037,13 +1037,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive
         && ActiveAnnotationKind is not (AnnotationKind.Pen or AnnotationKind.Fill);
 
-    public Visibility AnnotationShapeControlsVisibility => ActiveOrSelectedAnnotationKind is AnnotationKind.Fill or AnnotationKind.Image
-        ? Visibility.Collapsed : Visibility.Visible;
-
-    public Visibility AnnotationColorControlsVisibility => ActiveOrSelectedAnnotationKind == AnnotationKind.Image
-        ? Visibility.Collapsed : Visibility.Visible;
-
-    public Visibility FillToleranceControlsVisibility => !IsSelectionToolActive && ActiveAnnotationKind == AnnotationKind.Fill
+    public Visibility FillToleranceControlsVisibility => !HasSelectedAnnotation && !IsSelectionToolActive && ActiveAnnotationKind == AnnotationKind.Fill
         ? Visibility.Visible : Visibility.Collapsed;
 
     public double FillTolerance
@@ -1069,6 +1063,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
         OnPropertyChanged(nameof(FillToleranceControlsVisibility));
         StatusText = "Selection: drag a rectangle to select objects. Shift-click adds or removes an object.";
+        NotifyAnnotationStyleControlsChanged();
     }
 
     public int AnnotationToolIndex
@@ -1180,10 +1175,6 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     public double AnnotationSizeStepFrequency => ActiveOrSelectedAnnotationKind == AnnotationKind.Text
         ? 1
         : 0.5;
-
-    public Visibility AnnotationCornerStyleControlsVisibility => ActiveOrSelectedAnnotationKind == AnnotationKind.Rectangle
-        ? Visibility.Visible
-        : Visibility.Collapsed;
 
     public int AnnotationCornerStyleIndex => AnnotationCornerRadius > 0
         ? AnnotationCornerStyleRoundedIndex
@@ -5343,6 +5334,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         CancellationToken cancellationToken,
         SelectionStyleAspect aspect = SelectionStyleAspect.All)
     {
+        if (!CanApplyAnnotationProperty(aspect)) return;
         if (SelectedAnnotationCount > 1)
         {
             await ApplySelectionStyleAsync(aspect, cancellationToken);
@@ -5462,6 +5454,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void NotifyEditorStateChanged()
     {
+        NotifyAnnotationStyleControlsChanged();
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
         OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanRedo));
@@ -6273,17 +6266,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void NotifyAnnotationStyleControlsChanged()
     {
-        OnPropertyChanged(nameof(AnnotationShapeControlsVisibility));
-        OnPropertyChanged(nameof(AnnotationFontControlsVisibility));
-        OnPropertyChanged(nameof(AnnotationColorControlsVisibility));
-        OnPropertyChanged(nameof(FillToleranceControlsVisibility));
-        OnPropertyChanged(nameof(AnnotationSizeHeader));
-        OnPropertyChanged(nameof(AnnotationSizeMaximum));
-        OnPropertyChanged(nameof(AnnotationSizeInputMaximum));
-        OnPropertyChanged(nameof(AnnotationSizeSliderValue));
-        OnPropertyChanged(nameof(AnnotationSizeStepFrequency));
-        OnPropertyChanged(nameof(AnnotationCornerStyleControlsVisibility));
-        OnPropertyChanged(nameof(AnnotationCornerStyleIndex));
+        NotifyPropertyContextChanged();
     }
 
     private static string ResolveDocumentTitle(CaptureDocument document)

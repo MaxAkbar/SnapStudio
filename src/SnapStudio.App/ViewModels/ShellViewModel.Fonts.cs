@@ -12,10 +12,7 @@ public sealed partial class ShellViewModel
 
     public string AnnotationFontFamily => SystemFontCatalog.ResolveFamily(_annotationFontFamily);
 
-    public Visibility AnnotationFontControlsVisibility => HasSelectedAnnotation
-        ? _currentDocument!.Annotations.Any(item => SelectedAnnotationIds.Contains(item.Id) && item.Kind == AnnotationKind.Text)
-            ? Visibility.Visible : Visibility.Collapsed
-        : ActiveAnnotationKind == AnnotationKind.Text ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AnnotationFontControlsVisibility => PropertyVisibility(AnnotationProperty.Font);
 
     private void SetAnnotationFontFamily(string? family)
     {

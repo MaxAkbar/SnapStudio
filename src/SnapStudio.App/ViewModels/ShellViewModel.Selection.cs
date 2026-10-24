@@ -10,7 +10,7 @@ public sealed partial class ShellViewModel
 
     public IReadOnlySet<Guid> SelectedAnnotationIds => _annotationSelection.SelectedAnnotationIds;
     public int SelectedAnnotationCount => SelectedAnnotationIds.Count;
-    public bool CanEditAnnotationText => SelectedAnnotationCount <= 1;
+    public bool CanEditAnnotationText => SelectedAnnotationCount <= 1 && HasAnnotationProperty(AnnotationProperty.TextContent);
     public bool HasCanvasSelection => HasSelectedAnnotation || _annotationSelection.HasMarquee;
 
     public RectD? SourceSelectionBounds => _currentDocument is not null && _annotationSelection.GetBounds(_currentDocument) is RectD bounds

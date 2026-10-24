@@ -21,6 +21,7 @@ public sealed partial class MainPage : INotifyPropertyChanged
     private static readonly string[] WorkspacePresentationProperties =
     [
         nameof(WorkspaceColorHex), nameof(WorkspaceStrokeBrush), nameof(WorkspaceOpacityLabel),
+        nameof(WorkspaceAnnotationColor),
         nameof(WorkspaceObjectLabel), nameof(WorkspaceToolKind), nameof(WorkspaceToolHint),
         nameof(WorkspacePageLabel), nameof(WorkspaceRangeLabel), nameof(WorkspaceCaptureCount),
         nameof(WorkspaceFileType), nameof(WorkspaceSquareCornersBrush), nameof(WorkspaceRoundedCornersBrush)
@@ -30,8 +31,8 @@ public sealed partial class MainPage : INotifyPropertyChanged
     {
         get
         {
-            var color = ViewModel.DrawingStyle.Stroke;
-            return $"{color.R:X2}{color.G:X2}{color.B:X2}";
+            var color = ViewModel.AnnotationPropertyColor;
+            return ViewModel.HasMixedAnnotationColors ? "Mixed" : $"{color.R:X2}{color.G:X2}{color.B:X2}";
         }
     }
 
@@ -39,17 +40,23 @@ public sealed partial class MainPage : INotifyPropertyChanged
     {
         get
         {
-            var color = ViewModel.DrawingStyle.Stroke;
+            var color = ViewModel.AnnotationPropertyColor;
             return new SolidColorBrush(Color.FromArgb(color.A, color.R, color.G, color.B));
+        }
+    }
+
+    public Color WorkspaceAnnotationColor
+    {
+        get
+        {
+            var color = ViewModel.AnnotationPropertyColor;
+            return Color.FromArgb(color.A, color.R, color.G, color.B);
         }
     }
 
     public string WorkspaceOpacityLabel => $"{Math.Round(ViewModel.AnnotationOpacity * 100).ToString(CultureInfo.CurrentCulture)}%";
 
-    public string WorkspaceObjectLabel => ViewModel.SelectedAnnotationId is Guid selectedId
-        ? ViewModel.AnnotationOverlays.FirstOrDefault(item => item.Id == selectedId)?.LayerLabel
-            ?? ViewModel.ActiveAnnotationToolLabel
-        : ViewModel.ActiveAnnotationToolLabel;
+    public string WorkspaceObjectLabel => ViewModel.AnnotationPropertiesTitle;
 
     public string WorkspaceToolKind => ViewModel.IsSelectionToolActive
         ? "Select"
