@@ -2903,16 +2903,17 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
+        RectD? selectionBounds = SourceSelectionBounds;
         ClipboardResult result = await _clipboardService
-            .CopyDocumentAsync(_currentDocumentId.Value, cancellationToken)
+            .CopyDocumentAsync(_currentDocumentId.Value, selectionBounds, cancellationToken)
             .ConfigureAwait(true);
 
         if (result.Succeeded)
         {
-            StatusText = "Copied image to clipboard.";
+            StatusText = selectionBounds.HasValue ? "Copied selection to clipboard." : "Copied image to clipboard.";
             ShowCaptureNotice(
                 "Copied",
-                "The current image was copied to the clipboard.",
+                selectionBounds.HasValue ? "The selected area was copied to the clipboard." : "The current image was copied to the clipboard.",
                 InfoBarSeverity.Success);
             return;
         }

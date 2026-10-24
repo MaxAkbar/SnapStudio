@@ -12,6 +12,49 @@ namespace SnapStudio.Core.Tests;
 public sealed class SystemDrawingDocumentRendererTests
 {
     [TestMethod]
+    public async Task RenderAsync_SelectionClipsVisibleShapesAndImagesAndPreservesTransparency()
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        string sourcePath = Path.Combine(workspace.Path, "source.png");
+        string pastedPath = Path.Combine(workspace.Path, "pasted.png");
+        CreateSolidImage(sourcePath, 100, 80, Color.Transparent);
+        CreateSolidImage(pastedPath, 20, 10, Color.Lime);
+        var document = new CaptureDocument
+        {
+            SourceImage = new ImageAsset(sourcePath, 100, 80, ImagePixelFormat.Bgra32),
+            Annotations =
+            [
+                CreateFilledRectangle(new RectD(10, 18, 20, 10), new ColorRgba(255, 0, 0, 255)),
+                new AnnotationObject
+                {
+                    Kind = AnnotationKind.Image,
+                    Bounds = new RectD(50, 20, 20, 10),
+                    Image = new AnnotationImage(20, 10, await File.ReadAllBytesAsync(pastedPath))
+                },
+                CreateFilledRectangle(new RectD(80, 50, 10, 10), ColorRgba.Black),
+                CreateFilledRectangle(new RectD(20, 10, 40, 30), ColorRgba.Black)
+            ]
+        };
+        AssignDefaultLayer(document);
+        document.Annotations[^1].IsVisible = false;
+        var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
+
+        RenderResult result = await renderer.RenderAsync(
+            new RenderRequest(document.Id, 1, new RectD(20, 10, 40, 30)), CancellationToken.None);
+
+        Assert.IsTrue(result.Succeeded, result.ErrorMessage);
+        Assert.AreEqual(40, result.Image!.Width);
+        Assert.AreEqual(30, result.Image.Height);
+        using Bitmap rendered = LoadBitmap(result.Image.Pixels);
+        Assert.AreEqual(Color.Red.ToArgb(), rendered.GetPixel(0, 12).ToArgb());
+        Assert.AreEqual(Color.Lime.ToArgb(), rendered.GetPixel(35, 15).ToArgb());
+        Assert.AreEqual(0, rendered.GetPixel(25, 2).A);
+        Assert.AreEqual(0, rendered.GetPixel(20, 25).A);
+        Assert.AreEqual(4, document.Annotations.Count, "Copying a selection must leave the source objects intact.");
+        Assert.AreEqual(new RectD(10, 18, 20, 10), document.Annotations[0].Bounds);
+    }
+
+    [TestMethod]
     [DataRow(0.5)]
     [DataRow(1.0)]
     [DataRow(2.0)]

@@ -26,14 +26,19 @@ public sealed class WindowsClipboardService : IClipboardService
             "Clipboard"));
     }
 
+    public Task<ClipboardResult> CopyDocumentAsync(
+        DocumentId documentId,
+        CancellationToken cancellationToken) => CopyDocumentAsync(documentId, null, cancellationToken);
+
     public async Task<ClipboardResult> CopyDocumentAsync(
         DocumentId documentId,
+        RectD? sourceBounds,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         RenderResult renderResult = await _documentRenderer
-            .RenderAsync(new RenderRequest(documentId, 1, null), cancellationToken)
+            .RenderAsync(new RenderRequest(documentId, 1, sourceBounds), cancellationToken)
             .ConfigureAwait(true);
 
         if (!renderResult.Succeeded || renderResult.Image is not RenderedImage image)

@@ -49,6 +49,7 @@ public sealed partial class MainPage : Page
     private bool _isUpdatingBindings;
     private bool _isReadyForControlEvents;
     private bool _newImageDialogIsOpen;
+    private bool _pasteImageDialogIsOpen;
     private bool _layerRenameDialogIsOpen;
     private bool _layerColorDialogIsOpen;
     private bool _historyPaneIsExpanded = true;
@@ -179,7 +180,10 @@ public sealed partial class MainPage : Page
     {
         if (TryHandleApplicationShortcut(args, ViewModel.CanCreateImage))
         {
-            await PasteImageAndUpdateAsync(CancellationToken.None, sender.Modifiers.HasFlag(VirtualKeyModifiers.Shift));
+            if (sender.Modifiers.HasFlag(VirtualKeyModifiers.Shift))
+                await PasteImageAndUpdateAsync(CancellationToken.None, asNewDocument: true);
+            else
+                await ShowPasteImageOptionsAsync();
         }
     }
 
@@ -491,7 +495,7 @@ public sealed partial class MainPage : Page
 
     private async void RenameLayerMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if (_layerRenameDialogIsOpen || _layerColorDialogIsOpen || _newImageDialogIsOpen
+        if (_layerRenameDialogIsOpen || _layerColorDialogIsOpen || _newImageDialogIsOpen || _pasteImageDialogIsOpen
             || sender is not FrameworkElement { DataContext: AnnotationLayerItem item })
         {
             return;
@@ -558,7 +562,7 @@ public sealed partial class MainPage : Page
 
     private async void LayerCustomColorMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if (_layerColorDialogIsOpen || _layerRenameDialogIsOpen || _newImageDialogIsOpen
+        if (_layerColorDialogIsOpen || _layerRenameDialogIsOpen || _newImageDialogIsOpen || _pasteImageDialogIsOpen
             || sender is not FrameworkElement { DataContext: AnnotationLayerItem item })
         {
             return;
@@ -722,6 +726,11 @@ public sealed partial class MainPage : Page
 
     private async void PasteImageButton_Click(object sender, RoutedEventArgs e)
     {
+        await ShowPasteImageOptionsAsync();
+    }
+
+    private async void PasteImageAsLayer_Click(object sender, RoutedEventArgs e)
+    {
         await PasteImageAndUpdateAsync(CancellationToken.None);
     }
 
@@ -732,7 +741,7 @@ public sealed partial class MainPage : Page
 
     private async Task ShowNewImageDialogAsync()
     {
-        if (_newImageDialogIsOpen || _layerRenameDialogIsOpen || _layerColorDialogIsOpen || !ViewModel.CanCreateImage)
+        if (_newImageDialogIsOpen || _pasteImageDialogIsOpen || _layerRenameDialogIsOpen || _layerColorDialogIsOpen || !ViewModel.CanCreateImage)
         {
             return;
         }
@@ -1846,6 +1855,7 @@ public sealed partial class MainPage : Page
     {
         return !_isReadyForControlEvents
             || _newImageDialogIsOpen
+            || _pasteImageDialogIsOpen
             || _layerRenameDialogIsOpen
             || _layerColorDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen

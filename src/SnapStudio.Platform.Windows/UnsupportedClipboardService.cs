@@ -7,6 +7,11 @@ public sealed class UnsupportedClipboardService : IClipboardService
 {
     public Task<ClipboardResult> CopyDocumentAsync(
         DocumentId documentId,
+        RectD? sourceBounds,
+        CancellationToken cancellationToken) => CopyDocumentAsync(documentId, cancellationToken);
+
+    public Task<ClipboardResult> CopyDocumentAsync(
+        DocumentId documentId,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
