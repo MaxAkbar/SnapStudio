@@ -1294,10 +1294,7 @@ public sealed partial class MainPage : Page
             return;
         }
 
-        ViewModel.UpdateAnnotationTool(toolIndex);
-        PropertiesSectionExpander.IsExpanded = true;
-        UpdateBindingsFromViewModel();
-        RefreshAnnotationCanvas();
+        SelectCanvasTool(toolIndex);
     }
 
     private void AnnotationPreset_SelectionChanged(
@@ -1477,9 +1474,7 @@ public sealed partial class MainPage : Page
 
     private void SelectionToolButton_Click(object sender, RoutedEventArgs e)
     {
-        ViewModel.UseSelectionTool();
-        PropertiesSectionExpander.IsExpanded = true;
-        UpdateBindingsFromViewModel();
+        SelectCanvasTool(null);
     }
 
     private void AnnotationOverlay_Tapped(

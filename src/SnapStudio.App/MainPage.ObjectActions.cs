@@ -87,7 +87,15 @@ public sealed partial class MainPage
         bool pointer = args.TryGetPosition(this, out Point position);
         AnnotationOverlayItem? item = FindObjectItem(args.OriginalSource as DependencyObject);
         if (item is null && !pointer) item = GetSelectedObjectItem();
-        if (item is null) return;
+        if (item is null)
+        {
+            if (ViewModel.HasSelectedAnnotation) return;
+            if (!pointer) position = CanvasScrollViewer.TransformToVisual(this)
+                .TransformPoint(new Point(CanvasScrollViewer.ActualWidth / 2, CanvasScrollViewer.ActualHeight / 2));
+            args.Handled = true;
+            ShowCanvasToolMenu(position);
+            return;
+        }
         if (!pointer)
         {
             Point center = CanvasSurface.TransformToVisual(CanvasScrollViewer).TransformPoint(new Point(item.Left + item.Width / 2, item.Top + item.Height / 2));

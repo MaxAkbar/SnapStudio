@@ -1025,7 +1025,7 @@
                     </Border>
                     <Border
                         Grid.Row="3"
-                        AutomationProperties.HelpText="Drag a selection rectangle to select overlapping objects. Shift-click adds or removes objects. Hold Ctrl and scroll the mouse wheel to zoom at the pointer."
+                        AutomationProperties.HelpText="Drag a selection rectangle to select overlapping objects. Shift-click adds or removes objects. Right-click the image background with no objects selected to choose a tool. Hold Ctrl and scroll the mouse wheel to zoom at the pointer."
                         AutomationProperties.Name="Editor canvas"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
