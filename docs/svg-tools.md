@@ -13,8 +13,9 @@ Stroke width and text size accept typed values without a slider cap. Use **Fit
 artwork** to fit the SVG viewBox around the drawing, including its strokes.
 Import and export in the editor operate on actual SVG files; library import and
 export use SnapStudio JSON files containing both style presets and SVG designs.
-Hold **Shift** while drawing a line or arrow, moving objects, or rotating to snap
-the angle in **15° increments**. Shift still makes rectangles square and ellipses
+Hold **Shift** while drawing a line or arrow with perspective snapping off,
+moving objects, or rotating to snap the angle in **15° increments**.
+Shift still makes rectangles square and ellipses
 circular, and preserves proportions when resizing.
 
 In source builds, **Grid** shows or hides a square editing grid in the SVG
@@ -42,15 +43,67 @@ lines through the center. The curve radius is a percentage of the shorter side.
 **Reset perspective** restores defaults for the selected mode.
 
 Perspective settings are shared with the canvas for the workspace session.
-Snapping follows the actual visible segments and curves, preserving Shift
-constraints and one undo step per completed drag. These are drawing guides:
+With perspective snapping on, the ordinary **Line and Arrow** tools follow a direction through
+the exact point you click**, even between visible guides. The initial drag
+chooses the closest perspective direction and locks it until you finish the
+stroke. Guide density changes the reference lines, not the available drawing
+positions. Four- and five-point modes use the curve's local tangent or a
+vanishing-point direction, keeping lines and arrows straight. Perspective
+directions take priority over Shift's 15° angles. Turn off **Snap to grid** or
+hold **Alt** to draw freely.
+
+Choose the separate **Perspective line** icon in the SVG toolbar to follow a
+whole guide curve. On the main canvas, open the **Line** tool drawer and choose
+**Perspective line**. Your click fixes the start, even between the visible
+guides. The initial drag chooses a guide direction and locks it for the stroke;
+guide density only changes the reference lines.
+
+In one-, two-, and three-point modes, Perspective line follows straight
+vanishing-point or parallel directions. Four-point mode also follows the full
+vertical curves. Five-point mode follows horizontal or vertical curves, or a
+straight depth line through the center. Curved strokes stop at the canvas or
+curved-grid rim. Selecting the tool shows the grid and chooses four-point mode
+if the grid was rectangular; existing perspective settings are retained.
+
+Keep the grid and **Snap to grid** on, plus the main canvas **Snap** switch when
+drawing there. Hold **Alt**, turn snapping off, or hide the grid to draw a free
+straight line. Each stroke is an open SVG path with no fill, its own stroke
+color, width, dash style, opacity, and one undo step. Choose **Edit SVG** on the
+main canvas to edit its path. Moving or resizing it transforms the saved
+artwork; changing the grid affects new strokes. The ordinary Line and Arrow
+tools continue to stay straight, using a curve's local direction when snapping.
+
+**Perspective rectangle** is a separate tool beside Rectangle in the SVG
+toolbar. Choose **Front**, **Side**, or **Ground** in its **Perspective plane**
+selector, then drag opposite corners. Opposite edges follow the selected
+plane's guide families even between visible guides; four- and five-point modes
+use curved edges where the plane calls for them. The clicked corner stays
+fixed. The face stops at the canvas boundary, vanishing axis, or curved-grid
+rim. Start curved faces inside that rim. Selecting the tool shows the grid and
+chooses two-point perspective if the current grid is rectangular. Existing
+perspective settings and the snap preference are retained.
+
+The main canvas offers the same tool in the **Rectangle** drawer: choose its
+plane, then **Perspective rectangle**. It is also in the image background's
+right-click tool menu. Front means width × height, Side means depth × height,
+and Ground means width × depth. A one-point Front face is parallel to the
+image, so it remains rectangular. With snapping off or **Alt** held, the tool
+draws a flat face. The ordinary Rectangle tool keeps its usual behavior.
+Each face is a single SVG object with its fill, stroke, and one undo step;
+choose **Edit SVG** on the main canvas to edit its paths and colors. Moving or
+resizing an existing face transforms its saved artwork; changing grid settings
+affects new drawings.
+
+Other objects and resize corners snap to nearby visible segments and curves,
+preserving Shift constraints and one undo step per completed drag. These are drawing guides:
 positioning an SVG object on a guide keeps its artwork intact rather than
 applying perspective distortion. The guides are excluded from saved SVGs and
 exports and remain isolated from styles inside imported artwork.
 
 On the main canvas, drawing an SVG tool object also snaps its start and end
-corners to the perspective guides. Native shape, line, arrow, and text tools,
-toolbar object insertion, and stamp placement use perspective snapping too.
+corners to the perspective guides. The ordinary native Line and Arrow tools use the same
+continuous direction snapping as the SVG editor. Native shapes, text,
+toolbar object insertion, and stamp placement use nearby perspective guides.
 Hold **Alt** while drawing or placing a stamp for free positioning. The native
 canvas keeps each completed drawing or stamp placement as one undo step.
 

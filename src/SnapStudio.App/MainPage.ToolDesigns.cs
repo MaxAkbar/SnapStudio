@@ -50,6 +50,29 @@ public sealed partial class MainPage
         var defaults = new Button { Content = kind == AnnotationKind.Vector ? "Default shape" : "Default / solid", HorizontalAlignment = HorizontalAlignment.Stretch };
         defaults.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UseDefaultToolDesign(kind); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
         content.Children.Add(defaults);
+        if (kind == AnnotationKind.Line)
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+            row.Children.Add(new SvgThumbnail("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M4 21C19 18 19 6 4 3\" fill=\"none\" stroke=\"#4cc2ff\" stroke-width=\"2\"/></svg>"));
+            row.Children.Add(new TextBlock { Text = "Perspective line", VerticalAlignment = VerticalAlignment.Center });
+            var perspective = new Button { Content = row, HorizontalAlignment = HorizontalAlignment.Stretch };
+            AutomationProperties.SetName(perspective, "Use perspective line");
+            perspective.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UsePerspectiveLineTool(); PropertiesSectionExpander.IsExpanded = true; UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+            content.Children.Add(perspective);
+        }
+        if (kind == AnnotationKind.Rectangle)
+        {
+            var plane = new ComboBox { Header = "Perspective rectangle plane", ItemsSource = new[] { "Front", "Side", "Ground" }, SelectedIndex = (int)ViewModel.RectanglePerspectivePlane, HorizontalAlignment = HorizontalAlignment.Stretch };
+            AutomationProperties.SetName(plane, "Perspective rectangle plane");
+            content.Children.Add(plane);
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+            row.Children.Add(new SvgThumbnail("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M3 6L20 3V20L3 16Z\" fill=\"none\" stroke=\"#4cc2ff\" stroke-width=\"2\"/></svg>"));
+            row.Children.Add(new TextBlock { Text = "Perspective rectangle", VerticalAlignment = VerticalAlignment.Center });
+            var perspective = new Button { Content = row, HorizontalAlignment = HorizontalAlignment.Stretch };
+            AutomationProperties.SetName(perspective, "Use perspective rectangle");
+            perspective.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UsePerspectiveRectangleTool((PerspectiveRectanglePlane)plane.SelectedIndex); PropertiesSectionExpander.IsExpanded = true; UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+            content.Children.Add(perspective);
+        }
         var list = new StackPanel { Spacing = 6 };
         foreach (ToolDesign design in ViewModel.GetToolDesigns(kind))
         {

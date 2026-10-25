@@ -3,7 +3,7 @@ using SnapStudio.Core.Rendering;
 
 namespace SnapStudio.Core.Documents;
 
-public sealed record PerspectiveDrawingSnapResult(PointD Start, PointD End, IReadOnlyList<AnnotationSnapGuide> Guides);
+public sealed record PerspectiveDrawingSnapResult(PointD Start, PointD End, IReadOnlyList<AnnotationSnapGuide> Guides, PerspectiveLineFamily? Direction = null);
 
 public static class PerspectiveSnapping
 {

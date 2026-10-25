@@ -18,7 +18,7 @@ public sealed partial class ShellViewModel
     public Visibility AnnotationColorControlsVisibility => PropertyVisibility(AnnotationProperty.Color);
     public Visibility AnnotationFillControlsVisibility => PropertyVisibility(AnnotationProperty.ShapeFill);
     public Visibility AnnotationOpacityControlsVisibility => PropertyVisibility(AnnotationProperty.Opacity | AnnotationProperty.BlurStrength);
-    public Visibility AnnotationCornerStyleControlsVisibility => PropertyVisibility(AnnotationProperty.Corners);
+    public Visibility AnnotationCornerStyleControlsVisibility => IsPerspectiveRectangleToolActive && !HasSelectedAnnotation ? Visibility.Collapsed : PropertyVisibility(AnnotationProperty.Corners);
     public Visibility AnnotationTextControlsVisibility => CanEditAnnotationText ? PropertyVisibility(AnnotationProperty.TextContent) : Visibility.Collapsed;
     public Visibility AnnotationSelectionControlsVisibility => IsSelectionToolActive && (IsMarqueeToolActive && MarqueeSourceBounds.HasValue || !HasSelectedAnnotation) ? Visibility.Visible : Visibility.Collapsed;
     public Visibility AnnotationSelectionCropVisibility => IsSelectionToolActive && CanCropToSelection && (IsMarqueeToolActive || !HasSelectedAnnotation) ? Visibility.Visible : Visibility.Collapsed;

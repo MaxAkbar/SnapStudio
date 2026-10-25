@@ -48,5 +48,28 @@
   'M12 2C2 7 2 17 12 22 M12 2C22 7 22 17 12 22 M2 10L20 17 M22 10L4 17 M12 2V22',
   'M12 2A10 10 0 1 1 12 22A10 10 0 1 1 12 2 M12 2C3 7 3 17 12 22 M12 2C21 7 21 17 12 22 M2 12C7 3 17 3 22 12 M2 12C7 21 17 21 22 12 M2 12H22 M12 2V22'
  ];
- window.snapPerspective={normalize,create,find,icons};
+ function constrainLine(start,end,view,settings,scaleX=1,scaleY=1,locked=null){
+  const free={start,end,direction:null,stroke:null};
+  if(![start.x,start.y,end.x,end.y,view.x,view.y,view.width,view.height,scaleX,scaleY].every(Number.isFinite)||scaleX<=0||scaleY<=0||view.width<=0||view.height<=0||start.x<view.x||start.x>view.x+view.width||start.y<view.y||start.y>view.y+view.height)return free;
+  const delta={x:end.x-start.x,y:end.y-start.y};if(locked===null&&Math.hypot(delta.x*scaleX,delta.y*scaleY)<4)return free;
+  const s=normalize(settings),cx=view.x+view.width*s.centerX/100,cy=view.y+view.height*s.horizon/100,radius=Math.min(view.width,view.height)*s.radius/100;
+  let candidates=[];
+  function add(family,d){const length=Math.hypot(d.x,d.y);if(Number.isFinite(length)&&length>1e-10)candidates.push({family,d:{x:d.x/length,y:d.y/length}});}
+  function vanish(family,x,y){const d={x:x-start.x,y:y-start.y};add(family,Math.abs(d.x)+Math.abs(d.y)<1e-9?delta:d);}
+  function tangent(family,horizontal){let x=(start.x-cx)/radius,y=(start.y-cy)/radius;if(x*x+y*y>1+1e-8)return;if(horizontal)[x,y]=[y,x];let d;
+   if(Math.abs(x)<1e-9)d=Math.abs(Math.abs(y)-1)<1e-8?(horizontal?{x:delta.y,y:delta.x}:delta):{x:0,y:1};
+   else{const a=(x*x+y*y-1)/(2*x);d={x:-y,y:x-a};}add(family,horizontal?{x:d.y,y:d.x}:d);
+  }
+  if(s.mode===1){add(0,{x:1,y:0});add(1,{x:0,y:1});vanish(2,cx,cy);}
+  else if(s.mode>=2&&s.mode<=4){vanish(2,view.x+view.width*s.left/100,cy);vanish(3,view.x+view.width*s.right/100,cy);if(s.mode===2)add(1,{x:0,y:1});else if(s.mode===3)vanish(4,cx,view.y+view.height*s.vertical/100);else tangent(6,false);}
+  else if(s.mode===5){tangent(6,false);tangent(5,true);vanish(7,cx,cy);}
+  if(candidates.some(c=>c.family===locked))candidates=candidates.filter(c=>c.family===locked);
+  let best=null;
+  for(const {family,d}of candidates){const amount=(delta.x*d.x*scaleX*scaleX+delta.y*d.y*scaleY*scaleY)/(d.x*d.x*scaleX*scaleX+d.y*d.y*scaleY*scaleY),p={x:start.x+d.x*amount,y:start.y+d.y*amount},score=((p.x-end.x)*scaleX)**2+((p.y-end.y)*scaleY)**2;if(!best||score<best.score-1e-8)best={family,d,p,score};}
+  if(!best)return free;
+  const line=dist(start,best.p)<1e-9?[start,start]:clip(start,best.p,view);if(!line)return free;
+  const reach=(view.width+view.height)*2,pair=clip({x:start.x-best.d.x*reach,y:start.y-best.d.y*reach},{x:start.x+best.d.x*reach,y:start.y+best.d.y*reach},view);
+  return{start,end:line[1],direction:best.family,stroke:pair?{points:pair,major:true}:null};
+ }
+ window.snapPerspective={normalize,create,find,constrainLine,icons};
 })();

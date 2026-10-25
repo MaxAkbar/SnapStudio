@@ -12,6 +12,9 @@ public sealed partial class MainPage
     private IReadOnlyList<AnnotationSnapGuide> _objectSnapGuides = [];
     private DocumentId? _objectSnapDocumentId;
     private AnnotationKind? _toolDrawingKind;
+    private PerspectiveLineFamily? _drawingLineFamily;
+    private PerspectiveCurveDrawingResult? _perspectiveLineDrawing;
+    private bool _toolDrawingPerspectiveLine;
     private void ResetPerspectiveGrid_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs args) => ViewModel.ResetPerspectiveGrid();
 
     private void ShowObjectSnapGuides()

@@ -64,6 +64,21 @@
    if(settings.mode){const match=P.find(p,strokes(state),TOLERANCE,null,null,state.scale.x,state.scale.y);showMatch(match);return match?.point||p;}
    return{x:p.x+(nearest(p.x,'x',state)??0),y:p.y+(nearest(p.y,'y',state)??0)};
   }
+  function snapStraightLine(start,end,event,direction=null){
+   const state=layout();if(!settings.mode||!active(state,event)){showMatch(null);return null;}
+   const result=P.constrainLine(start,end,state.view,settings,state.scale.x,state.scale.y,direction);
+   showMatch(result.stroke?{stroke:result.stroke}:null);return result;
+  }
+  function snapPerspectiveLine(start,end,event,direction=null){
+   const state=layout();if(!settings.mode||!active(state,event)){showMatch(null);return{points:[start,end],stroke:null,direction:null};}
+   const result=P.curveLine(start,end,state.view,settings,state.scale.x,state.scale.y,direction);
+   showMatch(result.stroke?{stroke:result.stroke}:null);return result;
+  }
+  function snapRectangle(start,end,event,plane){
+   const state=layout(),enabled=!!settings.mode&&active(state,event);
+   const result=enabled?P.rectangle(start,end,state.view,settings,plane):P.flatRectangle(start,end);
+   showMatch(enabled&&result?{stroke:{points:result.outline}}:null);return result;
+  }
   // Shift constrains a direction or aspect ratio. Snap along that ray, never independently on X/Y.
   function alongRay(anchors,direction,state){
    let best=null;const length=Math.hypot(direction.x,direction.y);if(length<1e-9)return{x:0,y:0};
@@ -97,6 +112,6 @@
   document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!toggle.contains(e.target))close();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden){close();toggle.focus();e.preventDefault();e.stopImmediatePropagation();}},true);
   new ResizeObserver(render).observe(frame);
-  return{render,setSettings,snapPoint,snapRay,snapMove,getState};
+  return{render,setSettings,snapPoint,snapRay,snapMove,snapStraightLine,snapPerspectiveLine,snapRectangle,clearMatch:()=>showMatch(null),getState};
  };
 })();

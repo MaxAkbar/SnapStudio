@@ -1043,7 +1043,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     public bool IsMoveToolActive => IsSelectionToolActive && !_isMarqueeTool;
     private bool _isMarqueeTool = true;
 
-    public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive && !IsStampToolActive
+    public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive && !IsStampToolActive && !IsPerspectiveRectangleToolActive && !IsPerspectiveLineToolActive
         && ActiveAnnotationKind is not (AnnotationKind.Pen or AnnotationKind.Fill);
 
     public Visibility FillToleranceControlsVisibility => !HasSelectedAnnotation && !IsSelectionToolActive && ActiveAnnotationKind == AnnotationKind.Fill
@@ -1069,6 +1069,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void SetSelectionTool(bool marquee)
     {
+        _perspectiveRectangleTool = false;
+        _perspectiveLineTool = false;
         _activeStamp = null;
         _pixelSelectionRequestVersion++;
         _isMarqueeTool = marquee;
@@ -1121,7 +1123,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         _ => AnnotationKind.Rectangle
     };
 
-    public string ActiveAnnotationToolLabel => IsStampToolActive ? $"Stamp · {ActiveStampName}" : IsSelectionToolActive ? (IsMarqueeToolActive ? AreaSelectionToolName : "Move") : ActiveSvgToolDesign?.Name ?? ActiveAnnotationKind switch
+    public string ActiveAnnotationToolLabel => IsPerspectiveLineToolActive ? "Perspective line" : IsPerspectiveRectangleToolActive ? "Perspective rectangle" : IsStampToolActive ? $"Stamp · {ActiveStampName}" : IsSelectionToolActive ? (IsMarqueeToolActive ? AreaSelectionToolName : "Move") : ActiveSvgToolDesign?.Name ?? ActiveAnnotationKind switch
     {
         AnnotationKind.Ellipse => "Ellipse",
         AnnotationKind.Line => "Line",
@@ -1514,6 +1516,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public void UpdateAnnotationTool(int toolIndex)
     {
+        _perspectiveRectangleTool = false;
+        _perspectiveLineTool = false;
         _activeStamp = null;
         _pixelSelectionRequestVersion++;
         IsSelectionToolActive = false;
@@ -1536,6 +1540,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     {
         if (presetIndex > 0)
         {
+            _perspectiveRectangleTool = false;
+            _perspectiveLineTool = false;
             _activeStamp = null;
             IsSelectionToolActive = false;
             OnPropertyChanged(nameof(IsSelectionToolActive));
@@ -3180,6 +3186,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public async Task AddActiveAnnotationAsync(CancellationToken cancellationToken)
     {
+        if (IsPerspectiveLineToolActive || IsPerspectiveRectangleToolActive)
+        {
+            StatusText = "Drag on the canvas to draw the selected perspective tool.";
+            return;
+        }
         if (IsSelectionToolActive || IsStampToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
         {
             StatusText = "Choose a shape tool, draw with Pen, or click an area with Fill bucket.";
@@ -3194,6 +3205,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         CancellationToken cancellationToken,
         bool bypassPerspectiveSnapping = false)
     {
+        if (IsPerspectiveLineToolActive || IsPerspectiveRectangleToolActive) return;
         if (IsSelectionToolActive || IsStampToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
         {
             return;
@@ -3375,6 +3387,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
         PointD start = _canvasViewport.ToSourcePoint(displayStart);
         PointD end = _canvasViewport.ToSourcePoint(displayEnd);
+        if (IsPerspectiveRectangleToolActive)
+        {
+            var rectangle = CreatePerspectiveRectangleAnnotation(start, end, bypassPerspectiveSnapping);
+            return rectangle is null ? null : AnnotationOverlayItem.FromAnnotation(rectangle, _canvasViewport.Zoom, null);
+        }
         AnnotationObject annotation = CreateAnnotation(_currentDocument, ActiveAnnotationKind,
             new RectD(start.X, start.Y, end.X - start.X, end.Y - start.Y));
         if (annotation.Kind == AnnotationKind.Text) placementGuides = SnapNewObjectPlacement(annotation, bypassPerspectiveSnapping);

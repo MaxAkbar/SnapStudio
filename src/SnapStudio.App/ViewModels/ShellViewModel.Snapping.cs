@@ -15,12 +15,16 @@ public sealed partial class ShellViewModel
     public IReadOnlyList<RectD> GetObjectSnapTargets(IEnumerable<Guid> selectedIds) => _currentDocument is null ? []
         : AnnotationSnapping.GetTargets(_currentDocument, selectedIds.ToHashSet());
 
-    public PerspectiveDrawingSnapResult SnapToolDrawing(PointD displayStart, PointD displayEnd, bool constrain, bool bypass)
+    public PerspectiveDrawingSnapResult SnapToolDrawing(PointD displayStart, PointD displayEnd, bool constrain, bool bypass, PerspectiveLineFamily? direction = null)
     {
         PointD start = _canvasViewport.ToSourcePoint(displayStart), end = _canvasViewport.ToSourcePoint(displayEnd);
+        if (IsPerspectiveRectangleToolActive) return new(start, end, []);
         var canvas = new SizeD(_currentDocument?.SourceImage.Width ?? 0, _currentDocument?.SourceImage.Height ?? 0);
+        bool enabled = ObjectSnappingEnabled && IsPerspectiveGridSnapEnabled && !bypass;
+        if (enabled && ActiveAnnotationKind is AnnotationKind.Line or AnnotationKind.Arrow)
+            return PerspectiveLineDrawing.Constrain(start, end, new(0, 0, canvas.Width, canvas.Height), CanvasGridPerspective, CanvasZoom, CanvasZoom, direction);
         return PerspectiveSnapping.Draw(start, end, ActiveAnnotationKind,
-            ObjectSnappingEnabled && IsPerspectiveGridSnapEnabled && !bypass ? CurrentPerspectiveGrid : [], canvas, CanvasZoom, constrain);
+            enabled ? CurrentPerspectiveGrid : [], canvas, CanvasZoom, constrain);
     }
 
     private IReadOnlyList<AnnotationSnapGuide> SnapNewObjectPlacement(AnnotationObject annotation, bool bypass)

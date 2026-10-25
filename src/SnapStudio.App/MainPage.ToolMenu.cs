@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using SnapStudio.Core.Documents;
 using Windows.Foundation;
 
 namespace SnapStudio.App;
@@ -32,7 +33,7 @@ public sealed partial class MainPage
                 Text = name,
                 GroupName = group,
                 KeyboardAcceleratorTextOverride = ToolShortcut(index),
-                IsChecked = index == -1 ? ViewModel.IsMoveToolActive : index.HasValue ? !ViewModel.IsSelectionToolActive && !ViewModel.IsStampToolActive && ViewModel.AnnotationToolIndex == index
+                IsChecked = index == -1 ? ViewModel.IsMoveToolActive : index.HasValue ? !ViewModel.IsSelectionToolActive && !ViewModel.IsStampToolActive && !ViewModel.IsPerspectiveRectangleToolActive && !ViewModel.IsPerspectiveLineToolActive && ViewModel.AnnotationToolIndex == index
                     : ViewModel.IsMarqueeToolActive
             };
             item.Click += (_, _) =>
@@ -41,6 +42,23 @@ public sealed partial class MainPage
                     SelectCanvasTool(index);
             };
             menu.Items.Add(item);
+            if (index == 2)
+            {
+                var perspective = new RadioMenuFlyoutItem { Text = "Perspective line", GroupName = group, IsChecked = ViewModel.IsPerspectiveLineToolActive };
+                perspective.Click += (_, _) => { if (ViewModel.CurrentDocumentId != documentId || _canvasDragMode != CanvasDragMode.None) return; HideToolDesignDrawer(); _objectContextMenu?.Hide(); ViewModel.UsePerspectiveLineTool(); PropertiesSectionExpander.IsExpanded = true; UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+                menu.Items.Add(perspective);
+            }
+            if (index == 0)
+            {
+                var perspective = new MenuFlyoutSubItem { Text = "Perspective rectangle" };
+                foreach (var plane in Enum.GetValues<PerspectiveRectanglePlane>())
+                {
+                    var choice = new RadioMenuFlyoutItem { Text = plane + " plane", GroupName = group, IsChecked = ViewModel.IsPerspectiveRectangleToolActive && ViewModel.RectanglePerspectivePlane == plane };
+                    choice.Click += (_, _) => { if (ViewModel.CurrentDocumentId != documentId || _canvasDragMode != CanvasDragMode.None) return; HideToolDesignDrawer(); _objectContextMenu?.Hide(); ViewModel.UsePerspectiveRectangleTool(plane); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+                    perspective.Items.Add(choice);
+                }
+                menu.Items.Add(perspective);
+            }
         }
         var stamps = new RadioMenuFlyoutItem
         {

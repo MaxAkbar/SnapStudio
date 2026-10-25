@@ -293,7 +293,7 @@ public sealed partial class MainPage : Page
         KeyboardAccelerator sender,
         KeyboardAcceleratorInvokedEventArgs args)
     {
-        if (!TryHandleApplicationShortcut(args, ViewModel.HasCurrentDocument))
+        if (!TryHandleApplicationShortcut(args, ViewModel.CanAddActiveAnnotation))
         {
             return;
         }
@@ -1663,6 +1663,8 @@ public sealed partial class MainPage : Page
         _annotationDragStart = ClampToCanvas(pointerPoint.Position);
         _objectSnapDocumentId = ViewModel.CurrentDocumentId;
         _toolDrawingKind = ViewModel.ActiveAnnotationKind;
+        _toolDrawingPerspectiveLine = ViewModel.IsPerspectiveLineToolActive;
+        _drawingLineFamily = null;
         CanvasSurface.CapturePointer(e.Pointer);
         ShowDrawingPreview(_annotationDragStart, e);
         e.Handled = true;
@@ -1777,10 +1779,13 @@ public sealed partial class MainPage : Page
         RectD displayBounds = CreateDisplayBounds(drawingStart, drawingEnd);
         RectD gestureBounds = CreateDisplayBounds(_annotationDragStart, currentPoint);
         bool bypassSnapping = e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu);
+        PerspectiveCurveDrawingResult? curveDrawing = _perspectiveLineDrawing;
         EndCanvasDrag(e);
 
         bool isLinearAnnotation = IsLinearAnnotationKind(ViewModel.ActiveAnnotationKind);
-        bool isTooSmall = !isLinearAnnotation
+        bool isTooSmall = ViewModel.IsPerspectiveRectangleToolActive
+            ? CalculateDistance(_annotationDragStart, currentPoint) < MinimumDragDisplaySize
+            : !isLinearAnnotation
             ? displayBounds.Width < MinimumDragDisplaySize
                 || displayBounds.Height < MinimumDragDisplaySize
                 || gestureBounds.Width < MinimumDragDisplaySize || gestureBounds.Height < MinimumDragDisplaySize
@@ -1794,6 +1799,18 @@ public sealed partial class MainPage : Page
             return;
         }
 
+        if (ViewModel.IsPerspectiveLineToolActive)
+        {
+            if (curveDrawing is not null) await ViewModel.AddPerspectiveLineAsync(curveDrawing, CancellationToken.None);
+            UpdateBindingsFromViewModel();
+            return;
+        }
+        if (ViewModel.IsPerspectiveRectangleToolActive)
+        {
+            await ViewModel.AddPerspectiveRectangleAsync(drawing.Start, drawing.End, bypassSnapping, CancellationToken.None);
+            UpdateBindingsFromViewModel();
+            return;
+        }
         RectD? sourceBounds = isLinearAnnotation
             ? ViewModel.CreateDirectedSourceBoundsFromCanvasDrag(
                 new PointD(drawingStart.X, drawingStart.Y),
@@ -2849,6 +2866,9 @@ public sealed partial class MainPage : Page
         _objectSnapTargets = [];
         _objectSnapDocumentId = null;
         _toolDrawingKind = null;
+        _toolDrawingPerspectiveLine = false;
+        _perspectiveLineDrawing = null;
+        _drawingLineFamily = null;
         _objectSnapGuides = [];
         ObjectSnapGuides.Children.Clear();
         if (e is not null) CanvasSurface.ReleasePointerCapture(e.Pointer);
@@ -2876,7 +2896,18 @@ public sealed partial class MainPage : Page
     private PerspectiveDrawingSnapResult ShowDrawingPreview(Point end, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         bool bypass = e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu);
-        PerspectiveDrawingSnapResult drawing = ViewModel.SnapToolDrawing(new(_annotationDragStart.X, _annotationDragStart.Y), new(end.X, end.Y), IsShiftPressed(e), bypass);
+        if (ViewModel.IsPerspectiveLineToolActive)
+        {
+            var curve = ViewModel.GetPerspectiveLineDrawing(new(_annotationDragStart.X, _annotationDragStart.Y), new(end.X, end.Y), bypass, _drawingLineFamily);
+            _perspectiveLineDrawing = curve;
+            _drawingLineFamily = curve.Direction ?? _drawingLineFamily;
+            ShowDragAnnotationPreview(ViewModel.CreatePerspectiveLinePreview(curve));
+            _objectSnapGuides = curve.Guides;
+            ShowObjectSnapGuides();
+            return new(curve.Points.Count > 0 ? curve.Points[0] : default, curve.Points.Count > 0 ? curve.Points[^1] : default, curve.Guides, curve.Direction);
+        }
+        PerspectiveDrawingSnapResult drawing = ViewModel.SnapToolDrawing(new(_annotationDragStart.X, _annotationDragStart.Y), new(end.X, end.Y), IsShiftPressed(e), bypass, _drawingLineFamily);
+        _drawingLineFamily = drawing.Direction ?? _drawingLineFamily;
         double zoom = ViewModel.CanvasZoom;
         ShowDragAnnotationPreview(ViewModel.CreateActiveAnnotationPreview(
             new PointD(drawing.Start.X * zoom, drawing.Start.Y * zoom), new PointD(drawing.End.X * zoom, drawing.End.Y * zoom), bypass, out var placementGuides));
@@ -2932,7 +2963,8 @@ public sealed partial class MainPage : Page
     {
         if (_canvasDragMode is CanvasDragMode.MoveAnnotation or CanvasDragMode.ResizeAnnotation or CanvasDragMode.DrawAnnotation
             && _objectSnapDocumentId != ViewModel.CurrentDocumentId) EndCanvasDrag();
-        if (_canvasDragMode == CanvasDragMode.DrawAnnotation && _toolDrawingKind != ViewModel.ActiveAnnotationKind) EndCanvasDrag();
+        if (_canvasDragMode == CanvasDragMode.DrawAnnotation && (_toolDrawingKind != ViewModel.ActiveAnnotationKind
+            || _toolDrawingPerspectiveLine != ViewModel.IsPerspectiveLineToolActive)) EndCanvasDrag();
         if (_canvasDragMode == CanvasDragMode.SelectPolygon && (_polygonDocumentId != ViewModel.CurrentDocumentId
             || !ReferenceEquals(_polygonSourceImage, ViewModel.CanvasImageSource) || !ViewModel.IsMarqueeToolActive
             || ViewModel.AreaSelectionTool != PixelSelectionTool.PolygonalLasso)) CancelPolygonSelection();

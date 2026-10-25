@@ -62,7 +62,9 @@ public sealed partial class MainPage : INotifyPropertyChanged
         ? (ViewModel.IsMarqueeToolActive ? ViewModel.AreaSelectionIcon : "Move")
         : ViewModel.ActiveAnnotationKind.ToString();
 
-    public string WorkspaceToolHint => ViewModel.IsStampToolActive ? "Click to place a stamp · V to move or resize" : ViewModel.IsSelectionToolActive
+    public string WorkspaceToolHint => ViewModel.IsPerspectiveLineToolActive ? "Drag along a perspective curve · Alt draws freely"
+        : ViewModel.IsPerspectiveRectangleToolActive ? $"Drag opposite corners · {ViewModel.RectanglePerspectivePlane} plane · Alt draws flat"
+        : ViewModel.IsStampToolActive ? "Click to place a stamp · V to move or resize" : ViewModel.IsSelectionToolActive
         ? (ViewModel.IsMarqueeToolActive ? ViewModel.AreaSelectionHint : "Click or drag objects · M to select an area")
         : ViewModel.ActiveAnnotationKind switch
         {
