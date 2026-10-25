@@ -19,10 +19,6 @@
 
 <p align="center">Windows 11 · Works offline · No account required · MIT licensed</p>
 
-![SnapStudio demo: start with a screenshot, add an arrow and text note, reposition the note, and prepare the image for sharing](docs/media/snapstudio-demo.gif)
-
-*See SnapStudio 1.0 in action. [View the still image](docs/media/snapstudio-demo.png) if you prefer.*
-
 ## From screenshot to explanation
 
 - **Capture what matters.** Grab a region, a window, one monitor, or your entire desktop. You can also open an image or paste from the clipboard.
@@ -128,7 +124,6 @@ SnapStudio uses WinUI for the desktop app and Windows APIs for capture. Core wor
 - [SVG designer and supported SVG features](docs/svg-tools.md)
 - [Example tool design pack](docs/tool-designs.sample.json)
 - [Updating the HTML help](docs/help-authoring.md)
-- [README demo source and refresh notes](docs/media/README.md)
 
 </details>
 

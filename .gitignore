@@ -9,3 +9,8 @@ TestResults/
 *.snupkg
 artifacts/
 coverage/
+
+# Local design experiments and documentation media.
+/docs/branding/
+/docs/media/
+/prototypes/
