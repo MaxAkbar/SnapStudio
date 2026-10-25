@@ -17,6 +17,20 @@ Hold **Shift** while drawing a line or arrow, moving objects, or rotating to sna
 the angle in **15° increments**. Shift still makes rectangles square and ellipses
 circular, and preserves proportions when resizing.
 
+In source builds, **Grid** shows or hides a square editing grid in the SVG
+designer. Open **Grid settings** to adjust cell spacing from **4 to 512 SVG
+coordinate units** and turn **Snap to grid** on or off. Fine grids use wider
+visible spacing at low scale, and snapping uses those same lines. Hold **Alt**
+to bypass grid snapping. Hiding the grid also stops grid snapping. The grid is
+an editing guide and is excluded from saved and exported SVG artwork. These
+controls are not included in the 1.0.0 download.
+
+Grid visibility, spacing, and the snap preference are shared with the main
+canvas for the current workspace session. In the designer, snapping applies to
+object and group movement, resize corners, new shape endpoints, and path
+anchors. Freehand strokes and Bézier control handles remain free to draw curves;
+existing Shift constraints and Alt controls continue to work.
+
 Drawing an SVG variant places one SVG object, with its own saved source. Select
 that object and choose **Edit SVG** in Properties or its context menu. Changes
 apply to that object and can be undone; its reusable tool and duplicates keep

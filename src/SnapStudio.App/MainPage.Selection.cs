@@ -195,14 +195,28 @@ public sealed partial class MainPage
             (marquee.Y + pair.Value.Y - original.Y) * ViewModel.CanvasZoom, marquee.Width * ViewModel.CanvasZoom, marquee.Height * ViewModel.CanvasZoom));
     }
 
-    private IReadOnlyDictionary<Guid, RectD> CreateSelectionDragBounds(Point current, bool constrain)
+    private IReadOnlyDictionary<Guid, RectD> CreateSelectionDragBounds(Point current, bool constrain, bool bypassSnapping)
     {
+        IReadOnlyDictionary<Guid, RectD> proposed;
         if (_canvasDragMode == CanvasDragMode.MoveAnnotation && _annotationDragBounds.Count > 0)
         {
             PointD? source = ViewModel.CreateSourcePointFromCanvasPoint(new PointD(current.X, current.Y));
-            return source is PointD point ? ViewModel.CreateSelectionMoveBounds(_annotationDragBounds, _annotationDragStartSourcePoint, point, constrain) : _annotationDragBounds;
+            proposed = source is PointD point ? ViewModel.CreateSelectionMoveBounds(_annotationDragBounds, _annotationDragStartSourcePoint, point, constrain) : _annotationDragBounds;
         }
-        return CreateAnnotationDragBounds(current, constrain) is RectD bounds ? new Dictionary<Guid, RectD> { [_annotationDragId] = bounds } : new Dictionary<Guid, RectD>();
+        else proposed = CreateAnnotationDragBounds(current, constrain) is RectD bounds ? new Dictionary<Guid, RectD> { [_annotationDragId] = bounds } : new Dictionary<Guid, RectD>();
+        _objectSnapGuides = [];
+        if (proposed.Count == 0) return proposed;
+        bool moving = _canvasDragMode == CanvasDragMode.MoveAnnotation;
+        RectD group = moving ? AnnotationBoundsEditor.CombinedBounds(proposed.Values) : proposed.First().Value;
+        bool horizontal = Math.Abs(current.X - _annotationDragStart.X) >= Math.Abs(current.Y - _annotationDragStart.Y);
+        AnnotationSnapResult snapped = ViewModel.SnapObjectDragBounds(_annotationDragId, group, _annotationDragOriginalSourceBounds,
+            _annotationDragHandle, _objectSnapTargets, constrain, !constrain || !moving || horizontal, !constrain || !moving || !horizontal, bypassSnapping);
+        _objectSnapGuides = snapped.Guides;
+        return moving ? proposed.ToDictionary(pair => pair.Key, pair => pair.Value with
+        {
+            X = pair.Value.X + snapped.Bounds.X - group.X,
+            Y = pair.Value.Y + snapped.Bounds.Y - group.Y
+        }) : new Dictionary<Guid, RectD> { [_annotationDragId] = snapped.Bounds };
     }
 
     private static Microsoft.UI.Xaml.Shapes.Rectangle CreateSelectionOutline(AnnotationOverlayItem item) => new()

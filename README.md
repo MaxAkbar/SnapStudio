@@ -61,6 +61,9 @@ When you need more than a quick arrow:
 - Place reusable symbols, status labels, and your own SVG artwork with **Stamps** (**S**).
 - Add tags such as `Design` or `Bug` and find them later with searches like `#Design`.
 - Choose **Dark**, **Light**, or **Use system setting** in **Settings → Appearance**.
+- In source builds, use **Snap** beside the zoom controls to align moving objects by their edges or centers. Magenta guides show the match. Hold **Alt** to bypass snapping, or turn Snap off for free positioning.
+- In source builds, turn on **Grid** beside Snap for an editing grid. Its arrow opens settings for **4–512 px** cell spacing and **Snap to grid**. Dense grids use wider visible spacing at low zoom, and snapping follows those lines. The grid stays out of copied and exported images.
+- In source builds, use **Grid** in the SVG designer too, with **4–512 SVG units** of cell spacing and optional grid snapping. The guide stays out of saved and exported SVG artwork.
 
 ## Stamps and free SVG icons
 

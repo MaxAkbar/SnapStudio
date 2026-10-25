@@ -3,8 +3,20 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using SnapStudio.Core.Documents;
+using SnapStudio.Core.Rendering;
 
 namespace SnapStudio.App.Controls;
+
+public sealed record SvgDesignerGridSettings
+{
+    public SvgDesignerGridSettings(bool visible = false, double spacing = CanvasGridLayout.DefaultSpacing, bool snap = true)
+    {
+        Visible = visible; Spacing = CanvasGridLayout.NormalizeSpacing(spacing); Snap = snap;
+    }
+    public bool Visible { get; }
+    public double Spacing { get; }
+    public bool Snap { get; }
+}
 
 public sealed class SvgDesignerControl : Grid, IDisposable
 {
@@ -19,10 +31,12 @@ public sealed class SvgDesignerControl : Grid, IDisposable
     public event EventHandler? ImportRequested;
     public event EventHandler? ExportRequested;
     public event EventHandler? SaveRequested;
+    public event EventHandler<SvgDesignerGridSettings>? GridSettingsChanged;
+    public SvgDesignerGridSettings GridSettings { get; private set; }
 
-    public SvgDesignerControl(string svg, string[] fonts, ElementTheme theme)
+    public SvgDesignerControl(string svg, string[] fonts, ElementTheme theme, SvgDesignerGridSettings? grid = null)
     {
-        _initialSvg = svg; _fonts = fonts; _theme = theme;
+        _initialSvg = svg; _fonts = fonts; _theme = theme; GridSettings = grid ?? new();
         RowDefinitions.Add(new() { Height = new(1, GridUnitType.Star) }); RowDefinitions.Add(new() { Height = GridLength.Auto });
         Children.Add(_web); SetRow(_error, 1); Children.Add(_error);
         Loaded += Initialize;
@@ -53,12 +67,17 @@ public sealed class SvgDesignerControl : Grid, IDisposable
                     switch (message.RootElement.GetProperty("type").GetString())
                     {
                         case "ready":
-                            core.PostWebMessageAsJson(JsonSerializer.Serialize(new { type = "load", svg = _initialSvg, theme = _theme.ToString(), fonts = _fonts }));
+                            core.PostWebMessageAsJson(JsonSerializer.Serialize(new
+                            {
+                                type = "load", svg = _initialSvg, theme = _theme.ToString(), fonts = _fonts,
+                                grid = new { visible = GridSettings.Visible, spacing = GridSettings.Spacing, snap = GridSettings.Snap }
+                            }));
                             break;
                         case "loaded": _ready.TrySetResult(); Ready?.Invoke(this, EventArgs.Empty); break;
                         case "import": ImportRequested?.Invoke(this, EventArgs.Empty); break;
                         case "export": ExportRequested?.Invoke(this, EventArgs.Empty); break;
                         case "save": SaveRequested?.Invoke(this, EventArgs.Empty); break;
+                        case "gridChanged": ApplyGridSettings(message.RootElement); break;
                         case "error": ShowError(message.RootElement.GetProperty("message").GetString() ?? "The SVG could not be loaded."); break;
                     }
                 }
@@ -70,6 +89,22 @@ public sealed class SvgDesignerControl : Grid, IDisposable
             core.Navigate(editorUrl);
         }
         catch (Exception error) { _ready.TrySetException(error); ShowError("The SVG editor could not start: " + error.Message); }
+    }
+
+    private void ApplyGridSettings(JsonElement message)
+    {
+        if (!message.TryGetProperty("visible", out var visible) || visible.ValueKind is not (JsonValueKind.True or JsonValueKind.False)
+            || !message.TryGetProperty("spacing", out var spacing) || spacing.ValueKind != JsonValueKind.Number
+            || !spacing.TryGetDouble(out double value) || !double.IsFinite(value)
+            || !message.TryGetProperty("snap", out var snap) || snap.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+        {
+            ShowError("The SVG editor returned invalid grid settings.");
+            return;
+        }
+        var settings = new SvgDesignerGridSettings(visible.GetBoolean(), value, snap.GetBoolean());
+        if (GridSettings == settings) return;
+        GridSettings = settings;
+        GridSettingsChanged?.Invoke(this, settings);
     }
 
     public async Task<string> GetSvgAsync()

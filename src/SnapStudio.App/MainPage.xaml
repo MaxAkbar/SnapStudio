@@ -1144,8 +1144,12 @@
                                             Source="{x:Bind ViewModel.CanvasImageSource, Mode=OneWay}"
                                             Stretch="Fill" />
                                         <Canvas x:Name="AnnotationCanvas" Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}" Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"/>
+                                        <controls:CanvasGridOverlay Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}" Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
+                                            CellSize="{x:Bind ViewModel.CanvasGridCellSize, Mode=OneWay}" Zoom="{x:Bind ViewModel.CanvasZoom, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.CanvasGridVisibility, Mode=OneWay}" IsHitTestVisible="False" AutomationProperties.Name="Canvas grid"/>
                                         <Canvas Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}" Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}" IsHitTestVisible="False">
                                             <Canvas x:Name="AnnotationDragPreview"/>
+                                            <Canvas x:Name="ObjectSnapGuides" IsHitTestVisible="False"/>
                                             <Path x:Name="SelectionMarqueeUnderlay" Stroke="White" StrokeThickness="1" Visibility="Collapsed"/>
                                             <Path
                                                 x:Name="SelectionMarquee"
@@ -1198,7 +1202,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                <TextBlock Text="M select area · V move objects · Ctrl + scroll to zoom" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
+                                <TextBlock Text="M select area · V move objects · Ctrl + scroll to zoom" TextTrimming="CharacterEllipsis" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
                                     <Border
                                         Grid.Column="1"
                                         Background="{ThemeResource WorkspaceCommandBrush}"
@@ -1207,6 +1211,31 @@
                                         CornerRadius="7"
                                         Padding="4">
                                         <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="4">
+                                            <ToggleButton Content="Grid" IsChecked="{x:Bind ViewModel.ShowCanvasGrid, Mode=TwoWay}"
+                                                AutomationProperties.Name="Show canvas grid" ToolTipService.ToolTip="Show or hide the canvas grid"
+                                                FontSize="10" Padding="8,2" MinWidth="0" Height="26" IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"/>
+                                            <Button Content="▾" AutomationProperties.Name="Grid settings" ToolTipService.ToolTip="Grid spacing and snapping"
+                                                Padding="4,2" MinWidth="20" Height="26" IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}">
+                                                <Button.Flyout>
+                                                    <Flyout Placement="Top">
+                                                        <StackPanel Width="240" Spacing="12">
+                                                            <TextBlock Text="Canvas grid" FontSize="16" FontWeight="SemiBold"/>
+                                                            <CheckBox Content="Show grid" IsChecked="{x:Bind ViewModel.ShowCanvasGrid, Mode=TwoWay}"/>
+                                                            <NumberBox Header="Cell spacing (image px)" AutomationProperties.Name="Grid cell spacing" Minimum="4" Maximum="512"
+                                                                Value="{x:Bind ViewModel.CanvasGridCellSize, Mode=TwoWay}" SpinButtonPlacementMode="Compact" SmallChange="1" LargeChange="8"/>
+                                                            <TextBlock Text="{x:Bind ViewModel.CanvasGridSpacingDescription, Mode=OneWay}" FontSize="11" TextWrapping="Wrap"/>
+                                                            <CheckBox Content="Snap to grid" IsChecked="{x:Bind ViewModel.SnapToCanvasGrid, Mode=TwoWay}"
+                                                                IsEnabled="{x:Bind ViewModel.ShowCanvasGrid, Mode=OneWay}"/>
+                                                            <TextBlock Text="Snap must be on to align objects. Hold Alt to bypass. The grid is only for editing; it is left out of copied and exported images."
+                                                                TextWrapping="Wrap" FontSize="11"/>
+                                                        </StackPanel>
+                                                    </Flyout>
+                                                </Button.Flyout>
+                                            </Button>
+                                            <ToggleButton Content="Snap" IsChecked="{x:Bind ViewModel.ObjectSnappingEnabled, Mode=TwoWay}"
+                                                AutomationProperties.Name="Snap objects" AutomationProperties.HelpText="Snap moving or resizing objects to visible object and canvas edges and centers, and to the grid when Snap to grid is enabled. Hold Alt while dragging to bypass."
+                                                ToolTipService.ToolTip="Snap objects · hold Alt to bypass" FontSize="10" Padding="8,2" MinWidth="0" Height="26"
+                                                IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"/>
                                             <Button
                                                 AccessKey="-"
                                                 AutomationProperties.AcceleratorKey="Ctrl+Minus"

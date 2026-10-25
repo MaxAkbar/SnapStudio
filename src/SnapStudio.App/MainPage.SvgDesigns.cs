@@ -44,7 +44,14 @@ public sealed partial class MainPage
     private async Task ShowSvgDesignerAsync(string title, UIElement heading, string svg, Func<string, Task> save, string saveLabel, Action<string>? importedName = null)
     {
         HideToolDesignDrawer(); _toolDesignDialogIsOpen = true;
-        using var editor = new SvgDesignerControl(svg, ViewModel.AnnotationFontFamilies.ToArray(), ActualTheme);
+        using var editor = new SvgDesignerControl(svg, ViewModel.AnnotationFontFamilies.ToArray(), ActualTheme,
+            new(ViewModel.ShowCanvasGrid, ViewModel.CanvasGridCellSize, ViewModel.SnapToCanvasGrid));
+        editor.GridSettingsChanged += (_, settings) =>
+        {
+            ViewModel.CanvasGridCellSize = settings.Spacing;
+            ViewModel.SnapToCanvasGrid = settings.Snap;
+            ViewModel.ShowCanvasGrid = settings.Visible;
+        };
         try
         {
             double width = Math.Max(640, Math.Min(1180, XamlRoot.Size.Width - 96));

@@ -2760,6 +2760,9 @@ public sealed partial class MainPage : Page
         _annotationDragStart = displayPoint;
         _annotationDragHasMoved = false;
         _annotationDragBounds = ViewModel.GetSelectedAnnotationBounds();
+        _objectSnapTargets = ViewModel.GetObjectSnapTargets(_annotationDragBounds.Keys);
+        _objectSnapDocumentId = ViewModel.CurrentDocumentId;
+        _objectSnapGuides = [];
         _annotationDragMarqueeBounds = ViewModel.PersistentSelectionSourceBounds;
         CanvasSurface.CapturePointer(e.Pointer);
         e.Handled = true;
@@ -2775,11 +2778,12 @@ public sealed partial class MainPage : Page
             _annotationDragHasMoved = true;
             SetDraggedAnnotationVisibility(Visibility.Collapsed);
         }
-        IReadOnlyDictionary<Guid, RectD> bounds = CreateSelectionDragBounds(currentDisplayPoint, IsShiftPressed(e));
+        IReadOnlyDictionary<Guid, RectD> bounds = CreateSelectionDragBounds(currentDisplayPoint, IsShiftPressed(e), e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
         AnnotationDragPreview.Children.Clear();
         foreach (var pair in bounds)
             AddDragAnnotationPreview(ViewModel.CreateAnnotationEditPreview(pair.Key, pair.Value), bounds.Count > 1);
         ShowMovedSelectionMarquee(bounds);
+        ShowObjectSnapGuides();
     }
 
     private async Task CompleteAnnotationDragAsync(
@@ -2788,7 +2792,7 @@ public sealed partial class MainPage : Page
     {
         ShowAnnotationEditPreview(currentDisplayPoint, e);
         if (!_annotationDragHasMoved) { EndCanvasDrag(e); UpdateBindingsFromViewModel(); return; }
-        IReadOnlyDictionary<Guid, RectD> editedBounds = CreateSelectionDragBounds(currentDisplayPoint, IsShiftPressed(e));
+        IReadOnlyDictionary<Guid, RectD> editedBounds = CreateSelectionDragBounds(currentDisplayPoint, IsShiftPressed(e), e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
         string displayName = _annotationDragHandle == AnnotationBoundsHandle.Move
             ? "Move Annotation"
             : "Resize Annotation";
@@ -2836,6 +2840,10 @@ public sealed partial class MainPage : Page
         _annotationDragOriginalSourceBounds = default;
         _annotationDragStartSourcePoint = default;
         _annotationDragBounds = new Dictionary<Guid, RectD>();
+        _objectSnapTargets = [];
+        _objectSnapDocumentId = null;
+        _objectSnapGuides = [];
+        ObjectSnapGuides.Children.Clear();
         if (e is not null) CanvasSurface.ReleasePointerCapture(e.Pointer);
         else CanvasSurface.ReleasePointerCaptures();
         AnnotationDragPreview.Children.Clear();
@@ -2927,6 +2935,8 @@ public sealed partial class MainPage : Page
 
     private void UpdateBindingsFromViewModel()
     {
+        if (_canvasDragMode is CanvasDragMode.MoveAnnotation or CanvasDragMode.ResizeAnnotation
+            && _objectSnapDocumentId != ViewModel.CurrentDocumentId) EndCanvasDrag();
         if (_canvasDragMode == CanvasDragMode.SelectPolygon && (_polygonDocumentId != ViewModel.CurrentDocumentId
             || !ReferenceEquals(_polygonSourceImage, ViewModel.CanvasImageSource) || !ViewModel.IsMarqueeToolActive
             || ViewModel.AreaSelectionTool != PixelSelectionTool.PolygonalLasso)) CancelPolygonSelection();
