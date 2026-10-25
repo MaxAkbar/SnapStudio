@@ -186,6 +186,7 @@
         </ResourceDictionary>
     </Page.Resources>
     <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="F1" Invoked="HelpKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="N" Modifiers="Control" Invoked="NewImageKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="V" Modifiers="Control" Invoked="PasteImageKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="V" Modifiers="Control,Shift" Invoked="PasteImageKeyboardAccelerator_Invoked"/>
@@ -246,6 +247,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
@@ -475,6 +477,17 @@
                     x:Name="FocusWorkspaceButton"
                     Grid.Column="4">
                     <controls:WorkspaceIcon Kind="Focus" Width="18" Height="18"/>
+                </Button>
+                <Button
+                    Grid.Column="7"
+                    AccessKey="H"
+                    AutomationProperties.Name="Help"
+                    AutomationProperties.AcceleratorKey="F1"
+                    AutomationProperties.HelpText="Open the offline SnapStudio user guide."
+                    Click="HelpButton_Click"
+                    Style="{StaticResource WorkspaceIconButtonStyle}"
+                    ToolTipService.ToolTip="Help (F1)">
+                    <SymbolIcon Symbol="Help"/>
                 </Button>
             </Grid>
         </Border>

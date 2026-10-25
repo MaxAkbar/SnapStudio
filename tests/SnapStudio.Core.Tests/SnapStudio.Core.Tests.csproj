@@ -25,6 +25,7 @@
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
     <!-- Exercise the UI-independent collection updater without loading WinUI into the test host. -->
     <Compile Include="..\..\src\SnapStudio.App\ViewModels\CollectionUpdates.cs" Link="App\CollectionUpdates.cs" />
+    <Compile Include="..\..\src\SnapStudio.App\Help\HelpContent.cs" Link="App\HelpContent.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -42,6 +42,11 @@ dotnet publish src\SnapStudio.App\SnapStudio.App.csproj --configuration Release 
 
 The app project also includes its generated `SnapStudio.App.pri` in the portable publish. This resource index is required for the app window to open.
 
+The offline user guide is copied from `docs/help` into `Assets/Help` for build,
+portable publish, and MSIX output. Keep `index.html`, `help.css`, and `help.js`
+together. The Help viewer and SVG designer require the Microsoft Edge WebView2
+Runtime on the destination PC; it is not bundled in the portable ZIP.
+
 Include `LICENSE` and `docs\privacy.md` in the distribution, then ZIP the entire publish directory. Users must extract all files before running `SnapStudio.App.exe`. This build is unsigned and uses the normal local Windows profile for captures and settings. OCR, scrolling capture, and screen recording remain disabled by default.
 
 ## Release Package Smoke

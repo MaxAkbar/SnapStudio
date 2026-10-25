@@ -330,7 +330,10 @@ $requiredPayloadFiles = @(
     "resources.pri",
     "SnapStudio.Core.dll",
     "SnapStudio.Platform.Windows.dll",
-    "Assets\StoreLogo.png"
+    "Assets\StoreLogo.png",
+    "Assets\Help\index.html",
+    "Assets\Help\help.css",
+    "Assets\Help\help.js"
 )
 
 foreach ($payloadFile in $requiredPayloadFiles) {

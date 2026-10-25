@@ -14,6 +14,7 @@ public sealed partial class MainPage
             _ => ElementTheme.Dark
         };
         RequestedTheme = theme;
+        _helpWindow?.SetTheme(theme);
         // Include the window title bar and popup roots in the same preference.
         if (XamlRoot?.Content is FrameworkElement root) root.RequestedTheme = theme;
     }

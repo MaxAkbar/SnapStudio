@@ -1,192 +1,139 @@
-# SnapStudio
+<p align="center">
+  <img src="src/SnapStudio.App/Assets/Square44x44Logo.scale-200.png" alt="SnapStudio icon" width="72">
+</p>
 
-SnapStudio is a local-first Windows screen capture and image editing app built with .NET, WinUI, and Windows platform capture APIs.
+<h1 align="center">SnapStudio</h1>
 
-It is designed for practical capture workflows: capture a screen region or target, annotate it, crop or resize it, manage it in a local workspace, and export or copy the result without sending capture data to a cloud service.
+<p align="center"><strong>Capture an idea. Make it clear.</strong></p>
 
-## Status
+<p align="center">
+  A Windows screenshot editor for pointing things out, explaining a change,<br>
+  and turning a quick capture into something worth sharing.
+</p>
 
-SnapStudio is in active development. The current codebase includes the main capture/editor workflow, local workspace, settings, packaging scripts, and feature-gated v1 lanes for OCR, scrolling capture, and screen recording.
+<p align="center">
+  <a href="https://github.com/MaxAkbar/SnapStudio/releases/tag/v0.1.0-alpha.1">Download the preview</a> ·
+  <a href="#your-first-screenshot">Get started</a> ·
+  <a href="#help-when-you-need-it">User guide</a>
+</p>
 
-## Highlights
+<p align="center">Windows 11 · Works offline · No account required · MIT licensed</p>
 
-- Region, picker/window, display, full-screen, and scrolling capture entry points.
-- Adjustable region selection before capture.
-- **New capture → Display** lets you choose a connected monitor. **Full Screen (all displays)** captures the complete desktop in one image, preserving monitor positions. **Window** provides a searchable, refreshable list of open windows.
-- With **Include cursor** enabled, still captures keep the screenshot clean and add the visible pointer as an image object in a **Mouse pointer** layer. Select it to move or resize it, or hide/delete it independently. The pointer stays editable after saving and reopening; clipboard copies and exports include visible objects.
-- Local workspace with capture history in pages of ten, thumbnails, search, filters, rename, duplicate, folder open, remove from history, and move to recycle bin. Use the arrows below the history to browse pages; search covers every page in the selected view, and new captures return to page 1.
-- Tag images from **right-click → Edit tags…**, the current capture's **…** menu, or **Image details → Edit…**. Enter tags separated by commas or new lines. Use **Find or add a tag** to search the saved tag library by keyword and select a suggestion, or type a new tag and press **Add** or **Enter**. Search ignores case and excludes tags already assigned to the capture. There is no tag count limit; each label can have up to 64 characters. Remove labels from the field and save to untag that capture. Library search includes tags; **#Design** matches that exact tag, ignoring case, within the selected folder and source filter. Tags stay with each editable capture across restarts; duplicates inherit tags and can change them independently. Tagging leaves source image files untouched.
-- The **Library** keeps folders, search, and paged captures together on the left. Choose **All captures**, **Unfiled**, or a folder from the compact dropdown. The **+** button beside it maps another folder; the adjacent **Refresh** button adds newly discovered images to the selected mapped folder, or checks every mapping when All captures or Unfiled is selected. SnapStudio keeps editable copies of PNG, JPEG, and BMP images and remembers the source location, optionally including subfolders. Existing copies and edits stay intact, even if an original is changed or removed. Already copied files are not added again. The **…** button beside **Captures** offers **New group…**, a one-time import, renaming, and removing a group. Right-click a capture to **Rename…**, **Duplicate**, **Move to folder**, **Show in folder**, **Remove from recent captures** while keeping its image file, or **Delete image (Recycle Bin)…** to recycle the file after confirmation. These actions target the clicked capture. Duplicates retain their editable layers and group; select the new copy to edit it. Renaming, duplicating, moving, or revealing another capture preserves the open editor, selection, zoom, and undo. Show in folder reveals the stored source image; for imports, this is SnapStudio's editable copy. Removing a group keeps its copies and returns them to Unfiled. Folder mappings and membership are saved in the workspace database.
-- Editing tools sit beside the canvas. **Properties** and **Layers** share the right **Inspector**, with **Image details** and **Capture options** available when needed. Use **…** beside the image title to rename, duplicate, move to a folder, or remove the current capture. Collapse **Folders and search**, **Captures**, or **Layers** independently; collapsing Captures hides its list and pagination together. Both side panes can still be resized or collapsed. **Focus mode** beside the image title, or **F8**, hides both panes and restores their previous widths and open/closed states when you return.
-- With the folder dropdown open, right-click a folder or group for **Rename…** and **Remove … (keep captures)**. Removing a mapped folder stops its mapping; removing either kind returns its captures to **Unfiled** and keeps the image files and editable documents. **All captures** and **Unfiled** remain available.
-- Choose **Dark**, **Light**, or **Use system setting** under **Settings → Appearance → Theme**, then **Save** to apply it without restarting. The choice is remembered and included in settings imports and exports. Existing settings keep the dark theme.
-- Editable annotations: rectangle, ellipse, line, arrow, text, freehand pen, highlight, and blur. **Move (V)** selects, moves, and resizes objects. **Marquee (M)** selects an image area without grabbing the objects underneath it.
-- **Design** at the bottom of the tool rail creates, edits, imports, and exports reusable styles for existing tools. Tools with designs show an arrow; click to open their design drawer, or right-click any drawing tool to create a design. Rectangle, ellipse, line, arrow, and pen include dashed and dotted variants. Designs can save color, fill, width or text size, opacity, corners, and font where applicable. Existing objects retain their own editable styles. Import a SnapStudio JSON design pack, such as [the example pack](docs/tool-designs.sample.json); export shares your saved designs. Styles and line patterns survive reopening and are included in Copy and export.
-- **Properties** follows the drawing tool or objects selected with Move. Marquee shows selected-area dimensions and a crop action. Rectangles show corner controls; text shows font and text size; images show opacity; blur shows strength. Mixed object selections show only shared properties, and text/fill color previews use the object's actual color. Stroke widths and text sizes can exceed the slider range through the adjacent textbox.
-- Right-click the image background with no objects selected to choose **Move**, **Marquee**, **Rectangle**, **Ellipse**, **Line**, **Arrow**, **Text**, **Pen**, **Highlight**, **Blur**, or **Fill bucket**. The menu marks the active tool and switches tools without adding an object. **Shift+F10** opens the same menu when the canvas has focus and no object is selected. Right-click an object for its existing editing actions.
-- Right-click a layer to rename it, move it up or down in the stack, or choose a color label. **Custom color…** opens a color picker with a hex entry. Layer changes support undo and redo.
-- Right-click an object inside a layer to move it up or down within that layer. Object order is saved and supports undo and redo.
-- Right-click an object on the editor canvas or in the layer list to duplicate, show/hide, arrange, move to another visible layer, or delete it. Keyboard shortcuts are shown in the menu.
-- Use **Fill bucket** inside a rectangle or ellipse to change that object's fill while keeping its outline. The fill moves and resizes with the shape. On image areas, the bucket adds a connected fill object to the selected layer; adjust tolerance to include similar colors. Both support undo and redo.
-- Use **Copy** or **Ctrl+C** to copy the area inside the selection rectangle, including the visible image and objects. With nothing selected, Copy uses the whole edited image. **Paste** or **Ctrl+V** offers **New layer** to paste over the open image, or **New image** to open a separate document. A pasted layer keeps its transparency and can be moved or resized independently. The arrow beside Paste provides both actions directly; **Ctrl+Shift+V** opens a new image directly. With no image open, **Ctrl+V** creates a new document.
-- Create a transparent canvas with **New** or **Ctrl+N**, then choose its width and height. The checkerboard shows transparency in the editor; PNG export preserves it.
-- Selection, move, resize, style controls, opacity, presets, undo, and redo.
-- Text boxes fit their content. Resize handles scale the text instead of cropping it, and text or size edits refit the box. Choose an installed system font under **Font** for new or selected text; the choice is saved and used in Copy and export. Type sizes beyond the slider range when needed. Copying selected text preserves the visible text and transparency.
-- **Marquee (M)** draws an animated black-and-white selection border anywhere on the image, including over existing objects. Overlapping visible objects are selected for group actions. Drag inside the existing marquee, or use arrow keys (Shift for ten pixels), to move only its boundary; image pixels and objects stay in place. **Ctrl+A** selects the whole canvas, including empty areas. Hold **Shift** while drawing a new selection to make a square, **Alt** to draw from its center, or **Space** while dragging to reposition it. With a selection already present, Shift-drag adds objects and Ctrl-drag toggles overlapping objects. Copy and Crop use the selected rectangle.
-- **Move (V)** clicks an object to select it and drags selected objects together. **Shift-click** or **Ctrl-click** adds or removes individual objects. Drag an empty area to select overlapping objects. **Ctrl+A** selects every visible object; Shift-dragging objects constrains movement to one axis. Resize handles appear for one selected object. Switching between M and V keeps the selected area and objects. Keyboard movement, duplicate, delete, visibility, style, arrange, and move-to-layer actions apply to the selected objects with one undo step. Clicking an object in Layers switches to Move.
-- **Ctrl+D** deselects; **Ctrl+J** duplicates the selected objects. **Escape** cancels a drag and restores its previous selection, or clears the selection when idle. Text fields retain their normal editing shortcuts.
-- Hold **Ctrl** and scroll the mouse wheel over the editor to zoom in or out at the pointer. Scrolling without Ctrl keeps the normal canvas scrolling behavior.
-- The dotted selection rectangle stays visible after drawing. Use **Crop** to keep that exact area, including padding around multiple selected objects. The rectangle follows group moves and stays aligned while zooming; cropping keeps the objects inside the area and can be undone.
-- Crop and resize, including pixel or percentage resize with optional aspect-ratio lock.
-- Export to PNG, JPEG, PDF, and source image.
-- Optional OCR, scrolling capture, and screen recording lanes behind feature flags and readiness gates.
-- Local settings, selectable file-system or CSharpDB document storage, local diagnostics, crash recovery journal, and MSIX packaging support.
+![SnapStudio demo: start with a screenshot, add an arrow and text note, reposition the note, and prepare the image for sharing](docs/media/snapstudio-demo.gif)
 
-## Architecture
+*A quick look at the current development build. The downloadable alpha preview has an earlier interface and fewer features. [View the still image](docs/media/snapstudio-demo.png) if you prefer.*
 
-The project is structured around clear boundaries:
+## From screenshot to explanation
 
-- `SnapStudio.App`: WinUI app shell and composition root.
-- `SnapStudio.Core`: contracts, models, workflows, editor commands, settings, diagnostics, and domain logic.
-- `SnapStudio.Platform.Windows`: Windows capture, OCR, clipboard, hotkey, recording, scrolling, and shell adapters.
-- `SnapStudio.Storage`: file-system and CSharpDB document storage, settings, diagnostics, OCR cache, and thumbnail persistence.
-- `SnapStudio.Rendering`: document rendering and raster edits.
-- `SnapStudio.Ipc`: editor message serialization and named-pipe transport.
-- `SnapStudio.CaptureHost`: capture host boundary.
-- `tests/SnapStudio.Core.Tests`: unit and integration-style coverage for core and platform-adapter behavior.
+- **Capture what matters.** Grab a region, a window, one monitor, or your entire desktop. You can also open an image or paste from the clipboard.
+- **Make your point.** Add arrows, text, shapes, highlights, or blur. Move, resize, and restyle your notes as you go, with undo and redo.
+- **Keep it editable.** Organize objects in layers and come back to the document later. Even the captured mouse pointer can be moved or hidden on its own.
+- **Find it again.** Browse your local library, group images into folders, and search by title or tag. Map a folder to bring existing images into your workspace.
+- **Share the result.** Copy the image to your clipboard or export PNG, JPEG, or PDF. PNG keeps transparent backgrounds.
 
-See [docs/project-plan.md](docs/project-plan.md) for the working roadmap, QA checklist, release gates, and architecture principles.
+Your captures stay on your PC. There is no cloud account, automatic upload, or subscription to set up.
 
-## Download the preview
+## Try the preview
 
-Get the first preview from [GitHub Releases](https://github.com/MaxAkbar/SnapStudio/releases/tag/v0.1.0-alpha.1).
-On Windows 11 x64, download `SnapStudio-0.1.0-alpha.1-win-x64-portable.zip`, extract the entire ZIP, and run `SnapStudio.App.exe`. The portable build includes .NET and the Windows App SDK runtime. Captures and settings are saved under your local Windows profile.
+1. Open [GitHub Releases](https://github.com/MaxAkbar/SnapStudio/releases/tag/v0.1.0-alpha.1).
+2. Download **`SnapStudio-0.1.0-alpha.1-win-x64-portable.zip`**.
+3. Extract the **entire ZIP**, then run **`SnapStudio.App.exe`** from the extracted folder.
 
-This is an unsigned alpha preview. OCR, scrolling capture, and screen recording are disabled by default. See the [release notes](docs/releases/v0.1.0-alpha.1.md) for validation and package limitations.
+The preview runs on **Windows 11 x64** and includes .NET and the Windows App SDK runtime. You do not need Visual Studio or a .NET SDK to try it. The Help viewer and SVG designer in current source builds also use the Microsoft Edge WebView2 Runtime.
 
-## Tool shortcuts
+This is an **unsigned alpha**, intended for testing. OCR, scrolling capture, and screen recording are experimental and disabled by default. See the [release notes](docs/releases/v0.1.0-alpha.1.md) for what is included in the download and its known limits.
 
-Keys are shown beside each tool icon. Shortcuts apply outside text fields and dialogs. Clicking a tool with an arrow opens its designs; its shortcut activates the last design chosen for that tool.
+## Your first screenshot
 
-| Shortcut | Tool |
-| --- | --- |
-| M | Rectangular marquee |
-| V | Move objects |
-| U | Rectangle |
-| O | Ellipse |
-| L | Line |
-| A | Arrow |
-| T | Text |
-| P | Pen |
-| H | Highlighter |
-| B | Blur |
-| G | Fill bucket |
-| C | Crop to the selected area |
-| D | Design library |
+1. **Start with an image.** Choose **New capture → Region**, or press **Ctrl+R**. Already have a screenshot? Use **Open** (**Ctrl+O**) or **Paste** (**Ctrl+V**).
+2. **Add a note.** Choose **Arrow** or **Text** beside the canvas, then draw on the image. Change its color, size, and opacity in **Properties**.
+3. **Adjust it.** Use **Move** (**V**) to select and reposition objects. Use **Marquee** (**M**) to select an image area, then **Crop** (**C**) to keep that area.
+4. **Share it.** Choose **Copy** (**Ctrl+C**) or **Export → PNG, JPEG, or PDF**.
 
-## Object shortcuts
+**Copy only part of an image:** draw a marquee first. To copy the whole edited image, clear the selection with **Ctrl+D**.
 
-Select an object on the canvas or in the layer list first. Text fields keep their normal editing keys.
+## A workspace that grows with your work
+
+The **Library** on the left keeps your images within reach. The canvas is in the middle, and the **Inspector** on the right holds Properties and Layers. Resize or collapse either side pane, or press **F8** for Focus mode.
+
+When you need more than a quick arrow:
+
+- Start a transparent canvas with **New** (**Ctrl+N**), or paste another image as an editable layer.
+- Save your favorite tool styles in **Design** (**D**) so your annotations look consistent.
+- Create reusable SVG artwork in the built-in designer, then edit an individual object's artwork whenever needed.
+- Add tags such as `Design` or `Bug` and find them later with searches like `#Design`.
+- Choose **Dark**, **Light**, or **Use system setting** in **Settings → Appearance**.
+
+## Help when you need it
+
+In the current source build, choose **Help** in the top toolbar or press **F1**. The built-in guide opens beside your work and includes searchable topics, walkthroughs, and the full shortcut reference. It works offline and follows the app's theme.
+
+You can also open [the HTML guide](docs/help/index.html) from a local copy of this repository in your browser.
 
 | Shortcut | Action |
 | --- | --- |
-| Arrow keys | Move by 1 image pixel |
-| Shift+Arrow | Move by 10 image pixels |
-| Ctrl+J | Duplicate selected objects |
-| Ctrl+D | Deselect |
-| Ctrl+H | Hide or show |
-| Delete | Delete the selected object |
-| Ctrl+Page Up / Page Down | Bring forward / send backward within its layer |
-| Ctrl+Shift+Page Up / Page Down | Bring to front / send to back within its layer |
-| Shift+F10 or Menu key | Open the selected object's context menu |
-| Escape | Close the menu, then clear the selection |
-| Ctrl+Z / Ctrl+Y | Undo / redo |
+| **Ctrl+R** | Capture a screen region |
+| **Ctrl+O** / **Ctrl+V** | Open an image / paste |
+| **V** / **M** | Move objects / select an image area |
+| **A** / **T** / **H** | Arrow / text / highlighter |
+| **Ctrl+Z** / **Ctrl+Y** | Undo / redo |
+| **Ctrl+C** / **Ctrl+D** | Copy / deselect |
+| **Ctrl+mouse wheel** | Zoom at the pointer |
+| **F8** / **F1** | Focus mode / Help |
 
-## Requirements
+Editor shortcuts apply outside text fields and dialogs.
 
-- Windows 11.
-- .NET 10 SDK.
-- Windows 11 SDK 10.0.26100 or newer.
-- Visual Studio with Windows App SDK / WinUI tooling for IDE development.
-- PowerShell for `eng` scripts.
+## Your files stay yours
 
-## Getting Started
+Documents are saved under `%LOCALAPPDATA%\SnapStudio\Documents` by default. Choose another location in Settings, and use either JSON sidecars or a local CSharpDB database for editable document metadata.
 
-Clone the repository:
+Images, thumbnails, settings, and logs remain local. Copying or exporting creates a copy you control. Storage location, storage backend, and feature-switch changes take effect after restarting the app.
+
+Read the [privacy disclosure](docs/privacy.md) for the details.
+
+## Build from source
+
+For the latest development features, use **Windows 11**, the **.NET 10 SDK**, and **Windows SDK 10.0.26100 or newer**.
 
 ```powershell
 git clone https://github.com/MaxAkbar/SnapStudio.git
 cd SnapStudio
-```
-
-Restore, build, and test:
-
-```powershell
 dotnet restore SnapStudio.sln
 dotnet build SnapStudio.sln --configuration Debug -p:Platform=x64
 dotnet test SnapStudio.sln --configuration Debug -p:Platform=x64
 ```
 
-Open `SnapStudio.sln` in Visual Studio, select the `x64` platform, and run `SnapStudio.App`.
+In Visual Studio, open **`SnapStudio.sln`**, select **x64**, set **SnapStudio.App** as the startup project, and run. Install the WinUI / Windows App SDK tooling if it is not already available.
 
-More setup notes are in [docs/development-setup.md](docs/development-setup.md).
+See [development setup](docs/development-setup.md) for prerequisites and validation commands.
 
-## Local Storage
+<details>
+<summary><strong>Project structure and developer documentation</strong></summary>
 
-SnapStudio stores data under `%LOCALAPPDATA%\SnapStudio\Documents` by default, or under the storage folder chosen in Settings.
+SnapStudio uses WinUI for the desktop app and Windows APIs for capture. Core workflows, storage, and rendering live in separate projects.
 
-The Settings window lets you choose the document storage backend:
+| Project | Responsibility |
+| --- | --- |
+| `SnapStudio.App` | Desktop UI and application composition |
+| `SnapStudio.Core` | Documents, editor commands, settings, and workflows |
+| `SnapStudio.Platform.Windows` | Windows capture, clipboard, hotkeys, and shell integration |
+| `SnapStudio.Storage` | Local documents, settings, thumbnails, and diagnostics |
+| `SnapStudio.Rendering` | Image rendering and raster edits |
+| `SnapStudio.Ipc` / `SnapStudio.CaptureHost` | Capture-host communication |
+| `tests/SnapStudio.Core.Tests` | Core and adapter tests |
 
-- `File system`: editable document metadata is saved as per-capture JSON sidecars.
-- `Database`: editable document metadata is saved in a local CSharpDB database file named `snapstudio-documents.db`.
+- [Project plan and release gates](docs/project-plan.md)
+- [Packaging and portable builds](docs/packaging.md)
+- [Microsoft Store submission](docs/store-submission.md)
+- [SVG designer and supported SVG features](docs/svg-tools.md)
+- [Example tool design pack](docs/tool-designs.sample.json)
+- [Updating the HTML help](docs/help-authoring.md)
+- [README demo source and refresh notes](docs/media/README.md)
 
-Source images, thumbnails, OCR cache files, recordings, diagnostics, and exports remain local files under the configured storage root. Changing the storage location, backend, or feature gates is saved immediately and takes effect after restarting SnapStudio.
+</details>
 
-## Validation
+## Feedback and license
 
-Use these checks before committing app or tooling changes:
+Found a problem or have an idea? [Open an issue](https://github.com/MaxAkbar/SnapStudio/issues) with the steps and what you expected to happen. Include sample images only when you are comfortable sharing them.
 
-```powershell
-dotnet format SnapStudio.sln
-dotnet build SnapStudio.sln --no-restore -p:Platform=x64
-dotnet test SnapStudio.sln --no-build -p:Platform=x64
-.\eng\run-ui-smoke.ps1 -Configuration Debug -Platform x64 -SkipBuild
-```
-
-Release readiness checks:
-
-```powershell
-.\eng\run-release-smoke.ps1 -Platform x64 -Configuration Release
-.\eng\run-release-readiness.ps1 -ReportPath artifacts\release\release-readiness.md
-```
-
-Feature-lane smoke checks:
-
-```powershell
-.\eng\run-ocr-smoke.ps1 -Platform x64 -Configuration Release -RegisterLayout -Launch -KeepAppOpen
-.\eng\run-scrolling-smoke.ps1 -Configuration Release -Platform x64 -Launch
-.\eng\run-recording-smoke.ps1 -Configuration Release -Platform x64 -Launch
-```
-
-## Packaging
-
-Build an unsigned x64 MSIX package:
-
-```powershell
-.\eng\package-msix.ps1 -Platform x64 -Configuration Release
-```
-
-Packaging and Store submission details are documented in:
-
-- [docs/packaging.md](docs/packaging.md)
-- [docs/store-submission.md](docs/store-submission.md)
-
-## Privacy
-
-SnapStudio is local-first. It does not upload captures, recordings, documents, settings, logs, or exports to a SnapStudio service.
-
-See [docs/privacy.md](docs/privacy.md) for the full privacy disclosure.
-
-## License
-
-SnapStudio is licensed under the [MIT License](LICENSE).
+SnapStudio is open source under the [MIT License](LICENSE).

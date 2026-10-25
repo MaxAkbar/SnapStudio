@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="light dark">
+  <title>SnapStudio user guide</title>
+  <link rel="stylesheet" href="help.css">
+  <script src="help.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#guide">Skip to the guide</a>
+  <aside>
+    <a class="brand" href="#getting-started">SnapStudio <span>USER GUIDE</span></a>
+    <p class="offline">Built-in help · available offline</p>
+    <label for="search">Search the guide</label>
+    <div class="search-row">
+      <input id="search" type="search" placeholder="Try layers, crop, tags…" autocomplete="off" aria-controls="guide">
+      <button id="clear-search" type="button" hidden>Clear</button>
+    </div>
+    <p id="search-status" role="status" aria-live="polite"></p>
+    <nav aria-label="Help topics">
+      <a href="#getting-started">Get started</a>
+      <a href="#capture">Capture your screen</a>
+      <a href="#workspace">Find your way around</a>
+      <a href="#selection">Select, move, and crop</a>
+      <a href="#annotations">Draw and annotate</a>
+      <a href="#layers">Work with layers</a>
+      <a href="#designs">Reuse designs and SVG artwork</a>
+      <a href="#library">Organize your library</a>
+      <a href="#export">Copy, paste, and export</a>
+      <a href="#settings">Settings and local data</a>
+      <a href="#shortcuts">Keyboard shortcuts</a>
+      <a href="#troubleshooting">Troubleshooting</a>
+    </nav>
+    <p class="sidebar-note">Press <kbd>F1</kbd> in SnapStudio to return to Help. Use the toolbar to go back, forward, or home.</p>
+  </aside>
+  <main id="guide" tabindex="-1">
+    <header>
+      <p class="eyebrow">CAPTURE · ANNOTATE · SHARE</p>
+      <h1>A little help, right here.</h1>
+      <p class="intro">Turn a screenshot into something clear. Learn the everyday tools, keep your captures organized, and export the result when you are ready.</p>
+    </header>
+    <p id="no-results" hidden>No topics match your search. Try a shorter phrase or clear the search to see the whole guide.</p>
+
+    <section id="getting-started" aria-labelledby="getting-started-title">
+      <h2 id="getting-started-title">Get started</h2>
+      <p>SnapStudio keeps captures and editable documents on your PC. Start with a screen capture, an existing image, or a transparent canvas.</p>
+      <ol>
+        <li>Finish the first-run setup. Review the capture hotkey, cursor option, clipboard preference, and storage location.</li>
+        <li>Choose <strong>New capture → Region</strong>, or press <kbd>Ctrl+R</kbd>, and select an area of your screen. Use <kbd>Esc</kbd> to cancel the capture.</li>
+        <li>Choose <strong>Arrow</strong> or <strong>Text</strong> beside the canvas and draw on the image. Change the selected tool or object's appearance in <strong>Properties</strong>.</li>
+        <li>Choose <strong>Copy</strong> to place the edited image on the clipboard, or <strong>Export → PNG</strong> to save a shareable file.</li>
+      </ol>
+      <p>For an existing file, use <strong>Open</strong> (<kbd>Ctrl+O</kbd>). To start from scratch, use <strong>New</strong> (<kbd>Ctrl+N</kbd>) and enter the canvas width and height. The checkerboard represents transparency; PNG export preserves it.</p>
+      <div class="note">Your workspace keeps editable documents. Export creates a separate copy for sharing; it does not replace the editable document.</div>
+    </section>
+
+    <section id="capture" aria-labelledby="capture-title">
+      <h2 id="capture-title">Capture your screen</h2>
+      <p>Open <strong>New capture</strong> and choose the target that fits your task.</p>
+      <div class="table-wrap"><table>
+        <caption>Capture modes</caption>
+        <thead><tr><th scope="col">Mode</th><th scope="col">Use it for</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Region</th><td>Selecting an area of the desktop and adjusting the selection before capture.</td></tr>
+          <tr><th scope="row">Picker</th><td>Choosing a window or display through the Windows capture picker.</td></tr>
+          <tr><th scope="row">Display</th><td>Capturing one of your connected monitors.</td></tr>
+          <tr><th scope="row">Full Screen (all displays)</th><td>Capturing the complete desktop in one image, preserving the positions of your monitors.</td></tr>
+          <tr><th scope="row">Window</th><td>Finding an open window by title or app name. Refresh the list if a window has just opened.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Include the mouse pointer</h3>
+      <p>Enable <strong>Include cursor</strong> in Capture options or Settings. Still captures add the visible pointer as an editable image object in a <strong>Mouse pointer</strong> layer. Move, resize, hide, or delete it independently. Visible pointer objects appear in Copy and export.</p>
+      <h3>Optional capture features</h3>
+      <p>OCR, scrolling capture, and screen recording are experimental features, disabled by default. Their controls appear only when the matching feature is enabled in Settings; save and restart to apply feature changes.</p>
+      <ul>
+        <li><strong>OCR:</strong> extracts text locally when enabled. Recognition depends on the image and the Windows OCR languages available.</li>
+        <li><strong>Scrolling capture:</strong> attempts to capture a detected scrollable target. Some apps do not support this; a partial result may be kept when scrolling cannot finish.</li>
+        <li><strong>Screen recording:</strong> records a selected window or display to a local MP4 file. Audio can be off, microphone, or system audio. Simultaneous microphone and system audio, and webcam capture, are not implemented.</li>
+      </ul>
+    </section>
+
+    <section id="workspace" aria-labelledby="workspace-title">
+      <h2 id="workspace-title">Find your way around</h2>
+      <ul>
+        <li><strong>Library, on the left:</strong> choose a folder, search, and browse captures in pages of ten.</li>
+        <li><strong>Canvas, in the center:</strong> view the current image and edit its objects. The tool rail sits beside it.</li>
+        <li><strong>Inspector, on the right:</strong> adjust Properties and manage Layers. Expand Image details or Capture options when needed.</li>
+        <li><strong>Image title menu (…):</strong> rename, duplicate, move, or remove the current capture.</li>
+      </ul>
+      <p>Drag the divider beside either side pane to resize it. Unpin a pane to collapse it to a narrow rail, then pin it to restore its width. Folders and search, Captures, and Layers can also collapse independently.</p>
+      <p>Choose <strong>Focus mode</strong>, or press <kbd>F8</kbd>, to hide both side panes. Choose it again to restore their previous widths and open states.</p>
+      <p>Hold <kbd>Ctrl</kbd> and turn the mouse wheel over the editor to zoom around the pointer. Use <kbd>Ctrl+1</kbd> to fit the canvas and <kbd>Ctrl+0</kbd> for actual size. Normal scrolling moves around the canvas.</p>
+    </section>
+
+    <section id="selection" aria-labelledby="selection-title">
+      <h2 id="selection-title">Select, move, and crop</h2>
+      <h3>Marquee (M): choose an image area</h3>
+      <p>Drag to draw the animated selection rectangle, including over existing objects. Copy and Crop use this exact area. Overlapping visible objects are also selected for group actions.</p>
+      <ul>
+        <li>Drag inside the existing rectangle, or use the arrow keys, to move only the selection boundary. Image pixels and objects stay in place.</li>
+        <li>While drawing a new selection, hold <kbd>Shift</kbd> for a square, <kbd>Alt</kbd> to draw from the center, or <kbd>Space</kbd> to reposition it.</li>
+        <li>With a selection already present, Shift-drag adds objects and Ctrl-drag toggles overlapping objects.</li>
+        <li><kbd>Ctrl+A</kbd> selects the full canvas, including empty areas.</li>
+      </ul>
+      <h3>Move (V): work with objects</h3>
+      <p>Click an object to select it, then drag to move it. Shift-click or Ctrl-click adds or removes individual objects. Drag an empty area to select overlapping objects. <kbd>Ctrl+A</kbd> selects every visible object. Shift-drag constrains movement to one axis.</p>
+      <p>Resize handles appear for a single selected object. Arrow keys move the selection by one image pixel; add <kbd>Shift</kbd> for ten pixels. Clicking an object in Layers switches to Move. Switching between Marquee and Move keeps the selected area and objects.</p>
+      <h3>Crop and resize</h3>
+      <p>Draw a marquee around the part to keep, then choose <strong>Crop</strong> or press <kbd>C</kbd>. Padding inside the rectangle is included, and objects inside the area are kept. Undo restores the previous image. Resize changes the image dimensions; choose pixels or percentages and use the aspect-ratio lock to keep proportions.</p>
+      <p><kbd>Ctrl+D</kbd> deselects. <kbd>Esc</kbd> cancels an active drag and restores its previous selection, or clears the selection when idle.</p>
+    </section>
+
+    <section id="annotations" aria-labelledby="annotations-title">
+      <h2 id="annotations-title">Draw and annotate</h2>
+      <p>Choose a tool, then draw on the canvas. Use Properties to set color, stroke width, opacity, or other options. Select an existing object with Move to edit its appearance.</p>
+      <div class="table-wrap"><table>
+        <caption>Drawing tools</caption>
+        <thead><tr><th scope="col">Tool</th><th scope="col">Key</th><th scope="col">What it does</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Rectangle / Ellipse</th><td><kbd>U</kbd> / <kbd>O</kbd></td><td>Outline or fill an area. Rectangles also have corner controls.</td></tr>
+          <tr><th scope="row">Line / Arrow</th><td><kbd>L</kbd> / <kbd>A</kbd></td><td>Connect details or point to something important.</td></tr>
+          <tr><th scope="row">Text</th><td><kbd>T</kbd></td><td>Add a label. Choose an installed font and text size in Properties.</td></tr>
+          <tr><th scope="row">Pen / Highlighter</th><td><kbd>P</kbd> / <kbd>H</kbd></td><td>Draw freehand or highlight an area.</td></tr>
+          <tr><th scope="row">Blur</th><td><kbd>B</kbd></td><td>Obscure an area; use Properties to adjust strength.</td></tr>
+          <tr><th scope="row">Fill bucket</th><td><kbd>G</kbd></td><td>Fill a rectangle or ellipse, or add a connected fill object over an image area.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Text boxes fit their content. Resizing a text object scales the text. Type a stroke width or text size into the textbox when you need a value beyond the slider range.</p>
+      <p>The fill bucket preserves a shape's outline. On an image area, adjust tolerance to include similar colors. Fill changes support undo and redo.</p>
+      <p>Right-click the image background with no object selected to switch tools. Right-click an object to duplicate, hide/show, arrange, move to a visible layer, or delete it. Mixed object selections show only shared Properties.</p>
+      <div class="note">Blur remains editable in your workspace. Before sharing, export or copy the result and check that sensitive details are sufficiently obscured.</div>
+    </section>
+
+    <section id="layers" aria-labelledby="layers-title">
+      <h2 id="layers-title">Work with layers</h2>
+      <p>Layers keep groups of objects together. Select a layer to work in it, and use the add button to create another. Expand a layer to select its objects.</p>
+      <ul>
+        <li>Right-click a layer to rename it, move it up or down, or choose a color label. Custom color opens a picker with a hex entry.</li>
+        <li>Right-click an object to change its order within the layer or move it to another visible layer.</li>
+        <li>Hide objects when you want to leave them out of the rendered image without deleting them.</li>
+        <li>Use the delete-layer action to remove a selected layer. SnapStudio asks for confirmation if it contains objects; the last remaining layer cannot be deleted.</li>
+      </ul>
+      <p>Layer changes, object edits, and deleting a layer can be undone with <kbd>Ctrl+Z</kbd> and redone with <kbd>Ctrl+Y</kbd>. Duplicating or deleting several selected objects is one undo step.</p>
+    </section>
+
+    <section id="designs" aria-labelledby="designs-title">
+      <h2 id="designs-title">Reuse designs and SVG artwork</h2>
+      <h3>Saved tool designs</h3>
+      <p>Choose <strong>Design</strong> at the bottom of the tool rail, or press <kbd>D</kbd>, to manage reusable styles. Right-click a drawing tool to create a design. Tools with designs show an arrow that opens their design drawer; a tool shortcut activates its last chosen design.</p>
+      <p>Depending on the tool, designs save color, fill, stroke width, text size, opacity, corners, and font. Rectangle, ellipse, line, arrow, and pen support dashed and dotted designs. Existing objects keep their own editable styles. Import and export JSON design packs to reuse saved designs.</p>
+      <h3>SVG designs</h3>
+      <p>Choose <strong>Design → New SVG tool</strong> for a transparent canvas, <strong>Design SVG</strong> in a tool drawer to start from its artwork, or <strong>Import SVG</strong> for a local file. Save into Custom shapes (<kbd>K</kbd>) or an existing tool drawer. Right-click a preview to edit it or copy a built-in design.</p>
+      <p>Place a design on the canvas as one SVG object. Select it and choose <strong>Edit SVG</strong> in Properties or the context menu to change its internal shapes, paths, fills, strokes, and text. Changes affect that object; its reusable tool and duplicates keep their artwork. The designer supports grouping, transforms, undo/redo, and direct SVG source editing. Hold Shift to snap line, arrow, move, or rotation angles in 15-degree increments.</p>
+      <p>Imports accept static vector shapes, paths, text, groups, transforms, gradients, and internal references. Scripts, external resources, raster images, filters, animation, and foreign HTML are rejected. SVGs are limited to one million characters, 4,096 elements, and 32 nesting levels. Font appearance depends on the installed fonts.</p>
+    </section>
+
+    <section id="library" aria-labelledby="library-title">
+      <h2 id="library-title">Organize your library</h2>
+      <p>Choose <strong>All captures</strong>, <strong>Unfiled</strong>, or a folder from the Library dropdown. Search works across every page in the selected view and source filter. Use the arrows below Captures to browse pages of ten. New captures return to page one.</p>
+      <h3>Folders and imports</h3>
+      <p>The <strong>+</strong> beside the dropdown maps a local folder. SnapStudio imports editable copies of PNG, JPEG, and BMP files and can include subfolders. Refresh adds newly discovered files from the selected mapping, or checks all mappings when All captures or Unfiled is selected. Previously copied files are not added again; edits and copies stay intact if an original changes or disappears.</p>
+      <p>Use the <strong>…</strong> beside Captures to create a group, perform a one-time import, rename, or remove a group. Right-click a folder in the open dropdown to rename or remove it. Removing a folder stops its mapping; removing a folder or group keeps its captures and returns them to Unfiled.</p>
+      <h3>Capture actions</h3>
+      <p>Right-click a capture to rename, duplicate, move to a folder, show its stored image in File Explorer, remove it from recent captures, or delete its image to the Recycle Bin. Actions apply to the capture you clicked. Duplicates keep editable layers, tags, and group membership and can be edited independently.</p>
+      <div class="note"><strong>Remove from recent captures</strong> keeps the image file. <strong>Delete image (Recycle Bin)</strong> asks for confirmation and recycles the source image when no other document references it. For imported images, Show in folder reveals SnapStudio's editable copy.</div>
+      <h3>Tags</h3>
+      <p>Choose <strong>Edit tags…</strong> from a capture's context menu, its title menu, or Image details. Enter labels separated by commas or new lines. Search the tag library under Find or add a tag, or type a new label and choose Add. Each label can contain up to 64 characters; there is no tag-count limit.</p>
+      <p>Remove a label from the field and save to untag that capture. Library search includes tags; <code>#Design</code> matches that exact tag, ignoring case, within the selected folder and source filter. Tags stay with the editable document and leave the source image file untouched.</p>
+    </section>
+
+    <section id="export" aria-labelledby="export-title">
+      <h2 id="export-title">Copy, paste, and export</h2>
+      <h3>Copy the result</h3>
+      <p>Choose <strong>Copy</strong> or press <kbd>Ctrl+C</kbd>. If there is a selection rectangle, Copy uses that area, including visible image pixels and objects. With no selection it copies the whole edited image. Use <kbd>Ctrl+D</kbd> first if you want the complete image.</p>
+      <h3>Paste an image</h3>
+      <p><strong>Paste</strong> (<kbd>Ctrl+V</kbd>) offers New layer to place a clipboard image over the open image, or New image to open it as a separate document. Pasted layers retain transparency and can be moved or resized independently. The arrow beside Paste offers both actions directly. <kbd>Ctrl+Shift+V</kbd> always creates a new image. With no image open, Ctrl+V creates a new document.</p>
+      <h3>Export a file</h3>
+      <p>Choose <strong>Export → PNG, JPEG, or PDF</strong> and select a destination. Export renders the edited document with its visible objects. PNG preserves transparency. Keep the local editable document if you want to change objects later; exported images do not retain editable layers.</p>
+    </section>
+
+    <section id="settings" aria-labelledby="settings-title">
+      <h2 id="settings-title">Settings and local data</h2>
+      <p>Open <strong>Settings</strong> in the Library pane. Review the capture hotkey, Include cursor, clipboard preference, document storage, and feature switches, then save.</p>
+      <h3>Appearance</h3>
+      <p>Under <strong>Appearance → Theme</strong>, choose Dark, Light, or Use system setting. Save to apply the theme immediately. Help follows the app's theme.</p>
+      <h3>Storage</h3>
+      <p>The default document location is <code>%LOCALAPPDATA%\SnapStudio\Documents</code>. Choose another location in Settings if needed. The File system backend keeps document metadata in JSON sidecars; Database keeps it in the local <code>snapstudio-documents.db</code> file. Source images, thumbnails, OCR cache files, and recordings remain local files.</p>
+      <p>Settings are kept in <code>%LOCALAPPDATA%\SnapStudio\settings.json</code>. Import and export settings through JSON files. Storage location, storage backend, and feature-switch changes require restarting SnapStudio; save your work before restarting.</p>
+      <h3>Privacy and diagnostics</h3>
+      <p>SnapStudio has no cloud account, sync, telemetry upload, or remote capture processing. Captures, recordings, settings, and logs stay local. Copying, exporting, or opening a file in another application puts that copy under the destination's control.</p>
+      <p>Local diagnostic and recovery logs are in <code>%LOCALAPPDATA%\SnapStudio\Logs</code>. Help loads its bundled HTML on your PC and keeps its WebView2 cache in <code>%LOCALAPPDATA%\SnapStudio\HelpBrowser</code>. It does not need an internet connection.</p>
+    </section>
+
+    <section id="shortcuts" aria-labelledby="shortcuts-title">
+      <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+      <p>Editor shortcuts apply outside text fields and dialogs. Text fields keep their normal editing keys. Tool keys are listed in Draw and annotate above.</p>
+      <div class="table-wrap"><table>
+        <caption>Everyday actions</caption>
+        <thead><tr><th scope="col">Shortcut</th><th scope="col">Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>F1</kbd></td><td>Open or focus Help, including during first-run setup.</td></tr>
+          <tr><td><kbd>Ctrl+N</kbd> / <kbd>Ctrl+O</kbd></td><td>New image / open image.</td></tr>
+          <tr><td><kbd>Ctrl+R</kbd></td><td>Start a region capture.</td></tr>
+          <tr><td><kbd>Ctrl+C</kbd></td><td>Copy the selected area, or the whole edited image.</td></tr>
+          <tr><td><kbd>Ctrl+V</kbd> / <kbd>Ctrl+Shift+V</kbd></td><td>Paste with a choice / paste as a new image.</td></tr>
+          <tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>Undo / redo.</td></tr>
+          <tr><td><kbd>M</kbd> / <kbd>V</kbd></td><td>Marquee / Move.</td></tr>
+          <tr><td><kbd>Ctrl+A</kbd></td><td>Select the full canvas in Marquee, or visible objects in Move.</td></tr>
+          <tr><td><kbd>Ctrl+D</kbd> / <kbd>Esc</kbd></td><td>Deselect / cancel a drag or clear the selection.</td></tr>
+          <tr><td><kbd>Arrow keys</kbd> / <kbd>Shift+Arrow</kbd></td><td>Move by one / ten image pixels. Marquee moves only its boundary.</td></tr>
+          <tr><td><kbd>Ctrl+J</kbd></td><td>Duplicate selected objects.</td></tr>
+          <tr><td><kbd>Ctrl+H</kbd> / <kbd>Delete</kbd></td><td>Hide or show / delete selected objects.</td></tr>
+          <tr><td><kbd>Ctrl+Page Up</kbd> / <kbd>Ctrl+Page Down</kbd></td><td>Bring forward / send backward within the layer.</td></tr>
+          <tr><td><kbd>Ctrl+Shift+Page Up</kbd> / <kbd>Ctrl+Shift+Page Down</kbd></td><td>Bring to front / send to back within the layer.</td></tr>
+          <tr><td><kbd>Shift+F10</kbd> / <kbd>Menu</kbd></td><td>Open the object context menu, or tool menu on an unselected canvas.</td></tr>
+          <tr><td><kbd>Ctrl+1</kbd> / <kbd>Ctrl+0</kbd></td><td>Fit canvas / actual size.</td></tr>
+          <tr><td><kbd>Ctrl++</kbd> / <kbd>Ctrl+−</kbd></td><td>Zoom in / out using the numeric keypad keys.</td></tr>
+          <tr><td><kbd>F8</kbd></td><td>Toggle Focus mode.</td></tr>
+        </tbody>
+      </table></div>
+      <p>In Help, type in Search the guide to filter topics. Press <kbd>Esc</kbd> in the search field or choose Clear to show every topic. <kbd>Ctrl+F</kbd> finds text in the displayed page.</p>
+    </section>
+
+    <section id="troubleshooting" aria-labelledby="troubleshooting-title">
+      <h2 id="troubleshooting-title">Troubleshooting</h2>
+      <h3>A feature or shortcut seems unavailable</h3>
+      <p>OCR, scrolling capture, and recording are hidden when their feature switch is off. Save feature changes and restart. Editor shortcuts do not run while a text field or dialog has focus; click the canvas and try again. Some actions also need an open image or a selected object.</p>
+      <h3>Copy contains only part of the image</h3>
+      <p>Check for a marquee selection. Press <kbd>Ctrl+D</kbd> to clear it, then copy again for the whole edited image.</p>
+      <h3>An imported image does not update</h3>
+      <p>Mapped folders keep editable copies. Refresh discovers new files; it does not overwrite an existing copy when the original changes. Use a one-time import or Open to work from the changed original.</p>
+      <h3>Help cannot load</h3>
+      <p>Use Retry loading help in the toolbar. If files are missing, extract the entire portable ZIP or reinstall the complete package so the Assets/Help folder is present. The viewer requires the Microsoft Edge WebView2 Runtime, as does the SVG designer. If the runtime is missing, install it through Microsoft's official WebView2 distribution, then reopen SnapStudio. If the viewer stops, close the Help window and open it again.</p>
+      <h3>You need to report a problem</h3>
+      <p>Record the steps, expected result, actual result, and app version. Include a sample image only when you are comfortable sharing it. Local logs can help diagnose a failure; review them before sharing. Experimental features still need broader hardware and packaged-build validation.</p>
+    </section>
+    <footer>SnapStudio · Local-first capture and editing · This guide ships with the app.</footer>
+  </main>
+</body>
+</html>

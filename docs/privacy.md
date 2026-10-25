@@ -81,6 +81,11 @@ Recording diagnostics are local-only and can include target kind, output dimensi
 
 ## Network And Cloud Behavior
 
+The built-in Help viewer loads bundled HTML, styles, and scripts locally without
+an internet connection. Its WebView2 browser cache is stored under
+`%LOCALAPPDATA%\SnapStudio\HelpBrowser`. Search runs within the local guide and
+does not send queries to a service.
+
 SnapStudio has no cloud account, sync, team sharing, telemetry upload, crash upload, or remote capture processing.
 
 Any future networked feature should require an updated privacy review and user-facing disclosure before release.
