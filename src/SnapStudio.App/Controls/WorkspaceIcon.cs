@@ -37,6 +37,12 @@ public sealed class WorkspaceIcon : UserControl
         _canvas.Children.Clear();
         switch (Kind)
         {
+            case "Grid0": Path("M3 3H21V21H3Z M9 3V21 M15 3V21 M3 9H21 M3 15H21"); break;
+            case "Grid1": Path("M3 5H21 M12 8L3 21 M12 8L21 21 M12 8V21 M5 16H19"); Circle(12, 8, 1.5); break;
+            case "Grid2": Path("M2 8H22 M2 8L12 21L22 8 M2 8L12 15L22 8 M12 15V21"); Circle(2, 8, 1); Circle(22, 8, 1); break;
+            case "Grid3": Path("M2 7L12 22L22 7Z M12 2L8 15 M12 2L16 15 M2 7L16 15 M22 7L8 15"); Circle(12, 2, 1); break;
+            case "Grid4": Path("M12 2C2 7 2 17 12 22 M12 2C22 7 22 17 12 22 M2 10L20 17 M22 10L4 17 M12 2V22"); break;
+            case "Grid5": Circle(12, 12, 10); Path("M12 2C3 7 3 17 12 22 M12 2C21 7 21 17 12 22 M2 12C7 3 17 3 22 12 M2 12C7 21 17 21 22 12 M2 12H22 M12 2V22"); break;
             case "Library":
                 Rectangle(3, 4, 18, 16, 2);
                 Path("M8 4V20 M12 9H17 M12 14H17");

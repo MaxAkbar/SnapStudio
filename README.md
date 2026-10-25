@@ -64,6 +64,8 @@ When you need more than a quick arrow:
 - In source builds, use **Snap** beside the zoom controls to align moving objects by their edges or centers. Magenta guides show the match. Hold **Alt** to bypass snapping, or turn Snap off for free positioning.
 - In source builds, turn on **Grid** beside Snap for an editing grid. Its arrow opens settings for **4–512 px** cell spacing and **Snap to grid**. Dense grids use wider visible spacing at low zoom, and snapping follows those lines. The grid stays out of copied and exported images.
 - In source builds, use **Grid** in the SVG designer too, with **4–512 SVG units** of cell spacing and optional grid snapping. The guide stays out of saved and exported SVG artwork.
+- The same **Grid settings** also offer **1-, 2-, and 3-point perspective**, **4-point curved**, and **5-point fisheye**, each with its own icon. Adjust guide density, horizon, vanishing points, and curve radius. Settings are shared with the SVG designer, and snapping follows the visible guides.
+- Canvas drawing tools snap new shapes, lines, arrows, text, and SVG tool objects to perspective guides as you draw. Stamps and objects added with the toolbar snap when placed. Hold **Alt** for free placement.
 
 ## Stamps and free SVG icons
 

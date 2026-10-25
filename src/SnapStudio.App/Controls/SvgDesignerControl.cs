@@ -9,13 +9,14 @@ namespace SnapStudio.App.Controls;
 
 public sealed record SvgDesignerGridSettings
 {
-    public SvgDesignerGridSettings(bool visible = false, double spacing = CanvasGridLayout.DefaultSpacing, bool snap = true)
+    public SvgDesignerGridSettings(bool visible = false, double spacing = CanvasGridLayout.DefaultSpacing, bool snap = true, PerspectiveGridSettings? perspective = null)
     {
-        Visible = visible; Spacing = CanvasGridLayout.NormalizeSpacing(spacing); Snap = snap;
+        Visible = visible; Spacing = CanvasGridLayout.NormalizeSpacing(spacing); Snap = snap; Perspective = (perspective ?? new()).Normalize();
     }
     public bool Visible { get; }
     public double Spacing { get; }
     public bool Snap { get; }
+    public PerspectiveGridSettings Perspective { get; }
 }
 
 public sealed class SvgDesignerControl : Grid, IDisposable
@@ -70,7 +71,13 @@ public sealed class SvgDesignerControl : Grid, IDisposable
                             core.PostWebMessageAsJson(JsonSerializer.Serialize(new
                             {
                                 type = "load", svg = _initialSvg, theme = _theme.ToString(), fonts = _fonts,
-                                grid = new { visible = GridSettings.Visible, spacing = GridSettings.Spacing, snap = GridSettings.Snap }
+                                grid = new
+                                {
+                                    visible = GridSettings.Visible, spacing = GridSettings.Spacing, snap = GridSettings.Snap,
+                                    mode = (int)GridSettings.Perspective.Mode, centerX = GridSettings.Perspective.CenterX,
+                                    horizon = GridSettings.Perspective.Horizon, left = GridSettings.Perspective.Left, right = GridSettings.Perspective.Right,
+                                    vertical = GridSettings.Perspective.Vertical, radius = GridSettings.Perspective.Radius, density = GridSettings.Perspective.Density
+                                }
                             }));
                             break;
                         case "loaded": _ready.TrySetResult(); Ready?.Invoke(this, EventArgs.Empty); break;
@@ -101,7 +108,19 @@ public sealed class SvgDesignerControl : Grid, IDisposable
             ShowError("The SVG editor returned invalid grid settings.");
             return;
         }
-        var settings = new SvgDesignerGridSettings(visible.GetBoolean(), value, snap.GetBoolean());
+        var previous = GridSettings.Perspective; bool valid = true;
+        double Read(string name, double fallback)
+        {
+            if (!message.TryGetProperty(name, out var field)) return fallback;
+            if (field.ValueKind == JsonValueKind.Number && field.TryGetDouble(out double number) && double.IsFinite(number)) return number;
+            valid = false; return fallback;
+        }
+        double mode = Read("mode", (int)previous.Mode), density = Read("density", previous.Density);
+        var perspective = new PerspectiveGridSettings((CanvasGridMode)(int)Math.Clamp(mode, 0, 5), Read("centerX", previous.CenterX),
+            Read("horizon", previous.Horizon), Read("left", previous.Left), Read("right", previous.Right), Read("vertical", previous.Vertical),
+            Read("radius", previous.Radius), (int)Math.Clamp(Math.Round(density), 4, 32));
+        if (!valid || mode < 0 || mode > 5 || mode != Math.Truncate(mode)) { ShowError("The SVG editor returned invalid perspective settings."); return; }
+        var settings = new SvgDesignerGridSettings(visible.GetBoolean(), value, snap.GetBoolean(), perspective);
         if (GridSettings == settings) return;
         GridSettings = settings;
         GridSettingsChanged?.Invoke(this, settings);

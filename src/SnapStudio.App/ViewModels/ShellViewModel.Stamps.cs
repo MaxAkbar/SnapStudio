@@ -146,13 +146,14 @@ public sealed partial class ShellViewModel
         ShowCaptureNotice("Stamps", message, InfoBarSeverity.Warning);
     }
 
-    public async Task PlaceStampAtCanvasPointAsync(PointD displayPoint, CancellationToken token)
+    public async Task PlaceStampAtCanvasPointAsync(PointD displayPoint, CancellationToken token, bool bypassPerspectiveSnapping = false)
     {
         if (!IsStampToolActive || _activeStamp is null || _currentDocument is not { } document
             || _annotationEditor is null || _documentRepository is null || !_canvasViewport.HasSource) return;
         StampDefinition selected = _activeStamp;
         AnnotationObject stamp = StampCatalog.Place(selected, _canvasViewport.ToSourcePoint(displayPoint),
             new(document.SourceImage.Width, document.SourceImage.Height), StampSize);
+        SnapNewObjectPlacement(stamp, bypassPerspectiveSnapping);
         if (!_layerWorkspace.TryAssignActiveLayer(document, stamp)) { StatusText = "Show the selected layer before placing stamps."; return; }
         await _annotationEditor.AddAsync(document, stamp, token);
         _annotationSelection.Clear();

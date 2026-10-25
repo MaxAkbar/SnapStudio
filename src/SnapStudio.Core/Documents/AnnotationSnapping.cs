@@ -3,7 +3,7 @@ using SnapStudio.Core.Primitives;
 namespace SnapStudio.Core.Documents;
 
 public enum SnapGuideAxis { Vertical, Horizontal }
-public sealed record AnnotationSnapGuide(SnapGuideAxis Axis, double Position, double From, double To, bool IsCenter, bool IsGrid = false);
+public sealed record AnnotationSnapGuide(SnapGuideAxis Axis, double Position, double From, double To, bool IsCenter, bool IsGrid = false, IReadOnlyList<PointD>? Path = null);
 public sealed record AnnotationSnapResult(RectD Bounds, IReadOnlyList<AnnotationSnapGuide> Guides);
 
 public static class AnnotationSnapping

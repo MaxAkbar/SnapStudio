@@ -31,6 +31,29 @@ object and group movement, resize corners, new shape endpoints, and path
 anchors. Freehand strokes and Bézier control handles remain free to draw curves;
 existing Shift constraints and Alt controls continue to work.
 
+The same **Grid settings** contain icons for **Rectangular**, **1-point**,
+**2-point**, **3-point**, **4-point curved**, and **5-point fisheye**. Perspective
+modes replace cell spacing with **Guide density**. Adjust the horizon and the
+displayed vanishing-point positions as percentages of the SVG viewBox; points
+can sit outside the artwork. Three-point mode adds a third vertical vanishing
+point. Four-point mode combines two horizontal vanishing points with curved
+vertical guides; five-point mode curves both guide families and adds depth
+lines through the center. The curve radius is a percentage of the shorter side.
+**Reset perspective** restores defaults for the selected mode.
+
+Perspective settings are shared with the canvas for the workspace session.
+Snapping follows the actual visible segments and curves, preserving Shift
+constraints and one undo step per completed drag. These are drawing guides:
+positioning an SVG object on a guide keeps its artwork intact rather than
+applying perspective distortion. The guides are excluded from saved SVGs and
+exports and remain isolated from styles inside imported artwork.
+
+On the main canvas, drawing an SVG tool object also snaps its start and end
+corners to the perspective guides. Native shape, line, arrow, and text tools,
+toolbar object insertion, and stamp placement use perspective snapping too.
+Hold **Alt** while drawing or placing a stamp for free positioning. The native
+canvas keeps each completed drawing or stamp placement as one undo step.
+
 Drawing an SVG variant places one SVG object, with its own saved source. Select
 that object and choose **Edit SVG** in Properties or its context menu. Changes
 apply to that object and can be undone; its reusable tool and duplicates keep

@@ -35,7 +35,16 @@
  </aside>
 </main>
 <footer><div class="file-actions"><button data-action="import">Import SVG…</button><button data-action="export">Export SVG…</button><button data-action="fit">Fit artwork</button></div><div id="status" role="status">Ready</div>
- <div class="grid-controls"><button id="gridToggle" aria-label="Show SVG grid" aria-pressed="false" title="Show or hide the SVG grid">Grid</button><button id="gridSettingsToggle" aria-label="SVG grid settings" aria-expanded="false" aria-controls="gridPanel" title="Grid spacing and snapping">▾</button>
-  <section id="gridPanel" class="grid-panel" aria-label="SVG grid settings" hidden><h2>SVG grid</h2><label for="gridSpacing">Cell spacing (SVG units)</label><input id="gridSpacing" aria-label="SVG grid cell spacing" type="number" min="4" max="512" step="1" value="32"><p id="gridSpacingDescription">Spacing is measured in SVG coordinate units.</p><label class="check"><input id="gridSnap" aria-label="Snap to SVG grid" type="checkbox" checked>Snap to grid</label><p>Hold Alt to bypass snapping. The grid is an editing guide and stays out of saved and exported SVG artwork.</p></section>
+ <div class="grid-controls"><button id="gridToggle" aria-label="Show SVG grid" aria-pressed="false" title="Show or hide the SVG grid"><svg id="gridModeIcon" viewBox="0 0 24 24" aria-hidden="true"></svg><span>Grid</span></button><button id="gridSettingsToggle" aria-label="SVG grid settings" aria-expanded="false" aria-controls="gridPanel" title="Grid spacing and snapping">▾</button>
+  <section id="gridPanel" class="grid-panel" aria-label="SVG grid settings" hidden><h2>Grid and perspective</h2><div id="gridModes" class="grid-modes" role="group" aria-label="Grid mode"></div>
+   <div id="rectangularGridFields"><label for="gridSpacing">Cell spacing (SVG units)</label><input id="gridSpacing" aria-label="SVG grid cell spacing" type="number" min="4" max="512" step="1" value="32"></div>
+   <div id="perspectiveFields" hidden><label for="gridDensity">Guide density</label><input id="gridDensity" type="number" min="4" max="32" step="1" value="12">
+    <div class="fields"><label id="perspectiveCenterField">Center X (%)<input id="gridCenterX" type="number" min="-300" max="400" value="50"></label><label>Horizon Y (%)<input id="gridHorizon" type="number" min="-300" max="400" value="50"></label></div>
+    <div id="horizontalVanishingPoints" class="fields"><label>Left VP X (%)<input id="gridLeft" type="number" min="-500" max="500" value="-50"></label><label>Right VP X (%)<input id="gridRight" type="number" min="-500" max="500" value="150"></label></div>
+    <label id="verticalVanishingPoint">Third VP Y (%)<input id="gridVertical" type="number" min="-500" max="500" value="-100"></label>
+    <label id="perspectiveRadiusField">Curve radius (% of shorter side)<input id="gridRadius" type="number" min="10" max="300" value="70"></label>
+    <button id="resetPerspective" type="button">Reset perspective</button>
+   </div>
+   <p id="gridSpacingDescription">Spacing is measured in SVG coordinate units.</p><label class="check"><input id="gridSnap" aria-label="Snap to SVG grid" type="checkbox" checked>Snap to grid</label><p>Hold Alt to bypass snapping. Guides position objects without warping their artwork. Guides stay out of saved and exported SVGs.</p></section>
  </div><span id="dimensions">256 × 256</span></footer>
-<script src="grid.js"></script><script src="designer.js"></script></body></html>
+<script src="perspective.js"></script><script src="grid.js"></script><script src="designer.js"></script></body></html>

@@ -3191,13 +3191,14 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public async Task AddActiveAnnotationAsync(
         RectD sourceBounds,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool bypassPerspectiveSnapping = false)
     {
         if (IsSelectionToolActive || IsStampToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
         {
             return;
         }
-        await AddAnnotationCoreAsync(ActiveAnnotationKind, sourceBounds, cancellationToken)
+        await AddAnnotationCoreAsync(ActiveAnnotationKind, sourceBounds, cancellationToken, bypassPerspectiveSnapping)
             .ConfigureAwait(true);
     }
 
@@ -3359,8 +3360,13 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             ?.Bounds;
     }
 
-    public AnnotationOverlayItem? CreateActiveAnnotationPreview(PointD displayStart, PointD displayEnd)
+    public AnnotationOverlayItem? CreateActiveAnnotationPreview(PointD displayStart, PointD displayEnd, bool bypassPerspectiveSnapping = false)
+        => CreateActiveAnnotationPreview(displayStart, displayEnd, bypassPerspectiveSnapping, out _);
+
+    public AnnotationOverlayItem? CreateActiveAnnotationPreview(PointD displayStart, PointD displayEnd, bool bypassPerspectiveSnapping,
+        out IReadOnlyList<AnnotationSnapGuide> placementGuides)
     {
+        placementGuides = [];
         if (_currentDocument is null || !_canvasViewport.HasSource
             || IsSelectionToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
         {
@@ -3371,6 +3377,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         PointD end = _canvasViewport.ToSourcePoint(displayEnd);
         AnnotationObject annotation = CreateAnnotation(_currentDocument, ActiveAnnotationKind,
             new RectD(start.X, start.Y, end.X - start.X, end.Y - start.Y));
+        if (annotation.Kind == AnnotationKind.Text) placementGuides = SnapNewObjectPlacement(annotation, bypassPerspectiveSnapping);
         return AnnotationOverlayItem.FromAnnotation(annotation, _canvasViewport.Zoom, null);
     }
 
@@ -3493,7 +3500,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     private async Task AddAnnotationCoreAsync(
         AnnotationKind annotationKind,
         RectD? sourceBounds,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool bypassPerspectiveSnapping = false)
     {
         if (_currentDocument is null || _documentRepository is null || _annotationEditor is null)
         {
@@ -3507,6 +3515,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         AnnotationObject annotation = sourceBounds is RectD bounds
             ? CreateAnnotation(_currentDocument, annotationKind, bounds)
             : CreateCenteredAnnotation(_currentDocument, annotationKind);
+        if (sourceBounds is null || annotationKind == AnnotationKind.Text) SnapNewObjectPlacement(annotation, bypassPerspectiveSnapping);
 
         if (!_layerWorkspace.TryAssignActiveLayer(_currentDocument, annotation))
         {

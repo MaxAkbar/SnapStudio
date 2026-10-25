@@ -1574,7 +1574,8 @@ public sealed partial class MainPage : Page
             e.Handled = true;
             try
             {
-                await ViewModel.PlaceStampAtCanvasPointAsync(new(pointerPoint.Position.X, pointerPoint.Position.Y), CancellationToken.None);
+                await ViewModel.PlaceStampAtCanvasPointAsync(new(pointerPoint.Position.X, pointerPoint.Position.Y), CancellationToken.None,
+                    e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
             }
             catch (Exception error) { ViewModel.ShowStampError(error.Message); }
             UpdateBindingsFromViewModel();
@@ -1660,8 +1661,10 @@ public sealed partial class MainPage : Page
 
         _canvasDragMode = CanvasDragMode.DrawAnnotation;
         _annotationDragStart = ClampToCanvas(pointerPoint.Position);
+        _objectSnapDocumentId = ViewModel.CurrentDocumentId;
+        _toolDrawingKind = ViewModel.ActiveAnnotationKind;
         CanvasSurface.CapturePointer(e.Pointer);
-        ShowDrawingPreview(_annotationDragStart);
+        ShowDrawingPreview(_annotationDragStart, e);
         e.Handled = true;
     }
 
@@ -1701,8 +1704,7 @@ public sealed partial class MainPage : Page
         }
         else if (_canvasDragMode == CanvasDragMode.DrawAnnotation)
         {
-            Point previewPoint = CreateConstrainedShapePointIfNeeded(currentPoint, e);
-            ShowDrawingPreview(previewPoint);
+            ShowDrawingPreview(currentPoint, e);
         }
         else
         {
@@ -1768,16 +1770,20 @@ public sealed partial class MainPage : Page
             return;
         }
 
-        Point annotationEndPoint = CreateConstrainedShapePointIfNeeded(currentPoint, e);
-        RectD displayBounds = CreateDisplayBounds(
-            _annotationDragStart,
-            annotationEndPoint);
+        PerspectiveDrawingSnapResult drawing = ShowDrawingPreview(currentPoint, e);
+        double drawingZoom = ViewModel.CanvasZoom;
+        Point drawingStart = new(drawing.Start.X * drawingZoom, drawing.Start.Y * drawingZoom);
+        Point drawingEnd = new(drawing.End.X * drawingZoom, drawing.End.Y * drawingZoom);
+        RectD displayBounds = CreateDisplayBounds(drawingStart, drawingEnd);
+        RectD gestureBounds = CreateDisplayBounds(_annotationDragStart, currentPoint);
+        bool bypassSnapping = e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu);
         EndCanvasDrag(e);
 
         bool isLinearAnnotation = IsLinearAnnotationKind(ViewModel.ActiveAnnotationKind);
         bool isTooSmall = !isLinearAnnotation
             ? displayBounds.Width < MinimumDragDisplaySize
                 || displayBounds.Height < MinimumDragDisplaySize
+                || gestureBounds.Width < MinimumDragDisplaySize || gestureBounds.Height < MinimumDragDisplaySize
             : CalculateDistance(_annotationDragStart, currentPoint) < MinimumDragDisplaySize;
 
         if (isTooSmall)
@@ -1790,12 +1796,12 @@ public sealed partial class MainPage : Page
 
         RectD? sourceBounds = isLinearAnnotation
             ? ViewModel.CreateDirectedSourceBoundsFromCanvasDrag(
-                new PointD(_annotationDragStart.X, _annotationDragStart.Y),
-                new PointD(currentPoint.X, currentPoint.Y))
+                new PointD(drawingStart.X, drawingStart.Y),
+                new PointD(drawingEnd.X, drawingEnd.Y))
             : ViewModel.CreateSourceBoundsFromCanvasDrag(displayBounds);
         if (sourceBounds is RectD bounds)
         {
-            await ViewModel.AddActiveAnnotationAsync(bounds, CancellationToken.None);
+            await ViewModel.AddActiveAnnotationAsync(bounds, CancellationToken.None, bypassSnapping);
             UpdateBindingsFromViewModel();
         }
     }
@@ -2842,6 +2848,7 @@ public sealed partial class MainPage : Page
         _annotationDragBounds = new Dictionary<Guid, RectD>();
         _objectSnapTargets = [];
         _objectSnapDocumentId = null;
+        _toolDrawingKind = null;
         _objectSnapGuides = [];
         ObjectSnapGuides.Children.Clear();
         if (e is not null) CanvasSurface.ReleasePointerCapture(e.Pointer);
@@ -2866,10 +2873,16 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private void ShowDrawingPreview(Point end)
+    private PerspectiveDrawingSnapResult ShowDrawingPreview(Point end, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        bool bypass = e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu);
+        PerspectiveDrawingSnapResult drawing = ViewModel.SnapToolDrawing(new(_annotationDragStart.X, _annotationDragStart.Y), new(end.X, end.Y), IsShiftPressed(e), bypass);
+        double zoom = ViewModel.CanvasZoom;
         ShowDragAnnotationPreview(ViewModel.CreateActiveAnnotationPreview(
-            new PointD(_annotationDragStart.X, _annotationDragStart.Y), new PointD(end.X, end.Y)));
+            new PointD(drawing.Start.X * zoom, drawing.Start.Y * zoom), new PointD(drawing.End.X * zoom, drawing.End.Y * zoom), bypass, out var placementGuides));
+        _objectSnapGuides = ViewModel.ActiveAnnotationKind == AnnotationKind.Text ? placementGuides : drawing.Guides;
+        ShowObjectSnapGuides();
+        return drawing;
     }
 
     private void ShowDragAnnotationPreview(AnnotationOverlayItem? item)
@@ -2915,28 +2928,11 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private Point CreateConstrainedShapePointIfNeeded(
-        Point currentPoint,
-        Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
-    {
-        if (!IsShiftPressed(e)
-            || ViewModel.ActiveAnnotationKind is not (AnnotationKind.Rectangle or AnnotationKind.Ellipse))
-        {
-            return currentPoint;
-        }
-
-        double deltaX = currentPoint.X - _annotationDragStart.X;
-        double deltaY = currentPoint.Y - _annotationDragStart.Y;
-        double side = Math.Min(Math.Abs(deltaX), Math.Abs(deltaY));
-        return ClampToCanvas(new Point(
-            _annotationDragStart.X + Math.Sign(deltaX) * side,
-            _annotationDragStart.Y + Math.Sign(deltaY) * side));
-    }
-
     private void UpdateBindingsFromViewModel()
     {
-        if (_canvasDragMode is CanvasDragMode.MoveAnnotation or CanvasDragMode.ResizeAnnotation
+        if (_canvasDragMode is CanvasDragMode.MoveAnnotation or CanvasDragMode.ResizeAnnotation or CanvasDragMode.DrawAnnotation
             && _objectSnapDocumentId != ViewModel.CurrentDocumentId) EndCanvasDrag();
+        if (_canvasDragMode == CanvasDragMode.DrawAnnotation && _toolDrawingKind != ViewModel.ActiveAnnotationKind) EndCanvasDrag();
         if (_canvasDragMode == CanvasDragMode.SelectPolygon && (_polygonDocumentId != ViewModel.CurrentDocumentId
             || !ReferenceEquals(_polygonSourceImage, ViewModel.CanvasImageSource) || !ViewModel.IsMarqueeToolActive
             || ViewModel.AreaSelectionTool != PixelSelectionTool.PolygonalLasso)) CancelPolygonSelection();
