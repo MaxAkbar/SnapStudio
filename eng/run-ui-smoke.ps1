@@ -57,18 +57,24 @@ function Wait-ForWindow {
         [int]$ProcessId,
 
         [Parameter(Mandatory)]
-        [int]$TimeoutSeconds
+        [int]$TimeoutSeconds,
+
+        [string]$WindowName = "SnapStudio"
     )
 
     $deadline = [DateTimeOffset]::UtcNow.AddSeconds($TimeoutSeconds)
     $processCondition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ProcessIdProperty,
         $ProcessId)
+    $nameCondition = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::NameProperty,
+        $WindowName)
+    $windowCondition = [System.Windows.Automation.AndCondition]::new($processCondition, $nameCondition)
 
     while ([DateTimeOffset]::UtcNow -lt $deadline) {
         $window = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst(
             [System.Windows.Automation.TreeScope]::Children,
-            $processCondition)
+            $windowCondition)
 
         if ($null -ne $window) {
             return $window
@@ -287,7 +293,9 @@ try {
         "Open image",
         "New image",
         "Paste image",
-        "Select annotations",
+        "Move tool",
+        "Marquee selection tool",
+        "Help",
         "Pen tool",
         "Fill bucket tool",
         "Copy current capture",
@@ -318,21 +326,50 @@ try {
         [void](Assert-ElementByName -Root $window -Name $name)
     }
 
+    $helpButton = Assert-ElementByName -Root $window -Name "Help"
+    if (-not (Invoke-Element -Element $helpButton)) {
+        throw "Unable to open Help."
+    }
+    $helpWindow = Wait-ForWindow -ProcessId $process.Id -TimeoutSeconds $TimeoutSeconds -WindowName "SnapStudio Help"
+    $helpDeadline = [DateTimeOffset]::UtcNow.AddSeconds($TimeoutSeconds)
+    # WebView2's HTML accessibility subtree is not exposed consistently by every
+    # runtime. Home is enabled after initialization; Loading disappears only
+    # after navigation completes, and all error paths disable Home again.
+    do {
+        $helpHome = Find-ElementByName -Root $helpWindow -Name "Help home"
+        $helpLoading = Find-ElementByName -Root $helpWindow -Name "Loading help"
+        $helpReady = $null -ne $helpHome -and $helpHome.Current.IsEnabled -and $null -eq $helpLoading
+        if ($helpReady) { break }
+        Start-Sleep -Milliseconds 100
+    } while ([DateTimeOffset]::UtcNow -lt $helpDeadline)
+    if (-not $helpReady) {
+        Write-Host "Help accessibility diagnostics:"
+        $helpWindow.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+            [System.Windows.Automation.Condition]::TrueCondition) | ForEach-Object {
+                if (-not [string]::IsNullOrWhiteSpace($_.Current.Name)) { Write-Host $_.Current.Name }
+            }
+        throw "The bundled Help page did not finish loading successfully."
+    }
+    [void](Assert-ElementByName -Root $helpWindow -Name "SnapStudio user guide")
+    [void](Assert-ElementByName -Root $helpWindow -Name "Help home")
+    $helpPattern = $helpWindow.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern)
+    $helpPattern.Close()
+
     # Tool-specific properties are realized only for the selected tool.
     $rectangleTool = Assert-ElementByName -Root $window -Name "Rectangle tool"
     if (-not (Invoke-Element -Element $rectangleTool)) {
         throw "Unable to select the Rectangle tool."
     }
     Start-Sleep -Milliseconds 250
-    foreach ($name in @("Annotation color", "Annotation opacity")) {
+    foreach ($name in @("Annotation color", "Opacity")) {
         [void](Assert-ElementByName -Root $window -Name $name)
     }
-    Set-SectionExpanded -Root $window -Name "More tool options" -Expanded $true
-    [void](Assert-ElementByName -Root $window -Name "Annotation size")
+    [void](Assert-ElementByName -Root $window -Name "Annotation size value")
+    [void](Assert-ElementByName -Root $window -Name "Annotation size slider")
+    Set-SectionExpanded -Root $window -Name "More properties" -Expanded $true
     [void](Assert-ElementByName -Root $window -Name "Rectangle corner style")
     [void](Assert-ElementByName -Root $window -Name "Annotation preset")
-    [void](Assert-ElementByName -Root $window -Name "Annotation tool")
-    Set-SectionExpanded -Root $window -Name "More tool options" -Expanded $false
+    Set-SectionExpanded -Root $window -Name "More properties" -Expanded $false
 
     $textTool = Assert-ElementByName -Root $window -Name "Text tool"
     if (-not (Invoke-Element -Element $textTool)) {
@@ -442,7 +479,8 @@ try {
     Start-Sleep -Milliseconds 250
     $exitFocusMode = Assert-ElementByName -Root $window -Name "Exit focus mode"
     $focusedCanvas = Assert-ElementByName -Root $window -Name "Editor canvas"
-    [void](Assert-ElementByName -Root $window -Name "Select annotations")
+    [void](Assert-ElementByName -Root $window -Name "Move tool")
+    [void](Assert-ElementByName -Root $window -Name "Marquee selection tool")
     if ((Test-ElementVisible -Root $window -Name "Unpin layers and captures pane") `
         -or (Test-ElementVisible -Root $window -Name "Unpin right tools pane")) {
         throw "Focus mode left a side pane visible."
