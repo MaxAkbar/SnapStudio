@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MaxAkbar/SnapStudio/releases/tag/v0.1.0-alpha.1">Download the preview</a> ·
+  <a href="https://github.com/MaxAkbar/SnapStudio/releases/tag/v1.0.0">Download version 1.0</a> ·
   <a href="#your-first-screenshot">Get started</a> ·
   <a href="#help-when-you-need-it">User guide</a>
 </p>
@@ -21,7 +21,7 @@
 
 ![SnapStudio demo: start with a screenshot, add an arrow and text note, reposition the note, and prepare the image for sharing](docs/media/snapstudio-demo.gif)
 
-*A quick look at the current development build. The downloadable alpha preview has an earlier interface and fewer features. [View the still image](docs/media/snapstudio-demo.png) if you prefer.*
+*See SnapStudio 1.0 in action. [View the still image](docs/media/snapstudio-demo.png) if you prefer.*
 
 ## From screenshot to explanation
 
@@ -33,15 +33,15 @@
 
 Your captures stay on your PC. There is no cloud account, automatic upload, or subscription to set up.
 
-## Try the preview
+## Download SnapStudio 1.0
 
-1. Open [GitHub Releases](https://github.com/MaxAkbar/SnapStudio/releases/tag/v0.1.0-alpha.1).
-2. Download **`SnapStudio-0.1.0-alpha.1-win-x64-portable.zip`**.
+1. Open the [version 1.0.0 release](https://github.com/MaxAkbar/SnapStudio/releases/tag/v1.0.0).
+2. Download **`SnapStudio-1.0.0-win-x64-portable.zip`**.
 3. Extract the **entire ZIP**, then run **`SnapStudio.App.exe`** from the extracted folder.
 
-The preview runs on **Windows 11 x64** and includes .NET and the Windows App SDK runtime. You do not need Visual Studio or a .NET SDK to try it. The Help viewer and SVG designer in current source builds also use the Microsoft Edge WebView2 Runtime.
+The release runs on **Windows 11 x64** and includes .NET and the Windows App SDK runtime. You do not need Visual Studio or a .NET SDK to run it. The Help viewer and SVG designer require the Microsoft Edge WebView2 Runtime.
 
-This is an **unsigned alpha**, intended for testing. OCR, scrolling capture, and screen recording are experimental and disabled by default. See the [release notes](docs/releases/v0.1.0-alpha.1.md) for what is included in the download and its known limits.
+**Version 1.0.0 is the first stable GitHub release.** The download is unsigned, so Windows may show an unrecognized-app warning. OCR, scrolling capture, and screen recording remain experimental and disabled by default. See the [release notes](docs/releases/v1.0.0.md) for included features, checksums, and package details.
 
 ## Your first screenshot
 
@@ -66,7 +66,7 @@ When you need more than a quick arrow:
 
 ## Help when you need it
 
-In the current source build, choose **Help** in the top toolbar or press **F1**. The built-in guide opens beside your work and includes searchable topics, walkthroughs, and the full shortcut reference. It works offline and follows the app's theme.
+Choose **Help** in the top toolbar or press **F1**. The built-in guide opens beside your work and includes searchable topics, walkthroughs, and the full shortcut reference. It works offline and follows the app's theme.
 
 You can also open [the HTML guide](docs/help/index.html) from a local copy of this repository in your browser.
 

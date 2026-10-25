@@ -43,8 +43,10 @@ public static class ToolDesigns
 
     public static double[] DashArray(StrokePattern pattern) => pattern switch
     {
-        StrokePattern.Dashed => [4, 2], StrokePattern.Dotted => [1, 2],
-        StrokePattern.DashDot => [4, 2, 1, 2], _ => []
+        StrokePattern.Dashed => [4, 2],
+        StrokePattern.Dotted => [1, 2],
+        StrokePattern.DashDot => [4, 2, 1, 2],
+        _ => []
     };
 
     public static ToolDesign Validate(ToolDesign design)

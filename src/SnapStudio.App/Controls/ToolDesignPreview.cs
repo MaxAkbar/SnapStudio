@@ -54,16 +54,28 @@ public sealed class ToolDesignPreview : UserControl
                 _canvas.Children.Add(new Polygon { Points = [.. outline.Select(point => new Point(point.X, point.Y))], Fill = Brush(style.Stroke) });
             else
             {
-                _canvas.Children.Add(new Line { X1 = 20, Y1 = 85, X2 = (outline[2].X + outline[4].X) / 2, Y2 = (outline[2].Y + outline[4].Y) / 2,
-                    Stroke = Brush(style.Stroke), StrokeThickness = Math.Min(18, style.StrokeThickness), StrokeDashArray = [.. ToolDesigns.DashArray(style.Pattern)] });
+                _canvas.Children.Add(new Line
+                {
+                    X1 = 20,
+                    Y1 = 85,
+                    X2 = (outline[2].X + outline[4].X) / 2,
+                    Y2 = (outline[2].Y + outline[4].Y) / 2,
+                    Stroke = Brush(style.Stroke),
+                    StrokeThickness = Math.Min(18, style.StrokeThickness),
+                    StrokeDashArray = [.. ToolDesigns.DashArray(style.Pattern)]
+                });
                 _canvas.Children.Add(new Polygon { Points = [new(outline[2].X, outline[2].Y), new(outline[3].X, outline[3].Y), new(outline[4].X, outline[4].Y)], Fill = Brush(style.Stroke) });
             }
         }
         else
         {
-            var label = new TextBlock { Text = design.Kind == AnnotationKind.Blur ? $"Blur strength: {style.Opacity:P0}" : "Design",
+            var label = new TextBlock
+            {
+                Text = design.Kind == AnnotationKind.Blur ? $"Blur strength: {style.Opacity:P0}" : "Design",
                 Foreground = Brush(design.Kind == AnnotationKind.Blur ? ColorRgba.Black : style.Text),
-                FontFamily = new FontFamily(style.FontFamily), FontSize = design.Kind == AnnotationKind.Blur ? 20 : Math.Clamp(style.StrokeThickness, 10, 48) };
+                FontFamily = new FontFamily(style.FontFamily),
+                FontSize = design.Kind == AnnotationKind.Blur ? 20 : Math.Clamp(style.StrokeThickness, 10, 48)
+            };
             Canvas.SetLeft(label, 20); Canvas.SetTop(label, 28); _canvas.Children.Add(label);
         }
     }

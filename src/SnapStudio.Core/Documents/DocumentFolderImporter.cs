@@ -20,11 +20,11 @@ public sealed class DocumentFolderImporter(
     {
         var extensions = new HashSet<string>([".png", ".jpg", ".jpeg", ".bmp"], StringComparer.OrdinalIgnoreCase);
         return Directory.EnumerateFiles(path, "*", new EnumerationOptions
-            {
-                RecurseSubdirectories = includeSubfolders,
-                IgnoreInaccessible = false,
-                AttributesToSkip = FileAttributes.ReparsePoint
-            })
+        {
+            RecurseSubdirectories = includeSubfolders,
+            IgnoreInaccessible = false,
+            AttributesToSkip = FileAttributes.ReparsePoint
+        })
             .Where(file => extensions.Contains(Path.GetExtension(file)))
             .Order(StringComparer.OrdinalIgnoreCase).ToArray();
     }

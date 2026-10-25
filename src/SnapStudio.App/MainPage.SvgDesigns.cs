@@ -55,8 +55,13 @@ public sealed partial class MainPage
             content.Children.Add(heading); Grid.SetRow(editor, 1); content.Children.Add(editor);
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot, RequestedTheme = ActualTheme, Title = title, Content = content,
-                PrimaryButtonText = saveLabel, CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.None,
+                XamlRoot = XamlRoot,
+                RequestedTheme = ActualTheme,
+                Title = title,
+                Content = content,
+                PrimaryButtonText = saveLabel,
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.None,
                 IsPrimaryButtonEnabled = false
             };
             dialog.Resources["ContentDialogMaxWidth"] = width + 56;

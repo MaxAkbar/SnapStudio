@@ -22,7 +22,8 @@ public sealed partial class MainPage
             if (index == 0) menu.Items.Add(new MenuFlyoutSeparator());
             var item = new RadioMenuFlyoutItem
             {
-                Text = name, GroupName = group,
+                Text = name,
+                GroupName = group,
                 KeyboardAcceleratorTextOverride = ToolShortcut(index),
                 IsChecked = index == -1 ? ViewModel.IsMoveToolActive : index.HasValue ? !ViewModel.IsSelectionToolActive && ViewModel.AnnotationToolIndex == index
                     : ViewModel.IsMarqueeToolActive

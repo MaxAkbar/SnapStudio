@@ -105,9 +105,14 @@ public sealed class ToolDesignTests
         using (var source = new Bitmap(210, 130)) { using Graphics graphics = Graphics.FromImage(source); graphics.Clear(Color.White); source.Save(path, ImageFormat.Png); }
         var repository = new FileSystemDocumentRepository(Path.Combine(workspace.Path, "documents"));
         var document = new CaptureDocument { SourceImage = new(path, 210, 130, SnapStudio.Core.Capture.ImagePixelFormat.Rgba32) };
-        var shape = new AnnotationObject { Kind = kind, LayerId = document.Layers[0].Id,
+        var shape = new AnnotationObject
+        {
+            Kind = kind,
+            LayerId = document.Layers[0].Id,
             Bounds = new(20, 20, 160, kind is AnnotationKind.Rectangle or AnnotationKind.Ellipse ? 80 : 1),
-            StrokePoints = kind == AnnotationKind.Pen ? [new(0, 0), new(1, 0)] : [], Style = Design(StrokePattern.Solid).Style };
+            StrokePoints = kind == AnnotationKind.Pen ? [new(0, 0), new(1, 0)] : [],
+            Style = Design(StrokePattern.Solid).Style
+        };
         document.Annotations.Add(shape);
         var renderer = new SystemDrawingDocumentRenderer(repository);
         async Task<int> Ink(StrokePattern pattern)

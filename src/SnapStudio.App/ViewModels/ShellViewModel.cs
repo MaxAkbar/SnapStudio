@@ -5877,8 +5877,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 width,
                 height));
         if (annotationKind == AnnotationKind.Text)
-            annotation.Bounds = annotation.Bounds with { X = (document.SourceImage.Width - annotation.Bounds.Width) / 2,
-                Y = (document.SourceImage.Height - annotation.Bounds.Height) / 2 };
+            annotation.Bounds = annotation.Bounds with
+            {
+                X = (document.SourceImage.Width - annotation.Bounds.Width) / 2,
+                Y = (document.SourceImage.Height - annotation.Bounds.Height) / 2
+            };
         return annotation;
     }
 
@@ -6048,7 +6051,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 ColorRgba.Transparent,
                 color,
                 AnnotationStrokeThickness,
-                opacity) { FontFamily = AnnotationFontFamily },
+                opacity)
+            { FontFamily = AnnotationFontFamily },
             AnnotationKind.Highlight => new AnnotationStyle(
                 ColorRgba.Transparent,
                 ResolveFilledToolColor(annotationKind, color),
@@ -6067,7 +6071,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 ColorRgba.Black,
                 AnnotationStrokeThickness,
                 opacity,
-                annotationKind == AnnotationKind.Rectangle ? AnnotationCornerRadius : 0) { Pattern = AnnotationPattern }
+                annotationKind == AnnotationKind.Rectangle ? AnnotationCornerRadius : 0)
+            { Pattern = AnnotationPattern }
         };
     }
 

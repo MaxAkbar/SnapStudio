@@ -29,7 +29,7 @@ artifacts\msix\verify\x64\
 
 `artifacts\` is ignored by git.
 
-## Portable GitHub Preview
+## Portable GitHub Release
 
 Publish the x64 app with its .NET and Windows App SDK runtimes:
 
@@ -47,7 +47,14 @@ portable publish, and MSIX output. Keep `index.html`, `help.css`, and `help.js`
 together. The Help viewer and SVG designer require the Microsoft Edge WebView2
 Runtime on the destination PC; it is not bundled in the portable ZIP.
 
-Include `LICENSE` and `docs\privacy.md` in the distribution, then ZIP the entire publish directory. Users must extract all files before running `SnapStudio.App.exe`. This build is unsigned and uses the normal local Windows profile for captures and settings. OCR, scrolling capture, and screen recording remain disabled by default.
+Include `LICENSE` and `docs\privacy.md` in the distribution, then ZIP the entire publish directory as `SnapStudio-1.0.0-win-x64-portable.zip`. Users must extract all files before running `SnapStudio.App.exe`. This release is unsigned and uses the normal local Windows profile for captures and settings. OCR, scrolling capture, and screen recording remain experimental and disabled by default.
+
+The stable GitHub release is tagged `v1.0.0` and is published with the prerelease
+flag off. The additional `SnapStudio_1.0.0.0_x64.msix` is an unsigned,
+framework-dependent package for packaging evaluation; it needs a trusted signing
+certificate and the matching runtimes before installation. The portable ZIP is
+the normal download. Microsoft Store certification and signed distribution are
+separate release paths.
 
 ## Release Package Smoke
 

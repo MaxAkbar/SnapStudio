@@ -26,9 +26,13 @@ public sealed partial class MainPage
         {
             var input = new TextBox
             {
-                Header = "Tags", Text = string.Join(", ", ViewModel.GetCaptureTags(documentId)),
-                PlaceholderText = "Design, Feedback, To review", AcceptsReturn = true,
-                TextWrapping = TextWrapping.Wrap, MinHeight = 76, MaxHeight = 150
+                Header = "Tags",
+                Text = string.Join(", ", ViewModel.GetCaptureTags(documentId)),
+                PlaceholderText = "Design, Feedback, To review",
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                MinHeight = 76,
+                MaxHeight = 150
             };
             AutomationProperties.SetName(input, "Capture tags");
             ScrollViewer.SetVerticalScrollBarVisibility(input, ScrollBarVisibility.Auto);
@@ -40,13 +44,16 @@ public sealed partial class MainPage
             content.Children.Add(new TextBlock
             {
                 Text = "Separate tags with commas or new lines. Remove a tag from the field to untag this capture.",
-                FontSize = 12, TextWrapping = TextWrapping.Wrap
+                FontSize = 12,
+                TextWrapping = TextWrapping.Wrap
             });
             string[] available = ViewModel.AvailableCaptureTags.ToArray();
             var search = new AutoSuggestBox
             {
-                Header = "Find or add a tag", PlaceholderText = "Search tags by keyword…",
-                MaxSuggestionListHeight = 180, HorizontalAlignment = HorizontalAlignment.Stretch
+                Header = "Find or add a tag",
+                PlaceholderText = "Search tags by keyword…",
+                MaxSuggestionListHeight = 180,
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
             AutomationProperties.SetName(search, "Search tags to add");
             AutomationProperties.SetHelpText(search, "Search existing tags by keyword. Choose a suggestion or use Add to add the entered tag.");
@@ -62,7 +69,8 @@ public sealed partial class MainPage
             var searchHint = new TextBlock
             {
                 Text = "Type a keyword to find saved tags, or enter a new tag and press Add.",
-                FontSize = 12, TextWrapping = TextWrapping.Wrap
+                FontSize = 12,
+                TextWrapping = TextWrapping.Wrap
             };
             content.Children.Add(searchHint);
             void AddTag(string text)
@@ -103,12 +111,17 @@ public sealed partial class MainPage
             content.Children.Add(new TextBlock
             {
                 Text = "Find tagged images in library search. Use #Design to match an exact tag.",
-                FontSize = 12, TextWrapping = TextWrapping.Wrap
+                FontSize = 12,
+                TextWrapping = TextWrapping.Wrap
             });
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot, RequestedTheme = ActualTheme, Title = "Edit capture tags",
-                Content = content, PrimaryButtonText = "Save", CloseButtonText = "Cancel",
+                XamlRoot = XamlRoot,
+                RequestedTheme = ActualTheme,
+                Title = "Edit capture tags",
+                Content = content,
+                PrimaryButtonText = "Save",
+                CloseButtonText = "Cancel",
                 DefaultButton = ContentDialogButton.None
             };
             void Validate()

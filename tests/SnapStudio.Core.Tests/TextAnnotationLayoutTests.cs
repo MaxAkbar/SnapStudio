@@ -23,7 +23,9 @@ public sealed class TextAnnotationLayoutTests
         var document = new CaptureDocument { SourceImage = new ImageAsset(source, 1200, 600, ImagePixelFormat.Bgra32) };
         var text = new AnnotationObject
         {
-            Kind = AnnotationKind.Text, Text = "Wgyp", LayerId = document.Layers[0].Id,
+            Kind = AnnotationKind.Text,
+            Text = "Wgyp",
+            LayerId = document.Layers[0].Id,
             Style = AnnotationStyle.Default with { StrokeThickness = fontSize },
             Bounds = TextAnnotationLayout.FitBounds(new RectD(40, 30, 700, 400), "Wgyp", fontSize)
         };
@@ -75,8 +77,14 @@ public sealed class TextAnnotationLayoutTests
     public async Task TextAndStyleEditsRestoreTheirFittedBoundsWithOneUndo()
     {
         var document = new CaptureDocument();
-        var text = new AnnotationObject { Kind = AnnotationKind.Text, Text = "Before", LayerId = document.Layers[0].Id,
-            Bounds = new RectD(10, 20, 90, 30), Style = AnnotationStyle.Default with { StrokeThickness = 24 } };
+        var text = new AnnotationObject
+        {
+            Kind = AnnotationKind.Text,
+            Text = "Before",
+            LayerId = document.Layers[0].Id,
+            Bounds = new RectD(10, 20, 90, 30),
+            Style = AnnotationStyle.Default with { StrokeThickness = 24 }
+        };
         document.Annotations.Add(text);
         var stack = new EditCommandStack();
         var editor = new DocumentAnnotationEditor(stack);

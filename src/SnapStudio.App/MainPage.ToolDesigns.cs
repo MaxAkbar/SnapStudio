@@ -201,7 +201,8 @@ public sealed partial class MainPage
                     double radius = selected == AnnotationKind.Rectangle ? double.Parse(corners.Text, CultureInfo.CurrentCulture) : 0;
                     ColorRgba foreground = hasColor ? ParseDesignColor(color.Text) : ColorRgba.Transparent;
                     var style = new AnnotationStyle(stroked ? foreground : ColorRgba.Transparent, shape ? ParseDesignColor(fill.Text) : selected is AnnotationKind.Fill or AnnotationKind.Highlight ? foreground : ColorRgba.Transparent,
-                        text ? foreground : ColorRgba.Black, size, opacity.Value, radius) { Pattern = (StrokePattern)pattern.SelectedIndex, FontFamily = font.SelectedItem as string ?? AnnotationStyle.DefaultFontFamily };
+                        text ? foreground : ColorRgba.Black, size, opacity.Value, radius)
+                    { Pattern = (StrokePattern)pattern.SelectedIndex, FontFamily = font.SelectedItem as string ?? AnnotationStyle.DefaultFontFamily };
                     result = ToolDesigns.Validate(new(id, name.Text, selected, style));
                     string proposedName = result.Name;
                     if (ViewModel.SavedToolDesigns.Any(item => item.Id != id && item.Kind == selected && item.Name.Equals(proposedName, StringComparison.OrdinalIgnoreCase))) throw new InvalidDataException("A design with this name already exists for this tool.");
@@ -269,8 +270,21 @@ public sealed partial class MainPage
         if (_canvasDragMode != CanvasDragMode.None || !TryHandleApplicationShortcut(args, sender.Key != VirtualKey.C || ViewModel.CanCropToSelection)) return;
         if (sender.Key == VirtualKey.D) { ShowDesignLibrary(); return; }
         if (sender.Key == VirtualKey.C) { await ViewModel.CropToSelectedAnnotationAsync(CancellationToken.None); UpdateBindingsFromViewModel(); FitCurrentCanvas(); return; }
-        int? index = sender.Key switch { VirtualKey.V => -1, VirtualKey.U => 0, VirtualKey.O => 1, VirtualKey.L => 2, VirtualKey.A => 3,
-            VirtualKey.T => 4, VirtualKey.H => 5, VirtualKey.B => 6, VirtualKey.P => 7, VirtualKey.G => 8, VirtualKey.K => 9, _ => null };
+        int? index = sender.Key switch
+        {
+            VirtualKey.V => -1,
+            VirtualKey.U => 0,
+            VirtualKey.O => 1,
+            VirtualKey.L => 2,
+            VirtualKey.A => 3,
+            VirtualKey.T => 4,
+            VirtualKey.H => 5,
+            VirtualKey.B => 6,
+            VirtualKey.P => 7,
+            VirtualKey.G => 8,
+            VirtualKey.K => 9,
+            _ => null
+        };
         SelectCanvasTool(index);
     }
 

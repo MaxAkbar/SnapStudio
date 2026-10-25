@@ -24,7 +24,8 @@ internal static class DocumentSummaryFactory
             document.SourceImage.Path,
             document.Annotations.Count,
             thumbnailPath,
-            sourceKind) { Tags = DocumentTags.Read(document) };
+            sourceKind)
+        { Tags = DocumentTags.Read(document) };
     }
 
     public static string ResolveSourceKind(IReadOnlyDictionary<string, string> metadata)

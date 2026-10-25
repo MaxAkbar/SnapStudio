@@ -149,8 +149,13 @@ public sealed partial class MainPage
             AutomationProperties.SetName(picker, "Destination capture folder");
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot, RequestedTheme = ActualTheme, Title = "Move capture to folder", Content = picker,
-                PrimaryButtonText = "Move", CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Primary
+                XamlRoot = XamlRoot,
+                RequestedTheme = ActualTheme,
+                Title = "Move capture to folder",
+                Content = picker,
+                PrimaryButtonText = "Move",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary
             };
             if (await dialog.ShowAsync() == ContentDialogResult.Primary && picker.SelectedItem is HistoryFolderItem folder)
                 await ViewModel.MoveCaptureToHistoryFolderAsync(id.ToString(), folder.Id, CancellationToken.None);
@@ -191,7 +196,8 @@ public sealed partial class MainPage
         menu.Items.Add(move);
         var reveal = new MenuFlyoutItem
         {
-            Text = "Show in folder", Icon = new SymbolIcon(Symbol.OpenLocal),
+            Text = "Show in folder",
+            Icon = new SymbolIcon(Symbol.OpenLocal),
             IsEnabled = ViewModel.CanShowCaptureInFolder(capture.Id)
         };
         const string revealHelp = "Show this capture's stored image file in File Explorer.";
@@ -210,7 +216,8 @@ public sealed partial class MainPage
         menu.Items.Add(remove);
         var delete = new MenuFlyoutItem
         {
-            Text = "Delete image (Recycle Bin)…", Icon = new SymbolIcon(Symbol.Delete),
+            Text = "Delete image (Recycle Bin)…",
+            Icon = new SymbolIcon(Symbol.Delete),
             IsEnabled = ViewModel.CanRecycleCaptureImage(capture.Id)
         };
         const string deleteHelp = "Move this capture's image file to the Recycle Bin and remove it from the list.";
@@ -237,8 +244,12 @@ public sealed partial class MainPage
             content.Children.Add(error);
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot, RequestedTheme = ActualTheme, Title = "Rename capture",
-                Content = content, PrimaryButtonText = "Rename", CloseButtonText = "Cancel",
+                XamlRoot = XamlRoot,
+                RequestedTheme = ActualTheme,
+                Title = "Rename capture",
+                Content = content,
+                PrimaryButtonText = "Rename",
+                CloseButtonText = "Cancel",
                 DefaultButton = ContentDialogButton.Primary
             };
             dialog.PrimaryButtonClick += (_, args) =>
@@ -277,14 +288,16 @@ public sealed partial class MainPage
         {
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
+                XamlRoot = XamlRoot,
+                RequestedTheme = ActualTheme,
                 Title = "Delete image?",
                 Content = new TextBlock
                 {
                     Text = $"Move the image file for ‘{title}’ to the Recycle Bin and remove this capture from the list?\n\nTo keep the file, cancel and choose Remove from recent captures.",
                     TextWrapping = TextWrapping.Wrap
                 },
-                PrimaryButtonText = "Move to Recycle Bin", CloseButtonText = "Cancel",
+                PrimaryButtonText = "Move to Recycle Bin",
+                CloseButtonText = "Cancel",
                 DefaultButton = ContentDialogButton.Close
             };
             if (await dialog.ShowAsync() == ContentDialogResult.Primary)
@@ -322,9 +335,13 @@ public sealed partial class MainPage
         content.Children.Add(error);
         var dialog = new ContentDialog
         {
-            XamlRoot = XamlRoot, RequestedTheme = ActualTheme, Title = title, Content = content,
+            XamlRoot = XamlRoot,
+            RequestedTheme = ActualTheme,
+            Title = title,
+            Content = content,
             PrimaryButtonText = title == "Import folder" ? "Import" : title == "Add folder" ? "Add folder" : "Save",
-            CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Primary
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary
         };
         dialog.PrimaryButtonClick += (_, args) =>
         {

@@ -38,8 +38,11 @@ public sealed partial class ShellViewModel
     public string AnnotationPropertiesTitle => IsMarqueeToolActive && MarqueeSourceBounds.HasValue ? "Marquee" : SelectedAnnotationCount > 1 ? $"{SelectedAnnotationCount} objects selected"
         : GetSelectedAnnotation() is { } selected ? selected.Kind switch
         {
-            AnnotationKind.Image => "Image", AnnotationKind.Vector => selected.Vector?.Name ?? "SVG shape", AnnotationKind.Fill => "Filled region",
-            AnnotationKind.Highlight => "Highlighter", _ => selected.Kind.ToString()
+            AnnotationKind.Image => "Image",
+            AnnotationKind.Vector => selected.Vector?.Name ?? "SVG shape",
+            AnnotationKind.Fill => "Filled region",
+            AnnotationKind.Highlight => "Highlighter",
+            _ => selected.Kind.ToString()
         } : ActiveAnnotationToolLabel;
 
     public string AnnotationSelectionDescription => !HasCurrentDocument ? "Open or capture an image to start selecting."

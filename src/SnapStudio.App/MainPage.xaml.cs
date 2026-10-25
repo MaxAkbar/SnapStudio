@@ -534,7 +534,8 @@ public sealed partial class MainPage : Page
             AutomationProperties.SetName(name, "Layer name");
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
+                XamlRoot = XamlRoot,
+                RequestedTheme = ActualTheme,
                 Title = "Rename layer",
                 Content = name,
                 PrimaryButtonText = "Rename",
@@ -602,7 +603,8 @@ public sealed partial class MainPage : Page
             AutomationProperties.SetHelpText(picker, $"Choose a color label for {item.Name}.");
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
+                XamlRoot = XamlRoot,
+                RequestedTheme = ActualTheme,
                 Title = $"Color for {item.Name}",
                 Content = picker,
                 PrimaryButtonText = "Apply",
@@ -798,7 +800,8 @@ public sealed partial class MainPage : Page
             content.Children.Add(errorText);
             var dialog = new ContentDialog
             {
-                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
+                XamlRoot = XamlRoot,
+                RequestedTheme = ActualTheme,
                 Title = "New image",
                 Content = content,
                 PrimaryButtonText = "Create",
@@ -1236,7 +1239,8 @@ public sealed partial class MainPage : Page
         {
             var confirmation = new ContentDialog
             {
-                XamlRoot = XamlRoot, RequestedTheme = ActualTheme,
+                XamlRoot = XamlRoot,
+                RequestedTheme = ActualTheme,
                 Title = $"Delete {layerName}?",
                 Content = $"This layer contains {objectCount} object{(objectCount == 1 ? string.Empty : "s")}. "
                     + "Deleting the layer also removes its objects. You can undo this action.",
@@ -2017,8 +2021,12 @@ public sealed partial class MainPage : Page
 
         root.Children.Add(new Microsoft.UI.Xaml.Shapes.Rectangle
         {
-            Fill = item.FillBrush, Stroke = item.StrokeBrush, StrokeThickness = item.StrokeThicknessValue,
-            StrokeDashArray = item.StrokeDashes, RadiusX = item.CornerRadius, RadiusY = item.CornerRadius,
+            Fill = item.FillBrush,
+            Stroke = item.StrokeBrush,
+            StrokeThickness = item.StrokeThicknessValue,
+            StrokeDashArray = item.StrokeDashes,
+            RadiusX = item.CornerRadius,
+            RadiusY = item.CornerRadius,
             Margin = item.Kind == AnnotationKind.Rectangle ? new Thickness(-item.StrokeThicknessValue / 2) : new Thickness(0),
             IsHitTestVisible = false
         });
@@ -2547,8 +2555,13 @@ public sealed partial class MainPage : Page
             Point neck = new((points[2].X + points[4].X) / 2, (points[2].Y + points[4].Y) / 2);
             drawing.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
             {
-                X1 = item.StartX, Y1 = item.StartY, X2 = neck.X, Y2 = neck.Y,
-                Stroke = item.StrokeBrush, StrokeThickness = item.StrokeThicknessValue, StrokeDashArray = item.StrokeDashes
+                X1 = item.StartX,
+                Y1 = item.StartY,
+                X2 = neck.X,
+                Y2 = neck.Y,
+                Stroke = item.StrokeBrush,
+                StrokeThickness = item.StrokeThicknessValue,
+                StrokeDashArray = item.StrokeDashes
             });
             drawing.Children.Add(new Microsoft.UI.Xaml.Shapes.Polygon { Points = [points[2], points[3], points[4]], Fill = item.StrokeBrush });
             return drawing;

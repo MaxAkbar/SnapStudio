@@ -9,7 +9,8 @@ public sealed class JsonToolDesignStore(string path) : IToolDesignStore
     private readonly SemaphoreSlim _gate = new(1, 1);
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
     {
-        WriteIndented = true, Converters = { new JsonStringEnumConverter() }
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     public async Task<IReadOnlyList<ToolDesign>> LoadAsync(CancellationToken cancellationToken) =>

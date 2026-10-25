@@ -128,8 +128,14 @@ public sealed class TextFontTests
     private static CaptureDocument CreateDocument()
     {
         var document = new CaptureDocument();
-        document.Annotations.Add(new AnnotationObject { Kind = AnnotationKind.Text, Text = "iiiiiiiiii", LayerId = document.Layers[0].Id,
-            Bounds = new RectD(20, 20, 400, 100), Style = AnnotationStyle.Default with { StrokeThickness = 48 } });
+        document.Annotations.Add(new AnnotationObject
+        {
+            Kind = AnnotationKind.Text,
+            Text = "iiiiiiiiii",
+            LayerId = document.Layers[0].Id,
+            Bounds = new RectD(20, 20, 400, 100),
+            Style = AnnotationStyle.Default with { StrokeThickness = 48 }
+        });
         return document;
     }
 

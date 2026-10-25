@@ -485,7 +485,8 @@ public sealed partial class CSharpDbDocumentStore
             reader.GetString(4),
             Convert.ToInt32(reader.GetValue(5), CultureInfo.InvariantCulture),
             thumbnailPath,
-            reader.GetString(6)) { Tags = DocumentTags.ReadJson(reader.GetString(7)) };
+            reader.GetString(6))
+        { Tags = DocumentTags.ReadJson(reader.GetString(7)) };
     }
 
     private static string ResolveTitle(CaptureDocument document)

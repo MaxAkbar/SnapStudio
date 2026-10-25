@@ -15,7 +15,11 @@ public sealed class SvgThumbnail : UserControl
         var bitmap = new BitmapImage();
         using var stream = new MemoryStream(pixels.PngBytes, writable: false);
         bitmap.SetSource(stream.AsRandomAccessStream());
-        Content = new Border { CornerRadius = new(4), Background = new SolidColorBrush(Color.FromArgb(255, 222, 227, 233)),
-            Child = new Image { Source = bitmap, Stretch = Stretch.Uniform } };
+        Content = new Border
+        {
+            CornerRadius = new(4),
+            Background = new SolidColorBrush(Color.FromArgb(255, 222, 227, 233)),
+            Child = new Image { Source = bitmap, Stretch = Stretch.Uniform }
+        };
     }
 }

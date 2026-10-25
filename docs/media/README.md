@@ -1,8 +1,8 @@
 # README demonstration
 
 `snapstudio-demo.gif` is a short, looping walkthrough of the running Windows
-application. `snapstudio-demo.png` is a still alternative. Both show the current
-development interface, which is newer than the downloadable alpha preview.
+application. `snapstudio-demo.png` is a still alternative. Both show the
+interface included in SnapStudio 1.0.0.
 
 The example starts with sample travel-site artwork already loaded in a separate
 local workspace. The arrow, text note, repositioning, and final editor state

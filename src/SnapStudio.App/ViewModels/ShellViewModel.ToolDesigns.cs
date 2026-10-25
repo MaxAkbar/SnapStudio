@@ -50,9 +50,17 @@ public sealed partial class ShellViewModel
 
     public static int ToolIndex(AnnotationKind kind) => kind switch
     {
-        AnnotationKind.Rectangle => 0, AnnotationKind.Ellipse => 1, AnnotationKind.Line => 2, AnnotationKind.Arrow => 3,
-        AnnotationKind.Text => 4, AnnotationKind.Highlight => 5, AnnotationKind.Blur => 6, AnnotationKind.Pen => 7,
-        AnnotationKind.Fill => 8, AnnotationKind.Vector => 9, _ => throw new ArgumentException("This object is not a drawing tool.")
+        AnnotationKind.Rectangle => 0,
+        AnnotationKind.Ellipse => 1,
+        AnnotationKind.Line => 2,
+        AnnotationKind.Arrow => 3,
+        AnnotationKind.Text => 4,
+        AnnotationKind.Highlight => 5,
+        AnnotationKind.Blur => 6,
+        AnnotationKind.Pen => 7,
+        AnnotationKind.Fill => 8,
+        AnnotationKind.Vector => 9,
+        _ => throw new ArgumentException("This object is not a drawing tool.")
     };
 
     public void UseDefaultToolDesign(AnnotationKind kind)
@@ -68,8 +76,12 @@ public sealed partial class ShellViewModel
         _annotationDesignFill = SnapStudio.Core.Primitives.ColorRgba.Transparent;
         if (!_chosenToolDesigns.TryGetValue(ActiveToolFamily, out ToolDesign? design)) return;
         AnnotationStyle style = design.Style;
-        SelectAnnotationColor(design.Kind switch { AnnotationKind.Text => style.Text,
-            AnnotationKind.Highlight or AnnotationKind.Fill => style.Fill, _ => style.Stroke });
+        SelectAnnotationColor(design.Kind switch
+        {
+            AnnotationKind.Text => style.Text,
+            AnnotationKind.Highlight or AnnotationKind.Fill => style.Fill,
+            _ => style.Stroke
+        });
         AnnotationStrokeThickness = style.StrokeThickness; AnnotationOpacity = style.Opacity;
         AnnotationCornerRadius = style.CornerRadius; AnnotationPattern = style.Pattern;
         _annotationDesignFill = style.Fill;

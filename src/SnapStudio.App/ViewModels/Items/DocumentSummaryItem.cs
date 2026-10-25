@@ -75,7 +75,8 @@ public sealed class DocumentSummaryItem : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ThumbnailFallbackVisibility)));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
-            or ArgumentException or System.Runtime.InteropServices.COMException) { }
+            or ArgumentException or System.Runtime.InteropServices.COMException)
+        { }
     }
 
     private static string CreateSourceLabel(string sourceKind)

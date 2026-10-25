@@ -17,7 +17,8 @@ internal static class IconForeground
             if (parent is not Control owner) continue;
             icon.SetBinding(Control.ForegroundProperty, new Binding
             {
-                Source = owner, Path = new PropertyPath(nameof(Control.Foreground))
+                Source = owner,
+                Path = new PropertyPath(nameof(Control.Foreground))
             });
             return;
         }

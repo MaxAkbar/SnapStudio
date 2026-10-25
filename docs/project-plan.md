@@ -36,7 +36,10 @@ Document and editor state should preserve a source raster plus editable annotati
 
 ## Current Status Snapshot
 
-The current app has one clean root commit after history squash: `Implement SnapStudio application`.
+SnapStudio 1.0.0 is the first stable GitHub release of the capture, editor,
+workspace, and offline Help workflows. OCR, scrolling capture, and screen
+recording remain experimental and disabled by default. Store distribution is
+tracked separately from the GitHub release.
 
 Implemented foundations:
 
@@ -296,7 +299,7 @@ Use these levels in every release readiness pass:
 Current known issues:
 
 - Public Store v1 still depends on external Partner Center identity values and hosted URLs.
-- Final public-release manual QA evidence must be recorded for OCR, scrolling capture, screen recording, and Store packaging before submission.
+- OCR, scrolling capture, and screen recording need broader manual QA before promotion out of their disabled experimental lanes. Store packaging needs Partner Center validation before submission.
 
 ## Privacy Release Check
 
@@ -317,7 +320,8 @@ Before release:
 | Private alpha | Still capture, editor, workspace, settings, export, and recovery QA pass |
 | v1 beta | OCR, scrolling, and recording lanes pass their smoke tests and manual QA |
 | Store candidate | Release smoke, release readiness, Store identity, hosted URLs, and privacy review pass |
-| Public v1 | No release blockers remain and Partner Center package validation passes |
+| GitHub v1 | Release build, tests, UI smoke, package checks, and readiness pass; experimental lanes remain disabled and package limits are disclosed |
+| Public Store v1 | No Store release blockers remain and Partner Center package validation passes |
 
 ## Standard Validation Commands
 
