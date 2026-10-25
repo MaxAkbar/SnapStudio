@@ -35,7 +35,7 @@ public sealed partial class ShellViewModel
         _ => "Stroke color"
     };
 
-    public string AnnotationPropertiesTitle => IsMarqueeToolActive && MarqueeSourceBounds.HasValue ? "Marquee" : SelectedAnnotationCount > 1 ? $"{SelectedAnnotationCount} objects selected"
+    public string AnnotationPropertiesTitle => IsMarqueeToolActive && MarqueeSourceBounds.HasValue ? AreaSelectionToolName : SelectedAnnotationCount > 1 ? $"{SelectedAnnotationCount} objects selected"
         : GetSelectedAnnotation() is { } selected ? selected.Kind switch
         {
             AnnotationKind.Image => "Image",
@@ -47,8 +47,8 @@ public sealed partial class ShellViewModel
 
     public string AnnotationSelectionDescription => !HasCurrentDocument ? "Open or capture an image to start selecting."
         : SourceSelectionBounds is { } bounds
-            ? $"Selected area: {Math.Round(bounds.Width)} × {Math.Round(bounds.Height)} px. Copy or Crop uses this area. M adjusts its boundary; V moves objects."
-            : IsMarqueeToolActive ? "Drag anywhere on the image to select an area, including over objects. Drag inside an existing marquee to move its boundary. Use V to move objects."
+            ? $"Selected area: {Math.Round(bounds.Width)} × {Math.Round(bounds.Height)} px. Copy preserves the selection shape and transparency. Fill affects selected pixels; Crop keeps its bounding rectangle. Arrow keys move the boundary."
+            : IsMarqueeToolActive ? $"{AreaSelectionHint}. Choose a tool and selection mode below."
             : "Click an object to select it, then drag to move it. Shift-click adds or removes objects. Use M to select an area for Copy or Crop.";
 
     public ColorRgba AnnotationPropertyColor => ResolveStyleColor();

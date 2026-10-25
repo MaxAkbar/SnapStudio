@@ -1,4 +1,5 @@
 using SnapStudio.Core.Export;
+using SnapStudio.Core.Documents;
 using SnapStudio.Core.Primitives;
 using SnapStudio.Core.Rendering;
 using SnapStudio.Platform.Windows;
@@ -8,6 +9,26 @@ namespace SnapStudio.Core.Tests;
 [TestClass]
 public sealed class WindowsClipboardServiceTests
 {
+    [TestMethod]
+    public async Task EmptyPixelSelectionCannotFallBackToCopyingTheWholeImage()
+    {
+        var renderer = new FakeDocumentRenderer(RenderResult.Failed("Should not render."));
+        var clipboard = new WindowsClipboardService(renderer);
+        ClipboardResult result = await clipboard.CopySelectionAsync(DocumentId.New(), PixelSelection.Empty(20, 20), CancellationToken.None);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNull(renderer.LastRequest);
+    }
+    [TestMethod]
+    public async Task CopySelectionPassesTheMaskAndItsBoundingRectangleToTheRenderer()
+    {
+        var renderer = new FakeDocumentRenderer(RenderResult.Failed("Controlled render failure."));
+        var clipboard = new WindowsClipboardService(renderer);
+        PixelSelection selection = PixelSelection.Create(20, 20, PixelSelectionTool.Ellipse, new(3, 4, 10, 12));
+        await clipboard.CopySelectionAsync(DocumentId.New(), selection, CancellationToken.None);
+        Assert.AreSame(selection, renderer.LastRequest!.Selection);
+        Assert.AreEqual(selection.Bounds, renderer.LastRequest.Viewport);
+        Assert.IsFalse(selection.Contains(3, 4));
+    }
     [TestMethod]
     public async Task CopyDocumentAsync_WhenDocumentIsMissing_ReturnsFailure()
     {

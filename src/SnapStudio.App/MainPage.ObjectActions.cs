@@ -34,9 +34,9 @@ public sealed partial class MainPage
     {
         if (_canvasDragMode != CanvasDragMode.None)
         {
-            bool marquee = _canvasDragMode is CanvasDragMode.SelectObjects or CanvasDragMode.MoveMarquee;
+            bool marquee = _canvasDragMode is CanvasDragMode.SelectObjects or CanvasDragMode.MoveMarquee or CanvasDragMode.SelectPolygon;
             EndCanvasDrag();
-            if (marquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
+            if (marquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds, _marqueeOriginalPixelMask);
             args.Handled = true;
             return;
         }
@@ -58,6 +58,7 @@ public sealed partial class MainPage
 
     private async void CanvasScrollViewer_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (await HandlePolygonSelectionKeyAsync(e)) return;
         if (_canvasDragMode != CanvasDragMode.None || !ViewModel.HasCanvasSelection || ShouldIgnoreApplicationShortcut()
             || IsObjectModifierDown(VirtualKey.Menu)) return;
         if (IsObjectModifierDown(VirtualKey.Control))
@@ -100,6 +101,13 @@ public sealed partial class MainPage
     {
         if (_canvasDragMode != CanvasDragMode.None || !ViewModel.HasCurrentDocument) return;
         bool pointer = args.TryGetPosition(this, out Point position);
+        if (ViewModel.IsMarqueeToolActive && ViewModel.SourcePixelSelection is not null)
+        {
+            if (!pointer) position = CanvasScrollViewer.TransformToVisual(this).TransformPoint(new Point(CanvasScrollViewer.ActualWidth / 2, CanvasScrollViewer.ActualHeight / 2));
+            args.Handled = true;
+            ShowPixelSelectionContextMenu(position);
+            return;
+        }
         AnnotationOverlayItem? item = FindObjectItem(args.OriginalSource as DependencyObject);
         if (item is null && !pointer) item = GetSelectedObjectItem();
         if (item is null)

@@ -12,6 +12,84 @@ namespace SnapStudio.Core.Tests;
 public sealed class SystemDrawingDocumentRendererTests
 {
     [TestMethod]
+    [DataRow(PixelSelectionTool.Ellipse)]
+    [DataRow(PixelSelectionTool.Lasso)]
+    [DataRow(PixelSelectionTool.PolygonalLasso)]
+    [DataRow(PixelSelectionTool.Rectangle)]
+    public async Task RenderAsync_PixelSelectionCopiesOnlySelectedPixels(PixelSelectionTool tool)
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        string path = Path.Combine(workspace.Path, "source.png");
+        CreateSolidImage(path, 16, 12, Color.Red);
+        var document = new CaptureDocument { SourceImage = new ImageAsset(path, 16, 12, ImagePixelFormat.Bgra32) };
+        PixelSelection selection = PixelSelection.Create(16, 12, tool, new(2, 2, 10, 8), [new(2, 2), new(12, 2), new(2, 10)]);
+        var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
+        RenderResult result = await renderer.RenderAsync(new(document.Id, 1, selection.Bounds) { Selection = selection }, CancellationToken.None);
+        Assert.IsTrue(result.Succeeded, result.ErrorMessage);
+        using Bitmap bitmap = LoadBitmap(result.Image!.Pixels);
+        Assert.AreEqual((int)selection.Bounds!.Value.Width, bitmap.Width);
+        Assert.AreEqual((int)selection.Bounds.Value.Height, bitmap.Height);
+        for (int y = 0; y < bitmap.Height; y++)
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                bool selected = selection.Contains(x + (int)selection.Bounds.Value.X, y + (int)selection.Bounds.Value.Y);
+                Assert.AreEqual(selected ? 255 : 0, (int)bitmap.GetPixel(x, y).A, $"{tool} pixel {x}, {y}");
+                if (selected) Assert.AreEqual(255, (int)bitmap.GetPixel(x, y).R);
+            }
+    }
+
+    [TestMethod]
+    [DataRow(PixelSelectionTool.Ellipse)]
+    [DataRow(PixelSelectionTool.PolygonalLasso)]
+    [DataRow(PixelSelectionTool.Rectangle)]
+    public async Task FillSelectionDoesNotTouchAnyUnselectedPixel(PixelSelectionTool tool)
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        string path = Path.Combine(workspace.Path, "source.png");
+        CreateSolidImage(path, 16, 12, Color.Blue);
+        var document = new CaptureDocument { SourceImage = new ImageAsset(path, 16, 12, ImagePixelFormat.Bgra32) };
+        PixelSelection selection = PixelSelection.Create(16, 12, tool, new(2, 2, 10, 8), [new(2, 2), new(12, 2), new(2, 10)]);
+        AnnotationObject fill = selection.CreateFill(new(255, 0, 0, 255));
+        fill.LayerId = document.Layers[0].Id;
+        document.Annotations.Add(fill);
+        var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
+        RenderResult result = await renderer.RenderAsync(new(document.Id, 1, null), CancellationToken.None);
+        using Bitmap bitmap = LoadBitmap(result.Image!.Pixels);
+        for (int y = 0; y < 12; y++)
+            for (int x = 0; x < 16; x++)
+                Assert.AreEqual((selection.Contains(x, y) ? Color.Red : Color.Blue).ToArgb(), bitmap.GetPixel(x, y).ToArgb(), $"{tool} at {x}, {y}");
+    }
+
+    [TestMethod]
+    public async Task FillSelectionPreservesHolesUnselectedPixelsAndSourceAndIsOneUndoStep()
+    {
+        using TemporaryWorkspace workspace = TemporaryWorkspace.Create();
+        string path = Path.Combine(workspace.Path, "source.png");
+        CreateSolidImage(path, 16, 12, Color.Blue);
+        byte[] original = await File.ReadAllBytesAsync(path);
+        var document = new CaptureDocument { SourceImage = new ImageAsset(path, 16, 12, ImagePixelFormat.Bgra32) };
+        PixelSelection selection = PixelSelection.Create(16, 12, PixelSelectionTool.Rectangle, new(2, 2, 10, 8))
+            .Combine(PixelSelection.Create(16, 12, PixelSelectionTool.Rectangle, new(4, 4, 4, 3)), PixelSelectionMode.Subtract);
+        AnnotationObject fill = selection.CreateFill(new(255, 0, 0, 255));
+        fill.LayerId = document.Layers[0].Id;
+        var stack = new EditCommandStack();
+        await new DocumentAnnotationEditor(stack).AddAsync(document, fill, CancellationToken.None);
+        DocumentLayers.ValidateForSave(document);
+        var renderer = new SystemDrawingDocumentRenderer(new FakeDocumentRepository(document));
+        RenderResult filled = await renderer.RenderAsync(new(document.Id, 1, null), CancellationToken.None);
+        using Bitmap bitmap = LoadBitmap(filled.Image!.Pixels);
+        Assert.AreEqual(Color.Red.ToArgb(), bitmap.GetPixel(3, 3).ToArgb());
+        Assert.AreEqual(Color.Blue.ToArgb(), bitmap.GetPixel(5, 5).ToArgb());
+        Assert.AreEqual(Color.Blue.ToArgb(), bitmap.GetPixel(0, 0).ToArgb());
+        Assert.AreSequenceEqual(original, await File.ReadAllBytesAsync(path));
+        Assert.IsTrue(await stack.UndoAsync(document, CancellationToken.None));
+        Assert.IsFalse(stack.CanUndo);
+        Assert.IsEmpty(document.Annotations);
+        Assert.IsTrue(await stack.RedoAsync(document, CancellationToken.None));
+        Assert.ContainsSingle(document.Annotations);
+        Assert.AreEqual(fill.Id, document.Annotations[0].Id);
+    }
+    [TestMethod]
     public async Task RenderAsync_SelectionClipsVisibleShapesAndImagesAndPreservesTransparency()
     {
         using TemporaryWorkspace workspace = TemporaryWorkspace.Create();

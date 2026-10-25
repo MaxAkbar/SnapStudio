@@ -16,6 +16,12 @@ public sealed partial class MainPage
     private IReadOnlyDictionary<Guid, RectD> _annotationDragBounds = new Dictionary<Guid, RectD>();
     private Guid[] _marqueeOriginalSelection = [];
     private RectD? _marqueeOriginalBounds;
+    private PixelSelection? _marqueeOriginalPixelMask;
+    private PixelSelectionMode _pixelDragMode;
+    private readonly List<PointD> _lassoSelectionPoints = [];
+    private PixelSelection? _displayedPixelSelection;
+    private double _displayedPixelZoom;
+    private Geometry? _pixelSelectionGeometry;
     private RectD? _annotationDragMarqueeBounds;
     private AnnotationSelectionMode _marqueeSelectionMode;
     private Point _marqueeLastPointer;
@@ -33,6 +39,17 @@ public sealed partial class MainPage
 
     private void ShowSelectionMarquee(Point end, VirtualKeyModifiers modifiers)
     {
+        if (ViewModel.IsMarqueeToolActive && ViewModel.AreaSelectionTool == PixelSelectionTool.Lasso)
+        {
+            AppendLassoSelectionPoint(end);
+            var figure = new PathFigure { StartPoint = new(_lassoSelectionPoints[0].X, _lassoSelectionPoints[0].Y), IsClosed = true, IsFilled = false };
+            var line = new PolyLineSegment();
+            foreach (PointD point in _lassoSelectionPoints.Skip(1)) line.Points.Add(new(point.X, point.Y));
+            figure.Segments.Add(line);
+            var geometry = new PathGeometry(); geometry.Figures.Add(figure);
+            ShowSelectionGeometry(geometry);
+            return;
+        }
         var canvas = new SizeD(ViewModel.CanvasDisplayWidth, ViewModel.CanvasDisplayHeight);
         if (IsObjectModifierDown(VirtualKey.Space) && _marqueePreviewBounds is RectD previous)
         {
@@ -44,12 +61,38 @@ public sealed partial class MainPage
             square: ViewModel.IsMarqueeToolActive && _marqueeSelectionMode == AnnotationSelectionMode.Replace && modifiers.HasFlag(VirtualKeyModifiers.Shift),
             fromCenter: ViewModel.IsMarqueeToolActive && modifiers.HasFlag(VirtualKeyModifiers.Menu));
         _marqueeLastPointer = end;
-        ShowSelectionMarqueeBounds(_marqueePreviewBounds.Value);
+        RectD preview = _marqueePreviewBounds.Value;
+        if (ViewModel.IsMarqueeToolActive)
+        {
+            _marqueePreviewBounds = preview;
+            if (ViewModel.AreaSelectionTool == PixelSelectionTool.Ellipse)
+            {
+                ShowSelectionGeometry(new EllipseGeometry { Center = new(preview.X + preview.Width / 2, preview.Y + preview.Height / 2), RadiusX = preview.Width / 2, RadiusY = preview.Height / 2 });
+                return;
+            }
+        }
+        ShowSelectionMarqueeBounds(preview);
+    }
+
+    private void AppendLassoSelectionPoint(Point point)
+    {
+        if (_lassoSelectionPoints.Count == 0 || Math.Abs(point.X - _lassoSelectionPoints[^1].X) + Math.Abs(point.Y - _lassoSelectionPoints[^1].Y) >= 1)
+            _lassoSelectionPoints.Add(new(point.X, point.Y));
     }
 
     private void ShowMovingMarquee(Point end)
     {
         if (_marqueeOriginalBounds is not RectD source) return;
+        if (_marqueeOriginalPixelMask is { } selection)
+        {
+            ShowPixelSelection(selection);
+            RectD moved = MarqueeBoundsEditor.Move(source, (end.X - _annotationDragStart.X) / ViewModel.CanvasZoom,
+                (end.Y - _annotationDragStart.Y) / ViewModel.CanvasZoom, new(selection.Width, selection.Height));
+            double x = Math.Round(moved.X - source.X) * ViewModel.CanvasZoom, y = Math.Round(moved.Y - source.Y) * ViewModel.CanvasZoom;
+            SelectionMarquee.RenderTransform = new TranslateTransform { X = x, Y = y };
+            SelectionMarqueeUnderlay.RenderTransform = new TranslateTransform { X = x, Y = y };
+            return;
+        }
         RectD original = new(source.X * ViewModel.CanvasZoom, source.Y * ViewModel.CanvasZoom, source.Width * ViewModel.CanvasZoom, source.Height * ViewModel.CanvasZoom);
         ShowSelectionMarqueeBounds(MarqueeBoundsEditor.Move(original, end.X - _annotationDragStart.X, end.Y - _annotationDragStart.Y,
             new(ViewModel.CanvasDisplayWidth, ViewModel.CanvasDisplayHeight)));
@@ -57,14 +100,38 @@ public sealed partial class MainPage
 
     private void ShowSelectionMarqueeBounds(RectD bounds)
     {
-        foreach (var rectangle in new[] { SelectionMarqueeUnderlay, SelectionMarquee })
+        ShowSelectionGeometry(new RectangleGeometry { Rect = new(bounds.X, bounds.Y, bounds.Width, bounds.Height) });
+    }
+
+    private void ShowPixelSelection(PixelSelection selection)
+    {
+        if (!ReferenceEquals(selection, _displayedPixelSelection) || _displayedPixelZoom != ViewModel.CanvasZoom)
         {
-            rectangle.Width = bounds.Width;
-            rectangle.Height = bounds.Height;
-            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(rectangle, bounds.X);
-            Microsoft.UI.Xaml.Controls.Canvas.SetTop(rectangle, bounds.Y);
-            rectangle.Visibility = Visibility.Visible;
+            var geometry = new PathGeometry();
+            foreach (SelectionEdge edge in selection.GetEdges())
+            {
+                double zoom = ViewModel.CanvasZoom;
+                var figure = new PathFigure { StartPoint = new(edge.Start.X * zoom, edge.Start.Y * zoom), IsFilled = false };
+                figure.Segments.Add(new LineSegment { Point = new(edge.End.X * zoom, edge.End.Y * zoom) });
+                geometry.Figures.Add(figure);
+            }
+            _pixelSelectionGeometry = geometry;
+            _displayedPixelSelection = selection;
+            _displayedPixelZoom = ViewModel.CanvasZoom;
         }
+        ShowSelectionGeometry(_pixelSelectionGeometry!);
+    }
+
+    private void ShowSelectionGeometry(Geometry geometry)
+    {
+        if (!ReferenceEquals(SelectionMarquee.Data, geometry))
+        {
+            SelectionMarquee.Data = geometry;
+            // WinUI geometry objects belong to one Path; the contrasting outline needs its own copy.
+            SelectionMarqueeUnderlay.Data = CloneSelectionGeometry(geometry);
+        }
+        SelectionMarquee.RenderTransform = SelectionMarqueeUnderlay.RenderTransform = null;
+        SelectionMarquee.Visibility = SelectionMarqueeUnderlay.Visibility = Visibility.Visible;
         if (!_marqueeAnimationRunning && IsLoaded)
         {
             if (_marqueeAnimation is null)
@@ -79,6 +146,29 @@ public sealed partial class MainPage
         }
     }
 
+    private static Geometry CloneSelectionGeometry(Geometry geometry)
+    {
+        if (geometry is RectangleGeometry rectangle) return new RectangleGeometry { Rect = rectangle.Rect };
+        if (geometry is EllipseGeometry ellipse) return new EllipseGeometry { Center = ellipse.Center, RadiusX = ellipse.RadiusX, RadiusY = ellipse.RadiusY };
+        var copy = new PathGeometry();
+        foreach (PathFigure figure in ((PathGeometry)geometry).Figures)
+        {
+            var next = new PathFigure { StartPoint = figure.StartPoint, IsClosed = figure.IsClosed, IsFilled = figure.IsFilled };
+            foreach (PathSegment segment in figure.Segments)
+            {
+                if (segment is LineSegment line) next.Segments.Add(new LineSegment { Point = line.Point });
+                else if (segment is PolyLineSegment polyline)
+                {
+                    var lineCopy = new PolyLineSegment();
+                    foreach (Point point in polyline.Points) lineCopy.Points.Add(point);
+                    next.Segments.Add(lineCopy);
+                }
+            }
+            copy.Figures.Add(next);
+        }
+        return copy;
+    }
+
     private void StopMarqueeAnimation()
     {
         _marqueeAnimation?.Stop(); _marqueeAnimationRunning = false;
@@ -87,8 +177,13 @@ public sealed partial class MainPage
     private void RefreshPersistentSelectionMarquee()
     {
         if (_canvasDragMode != CanvasDragMode.None) return;
-        if (ViewModel.SelectionDisplayBounds is { Width: > 0, Height: > 0 } bounds) ShowSelectionMarqueeBounds(bounds);
-        else { StopMarqueeAnimation(); SelectionMarquee.Visibility = SelectionMarqueeUnderlay.Visibility = Visibility.Collapsed; }
+        if (ViewModel.SourcePixelSelection is { } selection) ShowPixelSelection(selection);
+        else if (ViewModel.SelectionDisplayBounds is { Width: > 0, Height: > 0 } bounds) ShowSelectionMarqueeBounds(bounds);
+        else
+        {
+            StopMarqueeAnimation(); SelectionMarquee.Visibility = SelectionMarqueeUnderlay.Visibility = Visibility.Collapsed;
+            _displayedPixelSelection = null; _pixelSelectionGeometry = null;
+        }
     }
 
     private void ShowMovedSelectionMarquee(IReadOnlyDictionary<Guid, RectD> movedBounds)

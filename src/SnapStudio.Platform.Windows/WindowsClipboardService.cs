@@ -1,4 +1,5 @@
 using SnapStudio.Core.Export;
+using SnapStudio.Core.Documents;
 using SnapStudio.Core.Primitives;
 using SnapStudio.Core.Rendering;
 using Windows.ApplicationModel.DataTransfer;
@@ -30,24 +31,34 @@ public sealed class WindowsClipboardService : IClipboardService
         DocumentId documentId,
         CancellationToken cancellationToken) => CopyDocumentAsync(documentId, null, cancellationToken);
 
-    public async Task<ClipboardResult> CopyDocumentAsync(
+    public Task<ClipboardResult> CopyDocumentAsync(
         DocumentId documentId,
         RectD? sourceBounds,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken) => CopyRenderedAsync(new RenderRequest(documentId, 1, sourceBounds), cancellationToken);
+
+    public Task<ClipboardResult> CopySelectionAsync(DocumentId documentId, PixelSelection selection, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(selection);
+        cancellationToken.ThrowIfCancellationRequested();
+        return selection.IsEmpty ? Task.FromResult(ClipboardResult.Failed("Select an area before copying."))
+            : CopyRenderedAsync(new RenderRequest(documentId, 1, selection.Bounds) { Selection = selection }, cancellationToken);
+    }
+
+    private async Task<ClipboardResult> CopyRenderedAsync(RenderRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         try
         {
             RenderResult renderResult = await _documentRenderer
-                .RenderAsync(new RenderRequest(documentId, 1, sourceBounds), cancellationToken)
+                .RenderAsync(request, cancellationToken)
                 .ConfigureAwait(true);
 
             if (!renderResult.Succeeded || renderResult.Image is not RenderedImage image)
                 return ClipboardResult.Failed(renderResult.ErrorMessage ?? "The document could not be rendered.");
 
             Directory.CreateDirectory(_temporaryDirectory);
-            string temporaryPath = Path.Combine(_temporaryDirectory, $"{documentId.Value:N}.png");
+            string temporaryPath = Path.Combine(_temporaryDirectory, $"{request.DocumentId.Value:N}-{Guid.NewGuid():N}.png");
             await File
                 .WriteAllBytesAsync(temporaryPath, image.Pixels, cancellationToken)
                 .ConfigureAwait(true);

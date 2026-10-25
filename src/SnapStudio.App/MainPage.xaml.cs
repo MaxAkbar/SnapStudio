@@ -84,6 +84,7 @@ public sealed partial class MainPage : Page
     {
         None,
         SelectObjects,
+        SelectPolygon,
         MoveMarquee,
         DrawAnnotation,
         DrawPen,
@@ -1477,7 +1478,7 @@ public sealed partial class MainPage : Page
 
     private void SelectionToolButton_Click(object sender, RoutedEventArgs e)
     {
-        SelectCanvasTool(null);
+        ShowAreaSelectionTools();
     }
 
     private void MoveToolButton_Click(object sender, RoutedEventArgs e) => SelectCanvasTool(-1);
@@ -1545,6 +1546,14 @@ public sealed partial class MainPage : Page
         object sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_polygonSelectionFinishing) { e.Handled = true; return; }
+        if (_canvasDragMode == CanvasDragMode.SelectPolygon)
+        {
+            e.Handled = true;
+            var polygonPoint = e.GetCurrentPoint(CanvasSurface);
+            if (polygonPoint.Properties.IsLeftButtonPressed) await AddPolygonCornerAsync(ClampToCanvas(polygonPoint.Position));
+            return;
+        }
         if (_canvasDragMode != CanvasDragMode.None
             || !ViewModel.HasCurrentDocument)
         {
@@ -1562,11 +1571,30 @@ public sealed partial class MainPage : Page
         {
             _marqueeOriginalSelection = ViewModel.SelectedAnnotationIds.ToArray();
             _marqueeOriginalBounds = ViewModel.MarqueeSourceBounds;
+            _marqueeOriginalPixelMask = ViewModel.SourcePixelSelection;
             _marqueeSelectionMode = e.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift) && ViewModel.HasCanvasSelection ? AnnotationSelectionMode.Add
                 : e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control) ? AnnotationSelectionMode.Toggle : AnnotationSelectionMode.Replace;
             _annotationDragStart = ClampToCanvas(pointerPoint.Position);
-            if (ViewModel.IsMarqueeToolActive && _marqueeSelectionMode == AnnotationSelectionMode.Replace
+            _pixelDragMode = e.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift) && e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu) ? PixelSelectionMode.Intersect
+                : e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu) ? PixelSelectionMode.Subtract
+                : e.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift) && ViewModel.SourcePixelSelection is not null ? PixelSelectionMode.Add : ViewModel.AreaSelectionMode;
+            if (ViewModel.IsMarqueeToolActive && ViewModel.AreaSelectionTool == PixelSelectionTool.PolygonalLasso)
+            {
+                BeginPolygonSelection(_annotationDragStart);
+                e.Handled = true;
+                return;
+            }
+            if (ViewModel.IsMarqueeToolActive && ViewModel.AreaSelectionTool == PixelSelectionTool.MagicWand)
+            {
+                e.Handled = true;
+                await ViewModel.SelectSimilarPixelsAsync(new(pointerPoint.Position.X, pointerPoint.Position.Y), _pixelDragMode, CancellationToken.None);
+                UpdateBindingsFromViewModel();
+                return;
+            }
+            if (ViewModel.IsMarqueeToolActive && _pixelDragMode == PixelSelectionMode.Replace
+                && ViewModel.AreaSelectionTool is PixelSelectionTool.Rectangle or PixelSelectionTool.Ellipse
                 && _marqueeOriginalBounds is RectD sourceArea
+                && (_marqueeOriginalPixelMask is null || _marqueeOriginalPixelMask.Contains((int)(_annotationDragStart.X / ViewModel.CanvasZoom), (int)(_annotationDragStart.Y / ViewModel.CanvasZoom)))
                 && new Rect(sourceArea.X * ViewModel.CanvasZoom, sourceArea.Y * ViewModel.CanvasZoom, sourceArea.Width * ViewModel.CanvasZoom, sourceArea.Height * ViewModel.CanvasZoom).Contains(_annotationDragStart))
             {
                 _canvasDragMode = CanvasDragMode.MoveMarquee;
@@ -1574,9 +1602,10 @@ public sealed partial class MainPage : Page
                 e.Handled = true;
                 return;
             }
-            if (_marqueeSelectionMode == AnnotationSelectionMode.Replace) ViewModel.ClearAnnotationSelection();
+            if (!ViewModel.IsMarqueeToolActive && _marqueeSelectionMode == AnnotationSelectionMode.Replace) ViewModel.ClearAnnotationSelection();
             _marqueeLastPointer = _annotationDragStart;
             _marqueePreviewBounds = null;
+            _lassoSelectionPoints.Clear();
             _canvasDragMode = CanvasDragMode.SelectObjects;
             CanvasSurface.CapturePointer(e.Pointer);
             ShowSelectionMarquee(_annotationDragStart, e.KeyModifiers);
@@ -1635,8 +1664,18 @@ public sealed partial class MainPage : Page
         Microsoft.UI.Input.PointerPoint pointerPoint = e.GetCurrentPoint(CanvasSurface);
         Point currentPoint = ClampToCanvas(pointerPoint.Position);
 
+        if (_canvasDragMode == CanvasDragMode.SelectPolygon)
+        {
+            if (ViewModel.CreateSourcePointFromCanvasPoint(new(currentPoint.X, currentPoint.Y)) is { } source) ShowPolygonSelectionPreview(source);
+            e.Handled = true;
+            return;
+        }
+
         if (_canvasDragMode == CanvasDragMode.SelectObjects)
         {
+            if (ViewModel.IsMarqueeToolActive && ViewModel.AreaSelectionTool == PixelSelectionTool.Lasso)
+                foreach (var sample in e.GetIntermediatePoints(CanvasSurface).OrderBy(point => point.Timestamp))
+                    AppendLassoSelectionPoint(ClampToCanvas(sample.Position));
             ShowSelectionMarquee(currentPoint, e.KeyModifiers);
         }
         else if (_canvasDragMode == CanvasDragMode.MoveMarquee) ShowMovingMarquee(currentPoint);
@@ -1664,6 +1703,7 @@ public sealed partial class MainPage : Page
         object sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_canvasDragMode == CanvasDragMode.SelectPolygon) { e.Handled = true; return; }
         if (_canvasDragMode == CanvasDragMode.None)
         {
             return;
@@ -1677,10 +1717,14 @@ public sealed partial class MainPage : Page
             ShowSelectionMarquee(currentPoint, e.KeyModifiers);
             RectD marqueeBounds = _marqueePreviewBounds ?? default;
             AnnotationSelectionMode mode = _marqueeSelectionMode;
+            bool areaSelection = ViewModel.IsMarqueeToolActive;
+            PointD[] points = _lassoSelectionPoints.ToArray();
             EndCanvasDrag(e);
-            if (marqueeBounds.Width >= ViewModel.CanvasZoom && marqueeBounds.Height >= ViewModel.CanvasZoom)
+            if (areaSelection)
+                await ViewModel.SelectPixelAreaAsync(marqueeBounds, points, _pixelDragMode, CancellationToken.None);
+            else if (marqueeBounds.Width >= ViewModel.CanvasZoom && marqueeBounds.Height >= ViewModel.CanvasZoom)
                 ViewModel.SelectAnnotationsInCanvasBounds(marqueeBounds, mode);
-            else if (mode != AnnotationSelectionMode.Replace) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
+            else if (mode != AnnotationSelectionMode.Replace) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds, _marqueeOriginalPixelMask);
             UpdateBindingsFromViewModel();
             return;
         }
@@ -1747,18 +1791,20 @@ public sealed partial class MainPage : Page
         object sender,
         Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_canvasDragMode == CanvasDragMode.SelectPolygon) { CancelPolygonSelection(); return; }
         if (_canvasDragMode != CanvasDragMode.None)
         {
-            if (_canvasDragMode is CanvasDragMode.SelectObjects or CanvasDragMode.MoveMarquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
+            if (_canvasDragMode is CanvasDragMode.SelectObjects or CanvasDragMode.MoveMarquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds, _marqueeOriginalPixelMask);
             EndCanvasDrag(e);
         }
     }
 
     private void CanvasSurface_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
     {
+        if (_canvasDragMode == CanvasDragMode.SelectPolygon) return;
         if (_canvasDragMode != CanvasDragMode.None)
         {
-            if (_canvasDragMode is CanvasDragMode.SelectObjects or CanvasDragMode.MoveMarquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds);
+            if (_canvasDragMode is CanvasDragMode.SelectObjects or CanvasDragMode.MoveMarquee) ViewModel.RestoreAnnotationSelection(_marqueeOriginalSelection, _marqueeOriginalBounds, _marqueeOriginalPixelMask);
             EndCanvasDrag(e);
         }
     }
@@ -1901,6 +1947,7 @@ public sealed partial class MainPage : Page
             || _captureRenameDialogIsOpen
             || _captureTagsDialogIsOpen
             || _toolDesignDialogIsOpen
+            || _selectionFillDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen
             || IsEditableFocusedElement(FocusManager.GetFocusedElement(XamlRoot));
     }
@@ -2763,6 +2810,9 @@ public sealed partial class MainPage : Page
 
     private void EndCanvasDrag(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs? e = null)
     {
+        _polygonalLasso.Clear();
+        _polygonDocumentId = null;
+        _polygonSourceImage = null;
         SetDraggedAnnotationVisibility(Visibility.Visible);
         _canvasDragMode = CanvasDragMode.None;
         _annotationDragId = Guid.Empty;
@@ -2863,6 +2913,9 @@ public sealed partial class MainPage : Page
 
     private void UpdateBindingsFromViewModel()
     {
+        if (_canvasDragMode == CanvasDragMode.SelectPolygon && (_polygonDocumentId != ViewModel.CurrentDocumentId
+            || !ReferenceEquals(_polygonSourceImage, ViewModel.CanvasImageSource) || !ViewModel.IsMarqueeToolActive
+            || ViewModel.AreaSelectionTool != PixelSelectionTool.PolygonalLasso)) CancelPolygonSelection();
         _isUpdatingBindings = true;
         try
         {

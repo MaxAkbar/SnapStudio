@@ -41,6 +41,21 @@ public sealed class AnnotationToolIcon : UserControl
         _canvas.Children.Clear();
         switch (Kind)
         {
+            case "SelectEllipse":
+                var selectionEllipse = new Ellipse { Width = 20, Height = 16, StrokeDashArray = [2, 2] };
+                Add(selectionEllipse, 2, 4);
+                selectionEllipse.StrokeDashArray = [2, 2];
+                break;
+            case "Lasso":
+                Line(new(6, 18), new(2, 12), new(4, 5), new(12, 2), new(21, 7), new(22, 14), new(16, 19), new(6, 18), new(5, 23), new(10, 22));
+                break;
+            case "MagicWand":
+                Line(new(3, 22), new(18, 7)); Line(new(14, 2), new(14, 6)); Line(new(20, 3), new(18, 5)); Line(new(20, 10), new(24, 10));
+                break;
+            case "PolygonalLasso":
+                Line(new(3, 20), new(6, 3), new(21, 8), new(16, 21), new(3, 20));
+                Line(new(1, 18), new(5, 18), new(5, 22), new(1, 22), new(1, 18));
+                break;
             case "Vector":
                 Line(new Point(12, 2), new Point(15, 9), new Point(23, 10), new Point(17, 15), new Point(19, 23), new Point(12, 19), new Point(5, 23), new Point(7, 15), new Point(1, 10), new Point(9, 9), new Point(12, 2));
                 break;

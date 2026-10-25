@@ -19,6 +19,13 @@ public sealed partial class MainPage
         ];
         foreach ((string name, int? index) in tools)
         {
+            if (index is null)
+            {
+                var selections = new MenuFlyoutSubItem { Text = "Selection tools" };
+                PopulateAreaSelectionTools(selections.Items);
+                menu.Items.Add(selections);
+                continue;
+            }
             if (index == 0) menu.Items.Add(new MenuFlyoutSeparator());
             var item = new RadioMenuFlyoutItem
             {
@@ -50,6 +57,7 @@ public sealed partial class MainPage
 
     private void SelectCanvasTool(int? toolIndex)
     {
+        CancelPolygonSelection();
         HideToolDesignDrawer();
         _objectContextMenu?.Hide();
         if (toolIndex == -1) ViewModel.UseMoveTool();

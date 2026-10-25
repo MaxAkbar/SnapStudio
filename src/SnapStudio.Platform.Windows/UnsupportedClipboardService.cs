@@ -5,6 +5,9 @@ namespace SnapStudio.Platform.Windows;
 
 public sealed class UnsupportedClipboardService : IClipboardService
 {
+    public Task<ClipboardResult> CopySelectionAsync(DocumentId documentId, SnapStudio.Core.Documents.PixelSelection selection,
+        CancellationToken cancellationToken) => CopyDocumentAsync(documentId, cancellationToken);
+
     public Task<ClipboardResult> CopyDocumentAsync(
         DocumentId documentId,
         RectD? sourceBounds,

@@ -73,6 +73,7 @@ internal static class SystemDrawingRegionFill
 
         while (pending.TryPop(out var point))
         {
+            if (!request.Contiguous) break;
             cancellationToken.ThrowIfCancellationRequested();
             if (!Matches(point.X, point.Y)) continue;
             int left = point.X;
@@ -92,6 +93,27 @@ internal static class SystemDrawingRegionFill
                     bool matches = Matches(x, y);
                     if (matches && !inSpan) pending.Push((x, y));
                     inSpan = matches;
+                }
+            }
+        }
+
+        if (!request.Contiguous)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                int start = -1;
+                for (int x = 0; x <= width; x++)
+                {
+                    bool matches = x < width && Matches(x, y);
+                    if (matches && start < 0) start = x;
+                    else if (!matches && start >= 0)
+                    {
+                        spans.Add(new(start, y, x - start, 1));
+                        minX = Math.Min(minX, start); minY = Math.Min(minY, y);
+                        maxX = Math.Max(maxX, x); maxY = Math.Max(maxY, y + 1);
+                        start = -1;
+                    }
                 }
             }
         }

@@ -24,6 +24,7 @@
 - **Capture what matters.** Grab a region, a window, one monitor, or your entire desktop. You can also open an image or paste from the clipboard.
 - **Make your point.** Add arrows, text, shapes, highlights, or blur. Move, resize, and restyle your notes as you go, with undo and redo.
 - **Keep it editable.** Organize objects in layers and come back to the document later. Even the captured mouse pointer can be moved or hidden on its own.
+- **Select precisely.** Use a rectangle, ellipse, freehand lasso, magic wand, or polygonal lasso with straight edges. Copy the selected shape with transparency, or fill it with a color.
 - **Find it again.** Browse your local library, group images into folders, and search by title or tag. Map a folder to bring existing images into your workspace.
 - **Share the result.** Copy the image to your clipboard or export PNG, JPEG, or PDF. PNG keeps transparent backgrounds.
 
@@ -43,10 +44,10 @@ The release runs on **Windows 11 x64** and includes .NET and the Windows App SDK
 
 1. **Start with an image.** Choose **New capture → Region**, or press **Ctrl+R**. Already have a screenshot? Use **Open** (**Ctrl+O**) or **Paste** (**Ctrl+V**).
 2. **Add a note.** Choose **Arrow** or **Text** beside the canvas, then draw on the image. Change its color, size, and opacity in **Properties**.
-3. **Adjust it.** Use **Move** (**V**) to select and reposition objects. Use **Marquee** (**M**) to select an image area, then **Crop** (**C**) to keep that area.
+3. **Adjust it.** Use **Move** (**V**) to select and reposition objects. Use the **selection tools** (**M**) to select an image area, then copy it, fill it, or **Crop** (**C**) to keep its bounding rectangle.
 4. **Share it.** Choose **Copy** (**Ctrl+C**) or **Export → PNG, JPEG, or PDF**.
 
-**Copy only part of an image:** draw a marquee first. To copy the whole edited image, clear the selection with **Ctrl+D**.
+**Copy only part of an image:** make a pixel selection first. Areas outside the selected shape stay transparent. To copy the whole edited image, clear the selection with **Ctrl+D**.
 
 ## A workspace that grows with your work
 

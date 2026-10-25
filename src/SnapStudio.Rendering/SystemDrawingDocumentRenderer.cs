@@ -107,6 +107,25 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
                 }
             }
 
+            if (request.Selection is PixelSelection selection)
+            {
+                if (selection.IsEmpty || selection.Width != document.SourceImage.Width || selection.Height != document.SourceImage.Height)
+                    return RenderResult.Failed("The selection does not match the current image.");
+                using Graphics graphics = Graphics.FromImage(outputBitmap);
+                using var selected = new Region();
+                selected.MakeEmpty();
+                foreach (RectD rectangle in selection.GetRectangles())
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    selected.Union(new RectangleF((float)((rectangle.X - viewport.X) * scale), (float)((rectangle.Y - viewport.Y) * scale),
+                        (float)(rectangle.Width * scale), (float)(rectangle.Height * scale)));
+                }
+                graphics.SetClip(selected, CombineMode.Exclude);
+                graphics.CompositingMode = CompositingMode.SourceCopy;
+                using var transparent = new SolidBrush(Color.Transparent);
+                graphics.FillRectangle(transparent, 0, 0, outputBitmap.Width, outputBitmap.Height);
+            }
+
             using var stream = new MemoryStream();
             outputBitmap.Save(stream, ImageFormat.Png);
 

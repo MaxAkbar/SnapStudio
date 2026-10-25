@@ -97,19 +97,23 @@
 
     <section id="selection" aria-labelledby="selection-title">
       <h2 id="selection-title">Select, move, and crop</h2>
-      <h3>Marquee (M): choose an image area</h3>
-      <p>Drag to draw the animated selection rectangle, including over existing objects. Copy and Crop use this exact area. Overlapping visible objects are also selected for group actions.</p>
+      <h3>Selection tools (M): choose image pixels</h3>
+      <p>Click the selection tool in the toolbar, or use Selection tool in Properties, to choose a shape. Selections work over the visible image without selecting or moving annotation objects.</p>
       <ul>
-        <li>Drag inside the existing rectangle, or use the arrow keys, to move only the selection boundary. Image pixels and objects stay in place.</li>
-        <li>While drawing a new selection, hold <kbd>Shift</kbd> for a square, <kbd>Alt</kbd> to draw from the center, or <kbd>Space</kbd> to reposition it.</li>
-        <li>With a selection already present, Shift-drag adds objects and Ctrl-drag toggles overlapping objects.</li>
+        <li><strong>Rectangular / Elliptical marquee:</strong> drag a rectangle or oval. Hold Shift when starting a new selection for a square or circle. Drag inside an existing marquee to move its boundary.</li>
+        <li><strong>Lasso:</strong> drag a freehand outline. Releasing the pointer closes the outline.</li>
+        <li><strong>Magic wand (W):</strong> click a color to select similar pixels from all visible layers. Tolerance runs from 0 (exact match) to 255. Contiguous limits the selection to connected pixels; turn it off to include separate matching areas.</li>
+        <li><strong>Polygonal lasso:</strong> click successive corners to build a selection with straight edges. Click the first corner, double-click, or press Enter to close the outline. Backspace removes the last corner; Esc cancels the outline and restores the previous selection.</li>
+        <li>Choose New, Add, Subtract, or Intersect in Selection mode. With a selection present, Shift adds; Alt subtracts; Shift+Alt intersects. Holes and separate selected regions are preserved.</li>
+        <li>Arrow keys move the selection boundary by one image pixel; Shift moves it by ten. Image pixels and objects stay in place.</li>
         <li><kbd>Ctrl+A</kbd> selects the full canvas, including empty areas.</li>
       </ul>
+      <p><strong>Copy selection</strong> (<kbd>Ctrl+C</kbd>) copies the selected pixels with transparency outside the shape. Paste can place the result in a new layer or a new image. <strong>Fill selection</strong> (<kbd>Shift+F5</kbd>) lets you choose a color and adds one editable fill object to the active layer, with undo and redo. Right-click a selection for these actions, Invert (<kbd>Ctrl+Shift+I</kbd>), Select all, or Deselect.</p>
       <h3>Move (V): work with objects</h3>
       <p>Click an object to select it, then drag to move it. Shift-click or Ctrl-click adds or removes individual objects. Drag an empty area to select overlapping objects. <kbd>Ctrl+A</kbd> selects every visible object. Shift-drag constrains movement to one axis.</p>
       <p>Resize handles appear for a single selected object. Arrow keys move the selection by one image pixel; add <kbd>Shift</kbd> for ten pixels. Clicking an object in Layers switches to Move. Switching between Marquee and Move keeps the selected area and objects.</p>
       <h3>Crop and resize</h3>
-      <p>Draw a marquee around the part to keep, then choose <strong>Crop</strong> or press <kbd>C</kbd>. Padding inside the rectangle is included, and objects inside the area are kept. Undo restores the previous image. Resize changes the image dimensions; choose pixels or percentages and use the aspect-ratio lock to keep proportions.</p>
+      <p>Make a selection around the part to keep, then choose <strong>Crop</strong> or press <kbd>C</kbd>. Crop keeps the selection's bounding rectangle, including padding, and retains objects inside that rectangle. Copy preserves a nonrectangular selection's shape. Undo restores the previous image. Resize changes the image dimensions; choose pixels or percentages and use the aspect-ratio lock to keep proportions.</p>
       <p><kbd>Ctrl+D</kbd> deselects. <kbd>Esc</kbd> cancels an active drag and restores its previous selection, or clears the selection when idle.</p>
     </section>
 
@@ -174,7 +178,7 @@
     <section id="export" aria-labelledby="export-title">
       <h2 id="export-title">Copy, paste, and export</h2>
       <h3>Copy the result</h3>
-      <p>Choose <strong>Copy</strong> or press <kbd>Ctrl+C</kbd>. If there is a selection rectangle, Copy uses that area, including visible image pixels and objects. With no selection it copies the whole edited image. Use <kbd>Ctrl+D</kbd> first if you want the complete image.</p>
+      <p>Choose <strong>Copy</strong> or press <kbd>Ctrl+C</kbd>. With a pixel selection, Copy includes the selected parts of the visible image and its objects, preserving transparency outside the selected shape. With object selections, Copy uses their bounding rectangle. With no selection it copies the whole edited image. Use <kbd>Ctrl+D</kbd> first if you want the complete image.</p>
       <h3>Paste an image</h3>
       <p><strong>Paste</strong> (<kbd>Ctrl+V</kbd>) offers New layer to place a clipboard image over the open image, or New image to open it as a separate document. Pasted layers retain transparency and can be moved or resized independently. The arrow beside Paste offers both actions directly. <kbd>Ctrl+Shift+V</kbd> always creates a new image. With no image open, Ctrl+V creates a new document.</p>
       <h3>Export a file</h3>
@@ -207,12 +211,14 @@
           <tr><td><kbd>Ctrl+C</kbd></td><td>Copy the selected area, or the whole edited image.</td></tr>
           <tr><td><kbd>Ctrl+V</kbd> / <kbd>Ctrl+Shift+V</kbd></td><td>Paste with a choice / paste as a new image.</td></tr>
           <tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>Undo / redo.</td></tr>
-          <tr><td><kbd>M</kbd> / <kbd>V</kbd></td><td>Marquee / Move.</td></tr>
+          <tr><td><kbd>M</kbd> / <kbd>V</kbd></td><td>Last used pixel selection tool / Move objects.</td></tr>
           <tr><td><kbd>Ctrl+A</kbd></td><td>Select the full canvas in Marquee, or visible objects in Move.</td></tr>
           <tr><td><kbd>Ctrl+D</kbd> / <kbd>Esc</kbd></td><td>Deselect / cancel a drag or clear the selection.</td></tr>
           <tr><td><kbd>Arrow keys</kbd> / <kbd>Shift+Arrow</kbd></td><td>Move by one / ten image pixels. Marquee moves only its boundary.</td></tr>
           <tr><td><kbd>Ctrl+J</kbd></td><td>Duplicate selected objects.</td></tr>
           <tr><td><kbd>Ctrl+H</kbd> / <kbd>Delete</kbd></td><td>Hide or show / delete selected objects.</td></tr>
+          <tr><td><kbd>W</kbd></td><td>Magic wand selection; use Properties for tolerance and contiguous matching.</td></tr>
+          <tr><td><kbd>Shift+F5</kbd> / <kbd>Ctrl+Shift+I</kbd></td><td>Fill / invert selected pixels.</td></tr>
           <tr><td><kbd>Ctrl+Page Up</kbd> / <kbd>Ctrl+Page Down</kbd></td><td>Bring forward / send backward within the layer.</td></tr>
           <tr><td><kbd>Ctrl+Shift+Page Up</kbd> / <kbd>Ctrl+Shift+Page Down</kbd></td><td>Bring to front / send to back within the layer.</td></tr>
           <tr><td><kbd>Shift+F10</kbd> / <kbd>Menu</kbd></td><td>Open the object context menu, or tool menu on an unselected canvas.</td></tr>

@@ -25,23 +25,37 @@ public sealed partial class ShellViewModel
     public void SelectEntireCanvas()
     {
         if (_currentDocument is null) return;
-        _annotationSelection.SelectIntersecting(_currentDocument, new(0, 0, _currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height));
+        _pixelSelectionRequestVersion++;
+        _annotationSelection.SetPixelSelection(PixelSelection.Create(_currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height,
+            PixelSelectionTool.Rectangle, new(0, 0, _currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height)));
         RefreshSelection();
     }
 
     public void MoveMarquee(double dx, double dy)
     {
         if (_currentDocument is null || MarqueeSourceBounds is not RectD bounds) return;
+        if (SourcePixelSelection is { } selection)
+        {
+            _pixelSelectionRequestVersion++;
+            _annotationSelection.SetPixelSelection(selection.Move((int)Math.Round(dx), (int)Math.Round(dy)));
+            RefreshSelection();
+            return;
+        }
         RectD moved = MarqueeBoundsEditor.Move(bounds, dx, dy, new(_currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height));
         _annotationSelection.SelectIntersecting(_currentDocument, moved);
         RefreshSelection();
     }
 
-    public void RestoreAnnotationSelection(IEnumerable<Guid> ids, RectD? selectionBounds = null)
+    public void RestoreAnnotationSelection(IEnumerable<Guid> ids, RectD? selectionBounds = null, PixelSelection? pixelSelection = null)
     {
         if (_currentDocument is null) return;
-        _annotationSelection.SelectMany(_currentDocument, ids);
-        if (selectionBounds is RectD bounds) _annotationSelection.SetMarqueeBounds(_currentDocument, bounds);
+        _pixelSelectionRequestVersion++;
+        if (pixelSelection is not null) _annotationSelection.SetPixelSelection(pixelSelection);
+        else
+        {
+            _annotationSelection.SelectMany(_currentDocument, ids);
+            if (selectionBounds is RectD bounds) _annotationSelection.SetMarqueeBounds(_currentDocument, bounds);
+        }
         RefreshSelection();
     }
 
@@ -109,7 +123,7 @@ public sealed partial class ShellViewModel
 
     private void RefreshSelection(bool syncStyle = true)
     {
-        _layerWorkspace.SelectAnnotation(GetSelectedAnnotation());
+        if (HasSelectedAnnotation) _layerWorkspace.SelectAnnotation(GetSelectedAnnotation());
         if (syncStyle)
         {
             if (HasSelectedAnnotation) SyncStyleControlsFromSelectedAnnotation();
@@ -118,7 +132,9 @@ public sealed partial class ShellViewModel
         RefreshAnnotationOverlays();
         NotifyAnnotationStyleControlsChanged();
         NotifyEditorStateChanged();
-        StatusText = SelectedAnnotationCount == 0 ? (_annotationSelection.HasMarquee ? "Area selected. Use Crop to keep this area." : "Selection cleared.")
+        NotifyPropertyContextChanged();
+        StatusText = SourcePixelSelection is { } pixels ? $"{pixels.PixelCount:N0} pixels selected. Copy, fill, or crop the area."
+            : SelectedAnnotationCount == 0 ? (_annotationSelection.HasMarquee ? "Area selected. Use Crop to keep this area." : "Selection cleared.")
             : $"{SelectedAnnotationCount} object{(SelectedAnnotationCount == 1 ? "" : "s")} selected.";
     }
 

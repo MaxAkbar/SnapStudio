@@ -1,4 +1,5 @@
 using SnapStudio.Core.Capture;
+using SnapStudio.Core.Documents;
 using SnapStudio.Core.Primitives;
 
 namespace SnapStudio.Core.Rendering;
@@ -6,7 +7,10 @@ namespace SnapStudio.Core.Rendering;
 public sealed record RenderRequest(
     DocumentId DocumentId,
     double Scale,
-    RectD? Viewport);
+    RectD? Viewport)
+{
+    public PixelSelection? Selection { get; init; }
+}
 
 public sealed record RenderedImage(
     int Width,
@@ -23,7 +27,10 @@ public sealed record RenderResult(RenderedImage? Image, string? ErrorMessage)
     public static RenderResult Failed(string errorMessage) => new(null, errorMessage);
 }
 
-public sealed record RegionFillRequest(RenderedImage Image, PointD Position, int Tolerance = 16);
+public sealed record RegionFillRequest(RenderedImage Image, PointD Position, int Tolerance = 16)
+{
+    public bool Contiguous { get; init; } = true;
+}
 
 public sealed record FillRegion(RectD Bounds, IReadOnlyList<RectD> Rectangles, ColorRgba OriginalColor);
 

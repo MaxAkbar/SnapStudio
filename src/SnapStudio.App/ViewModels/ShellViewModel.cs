@@ -385,7 +385,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public bool CanDeleteSelectedAnnotation => HasSelectedAnnotation && HasCurrentDocument;
 
-    public bool CanCropToSelection => HasCurrentDocument && SourceSelectionBounds is { Width: >= 2, Height: >= 2 };
+    public bool CanCropToSelection => HasCurrentDocument && SourceSelectionBounds is { Width: >= 1, Height: >= 1 };
 
     public bool OcrIsEnabled => _featureFlags?.IsEnabled(OcrFeatureFlag) == true;
 
@@ -1065,6 +1065,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void SetSelectionTool(bool marquee)
     {
+        _pixelSelectionRequestVersion++;
         _isMarqueeTool = marquee;
         IsSelectionToolActive = true;
         OnPropertyChanged(nameof(IsSelectionToolActive));
@@ -1073,10 +1074,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         OnPropertyChanged(nameof(ActiveAnnotationToolLabel));
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
         OnPropertyChanged(nameof(FillToleranceControlsVisibility));
-        StatusText = marquee ? "Marquee: drag to select an area. Drag inside the selection to move its boundary. V moves objects."
+        StatusText = marquee ? $"{AreaSelectionToolName}: {AreaSelectionHint}. Copy, fill, or crop the selection."
             : "Move: click an object to select it, then drag to move. Shift-click adds or removes objects. M selects an area.";
         RefreshAnnotationOverlays();
         NotifyAnnotationStyleControlsChanged();
+        NotifyPropertyContextChanged();
     }
 
     public int AnnotationToolIndex
@@ -1114,7 +1116,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         _ => AnnotationKind.Rectangle
     };
 
-    public string ActiveAnnotationToolLabel => IsSelectionToolActive ? (IsMarqueeToolActive ? "Marquee" : "Move") : ActiveSvgToolDesign?.Name ?? ActiveAnnotationKind switch
+    public string ActiveAnnotationToolLabel => IsSelectionToolActive ? (IsMarqueeToolActive ? AreaSelectionToolName : "Move") : ActiveSvgToolDesign?.Name ?? ActiveAnnotationKind switch
     {
         AnnotationKind.Ellipse => "Ellipse",
         AnnotationKind.Line => "Line",
@@ -1507,6 +1509,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public void UpdateAnnotationTool(int toolIndex)
     {
+        _pixelSelectionRequestVersion++;
         IsSelectionToolActive = false;
         OnPropertyChanged(nameof(IsSelectionToolActive));
         OnPropertyChanged(nameof(IsMarqueeToolActive));
@@ -2938,9 +2941,10 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
         if (_currentDocumentId != documentId) return;
         RectD? selectionBounds = SourceSelectionBounds;
-        ClipboardResult result = await _clipboardService
-            .CopyDocumentAsync(documentId, selectionBounds, cancellationToken)
-            .ConfigureAwait(true);
+        PixelSelection? selection = SourcePixelSelection;
+        ClipboardResult result = selection is null
+            ? await _clipboardService.CopyDocumentAsync(documentId, selectionBounds, cancellationToken).ConfigureAwait(true)
+            : await _clipboardService.CopySelectionAsync(documentId, selection, cancellationToken).ConfigureAwait(true);
 
         if (result.Succeeded)
         {
@@ -3531,6 +3535,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public void ClearAnnotationSelection()
     {
+        _pixelSelectionRequestVersion++;
         if (!HasCanvasSelection)
         {
             return;
@@ -3540,6 +3545,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         ApplyAnnotationToolDefaultsWhenUnselected();
         RefreshAnnotationOverlays();
         NotifyEditorStateChanged();
+        NotifyPropertyContextChanged();
         StatusText = "Selection cleared.";
     }
 
@@ -3914,7 +3920,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
-        if (cropBounds.Width < 2 || cropBounds.Height < 2)
+        if (cropBounds.Width < 1 || cropBounds.Height < 1)
         {
             StatusText = "Crop selection is too small.";
             return;

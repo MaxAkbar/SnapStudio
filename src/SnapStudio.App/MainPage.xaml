@@ -214,6 +214,9 @@
         <KeyboardAccelerator Key="PageDown" Modifiers="Control,Shift" Invoked="ObjectActionKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="F8" Invoked="FocusWorkspaceKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="M" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="W" Invoked="ToolKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="I" Modifiers="Control,Shift" Invoked="InvertSelectionKeyboardAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="F5" Modifiers="Shift" Invoked="FillSelectionKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="V" Invoked="ToolKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="U" Invoked="ToolKeyboardAccelerator_Invoked"/>
         <KeyboardAccelerator Key="O" Invoked="ToolKeyboardAccelerator_Invoked"/>
@@ -951,12 +954,13 @@
                                 </Button>
                                 <Button
                                     x:Name="SelectionToolButton"
-                                    AutomationProperties.HelpText="Drag anywhere to select an area without moving objects. Drag inside the marquee to move its boundary."
+                                    AutomationProperties.HelpText="Choose rectangular, elliptical, freehand lasso, magic wand, or polygonal lasso selection."
                                     AutomationProperties.Name="Marquee selection tool"
                                     Click="SelectionToolButton_Click"
+                                    ContextRequested="SelectionToolButton_ContextRequested"
                                     Style="{StaticResource EditorToolButtonStyle}"
-                                    ToolTipService.ToolTip="Rectangular marquee (M)">
-                                    <controls:ToolButtonContent Kind="Select" Shortcut="M"/>
+                                    ToolTipService.ToolTip="Selection tools (M) · choose a selection shape">
+                                    <controls:ToolButtonContent Kind="{x:Bind ViewModel.AreaSelectionIcon, Mode=OneWay}" Shortcut="M" HasDesigns="True"/>
                                 </Button>
                                 <Button
                                     x:Name="RectangleToolButton" ContextRequested="ToolDesignButton_ContextRequested"
@@ -1106,6 +1110,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Background="Transparent"
+                                        DoubleTapped="CanvasSurface_DoubleTapped"
                                         PointerCanceled="CanvasSurface_PointerCanceled"
                                         PointerCaptureLost="CanvasSurface_PointerCaptureLost"
                                         PointerMoved="CanvasSurface_PointerMoved"
@@ -1122,8 +1127,8 @@
                                         <Canvas x:Name="AnnotationCanvas" Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}" Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"/>
                                         <Canvas Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}" Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}" IsHitTestVisible="False">
                                             <Canvas x:Name="AnnotationDragPreview"/>
-                                            <Rectangle x:Name="SelectionMarqueeUnderlay" Stroke="White" StrokeThickness="1" Visibility="Collapsed"/>
-                                            <Rectangle
+                                            <Path x:Name="SelectionMarqueeUnderlay" Stroke="White" StrokeThickness="1" Visibility="Collapsed"/>
+                                            <Path
                                                 x:Name="SelectionMarquee"
                                                 Stroke="Black"
                                                 StrokeThickness="1"
@@ -1583,6 +1588,29 @@
                                     <Button Content="Crop selected area" Click="CropButton_Click" HorizontalAlignment="Stretch"
                                         IsEnabled="{x:Bind ViewModel.CanCropToSelection, Mode=OneWay}"
                                         Visibility="{x:Bind ViewModel.AnnotationSelectionCropVisibility, Mode=OneWay}"/>
+                                    <StackPanel Spacing="8" Margin="0,6,0,8" Visibility="{x:Bind ViewModel.PixelSelectionControlsVisibility, Mode=OneWay}">
+                                        <ComboBox Header="Selection tool" AutomationProperties.Name="Selection tool" HorizontalAlignment="Stretch"
+                                            SelectedIndex="{x:Bind ViewModel.PixelSelectionToolIndex, Mode=TwoWay}">
+                                            <x:String>Rectangular marquee</x:String><x:String>Elliptical marquee</x:String><x:String>Lasso</x:String>
+                                            <x:String>Magic wand</x:String><x:String>Polygonal lasso</x:String>
+                                        </ComboBox>
+                                        <ComboBox Header="Selection mode" AutomationProperties.Name="Selection mode" HorizontalAlignment="Stretch"
+                                            SelectedIndex="{x:Bind ViewModel.PixelSelectionModeIndex, Mode=TwoWay}">
+                                            <x:String>New selection</x:String><x:String>Add to selection</x:String><x:String>Subtract from selection</x:String><x:String>Intersect with selection</x:String>
+                                        </ComboBox>
+                                        <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.WandControlsVisibility, Mode=OneWay}">
+                                            <NumberBox Header="Color tolerance (0–255)" AutomationProperties.Name="Magic wand tolerance" Minimum="0" Maximum="255"
+                                                Value="{x:Bind ViewModel.WandTolerance, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
+                                            <CheckBox Content="Contiguous pixels only" IsChecked="{x:Bind ViewModel.WandContiguous, Mode=TwoWay}"/>
+                                            <TextBlock Text="Samples the visible image, including visible layers." FontSize="10" TextWrapping="Wrap" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.PixelSelectionActionsVisibility, Mode=OneWay}">
+                                        <Button Content="Copy selection" Click="CopyButton_Click" HorizontalAlignment="Stretch"/>
+                                        <Button Content="Fill selection…" Click="FillPixelSelection_Click" HorizontalAlignment="Stretch"/>
+                                        <Button Content="Invert selection" Click="InvertPixelSelection_Click" HorizontalAlignment="Stretch"/>
+                                        <Button Content="Deselect" Click="DeselectPixelSelection_Click" HorizontalAlignment="Stretch"/>
+                                    </StackPanel>
                                     <TextBlock Text="Only shared properties are shown. Select one object to edit its other properties."
                                         TextWrapping="Wrap" FontSize="10" Margin="0,4,0,8" Foreground="{ThemeResource SnapMutedBrush}"
                                         Visibility="{x:Bind ViewModel.AnnotationMultipleSelectionVisibility, Mode=OneWay}"/>

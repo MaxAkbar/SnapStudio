@@ -13,6 +13,26 @@ namespace SnapStudio.Core.Tests;
 public sealed class FillBucketTests
 {
     [TestMethod]
+    public async Task NonContiguousColorSelectionIncludesSeparatedMatchingIslandsWithinTolerance()
+    {
+        RenderedImage image = Image(7, 3, bitmap =>
+        {
+            using Graphics graphics = Graphics.FromImage(bitmap); graphics.Clear(Color.Black);
+            bitmap.SetPixel(0, 1, Color.Red);
+            bitmap.SetPixel(5, 1, Color.FromArgb(255, 250, 3, 4));
+            bitmap.SetPixel(6, 1, Color.FromArgb(255, 230, 0, 0));
+        });
+        var editor = new SystemDrawingDocumentRasterEditor();
+        RegionFillResult contiguous = await editor.FindFillRegionAsync(new(image, new(0, 1), 5), CancellationToken.None);
+        RegionFillResult global = await editor.FindFillRegionAsync(new(image, new(0, 1), 5) { Contiguous = false }, CancellationToken.None);
+        Assert.IsTrue(contiguous.Succeeded, contiguous.ErrorMessage);
+        Assert.IsTrue(global.Succeeded, global.ErrorMessage);
+        Assert.IsFalse(Contains(contiguous.Region!, 5, 1));
+        Assert.IsTrue(Contains(global.Region!, 5, 1));
+        Assert.IsFalse(Contains(global.Region!, 6, 1));
+        Assert.IsFalse(Contains(global.Region!, 3, 1));
+    }
+    [TestMethod]
     public async Task TransparentCanvas_FillsAsOneCompactRectangleWithoutChangingSource()
     {
         RenderedImage image = Image(128, 96, _ => { });

@@ -18,6 +18,16 @@ public sealed class AnnotationSelectionState
 
     public bool HasMarquee => _marqueeBounds.HasValue;
 
+    public PixelSelection? PixelMask { get; private set; }
+
+    public void SetPixelSelection(PixelSelection? selection)
+    {
+        Clear();
+        if (selection is null || selection.IsEmpty) return;
+        PixelMask = selection;
+        _marqueeBounds = selection.Bounds;
+    }
+
     public bool Select(CaptureDocument document, Guid annotationId)
     {
         ArgumentNullException.ThrowIfNull(document);
@@ -40,6 +50,7 @@ public sealed class AnnotationSelectionState
         ArgumentNullException.ThrowIfNull(annotationIds);
         Guid[] validIds = annotationIds.Distinct().Where(id => document.Annotations.Any(annotation => annotation.Id == id)).ToArray();
         _marqueeBounds = _marqueeObjectBounds = null;
+        PixelMask = null;
         if (mode == AnnotationSelectionMode.Replace) Clear();
         foreach (Guid id in validIds)
         {
@@ -74,6 +85,7 @@ public sealed class AnnotationSelectionState
 
     public void SetMarqueeBounds(CaptureDocument document, RectD bounds)
     {
+        PixelMask = null;
         _marqueeBounds = AnnotationBoundsEditor.CombinedBounds([bounds]);
         _marqueeObjectBounds = GetObjectBounds(document);
     }
@@ -127,5 +139,6 @@ public sealed class AnnotationSelectionState
         SelectedAnnotationId = null;
         _selectedIds.Clear();
         _marqueeBounds = _marqueeObjectBounds = null;
+        PixelMask = null;
     }
 }
