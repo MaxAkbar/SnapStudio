@@ -7,7 +7,7 @@ namespace SnapStudio.App;
 
 public sealed partial class MainPage
 {
-    private bool CanOpenSvgDesigner => !_toolDesignDialogIsOpen && !_captureTagsDialogIsOpen && !_captureRenameDialogIsOpen
+    private bool CanOpenSvgDesigner => !_stampDialogIsOpen && !_toolDesignDialogIsOpen && !_captureTagsDialogIsOpen && !_captureRenameDialogIsOpen
         && !_captureDeleteDialogIsOpen && !_newImageDialogIsOpen && !_pasteImageDialogIsOpen && !_layerRenameDialogIsOpen
         && !_layerColorDialogIsOpen && !_historyFolderDialogIsOpen;
 

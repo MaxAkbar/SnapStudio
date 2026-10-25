@@ -58,11 +58,11 @@ public sealed partial class MainPage : INotifyPropertyChanged
 
     public string WorkspaceObjectLabel => ViewModel.AnnotationPropertiesTitle;
 
-    public string WorkspaceToolKind => ViewModel.IsSelectionToolActive
+    public string WorkspaceToolKind => ViewModel.IsStampToolActive ? "Stamp" : ViewModel.IsSelectionToolActive
         ? (ViewModel.IsMarqueeToolActive ? ViewModel.AreaSelectionIcon : "Move")
         : ViewModel.ActiveAnnotationKind.ToString();
 
-    public string WorkspaceToolHint => ViewModel.IsSelectionToolActive
+    public string WorkspaceToolHint => ViewModel.IsStampToolActive ? "Click to place a stamp · V to move or resize" : ViewModel.IsSelectionToolActive
         ? (ViewModel.IsMarqueeToolActive ? ViewModel.AreaSelectionHint : "Click or drag objects · M to select an area")
         : ViewModel.ActiveAnnotationKind switch
         {

@@ -1,6 +1,6 @@
 # SnapStudio Privacy Disclosure
 
-Status: v1 hardening disclosure baseline.
+Status: local-first disclosure, including optional online icon search in source builds.
 
 SnapStudio is designed as a local-first screen capture, image editor, and feature-gated recording tool. The app does not upload captures, recordings, documents, settings, logs, or exports to a SnapStudio service.
 
@@ -22,6 +22,8 @@ Each saved capture or imported image can include:
 - Optional OCR cache files when `V1.Ocr` is enabled.
 
 Deleting a capture from SnapStudio removes the local editable document record for the active backend. Moving a capture to the recycle bin also removes the source image when no other document references it.
+
+Custom stamps are stored locally in `stamps.json` under the app's data folder. Icons added through online search retain their SVG, source, author, and license metadata in that library. Each placed SVG object keeps its own artwork and source and license metadata with the editable document. Saved stamps can be used offline.
 
 ## Clipboard, Export, And External Apps
 
@@ -81,6 +83,10 @@ Recording diagnostics are local-only and can include target kind, output dimensi
 
 ## Network And Cloud Behavior
 
+The optional **Stamps → Search online…** dialog uses the public [Iconify API](https://iconify.design/docs/api/) at `api.iconify.design`. It needs no account or API key. Opening the dialog, typing, or changing the collection does not make automatic network requests; the user must click **Search** or press **Enter** in the keyword field to start an online search.
+
+Searching, browsing preview results, and adding an icon send search words, collection filters, and requested icon IDs to `api.iconify.design`. The service also receives ordinary connection information such as the user's IP address. SnapStudio sends these requests only to that host. It does not send screenshots, recordings, documents, settings, logs, or exports to Iconify. Adding an icon saves a local copy; placing or reusing a saved stamp does not require an internet connection.
+
 The built-in Help viewer loads bundled HTML, styles, and scripts locally without
 an internet connection. Its WebView2 browser cache is stored under
 `%LOCALAPPDATA%\SnapStudio\HelpBrowser`. Search runs within the local guide and
@@ -88,7 +94,7 @@ does not send queries to a service.
 
 SnapStudio has no cloud account, sync, team sharing, telemetry upload, crash upload, or remote capture processing.
 
-Any future networked feature should require an updated privacy review and user-facing disclosure before release.
+Additional networked features or changes to online icon search should receive an updated privacy review and user-facing disclosure before release.
 
 ## User Controls
 
@@ -100,4 +106,5 @@ Users can:
 - Delete captures from the workspace.
 - Delete `%LOCALAPPDATA%\SnapStudio` to remove local app data.
 - Avoid clipboard or export actions when they do not want copies outside SnapStudio.
+- Use built-in or saved stamps and local SVG import without online search, or close the online search dialog without submitting with Search or Enter to avoid its network requests.
 - Keep feature-gated OCR, scrolling capture, and recording disabled until they are ready for their workflow.

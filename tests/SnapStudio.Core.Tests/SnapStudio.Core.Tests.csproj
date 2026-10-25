@@ -26,6 +26,7 @@
     <!-- Exercise the UI-independent collection updater without loading WinUI into the test host. -->
     <Compile Include="..\..\src\SnapStudio.App\ViewModels\CollectionUpdates.cs" Link="App\CollectionUpdates.cs" />
     <Compile Include="..\..\src\SnapStudio.App\Help\HelpContent.cs" Link="App\HelpContent.cs" />
+    <Compile Include="..\..\src\SnapStudio.App\Services\IconifyStampCatalog.cs" Link="App\IconifyStampCatalog.cs" />
   </ItemGroup>
 
   <ItemGroup>

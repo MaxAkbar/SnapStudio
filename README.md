@@ -58,8 +58,32 @@ When you need more than a quick arrow:
 - Start a transparent canvas with **New** (**Ctrl+N**), or paste another image as an editable layer.
 - Save your favorite tool styles in **Design** (**D**) so your annotations look consistent.
 - Create reusable SVG artwork in the built-in designer, then edit an individual object's artwork whenever needed.
+- Place reusable symbols, status labels, and your own SVG artwork with **Stamps** (**S**).
 - Add tags such as `Design` or `Bug` and find them later with searches like `#Design`.
 - Choose **Dark**, **Light**, or **Use system setting** in **Settings → Appearance**.
+
+## Stamps and free SVG icons
+
+Stamps are available in source builds; they are not included in the 1.0.0 download yet.
+
+Press **S**, choose a stamp, then click the image to place it. Keep clicking for more copies. Search the gallery or filter by category, and set the longest edge in image pixels under **Properties → Stamp size**. Press **V** to move or resize a placed stamp. Each placement supports undo and redo.
+
+The gallery includes 16 symbols and labels. Choose **Import SVG** to add a local SVG file to your saved library. You can also select an SVG object and choose **Save as stamp** in Properties or its right-click menu. Right-click a custom gallery item to rename it, change its category, or remove it. Placed copies keep their artwork even after the library item changes or is removed.
+
+To find an icon inside SnapStudio, choose **Search online…** in Stamps. Enter a keyword, choose **All collections**, **Heroicons**, **Tabler**, or **Lucide**, then click **Search** or press **Enter** in the keyword field. Browse the preview pages and select an icon to review its author, license, and source. **Add to stamps** saves the SVG locally and selects it; click the image to place it. Saved icons work offline. Right-click a custom stamp and choose **Source and license…** to review its saved details. The source and license metadata also stay with each placed SVG object.
+
+Online search is optional and needs no account or API key. Opening the dialog, typing, or changing the collection makes no automatic network requests. After you submit with **Search** or **Enter**, search words and requested icon IDs go to **api.iconify.design**, along with ordinary connection information such as your IP address. Screenshots and documents are never uploaded. See the [Iconify API documentation](https://iconify.design/docs/api/) and [privacy disclosure](docs/privacy.md).
+
+You can also download an individual SVG from one of these sites, then import it:
+
+| Source | License |
+| --- | --- |
+| [Heroicons](https://heroicons.com/) | [MIT](https://github.com/tailwindlabs/heroicons/blob/master/LICENSE) |
+| [Tabler Icons](https://tabler.io/icons) | [MIT](https://github.com/tabler/tabler-icons/blob/main/LICENSE) |
+| [Lucide](https://lucide.dev/icons/) | [ISC; some inherited icons use MIT](https://lucide.dev/license) |
+| [SVG Repo](https://www.svgrepo.com/) | [Varies by icon](https://www.svgrepo.com/page/licensing); check the individual license |
+
+Keep the applicable license notices with artwork you redistribute. SnapStudio imports static vector SVGs; see [supported SVG features](docs/svg-tools.md) for limits.
 
 ## Help when you need it
 
@@ -73,6 +97,7 @@ You can also open [the HTML guide](docs/help/index.html) from a local copy of th
 | **Ctrl+O** / **Ctrl+V** | Open an image / paste |
 | **V** / **M** | Move objects / select an image area |
 | **A** / **T** / **H** | Arrow / text / highlighter |
+| **S** | Open the stamp gallery |
 | **Ctrl+Z** / **Ctrl+Y** | Undo / redo |
 | **Ctrl+C** / **Ctrl+D** | Copy / deselect |
 | **Ctrl+mouse wheel** | Zoom at the pointer |

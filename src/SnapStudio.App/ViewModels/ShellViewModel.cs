@@ -230,7 +230,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         DispatcherQueue dispatcherQueue,
         IHistoryFolderStore? historyFolderStore = null,
         IToolDesignStore? toolDesignStore = null,
-        IToolDesignFilePicker? toolDesignFilePicker = null)
+        IToolDesignFilePicker? toolDesignFilePicker = null,
+        IStampStore? stampStore = null,
+        IOnlineStampCatalog? onlineStampCatalog = null)
     {
         _settingsStore = settingsStore;
         _settingsImportExportService = settingsImportExportService;
@@ -270,6 +272,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         _historyFolderStore = historyFolderStore;
         _toolDesignStore = toolDesignStore;
         _toolDesignFilePicker = toolDesignFilePicker;
+        _stampStore = stampStore;
+        _onlineStampCatalog = onlineStampCatalog;
         _hotkeyService.HotkeyPressed += HotkeyService_HotkeyPressed;
     }
 
@@ -1039,7 +1043,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     public bool IsMoveToolActive => IsSelectionToolActive && !_isMarqueeTool;
     private bool _isMarqueeTool = true;
 
-    public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive
+    public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive && !IsStampToolActive
         && ActiveAnnotationKind is not (AnnotationKind.Pen or AnnotationKind.Fill);
 
     public Visibility FillToleranceControlsVisibility => !HasSelectedAnnotation && !IsSelectionToolActive && ActiveAnnotationKind == AnnotationKind.Fill
@@ -1065,6 +1069,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void SetSelectionTool(bool marquee)
     {
+        _activeStamp = null;
         _pixelSelectionRequestVersion++;
         _isMarqueeTool = marquee;
         IsSelectionToolActive = true;
@@ -1116,7 +1121,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         _ => AnnotationKind.Rectangle
     };
 
-    public string ActiveAnnotationToolLabel => IsSelectionToolActive ? (IsMarqueeToolActive ? AreaSelectionToolName : "Move") : ActiveSvgToolDesign?.Name ?? ActiveAnnotationKind switch
+    public string ActiveAnnotationToolLabel => IsStampToolActive ? $"Stamp · {ActiveStampName}" : IsSelectionToolActive ? (IsMarqueeToolActive ? AreaSelectionToolName : "Move") : ActiveSvgToolDesign?.Name ?? ActiveAnnotationKind switch
     {
         AnnotationKind.Ellipse => "Ellipse",
         AnnotationKind.Line => "Line",
@@ -1509,6 +1514,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public void UpdateAnnotationTool(int toolIndex)
     {
+        _activeStamp = null;
         _pixelSelectionRequestVersion++;
         IsSelectionToolActive = false;
         OnPropertyChanged(nameof(IsSelectionToolActive));
@@ -1530,6 +1536,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     {
         if (presetIndex > 0)
         {
+            _activeStamp = null;
             IsSelectionToolActive = false;
             OnPropertyChanged(nameof(IsSelectionToolActive));
             OnPropertyChanged(nameof(IsMarqueeToolActive));
@@ -1689,6 +1696,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         StorageBackend = settings.StorageBackend;
         InitializeFirstRunSetup(settings);
         await LoadToolDesignsAsync(cancellationToken).ConfigureAwait(true);
+        await LoadStampsAsync(cancellationToken).ConfigureAwait(true);
         await _documentWorkspaceBootstrapper
             .EnsureInitializedAsync(cancellationToken)
             .ConfigureAwait(true);
@@ -3172,7 +3180,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public async Task AddActiveAnnotationAsync(CancellationToken cancellationToken)
     {
-        if (IsSelectionToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
+        if (IsSelectionToolActive || IsStampToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
         {
             StatusText = "Choose a shape tool, draw with Pen, or click an area with Fill bucket.";
             return;
@@ -3185,7 +3193,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         RectD sourceBounds,
         CancellationToken cancellationToken)
     {
-        if (IsSelectionToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
+        if (IsSelectionToolActive || IsStampToolActive || ActiveAnnotationKind is AnnotationKind.Pen or AnnotationKind.Fill)
         {
             return;
         }

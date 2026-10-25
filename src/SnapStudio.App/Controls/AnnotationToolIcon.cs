@@ -41,6 +41,10 @@ public sealed class AnnotationToolIcon : UserControl
         _canvas.Children.Clear();
         switch (Kind)
         {
+            case "Stamp":
+                Line(new(3, 18), new(21, 18), new(23, 22), new(1, 22), new(3, 18));
+                Line(new(8, 18), new(9, 11), new(7, 7), new(8, 2), new(16, 2), new(17, 7), new(15, 11), new(16, 18));
+                break;
             case "SelectEllipse":
                 var selectionEllipse = new Ellipse { Width = 20, Height = 16, StrokeDashArray = [2, 2] };
                 Add(selectionEllipse, 2, 4);

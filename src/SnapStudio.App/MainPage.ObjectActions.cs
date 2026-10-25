@@ -168,6 +168,15 @@ public sealed partial class MainPage
             var editSvg = new MenuFlyoutItem { Text = "Edit SVG…" };
             editSvg.Click += async (_, _) => { menu.Hide(); await EditSelectedVectorAsync(); };
             menu.Items.Add(editSvg);
+            var saveStamp = new MenuFlyoutItem { Text = "Save as stamp…" };
+            saveStamp.Click += async (_, _) => { menu.Hide(); await SaveSelectedVectorAsStampAsync(); };
+            menu.Items.Add(saveStamp);
+            if (ViewModel.SelectedVector?.Attribution is { } attribution)
+            {
+                var source = new MenuFlyoutItem { Text = "Source and license…" };
+                source.Click += async (_, _) => { menu.Hide(); await ShowStampAttributionAsync(attribution); };
+                menu.Items.Add(source);
+            }
         }
         menu.Items.Add(CreateObjectMenuAction("Duplicate", "Ctrl+J", ObjectAction.Duplicate));
         menu.Items.Add(CreateObjectMenuAction(selectedItems.All(candidate => candidate.IsVisible) ? (multiple ? "Hide objects" : "Hide object") : (multiple ? "Show objects" : "Show object"), "Ctrl+H", ObjectAction.ToggleVisibility));

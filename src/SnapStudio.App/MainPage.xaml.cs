@@ -136,7 +136,9 @@ public sealed partial class MainPage : Page
             DispatcherQueue,
             services.HistoryFolderStore,
             services.ToolDesignStore,
-            services.ToolDesignFilePicker);
+            services.ToolDesignFilePicker,
+            services.StampStore,
+            services.OnlineStampCatalog);
         SubscribeAnnotationOverlays(ViewModel);
         ViewModel.PropertyChanged += (_, args) =>
         {
@@ -1567,6 +1569,17 @@ public sealed partial class MainPage : Page
         }
 
         CanvasScrollViewer.Focus(FocusState.Programmatic);
+        if (ViewModel.IsStampToolActive)
+        {
+            e.Handled = true;
+            try
+            {
+                await ViewModel.PlaceStampAtCanvasPointAsync(new(pointerPoint.Position.X, pointerPoint.Position.Y), CancellationToken.None);
+            }
+            catch (Exception error) { ViewModel.ShowStampError(error.Message); }
+            UpdateBindingsFromViewModel();
+            return;
+        }
         if (ViewModel.IsSelectionToolActive)
         {
             _marqueeOriginalSelection = ViewModel.SelectedAnnotationIds.ToArray();
@@ -1948,6 +1961,7 @@ public sealed partial class MainPage : Page
             || _captureTagsDialogIsOpen
             || _toolDesignDialogIsOpen
             || _selectionFillDialogIsOpen
+            || _stampDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen
             || IsEditableFocusedElement(FocusManager.GetFocusedElement(XamlRoot));
     }
@@ -2937,6 +2951,7 @@ public sealed partial class MainPage : Page
     {
         UpdateToolDesignBadges();
         UpdateToolButtonAppearance(SelectionToolButton, ViewModel.IsMarqueeToolActive);
+        UpdateToolButtonAppearance(StampToolButton, ViewModel.IsStampToolActive);
         UpdateToolButtonAppearance(MoveToolButton, ViewModel.IsMoveToolActive);
         CanvasSurface.UpdateCursor(ViewModel.IsMarqueeToolActive, ViewModel.IsMoveToolActive);
         UpdateAnnotationToolButton(RectangleToolButton, 0);
@@ -2953,7 +2968,7 @@ public sealed partial class MainPage : Page
 
     private void UpdateAnnotationToolButton(Button button, int toolIndex)
     {
-        bool isActive = !ViewModel.IsSelectionToolActive && ViewModel.AnnotationToolIndex == toolIndex;
+        bool isActive = !ViewModel.IsSelectionToolActive && !ViewModel.IsStampToolActive && ViewModel.AnnotationToolIndex == toolIndex;
         UpdateToolButtonAppearance(button, isActive);
     }
 

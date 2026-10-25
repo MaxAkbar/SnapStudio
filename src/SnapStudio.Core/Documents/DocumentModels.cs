@@ -87,7 +87,10 @@ public sealed record AnnotationImage(int Width, int Height, byte[] PngBytes)
     public AnnotationImage DeepCopy() => this with { PngBytes = [.. PngBytes] };
 }
 
-public sealed record AnnotationVector(string Svg, string Name = "Custom shape");
+public sealed record AnnotationVector(string Svg, string Name = "Custom shape")
+{
+    public StampAttribution? Attribution { get; init; }
+}
 
 public enum LayerColorLabel
 {

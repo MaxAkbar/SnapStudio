@@ -32,7 +32,7 @@ public sealed partial class MainPage
                 Text = name,
                 GroupName = group,
                 KeyboardAcceleratorTextOverride = ToolShortcut(index),
-                IsChecked = index == -1 ? ViewModel.IsMoveToolActive : index.HasValue ? !ViewModel.IsSelectionToolActive && ViewModel.AnnotationToolIndex == index
+                IsChecked = index == -1 ? ViewModel.IsMoveToolActive : index.HasValue ? !ViewModel.IsSelectionToolActive && !ViewModel.IsStampToolActive && ViewModel.AnnotationToolIndex == index
                     : ViewModel.IsMarqueeToolActive
             };
             item.Click += (_, _) =>
@@ -42,6 +42,15 @@ public sealed partial class MainPage
             };
             menu.Items.Add(item);
         }
+        var stamps = new RadioMenuFlyoutItem
+        {
+            Text = "Stamps…",
+            GroupName = group,
+            KeyboardAcceleratorTextOverride = "S",
+            IsChecked = ViewModel.IsStampToolActive
+        };
+        stamps.Click += (_, _) => { _objectContextMenu?.Hide(); ShowStampPicker(); };
+        menu.Items.Add(stamps);
         return menu;
     }
 

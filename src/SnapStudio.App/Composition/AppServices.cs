@@ -12,6 +12,7 @@ using SnapStudio.Core.System;
 using SnapStudio.Ipc;
 using SnapStudio.App.Capture;
 using SnapStudio.App.Workspace;
+using SnapStudio.App.Services;
 using SnapStudio.Platform.Windows;
 using SnapStudio.Rendering;
 using SnapStudio.Storage;
@@ -59,6 +60,12 @@ public sealed record AppServices(
     public IHistoryFolderStore? HistoryFolderStore { get; init; }
     public IToolDesignStore? ToolDesignStore { get; init; }
     public IToolDesignFilePicker? ToolDesignFilePicker { get; init; }
+    public IStampStore? StampStore { get; init; }
+    public IOnlineStampCatalog? OnlineStampCatalog { get; init; }
+    private static readonly HttpClient IconifyHttpClient = new(new HttpClientHandler { AllowAutoRedirect = false })
+    {
+        Timeout = TimeSpan.FromSeconds(15)
+    };
 
     public static AppServices CreateDefault(
         nint ownerWindowHandle = 0,
@@ -196,7 +203,9 @@ public sealed record AppServices(
         {
             HistoryFolderStore = historyFolderStore,
             ToolDesignStore = new JsonToolDesignStore(Path.Combine(appDataRoot, "tool-designs.json")),
-            ToolDesignFilePicker = new WindowsToolDesignFilePicker(ownerWindowHandle)
+            ToolDesignFilePicker = new WindowsToolDesignFilePicker(ownerWindowHandle),
+            StampStore = new JsonStampStore(Path.Combine(appDataRoot, "stamps.json")),
+            OnlineStampCatalog = new IconifyStampCatalog(IconifyHttpClient)
         };
     }
 

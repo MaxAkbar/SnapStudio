@@ -269,6 +269,7 @@ public sealed partial class MainPage
     {
         if (_canvasDragMode != CanvasDragMode.None || !TryHandleApplicationShortcut(args, sender.Key != VirtualKey.C || ViewModel.CanCropToSelection)) return;
         if (sender.Key == VirtualKey.D) { ShowDesignLibrary(); return; }
+        if (sender.Key == VirtualKey.S) { ShowStampPicker(); return; }
         if (sender.Key == VirtualKey.W) { ViewModel.PixelSelectionToolIndex = (int)PixelSelectionTool.MagicWand; SelectCanvasTool(null); return; }
         if (sender.Key == VirtualKey.C) { await ViewModel.CropToSelectedAnnotationAsync(CancellationToken.None); UpdateBindingsFromViewModel(); FitCurrentCanvas(); return; }
         int? index = sender.Key switch

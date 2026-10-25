@@ -28,6 +28,7 @@
       <a href="#annotations">Draw and annotate</a>
       <a href="#layers">Work with layers</a>
       <a href="#designs">Reuse designs and SVG artwork</a>
+      <a href="#stamps">Place stamps</a>
       <a href="#library">Organize your library</a>
       <a href="#export">Copy, paste, and export</a>
       <a href="#settings">Settings and local data</a>
@@ -161,6 +162,29 @@
       <p>Imports accept static vector shapes, paths, text, groups, transforms, gradients, and internal references. Scripts, external resources, raster images, filters, animation, and foreign HTML are rejected. SVGs are limited to one million characters, 4,096 elements, and 32 nesting levels. Font appearance depends on the installed fonts.</p>
     </section>
 
+    <section id="stamps" aria-labelledby="stamps-title">
+      <h2 id="stamps-title">Place stamps</h2>
+      <ol>
+        <li>Choose <strong>Stamps</strong> on the tool rail or press <kbd>S</kbd>. Search by name or filter the gallery by category.</li>
+        <li>Choose a stamp. In Properties, set <strong>Stamp size</strong> to its longest edge in image pixels (16–1,024). Its proportions are preserved, and oversized stamps fit the image.</li>
+        <li>Click the image to place a copy in the active visible layer. Keep clicking for more copies. Each placement is one undo step.</li>
+        <li>Press <kbd>V</kbd> to move or resize a placed stamp. Select it and choose <strong>Edit SVG</strong> to change its artwork, or adjust opacity in Properties.</li>
+      </ol>
+      <h3>Build your own gallery</h3>
+      <p>The gallery includes 16 symbols and status labels. Choose <strong>Import SVG</strong> to save a local SVG as a custom stamp. Select an existing SVG object and choose <strong>Save as stamp</strong> in Properties or its right-click menu to reuse your own artwork.</p>
+      <p>Right-click a custom gallery item to rename it, change its category, or remove it. For an icon added through online search, choose <strong>Source and license…</strong> to review its saved author, license, and source. Built-in stamps stay available. Library changes do not change copies already placed in an image; each copy stores its own artwork and any source and license metadata. Custom stamps are saved locally in stamps.json under the app's data folder.</p>
+      <h3>Search online with Iconify</h3>
+      <ol>
+        <li>Choose <strong>Search online…</strong> in Stamps. Enter a keyword and choose <strong>All collections</strong>, <strong>Heroicons</strong>, <strong>Tabler</strong>, or <strong>Lucide</strong>.</li>
+        <li>Click <strong>Search</strong> or press <kbd>Enter</kbd> in the keyword field. Browse the preview pages, then select an icon to review its author, license, and source.</li>
+        <li>Choose <strong>Add to stamps</strong> to save a local SVG copy and select it. Click the image to place it. Saved copies work offline.</li>
+      </ol>
+      <p>Online search is optional and needs no account or API key. Opening the dialog, typing, or changing the collection makes no automatic network requests. After you submit with Search or Enter, search words and requested icon IDs go to <strong>api.iconify.design</strong>, along with ordinary connection information such as your IP address. Screenshots and documents are never uploaded. The SVG and its source and license metadata are saved locally with the stamp and each placed SVG object.</p>
+      <h3>Find free SVG artwork</h3>
+      <p>In your browser, try <strong>heroicons.com</strong> (MIT), <strong>tabler.io/icons</strong> (MIT), or <strong>lucide.dev/icons</strong> (ISC and some MIT artwork). <strong>svgrepo.com</strong> offers many icons with different licenses; check each icon's terms. Keep the applicable license notices when redistributing artwork. Download an individual SVG, then import it into SnapStudio.</p>
+      <p>Stamps use the same static SVG support and import limits described in Reuse designs and SVG artwork. Fonts depend on what is installed on your PC.</p>
+    </section>
+
     <section id="library" aria-labelledby="library-title">
       <h2 id="library-title">Organize your library</h2>
       <p>Choose <strong>All captures</strong>, <strong>Unfiled</strong>, or a folder from the Library dropdown. Search works across every page in the selected view and source filter. Use the arrows below Captures to browse pages of ten. New captures return to page one.</p>
@@ -218,6 +242,7 @@
           <tr><td><kbd>Ctrl+J</kbd></td><td>Duplicate selected objects.</td></tr>
           <tr><td><kbd>Ctrl+H</kbd> / <kbd>Delete</kbd></td><td>Hide or show / delete selected objects.</td></tr>
           <tr><td><kbd>W</kbd></td><td>Magic wand selection; use Properties for tolerance and contiguous matching.</td></tr>
+          <tr><td><kbd>S</kbd></td><td>Open the stamp gallery; choose a stamp, then click the image to place copies.</td></tr>
           <tr><td><kbd>Shift+F5</kbd> / <kbd>Ctrl+Shift+I</kbd></td><td>Fill / invert selected pixels.</td></tr>
           <tr><td><kbd>Ctrl+Page Up</kbd> / <kbd>Ctrl+Page Down</kbd></td><td>Bring forward / send backward within the layer.</td></tr>
           <tr><td><kbd>Ctrl+Shift+Page Up</kbd> / <kbd>Ctrl+Shift+Page Down</kbd></td><td>Bring to front / send to back within the layer.</td></tr>

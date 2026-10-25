@@ -6,7 +6,7 @@ namespace SnapStudio.App.ViewModels;
 
 public sealed partial class ShellViewModel
 {
-    private AnnotationProperty CurrentAnnotationProperties => IsMarqueeToolActive && MarqueeSourceBounds.HasValue ? AnnotationProperty.None : HasSelectedAnnotation
+    private AnnotationProperty CurrentAnnotationProperties => IsStampToolActive || IsMarqueeToolActive && MarqueeSourceBounds.HasValue ? AnnotationProperty.None : HasSelectedAnnotation
         ? AnnotationProperties.Common(_currentDocument!.Annotations.Where(item => SelectedAnnotationIds.Contains(item.Id)).Select(item => item.Kind))
         : IsSelectionToolActive ? AnnotationProperty.None : AnnotationProperties.For(ActiveAnnotationKind);
 
