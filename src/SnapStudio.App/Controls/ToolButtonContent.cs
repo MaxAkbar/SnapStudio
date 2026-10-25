@@ -14,9 +14,13 @@ public sealed class ToolButtonContent : UserControl
     {
         Width = 30; Height = 30; IsHitTestVisible = false;
         var grid = new Grid(); grid.Children.Add(_icon); grid.Children.Add(_key); grid.Children.Add(_arrow); Content = grid;
-        _key.SetBinding(TextBlock.ForegroundProperty, new Binding { Source = this, Path = new PropertyPath(nameof(Foreground)) });
-        _arrow.SetBinding(TextBlock.ForegroundProperty, new Binding { Source = this, Path = new PropertyPath(nameof(Foreground)) });
-        Loaded += (_, _) => IconForeground.InheritFromOwner(this);
+        Loaded += (_, _) =>
+        {
+            IconForeground.InheritFromOwner(this);
+            // Initialize labels from the owning button's theme and selection color.
+            _key.SetBinding(TextBlock.ForegroundProperty, new Binding { Source = this, Path = new PropertyPath(nameof(Foreground)) });
+            _arrow.SetBinding(TextBlock.ForegroundProperty, new Binding { Source = this, Path = new PropertyPath(nameof(Foreground)) });
+        };
     }
     public string Kind { get => _icon.Kind; set => _icon.Kind = value; }
     public string Shortcut { get => _key.Text; set => _key.Text = value; }
