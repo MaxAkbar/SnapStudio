@@ -332,7 +332,8 @@ internal sealed class AnnotationLayerWorkspace
                         && annotation.LayerId != layer.Id),
                 !_collapsedLayerIds.Contains(layer.Id),
                 index < document.Layers.Count - 1,
-                index > 0);
+                index > 0,
+                document.Layers.Count > 1);
             layers.Add(item);
         }
         CollectionUpdates.Synchronize(Layers, layers);

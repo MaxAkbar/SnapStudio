@@ -3651,19 +3651,31 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         layerId = Guid.Empty;
         layerName = string.Empty;
         objectCount = 0;
-        if (!CanDeleteActiveLayer || _currentDocument is null)
+        if (_layerWorkspace.ActiveLayerId is not Guid activeLayerId
+            || !TryGetLayerForRemoval(activeLayerId, out layerName, out objectCount))
         {
             return false;
         }
 
-        AnnotationLayer? layer = _currentDocument.Layers
-            .FirstOrDefault(candidate => candidate.Id == _layerWorkspace.ActiveLayerId);
+        layerId = activeLayerId;
+        return true;
+    }
+
+    public bool TryGetLayerForRemoval(Guid layerId, out string layerName, out int objectCount)
+    {
+        layerName = string.Empty;
+        objectCount = 0;
+        if (_currentDocument is not { Layers.Count: > 1 })
+        {
+            return false;
+        }
+
+        AnnotationLayer? layer = _currentDocument.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
         if (layer is null)
         {
             return false;
         }
 
-        layerId = layer.Id;
         layerName = layer.Name;
         objectCount = _currentDocument.Annotations.Count(annotation => annotation.LayerId == layer.Id);
         return true;

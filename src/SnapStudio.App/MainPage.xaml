@@ -1949,7 +1949,7 @@
                                         Grid.Column="2"
                                         AutomationProperties.HelpText="Delete the selected layer and its objects. At least one layer must remain."
                                         AutomationProperties.Name="Delete selected layer"
-                                        Click="DeleteLayerButton_Click"
+                                        Click="DeleteLayer_Click"
                                         IsEnabled="{x:Bind ViewModel.CanDeleteActiveLayer, Mode=OneWay}"
                                         Style="{StaticResource SidebarIconButtonStyle}"
                                         ToolTipService.ToolTip="Delete selected layer">
@@ -2071,6 +2071,16 @@
                                                                     </MenuFlyoutItem.Icon>
                                                                 </MenuFlyoutItem>
                                                             </MenuFlyoutSubItem>
+                                                            <MenuFlyoutSeparator/>
+                                                            <MenuFlyoutItem
+                                                                Text="Delete layer"
+                                                                DataContext="{x:Bind}"
+                                                                IsEnabled="{x:Bind CanDelete, Mode=OneWay}"
+                                                                Click="DeleteLayer_Click">
+                                                                <MenuFlyoutItem.Icon>
+                                                                    <SymbolIcon Symbol="Delete"/>
+                                                                </MenuFlyoutItem.Icon>
+                                                            </MenuFlyoutItem>
                                                         </MenuFlyout>
                                                     </Grid.ContextFlyout>
                                                     <controls:WorkspaceSelectionFrame

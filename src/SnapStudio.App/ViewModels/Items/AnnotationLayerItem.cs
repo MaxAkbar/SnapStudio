@@ -11,8 +11,8 @@ namespace SnapStudio.App.ViewModels.Items;
 public sealed class AnnotationLayerItem : INotifyPropertyChanged
 {
     private sealed record State(string Name, bool IsVisible, LayerColorLabel ColorLabel, ColorRgba? CustomColor,
-        bool IsActive, bool CanMoveSelectedHere, bool IsExpanded, bool CanMoveUp, bool CanMoveDown);
-    private State _state = new(string.Empty, true, LayerColorLabel.None, null, false, false, true, false, false);
+        bool IsActive, bool CanMoveSelectedHere, bool IsExpanded, bool CanMoveUp, bool CanMoveDown, bool CanDelete);
+    private State _state = new(string.Empty, true, LayerColorLabel.None, null, false, false, true, false, false, false);
     private readonly SolidColorBrush _indicatorBrush = new();
 
     public AnnotationLayerItem(AnnotationLayer layer) => Id = layer.Id;
@@ -22,10 +22,10 @@ public sealed class AnnotationLayerItem : INotifyPropertyChanged
     public ObservableCollection<AnnotationOverlayItem> Objects { get; } = [];
 
     internal void Update(AnnotationLayer layer, IReadOnlyList<AnnotationOverlayItem> objects, bool isActive,
-        bool canMoveSelectedHere, bool isExpanded, bool canMoveUp, bool canMoveDown)
+        bool canMoveSelectedHere, bool isExpanded, bool canMoveUp, bool canMoveDown, bool canDelete)
     {
         var next = new State(layer.Name, layer.IsVisible, layer.ColorLabel, layer.CustomColor,
-            isActive, canMoveSelectedHere, isExpanded, canMoveUp, canMoveDown);
+            isActive, canMoveSelectedHere, isExpanded, canMoveUp, canMoveDown, canDelete);
         bool changed = next != _state || Objects.Count != objects.Count;
         _state = next;
         CollectionUpdates.Synchronize(Objects, objects);
@@ -50,6 +50,8 @@ public sealed class AnnotationLayerItem : INotifyPropertyChanged
     public bool CanMoveUp => _state.CanMoveUp;
 
     public bool CanMoveDown => _state.CanMoveDown;
+
+    public bool CanDelete => _state.CanDelete;
 
     public string ColorMenuText => $"Color label: {ColorLabelText}";
 

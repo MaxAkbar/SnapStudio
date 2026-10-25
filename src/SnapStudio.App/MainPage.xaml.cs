@@ -1225,12 +1225,20 @@ public sealed partial class MainPage : Page
         UpdateBindingsFromViewModel();
     }
 
-    private async void DeleteLayerButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private async void DeleteLayer_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (!ViewModel.TryGetActiveLayerForRemoval(
-            out Guid layerId,
-            out string layerName,
-            out int objectCount))
+        Guid layerId;
+        string layerName;
+        int objectCount;
+        if (sender is FrameworkElement { DataContext: AnnotationLayerItem item })
+        {
+            layerId = item.Id;
+            if (!ViewModel.TryGetLayerForRemoval(layerId, out layerName, out objectCount))
+            {
+                return;
+            }
+        }
+        else if (!ViewModel.TryGetActiveLayerForRemoval(out layerId, out layerName, out objectCount))
         {
             return;
         }
