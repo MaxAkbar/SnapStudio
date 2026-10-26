@@ -9,14 +9,16 @@ namespace SnapStudio.App.Controls;
 
 public sealed record SvgDesignerGridSettings
 {
-    public SvgDesignerGridSettings(bool visible = false, double spacing = CanvasGridLayout.DefaultSpacing, bool snap = true, PerspectiveGridSettings? perspective = null)
+    public SvgDesignerGridSettings(bool visible = false, double spacing = CanvasGridLayout.DefaultSpacing, bool snap = true, PerspectiveGridSettings? perspective = null, CanvasGridFamilies? families = null)
     {
         Visible = visible; Spacing = CanvasGridLayout.NormalizeSpacing(spacing); Snap = snap; Perspective = (perspective ?? new()).Normalize();
+        Families = (families ?? new()).Normalize(Perspective.Density);
     }
     public bool Visible { get; }
     public double Spacing { get; }
     public bool Snap { get; }
     public PerspectiveGridSettings Perspective { get; }
+    public CanvasGridFamilies Families { get; }
 }
 
 public sealed class SvgDesignerControl : Grid, IDisposable
@@ -74,11 +76,12 @@ public sealed class SvgDesignerControl : Grid, IDisposable
                                 grid = new
                                 {
                                     visible = GridSettings.Visible, spacing = GridSettings.Spacing, snap = GridSettings.Snap,
+                                    families = GridSettings.Families,
                                     mode = (int)GridSettings.Perspective.Mode, centerX = GridSettings.Perspective.CenterX,
                                     horizon = GridSettings.Perspective.Horizon, left = GridSettings.Perspective.Left, right = GridSettings.Perspective.Right,
                                     vertical = GridSettings.Perspective.Vertical, radius = GridSettings.Perspective.Radius, density = GridSettings.Perspective.Density
                                 }
-                            }));
+                            }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
                             break;
                         case "loaded": _ready.TrySetResult(); Ready?.Invoke(this, EventArgs.Empty); break;
                         case "import": ImportRequested?.Invoke(this, EventArgs.Empty); break;
@@ -119,8 +122,31 @@ public sealed class SvgDesignerControl : Grid, IDisposable
         var perspective = new PerspectiveGridSettings((CanvasGridMode)(int)Math.Clamp(mode, 0, 5), Read("centerX", previous.CenterX),
             Read("horizon", previous.Horizon), Read("left", previous.Left), Read("right", previous.Right), Read("vertical", previous.Vertical),
             Read("radius", previous.Radius), (int)Math.Clamp(Math.Round(density), 4, 32));
-        if (!valid || mode < 0 || mode > 5 || mode != Math.Truncate(mode)) { ShowError("The SVG editor returned invalid perspective settings."); return; }
-        var settings = new SvgDesignerGridSettings(visible.GetBoolean(), value, snap.GetBoolean(), perspective);
+        bool hasFamilies = message.TryGetProperty("families", out var familyFields);
+        if (hasFamilies && familyFields.ValueKind != JsonValueKind.Object) valid = false;
+        GridGuideSettings ReadFamily(GridGuideFamily family)
+        {
+            var fallback = GridSettings.Families.Get(family);
+            if (!hasFamilies || familyFields.ValueKind != JsonValueKind.Object || !familyFields.TryGetProperty(family.ToString().ToLowerInvariant(), out var field)) return fallback;
+            if (field.ValueKind != JsonValueKind.Object) { valid = false; return fallback; }
+            string color = fallback.Color;
+            if (field.TryGetProperty("color", out var colorField))
+            {
+                if (colorField.ValueKind == JsonValueKind.String) color = colorField.GetString() ?? color;
+                else valid = false;
+            }
+            double Number(string key, double previousValue)
+            {
+                if (!field.TryGetProperty(key, out var item)) return previousValue;
+                if (item.ValueKind == JsonValueKind.Number && item.TryGetDouble(out double number) && double.IsFinite(number)) return number;
+                valid = false; return previousValue;
+            }
+            return new(color, Number("opacity", fallback.Opacity), (int)Math.Clamp(Math.Round(Number("density", fallback.Density)), 4, 32));
+        }
+        var families = new CanvasGridFamilies(ReadFamily(GridGuideFamily.Grid), ReadFamily(GridGuideFamily.Center), ReadFamily(GridGuideFamily.Left),
+            ReadFamily(GridGuideFamily.Right), ReadFamily(GridGuideFamily.Top), ReadFamily(GridGuideFamily.Bottom));
+        if (!valid || mode < 0 || mode > 5 || mode != Math.Truncate(mode)) { ShowError("The SVG editor returned invalid grid settings."); return; }
+        var settings = new SvgDesignerGridSettings(visible.GetBoolean(), value, snap.GetBoolean(), perspective, families);
         if (GridSettings == settings) return;
         GridSettings = settings;
         GridSettingsChanged?.Invoke(this, settings);

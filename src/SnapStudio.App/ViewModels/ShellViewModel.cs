@@ -3399,11 +3399,20 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     }
 
     public AnnotationOverlayItem? CreateAnnotationEditPreview(Guid annotationId, RectD sourceBounds)
+        => CreateAnnotationEditPreview(annotationId, sourceBounds, false, out _);
+
+    public AnnotationOverlayItem? CreateAnnotationEditPreview(Guid annotationId, RectD sourceBounds, bool reprojectPerspective, out bool reprojected)
     {
+        reprojected = false;
         AnnotationObject? annotation = _currentDocument?.Annotations
             .FirstOrDefault(candidate => candidate.Id == annotationId);
         if (annotation is null || !DocumentLayers.IsEffectivelyVisible(_currentDocument!, annotation)) return null;
         AnnotationObject preview = CloneAnnotation(annotation, sourceBounds, copyImageBytes: false);
+        if (reprojectPerspective && TryCreatePerspectiveMove(annotation, sourceBounds, out var projected))
+        {
+            reprojected = true;
+            preview = projected ?? annotation;
+        }
         if (annotation.Kind == AnnotationKind.Text && TextSizeChanged(annotation.Bounds, sourceBounds))
             (preview.Bounds, preview.Style) = TextAnnotationLayout.Resize(annotation, sourceBounds);
         return AnnotationOverlayItem.FromAnnotation(preview, _canvasViewport.Zoom, null);
@@ -3619,6 +3628,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public async Task DuplicateSelectedAnnotationAsync(CancellationToken cancellationToken)
     {
+        if (await TryDuplicatePerspectiveObjectsAsync(cancellationToken)) return;
         if (SelectedAnnotationCount > 1)
         {
             if (_currentDocument is null || _editCommandStack is null || _documentRepository is null) return;
@@ -3637,6 +3647,13 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public async Task NudgeSelectedAnnotationAsync(double deltaX, double deltaY, CancellationToken cancellationToken)
     {
+        if (CanReprojectPerspectiveMoves && _currentDocument is not null && HasSelectedAnnotation)
+        {
+            var original = GetSelectedAnnotationBounds();
+            var moved = AnnotationBoundsEditor.MoveSelection(original, deltaX, deltaY,
+                new(_currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height));
+            if (await TryCommitPerspectiveMovesAsync(moved, "Move Objects", cancellationToken)) return;
+        }
         if (SelectedAnnotationCount > 1)
         {
             await EditSelectionAsync((editor, document, ids) => editor.NudgeAsync(document, ids, deltaX, deltaY, cancellationToken), "Objects moved.", cancellationToken);

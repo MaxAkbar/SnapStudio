@@ -70,6 +70,8 @@ public sealed partial class MainPage
         var tools = new MenuFlyoutSubItem { Text = "Selection tool" };
         PopulateAreaSelectionTools(tools.Items);
         menu.Items.Add(tools);
+        menu.Items.Add(new MenuFlyoutSeparator());
+        menu.Items.Add(CreateGridSettingsMenuItem(position));
         _objectContextMenu?.Hide();
         _objectContextMenu = menu;
         menu.Closed += (_, _) => { if (ReferenceEquals(menu, _objectContextMenu)) _objectContextMenu = null; };

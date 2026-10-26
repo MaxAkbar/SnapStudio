@@ -45,10 +45,11 @@ public sealed partial class MainPage
     {
         HideToolDesignDrawer(); _toolDesignDialogIsOpen = true;
         using var editor = new SvgDesignerControl(svg, ViewModel.AnnotationFontFamilies.ToArray(), ActualTheme,
-            new(ViewModel.ShowCanvasGrid, ViewModel.CanvasGridCellSize, ViewModel.SnapToCanvasGrid, ViewModel.CanvasGridPerspective));
+            new(ViewModel.ShowCanvasGrid, ViewModel.CanvasGridCellSize, ViewModel.SnapToCanvasGrid, ViewModel.CanvasGridPerspective, ViewModel.GridFamilies));
         editor.GridSettingsChanged += (_, settings) =>
         {
             ViewModel.SetPerspectiveGrid(settings.Perspective);
+            ViewModel.SetGridFamilies(settings.Families);
             ViewModel.CanvasGridCellSize = settings.Spacing;
             ViewModel.SnapToCanvasGrid = settings.Snap;
             ViewModel.ShowCanvasGrid = settings.Visible;

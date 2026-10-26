@@ -8,6 +8,7 @@ public enum PerspectiveRectanglePlane { Front, Side, Ground }
 
 public sealed record PerspectiveRectangleGeometry(IReadOnlyList<PointD> Corners, IReadOnlyList<PointD> Outline, RectD Bounds)
 {
+    public PerspectiveRectanglePlane Plane { get; init; } = PerspectiveRectanglePlane.Side;
     public AnnotationObject ToAnnotation(AnnotationStyle style)
     {
         static string N(double value) => value.ToString("0.######", CultureInfo.InvariantCulture);
@@ -24,6 +25,7 @@ public sealed record PerspectiveRectangleGeometry(IReadOnlyList<PointD> Corners,
             _ => "none"
         };
         string svg = $"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{N(bounds.X)} {N(bounds.Y)} {N(bounds.Width)} {N(bounds.Height)}\" preserveAspectRatio=\"none\"><path d=\"{path}\" fill=\"{Color(style.Fill)}\" fill-opacity=\"{N(style.Fill.A / 255d)}\" stroke=\"{Color(style.Stroke)}\" stroke-opacity=\"{N(style.Stroke.A / 255d)}\" stroke-width=\"{N(w)}\" stroke-linejoin=\"round\" stroke-linecap=\"round\" stroke-dasharray=\"{dash}\"/></svg>";
+        svg = PerspectiveObjectBinding.Attach(svg, "rectangle", Corners[0], Corners[2], plane: Plane);
         return new() { Kind = AnnotationKind.Vector, Bounds = bounds, Style = style, Vector = new(svg, "Perspective rectangle") };
     }
 }
@@ -41,8 +43,8 @@ public static class PerspectiveRectangle
             || view.Width <= 0 || view.Height <= 0 || !Inside(start, view)) return null;
         end = new(Math.Clamp(end.X, view.X, view.Right), Math.Clamp(end.Y, view.Y, view.Bottom));
         var s = settings.Normalize();
-        if (s.Mode == CanvasGridMode.Rectangular) return Flat(start, end);
         if (!Enum.IsDefined(plane)) plane = PerspectiveRectanglePlane.Side;
+        if (s.Mode == CanvasGridMode.Rectangular) return Flat(start, end) is {} flat ? flat with { Plane = plane } : null;
         double cx = view.X + view.Width * s.CenterX / 100, cy = view.Y + view.Height * s.Horizon / 100;
         double radius = Math.Min(view.Width, view.Height) * s.Radius / 100;
         PointD Local(PointD p) => new((p.X - cx) / radius, (p.Y - cy) / radius);
@@ -106,7 +108,7 @@ public static class PerspectiveRectangle
             if (outline.Any(p => !Inside(p, view) || curved && (Math.Pow((p.X - cx) / radius, 2) + Math.Pow((p.Y - cy) / radius, 2) > 1 + 1e-8))) return null;
             PointD[] corners = local.Select(World).ToArray();
             double minX = outline.Min(p => p.X), minY = outline.Min(p => p.Y), maxX = outline.Max(p => p.X), maxY = outline.Max(p => p.Y);
-            return new(corners, outline, new(minX, minY, maxX - minX, maxY - minY));
+            return new(corners, outline, new(minX, minY, maxX - minX, maxY - minY)) { Plane = plane };
         }
         var full = Build(1); if (full is not null) return full;
         // Stop at the canvas, curved-grid rim or vanishing axis without independently clamping corners.

@@ -30,7 +30,7 @@ public sealed partial class ShellViewModel
         bool snap = ObjectSnappingEnabled && IsPerspectiveGridSnapEnabled && !bypass;
         var geometry = snap ? PerspectiveRectangle.Create(start, end,
             new(0, 0, _currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height), CanvasGridPerspective, RectanglePerspectivePlane)
-            : PerspectiveRectangle.Flat(start, end);
+            : PerspectiveRectangle.Flat(start, end) is { } flat ? flat with { Plane = RectanglePerspectivePlane } : null;
         return geometry is null || geometry.Bounds.Width < 1 || geometry.Bounds.Height < 1 ? null
             : geometry.ToAnnotation(CreateAnnotationStyle(AnnotationKind.Rectangle));
     }

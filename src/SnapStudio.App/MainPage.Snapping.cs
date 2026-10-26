@@ -1,4 +1,6 @@
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using SnapStudio.Core.Documents;
 using SnapStudio.Core.Primitives;
@@ -16,6 +18,23 @@ public sealed partial class MainPage
     private PerspectiveCurveDrawingResult? _perspectiveLineDrawing;
     private bool _toolDrawingPerspectiveLine;
     private void ResetPerspectiveGrid_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs args) => ViewModel.ResetPerspectiveGrid();
+    private void ResetGridFamilies_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs args) => ViewModel.ResetGridFamilies();
+
+    private MenuFlyoutItem CreateGridSettingsMenuItem(Windows.Foundation.Point position)
+    {
+        var documentId = ViewModel.CurrentDocumentId;
+        var item = new MenuFlyoutItem { Text = "Grid and perspective…" };
+        item.Click += (_, _) =>
+        {
+            _objectContextMenu?.Hide();
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (ViewModel.HasCurrentDocument && ViewModel.CurrentDocumentId == documentId && _canvasDragMode == CanvasDragMode.None)
+                    CanvasGridSettingsFlyout.ShowAt(this, new FlyoutShowOptions { Position = position, Placement = FlyoutPlacementMode.Auto });
+            });
+        };
+        return item;
+    }
 
     private void ShowObjectSnapGuides()
     {

@@ -8,7 +8,7 @@ namespace SnapStudio.App;
 
 public sealed partial class MainPage
 {
-    private MenuFlyout CreateCanvasToolMenu()
+    private MenuFlyout CreateCanvasToolMenu(Point position)
     {
         var menu = new MenuFlyout();
         string group = Guid.NewGuid().ToString();
@@ -69,6 +69,8 @@ public sealed partial class MainPage
         };
         stamps.Click += (_, _) => { _objectContextMenu?.Hide(); ShowStampPicker(); };
         menu.Items.Add(stamps);
+        menu.Items.Add(new MenuFlyoutSeparator());
+        menu.Items.Add(CreateGridSettingsMenuItem(position));
         return menu;
     }
 
@@ -76,7 +78,7 @@ public sealed partial class MainPage
     {
         CanvasScrollViewer.Focus(FocusState.Programmatic);
         _objectContextMenu?.Hide();
-        MenuFlyout menu = CreateCanvasToolMenu();
+        MenuFlyout menu = CreateCanvasToolMenu(position);
         menu.Closed += (_, _) => { if (ReferenceEquals(_objectContextMenu, menu)) _objectContextMenu = null; };
         _objectContextMenu = menu;
         menu.ShowAt(this, new FlyoutShowOptions { Position = position });

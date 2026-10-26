@@ -1,12 +1,23 @@
 (() => {
  'use strict';
  const defaults={mode:0,centerX:50,horizon:50,left:-50,right:150,vertical:-100,radius:70,density:12};
+ const familyDefaults={grid:{color:'#64748B',opacity:45},center:{color:'#7C3AED',opacity:75},left:{color:'#E05252',opacity:75},right:{color:'#0E9F6E',opacity:75},top:{color:'#2474D9',opacity:75},bottom:{color:'#D18A00',opacity:75}};
+ function normalizeFamilies(value={},density=12){
+  const result={};for(const [key,fallback]of Object.entries(familyDefaults)){
+   const input=value&&typeof value[key]==='object'&&value[key]!==null?value[key]:{};
+   result[key]={color:typeof input.color==='string'&&/^#[0-9a-f]{6}$/i.test(input.color.trim())?input.color.trim().toUpperCase():fallback.color,
+    opacity:typeof input.opacity==='number'&&Number.isFinite(input.opacity)?Math.max(0,Math.min(100,input.opacity)):fallback.opacity,
+    density:typeof input.density==='number'&&Number.isFinite(input.density)?Math.max(4,Math.min(32,Math.round(input.density))):density};
+  }return result;
+ }
+ const activeFamilies=mode=>mode===1?['grid','center']:mode===2?['grid','left','right']:mode===3?['grid','left','right','top']:mode===4?['grid','left','right','top','bottom']:mode===5?['grid','left','right','top','bottom','center']:['grid'];
+ const familyTitle=(key,mode)=>key==='grid'?'Base grid':key==='center'?(mode===1?'VP 1':'Center VP'):key==='top'&&mode===3?'Third VP':key[0].toUpperCase()+key.slice(1)+' VP';
  function normalize(value={}){
   const result={};for(const [key,fallback]of Object.entries(defaults)){
    const limits=key==='mode'?[0,5]:key==='density'?[4,32]:key==='radius'?[10,300]:['left','right','vertical'].includes(key)?[-500,500]:[-300,400];
    let n=Object.hasOwn(value,key)?Number(value[key]):fallback;if(!Number.isFinite(n))n=fallback;
    result[key]=Math.max(limits[0],Math.min(limits[1],['mode','density'].includes(key)?Math.round(n):n));
-  }return result;
+  }result.families=normalizeFamilies(value.families,result.density);return result;
  }
  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
  function clip(a,b,r){
@@ -18,17 +29,18 @@
  function create(view,options){
   const s=normalize(options);if(!s.mode||![view.x,view.y,view.width,view.height].every(Number.isFinite)||view.width<=0||view.height<=0)return[];
   const strokes=[],cx=view.x+view.width*s.centerX/100,cy=view.y+view.height*s.horizon/100,radius=Math.min(view.width,view.height)*s.radius/100;
-  function curve(points,major=false){let run=[];function flush(){if(run.length>1)strokes.push({points:run,major});run=[];}
+  function curve(points,major=false,family='grid'){if(s.families[family].opacity===0)return;let run=[];function flush(){if(run.length>1)strokes.push({points:run,major,family});run=[];}
    for(let i=1;i<points.length;i++){const pair=clip(points[i-1],points[i],view);if(!pair){flush();continue;}if(run.length&&dist(run.at(-1),pair[0])>1e-6)flush();if(!run.length)run.push(pair[0]);run.push(pair[1]);}flush();}
-  const line=(a,b,major=false)=>curve([a,b],major);
-  function fan(point,circular=false){const reach=Math.max(view.width,view.height)*20;for(let i=0;i<s.density*2;i++){const angle=i*Math.PI/(s.density*2),x=Math.cos(angle),y=Math.sin(angle),length=circular?radius:reach;line({x:point.x-x*length,y:point.y-y*length},{x:point.x+x*length,y:point.y+y*length},i%4===0);}}
-  function arcs(horizontal){for(let i=-s.density;i<=s.density;i++){
-   const t=i/s.density,a=t===0?0:Math.abs((t*t-1)/(2*t)),points=[];
-   for(let j=0;j<=96;j++){const angle=-Math.PI/2+Math.PI*j/96,y=Math.sin(angle),c=Math.cos(angle),x=t===0?0:Math.sign(t)*c*c/(Math.sqrt(a*a+c*c)+a);points.push(horizontal?{x:cx+y*radius,y:cy+x*radius}:{x:cx+x*radius,y:cy+y*radius});}curve(points,i%4===0);
+  const line=(a,b,major=false,family='grid')=>curve([a,b],major,family);
+  function fan(point,family,circular=false){const density=s.families[family].density,reach=Math.max(view.width,view.height)*20;for(let i=0;i<density*2;i++){const angle=i*Math.PI/(density*2),x=Math.cos(angle),y=Math.sin(angle),length=circular?radius:reach;line({x:point.x-x*length,y:point.y-y*length},{x:point.x+x*length,y:point.y+y*length},i%4===0,family);}}
+  function arcs(horizontal,positive,family){const density=s.families[family].density;for(let i=-density;i<=density;i++){
+   const t=i/density,a=t===0?0:Math.abs((t*t-1)/(2*t)),points=[];
+   for(let j=positive?48:0;j<=(positive?96:48);j++){const angle=-Math.PI/2+Math.PI*j/96,y=Math.sin(angle),c=Math.cos(angle),x=t===0?0:Math.sign(t)*c*c/(Math.sqrt(a*a+c*c)+a);points.push(horizontal?{x:cx+y*radius,y:cy+x*radius}:{x:cx+x*radius,y:cy+y*radius});}curve(points,i%4===0,family);
   }}
-  if(s.mode===1){fan({x:cx,y:cy});for(let i=0;i<=s.density;i++){const x=view.x+view.width*i/s.density,y=view.y+view.height*i/s.density;line({x,y:view.y},{x,y:view.y+view.height},i%4===0);line({x:view.x,y},{x:view.x+view.width,y},i%4===0);}}
-  else if(s.mode>=2&&s.mode<=4){fan({x:view.x+view.width*s.left/100,y:cy});fan({x:view.x+view.width*s.right/100,y:cy});if(s.mode===3)fan({x:cx,y:view.y+view.height*s.vertical/100});else if(s.mode===4)arcs(false);else for(let i=0;i<=s.density;i++){const x=view.x+view.width*i/s.density;line({x,y:view.y},{x,y:view.y+view.height},i%4===0);}}
-  else{arcs(false);arcs(true);fan({x:cx,y:cy},true);}return strokes;
+  const density=s.families.grid.density;for(let i=0;i<=density;i++){const x=view.x+view.width*i/density,y=view.y+view.height*i/density;line({x,y:view.y},{x,y:view.y+view.height},i%4===0);if(s.mode!==2)line({x:view.x,y},{x:view.x+view.width,y},i%4===0);}
+  if(s.mode===1)fan({x:cx,y:cy},'center');
+  else if(s.mode>=2&&s.mode<=4){fan({x:view.x+view.width*s.left/100,y:cy},'left');fan({x:view.x+view.width*s.right/100,y:cy},'right');if(s.mode===3)fan({x:cx,y:view.y+view.height*s.vertical/100},'top');else if(s.mode===4){arcs(false,false,'top');arcs(false,true,'bottom');}}
+  else{arcs(false,false,'top');arcs(false,true,'bottom');arcs(true,false,'left');arcs(true,true,'right');fan({x:cx,y:cy},'center',true);}return strokes;
  }
  function find(point,strokes,tolerance,direction=null,feasible=null,scaleX=1,scaleY=1){
   if(![point.x,point.y,tolerance,scaleX,scaleY].every(Number.isFinite)||tolerance<0||scaleX<=0||scaleY<=0)return null;
@@ -71,5 +83,5 @@
   const reach=(view.width+view.height)*2,pair=clip({x:start.x-best.d.x*reach,y:start.y-best.d.y*reach},{x:start.x+best.d.x*reach,y:start.y+best.d.y*reach},view);
   return{start,end:line[1],direction:best.family,stroke:pair?{points:pair,major:true}:null};
  }
- window.snapPerspective={normalize,create,find,constrainLine,icons};
+ window.snapPerspective={normalize,normalizeFamilies,activeFamilies,familyTitle,create,find,constrainLine,icons};
 })();

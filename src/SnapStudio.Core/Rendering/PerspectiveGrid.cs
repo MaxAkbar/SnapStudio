@@ -14,23 +14,25 @@ public sealed record PerspectiveGridSettings(CanvasGridMode Mode = CanvasGridMod
     private static double Bound(double value, double fallback, double min, double max) => double.IsFinite(value) ? Math.Clamp(value, min, max) : fallback;
 }
 
-public sealed record PerspectiveGridStroke(IReadOnlyList<PointD> Points, bool IsMajor);
+public sealed record PerspectiveGridStroke(IReadOnlyList<PointD> Points, bool IsMajor, GridGuideFamily Family = GridGuideFamily.Grid);
 public sealed record PerspectiveGridMatch(PointD Point, PerspectiveGridStroke Stroke, double Distance);
 
 public static class PerspectiveGrid
 {
-    public static IReadOnlyList<PerspectiveGridStroke> Create(RectD view, PerspectiveGridSettings options)
+    public static IReadOnlyList<PerspectiveGridStroke> Create(RectD view, PerspectiveGridSettings options, CanvasGridFamilies? guideFamilies = null)
     {
         if (!Finite(view.X, view.Y, view.Width, view.Height, view.Right, view.Bottom) || view.Width <= 0 || view.Height <= 0) return [];
         var s = options.Normalize();
+        var families = (guideFamilies ?? new()).Normalize(s.Density);
         if (s.Mode == CanvasGridMode.Rectangular) return [];
         var strokes = new List<PerspectiveGridStroke>();
         double cx = view.X + view.Width * s.CenterX / 100, cy = view.Y + view.Height * s.Horizon / 100;
         double radius = Math.Min(view.Width, view.Height) * s.Radius / 100;
-        void Curve(IReadOnlyList<PointD> points, bool major = false)
+        void Curve(IReadOnlyList<PointD> points, GridGuideFamily family, bool major = false)
         {
+            if (families.Get(family).Opacity == 0) return;
             List<PointD> run = [];
-            void Flush() { if (run.Count > 1) strokes.Add(new(run.ToArray(), major)); run = []; }
+            void Flush() { if (run.Count > 1) strokes.Add(new(run.ToArray(), major, family)); run = []; }
             for (int i = 1; i < points.Count; i++)
             {
                 if (!Clip(points[i - 1], points[i], view, out PointD a, out PointD b)) { Flush(); continue; }
@@ -40,56 +42,56 @@ public static class PerspectiveGrid
             }
             Flush();
         }
-        void Line(PointD a, PointD b, bool major = false) => Curve([a, b], major);
-        void Fan(PointD point, bool circular = false)
+        void Line(PointD a, PointD b, GridGuideFamily family, bool major = false) => Curve([a, b], family, major);
+        void Fan(PointD point, GridGuideFamily family, bool circular = false)
         {
+            int density = families.Get(family).Density;
             double reach = Math.Max(view.Width, view.Height) * 20;
-            for (int i = 0; i < s.Density * 2; i++)
+            for (int i = 0; i < density * 2; i++)
             {
-                double angle = i * Math.PI / (s.Density * 2), x = Math.Cos(angle), y = Math.Sin(angle);
+                double angle = i * Math.PI / (density * 2), x = Math.Cos(angle), y = Math.Sin(angle);
                 double length = circular ? radius : reach;
-                Line(new(point.X - x * length, point.Y - y * length), new(point.X + x * length, point.Y + y * length), i % 4 == 0);
+                Line(new(point.X - x * length, point.Y - y * length), new(point.X + x * length, point.Y + y * length), family, i % 4 == 0);
             }
         }
-        void Arcs(bool horizontal)
+        void Arcs(bool horizontal, bool positive, GridGuideFamily family)
         {
-            for (int i = -s.Density; i <= s.Density; i++)
+            int density = families.Get(family).Density;
+            for (int i = -density; i <= density; i++)
             {
-                double t = (double)i / s.Density, a = t == 0 ? 0 : Math.Abs((t * t - 1) / (2 * t));
+                double t = (double)i / density, a = t == 0 ? 0 : Math.Abs((t * t - 1) / (2 * t));
                 var points = new List<PointD>();
-                for (int j = 0; j <= 96; j++)
+                for (int j = positive ? 48 : 0; j <= (positive ? 96 : 48); j++)
                 {
                     double angle = -Math.PI / 2 + Math.PI * j / 96, y = Math.Sin(angle), c = Math.Cos(angle);
                     // Stable circle-through-three-points construction, including the straight center guide.
                     double x = t == 0 ? 0 : Math.Sign(t) * c * c / (Math.Sqrt(a * a + c * c) + a);
                     points.Add(horizontal ? new(cx + y * radius, cy + x * radius) : new(cx + x * radius, cy + y * radius));
                 }
-                Curve(points, i % 4 == 0);
+                Curve(points, family, i % 4 == 0);
             }
         }
-        if (s.Mode == CanvasGridMode.OnePoint)
+        int gridDensity = families.Get(GridGuideFamily.Grid).Density;
+        for (int i = 0; i <= gridDensity; i++)
         {
-            Fan(new(cx, cy));
-            for (int i = 0; i <= s.Density; i++)
-            {
-                double x = view.X + view.Width * i / s.Density, y = view.Y + view.Height * i / s.Density;
-                Line(new(x, view.Y), new(x, view.Bottom), i % 4 == 0);
-                Line(new(view.X, y), new(view.Right, y), i % 4 == 0);
-            }
+            double x = view.X + view.Width * i / gridDensity, y = view.Y + view.Height * i / gridDensity;
+            Line(new(x, view.Y), new(x, view.Bottom), GridGuideFamily.Grid, i % 4 == 0);
+            if (s.Mode != CanvasGridMode.TwoPoint) Line(new(view.X, y), new(view.Right, y), GridGuideFamily.Grid, i % 4 == 0);
         }
+        if (s.Mode == CanvasGridMode.OnePoint) Fan(new(cx, cy), GridGuideFamily.Center);
         else if (s.Mode is CanvasGridMode.TwoPoint or CanvasGridMode.ThreePoint or CanvasGridMode.FourPoint)
         {
-            Fan(new(view.X + view.Width * s.Left / 100, cy));
-            Fan(new(view.X + view.Width * s.Right / 100, cy));
-            if (s.Mode == CanvasGridMode.ThreePoint) Fan(new(cx, view.Y + view.Height * s.Vertical / 100));
-            else if (s.Mode == CanvasGridMode.FourPoint) Arcs(false);
-            else for (int i = 0; i <= s.Density; i++)
-            {
-                double x = view.X + view.Width * i / s.Density;
-                Line(new(x, view.Y), new(x, view.Bottom), i % 4 == 0);
-            }
+            Fan(new(view.X + view.Width * s.Left / 100, cy), GridGuideFamily.Left);
+            Fan(new(view.X + view.Width * s.Right / 100, cy), GridGuideFamily.Right);
+            if (s.Mode == CanvasGridMode.ThreePoint) Fan(new(cx, view.Y + view.Height * s.Vertical / 100), GridGuideFamily.Top);
+            else if (s.Mode == CanvasGridMode.FourPoint) { Arcs(false, false, GridGuideFamily.Top); Arcs(false, true, GridGuideFamily.Bottom); }
         }
-        else { Arcs(false); Arcs(true); Fan(new(cx, cy), true); }
+        else
+        {
+            Arcs(false, false, GridGuideFamily.Top); Arcs(false, true, GridGuideFamily.Bottom);
+            Arcs(true, false, GridGuideFamily.Left); Arcs(true, true, GridGuideFamily.Right);
+            Fan(new(cx, cy), GridGuideFamily.Center, true);
+        }
         return strokes;
     }
 

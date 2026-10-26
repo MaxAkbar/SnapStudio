@@ -2803,9 +2803,19 @@ public sealed partial class MainPage : Page
         }
         IReadOnlyDictionary<Guid, RectD> bounds = CreateSelectionDragBounds(currentDisplayPoint, IsShiftPressed(e), e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
         AnnotationDragPreview.Children.Clear();
+        bool perspectiveMove = _annotationDragHandle == AnnotationBoundsHandle.Move && !e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu);
+        bool anyReprojected = false;
+        var visibleBounds = new Dictionary<Guid, RectD>();
         foreach (var pair in bounds)
-            AddDragAnnotationPreview(ViewModel.CreateAnnotationEditPreview(pair.Key, pair.Value), bounds.Count > 1);
-        ShowMovedSelectionMarquee(bounds);
+        {
+            var preview = ViewModel.CreateAnnotationEditPreview(pair.Key, pair.Value, perspectiveMove, out bool reprojected);
+            anyReprojected |= reprojected;
+            visibleBounds[pair.Key] = reprojected && preview is not null
+                ? new(preview.Left / ViewModel.CanvasZoom, preview.Top / ViewModel.CanvasZoom, preview.Width / ViewModel.CanvasZoom, preview.Height / ViewModel.CanvasZoom) : pair.Value;
+            AddDragAnnotationPreview(preview, bounds.Count > 1);
+        }
+        if (anyReprojected) _objectSnapGuides = [];
+        ShowMovedSelectionMarquee(visibleBounds, anyReprojected);
         ShowObjectSnapGuides();
     }
 
@@ -2819,6 +2829,7 @@ public sealed partial class MainPage : Page
         string displayName = _annotationDragHandle == AnnotationBoundsHandle.Move
             ? "Move Annotation"
             : "Resize Annotation";
+        bool reprojectPerspective = _annotationDragHandle == AnnotationBoundsHandle.Move && !e.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu);
 
         EndCanvasDrag(e);
 
@@ -2827,7 +2838,8 @@ public sealed partial class MainPage : Page
             await ViewModel.UpdateSelectionBoundsAsync(
                 editedBounds,
                 displayName,
-                CancellationToken.None);
+                CancellationToken.None,
+                reprojectPerspective);
             UpdateBindingsFromViewModel();
         }
     }

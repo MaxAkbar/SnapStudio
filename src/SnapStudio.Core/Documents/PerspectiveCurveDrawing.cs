@@ -26,6 +26,7 @@ public sealed record PerspectiveCurveDrawingResult(IReadOnlyList<PointD> Points,
         };
         string color = $"#{style.Stroke.R:X2}{style.Stroke.G:X2}{style.Stroke.B:X2}";
         string svg = $"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{N(bounds.X)} {N(bounds.Y)} {N(bounds.Width)} {N(bounds.Height)}\" preserveAspectRatio=\"none\"><path d=\"{path}\" fill=\"none\" stroke=\"{color}\" stroke-opacity=\"{N(style.Stroke.A / 255d)}\" stroke-width=\"{N(w)}\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-dasharray=\"{dash}\"/></svg>";
+        svg = PerspectiveObjectBinding.Attach(svg, "line", Points[0], Points[^1], Direction);
         return new() { Kind = AnnotationKind.Vector, Bounds = bounds, Style = style, Vector = new(svg, "Perspective line") };
     }
 }

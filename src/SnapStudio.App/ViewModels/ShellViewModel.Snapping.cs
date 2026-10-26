@@ -46,6 +46,9 @@ public sealed partial class ShellViewModel
         var canvas = new SizeD(_currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height);
         if (handle == AnnotationBoundsHandle.Move)
         {
+            if (IsPerspectiveGridSnapEnabled && SelectedAnnotationCount == 1
+                && _currentDocument.Annotations.FirstOrDefault(item => item.Id == id) is { } moved
+                && PerspectiveObjectBinding.IsPerspectiveObject(moved)) return new(proposed, []);
             var aligned = AnnotationSnapping.Move(proposed, targets, canvas, CanvasZoom, allowX, allowY, EffectiveSnapGridSpacing);
             return IsPerspectiveGridSnapEnabled ? PerspectiveSnapping.Closest(proposed, aligned,
                 PerspectiveSnapping.Move(proposed, CurrentPerspectiveGrid, canvas, CanvasZoom, allowX, allowY)) : aligned;

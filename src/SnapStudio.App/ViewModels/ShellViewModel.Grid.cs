@@ -10,10 +10,30 @@ public sealed partial class ShellViewModel
     private bool _snapToCanvasGrid = true;
     private double _canvasGridCellSize = CanvasGridLayout.DefaultSpacing;
     private PerspectiveGridSettings _perspectiveGrid = new();
-    private (double Width, double Height, PerspectiveGridSettings Settings)? _perspectiveCacheKey;
+    private CanvasGridFamilies _gridFamilies = new CanvasGridFamilies().Normalize();
+    private (double Width, double Height, PerspectiveGridSettings Settings, CanvasGridFamilies Families)? _perspectiveCacheKey;
     private IReadOnlyList<PerspectiveGridStroke> _perspectiveCache = [];
 
     public PerspectiveGridSettings CanvasGridPerspective => _perspectiveGrid;
+    public CanvasGridFamilies GridFamilies => _gridFamilies;
+    public GridGuideSettings BaseGridStyle { get => _gridFamilies.Get(GridGuideFamily.Grid); set => SetGridFamilies(_gridFamilies with { Grid = value }); }
+    public GridGuideSettings CenterGridStyle { get => _gridFamilies.Get(GridGuideFamily.Center); set => SetGridFamilies(_gridFamilies with { Center = value }); }
+    public GridGuideSettings LeftGridStyle { get => _gridFamilies.Get(GridGuideFamily.Left); set => SetGridFamilies(_gridFamilies with { Left = value }); }
+    public GridGuideSettings RightGridStyle { get => _gridFamilies.Get(GridGuideFamily.Right); set => SetGridFamilies(_gridFamilies with { Right = value }); }
+    public GridGuideSettings TopGridStyle { get => _gridFamilies.Get(GridGuideFamily.Top); set => SetGridFamilies(_gridFamilies with { Top = value }); }
+    public GridGuideSettings BottomGridStyle { get => _gridFamilies.Get(GridGuideFamily.Bottom); set => SetGridFamilies(_gridFamilies with { Bottom = value }); }
+    public Visibility CenterGridFamilyVisibility => CanvasGridMode is 1 or 5 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility SideGridFamiliesVisibility => CanvasGridMode >= 2 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility TopGridFamilyVisibility => CanvasGridMode >= 3 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility BottomGridFamilyVisibility => CanvasGridMode >= 4 ? Visibility.Visible : Visibility.Collapsed;
+    public string CenterGridFamilyTitle => CanvasGridMode == 1 ? "VP 1" : "Center VP";
+    public string TopGridFamilyTitle => CanvasGridMode == 3 ? "Third VP" : "Top VP";
+    public void SetGridFamilies(CanvasGridFamilies families)
+    {
+        families = families.Normalize(); if (families == _gridFamilies) return;
+        _gridFamilies = families; OnPropertyChanged(string.Empty);
+    }
+    public void ResetGridFamilies() => SetGridFamilies(new());
     public int CanvasGridMode { get => (int)_perspectiveGrid.Mode; set { if (value == CanvasGridMode) return; SetPerspectiveGrid(_perspectiveGrid with { Mode = (CanvasGridMode)value }); ShowCanvasGrid = true; } }
     public string CanvasGridModeIcon => $"Grid{CanvasGridMode}";
     public Visibility RectangularGridSettingsVisibility => CanvasGridMode == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -28,7 +48,6 @@ public sealed partial class ShellViewModel
     public double PerspectiveRight { get => _perspectiveGrid.Right; set => SetPerspectiveGrid(_perspectiveGrid with { Right = value }); }
     public double PerspectiveVertical { get => _perspectiveGrid.Vertical; set => SetPerspectiveGrid(_perspectiveGrid with { Vertical = value }); }
     public double PerspectiveRadius { get => _perspectiveGrid.Radius; set => SetPerspectiveGrid(_perspectiveGrid with { Radius = value }); }
-    public double PerspectiveDensity { get => _perspectiveGrid.Density; set => SetPerspectiveGrid(_perspectiveGrid with { Density = double.IsFinite(value) ? (int)Math.Clamp(Math.Round(value), 4, 32) : 12 }); }
     public void SetPerspectiveGrid(PerspectiveGridSettings settings)
     {
         settings = settings.Normalize(); if (settings == _perspectiveGrid) return;
@@ -41,8 +60,8 @@ public sealed partial class ShellViewModel
         {
             if (_currentDocument is null) return [];
             double width = _currentDocument.SourceImage.Width, height = _currentDocument.SourceImage.Height;
-            var key = (width, height, _perspectiveGrid);
-            if (_perspectiveCacheKey != key) { _perspectiveCache = PerspectiveGrid.Create(new RectD(0, 0, width, height), _perspectiveGrid); _perspectiveCacheKey = key; }
+            var key = (width, height, _perspectiveGrid, _gridFamilies);
+            if (_perspectiveCacheKey != key) { _perspectiveCache = PerspectiveGrid.Create(new RectD(0, 0, width, height), _perspectiveGrid, _gridFamilies); _perspectiveCacheKey = key; }
             return _perspectiveCache;
         }
     }
@@ -69,5 +88,5 @@ public sealed partial class ShellViewModel
         ? "Perspective guides use density. Positions are percentages of the image; vanishing points may be outside it. Guides position objects without warping their artwork."
         : CurrentCanvasGrid.Stride == 1 ? "Spacing is measured in image pixels."
         : $"At this zoom, visible lines are {CurrentCanvasGrid.SourceSpacing:0} image pixels apart. Zoom in for a finer grid.";
-    private double EffectiveSnapGridSpacing => ShowCanvasGrid && SnapToCanvasGrid && CanvasGridMode == 0 ? CurrentCanvasGrid.SourceSpacing : 0;
+    private double EffectiveSnapGridSpacing => ShowCanvasGrid && SnapToCanvasGrid && CanvasGridMode == 0 && BaseGridStyle.Opacity > 0 ? CurrentCanvasGrid.SourceSpacing : 0;
 }

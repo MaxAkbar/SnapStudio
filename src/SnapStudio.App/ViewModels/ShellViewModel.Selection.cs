@@ -93,8 +93,9 @@ public sealed partial class ShellViewModel
         return AnnotationBoundsEditor.MoveSelection(original, dx, dy, new(_currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height));
     }
 
-    public async Task UpdateSelectionBoundsAsync(IReadOnlyDictionary<Guid, RectD> bounds, string name, CancellationToken token)
+    public async Task UpdateSelectionBoundsAsync(IReadOnlyDictionary<Guid, RectD> bounds, string name, CancellationToken token, bool reprojectPerspective = false)
     {
+        if (reprojectPerspective && await TryCommitPerspectiveMovesAsync(bounds, name, token)) return;
         if (bounds.Count == 1)
         {
             var pair = bounds.First();

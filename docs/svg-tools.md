@@ -42,9 +42,38 @@ vertical guides; five-point mode curves both guide families and adds depth
 lines through the center. The curve radius is a percentage of the shorter side.
 **Reset perspective** restores defaults for the selected mode.
 
+Type an exact value in a number box or drag its slider to preview the guides.
+Horizon, vanishing-point positions, guide density, and curve radius each have
+paired controls. Right-click the canvas and choose **Grid and perspective…**
+to open them at the pointer, or use the Grid settings arrow as before. This
+also works with artwork selected. Press **Escape** to dismiss the controls;
+**Shift+F10** opens the canvas menu from the keyboard.
+
+Under **Grid and VP families**, each family has an independent color, opacity,
+and density, with number boxes and sliders. Density changes only that family's
+visible guides and corresponding object snap targets. Rectangular mode uses
+the existing cell spacing control for its base grid.
+
+| Mode | Independent families |
+| --- | --- |
+| 1-point | Base grid, VP 1 |
+| 2-point | Base grid, Left VP, Right VP |
+| 3-point | Base grid, Left VP, Right VP, Third VP |
+| 4-point curved | Base grid, Left VP, Right VP, Top VP, Bottom VP |
+| 5-point fisheye | Base grid, Left VP, Right VP, Top VP, Bottom VP, Center VP |
+
+Curved guides split at the center: top and bottom halves use their respective
+VP settings, as do the left and right halves in five-point mode. The base grid
+is a separate reference family (vertical guides in two-point mode). Zero opacity
+hides a family's guides and removes those guides from object snapping. Straight
+and perspective drawing tools still follow the selected mode's directions.
+Settings are shared with the canvas for the workspace session and stay out of
+saved artwork and exports. **Reset guide families** restores colors, opacity,
+and densities; **Reset perspective** resets positions while keeping family settings.
+
 Perspective settings are shared with the canvas for the workspace session.
 With perspective snapping on, the ordinary **Line and Arrow** tools follow a direction through
-the exact point you click**, even between visible guides. The initial drag
+the exact point you click, even between visible guides. The initial drag
 chooses the closest perspective direction and locks it until you finish the
 stroke. Guide density changes the reference lines, not the available drawing
 positions. Four- and five-point modes use the curve's local tangent or a
@@ -69,8 +98,7 @@ Keep the grid and **Snap to grid** on, plus the main canvas **Snap** switch when
 drawing there. Hold **Alt**, turn snapping off, or hide the grid to draw a free
 straight line. Each stroke is an open SVG path with no fill, its own stroke
 color, width, dash style, opacity, and one undo step. Choose **Edit SVG** on the
-main canvas to edit its path. Moving or resizing it transforms the saved
-artwork; changing the grid affects new strokes. The ordinary Line and Arrow
+main canvas to edit its path. The ordinary Line and Arrow
 tools continue to stay straight, using a curve's local direction when snapping.
 
 **Perspective rectangle** is a separate tool beside Rectangle in the SVG
@@ -90,9 +118,20 @@ and Ground means width × depth. A one-point Front face is parallel to the
 image, so it remains rectangular. With snapping off or **Alt** held, the tool
 draws a flat face. The ordinary Rectangle tool keeps its usual behavior.
 Each face is a single SVG object with its fill, stroke, and one undo step;
-choose **Edit SVG** on the main canvas to edit its paths and colors. Moving or
-resizing an existing face transforms its saved artwork; changing grid settings
-affects new drawings.
+choose **Edit SVG** on the main canvas to edit its paths and colors.
+
+With perspective snapping on, moving a **Perspective line** or **Perspective
+rectangle** recalculates its edges at the new position against the active grid.
+Dragging, arrow-key nudges, and SVG X/Y position changes retain the line's guide
+family or the rectangle's selected plane, its appearance, and one undo step per
+move. Hold **Alt**, turn snapping off, or hide the grid for a free move; the next
+move with perspective snapping on fits the object to the grid again. Changing
+grid settings leaves existing objects in place until their next snapped move.
+
+Resizing and rotating still transform the saved artwork. Editing a path's
+geometry can detach its perspective behavior so a later move preserves your
+custom edits; changing colors, stroke width, dashes, or opacity retains it.
+Ordinary shapes and custom SVG artwork keep their normal movement behavior.
 
 Other objects and resize corners snap to nearby visible segments and curves,
 preserving Shift constraints and one undo step per completed drag. These are drawing guides:

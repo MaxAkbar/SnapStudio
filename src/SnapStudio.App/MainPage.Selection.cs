@@ -186,9 +186,15 @@ public sealed partial class MainPage
         }
     }
 
-    private void ShowMovedSelectionMarquee(IReadOnlyDictionary<Guid, RectD> movedBounds)
+    private void ShowMovedSelectionMarquee(IReadOnlyDictionary<Guid, RectD> movedBounds, bool useActualBounds = false)
     {
         if (_annotationDragMarqueeBounds is not RectD marquee || movedBounds.Count == 0 || _canvasDragMode != CanvasDragMode.MoveAnnotation) return;
+        if (useActualBounds)
+        {
+            RectD actual = AnnotationBoundsEditor.CombinedBounds(movedBounds.Values);
+            ShowSelectionMarqueeBounds(new(actual.X * ViewModel.CanvasZoom, actual.Y * ViewModel.CanvasZoom, actual.Width * ViewModel.CanvasZoom, actual.Height * ViewModel.CanvasZoom));
+            return;
+        }
         var pair = movedBounds.First();
         RectD original = _annotationDragBounds[pair.Key];
         ShowSelectionMarqueeBounds(new RectD((marquee.X + pair.Value.X - original.X) * ViewModel.CanvasZoom,

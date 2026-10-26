@@ -1145,7 +1145,7 @@
                                             Stretch="Fill" />
                                         <Canvas x:Name="AnnotationCanvas" Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}" Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"/>
                                         <controls:CanvasGridOverlay Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}" Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}"
-                                            CellSize="{x:Bind ViewModel.CanvasGridCellSize, Mode=OneWay}" Zoom="{x:Bind ViewModel.CanvasZoom, Mode=OneWay}" Perspective="{x:Bind ViewModel.CanvasGridPerspective, Mode=OneWay}"
+                                            CellSize="{x:Bind ViewModel.CanvasGridCellSize, Mode=OneWay}" Zoom="{x:Bind ViewModel.CanvasZoom, Mode=OneWay}" Perspective="{x:Bind ViewModel.CanvasGridPerspective, Mode=OneWay}" Families="{x:Bind ViewModel.GridFamilies, Mode=OneWay}"
                                             Visibility="{x:Bind ViewModel.CanvasGridVisibility, Mode=OneWay}" IsHitTestVisible="False" AutomationProperties.Name="Canvas grid"/>
                                         <Canvas Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}" Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}" IsHitTestVisible="False">
                                             <Canvas x:Name="AnnotationDragPreview"/>
@@ -1219,7 +1219,7 @@
                                             <Button Content="▾" AutomationProperties.Name="Grid settings" ToolTipService.ToolTip="Grid spacing and snapping"
                                                 Padding="4,2" MinWidth="20" Height="26" IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}">
                                                 <Button.Flyout>
-                                                    <Flyout Placement="Top">
+                                                    <Flyout x:Name="CanvasGridSettingsFlyout" Placement="Top">
                                                         <ScrollViewer MaxHeight="480" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                                         <StackPanel Width="300" Spacing="10">
                                                             <TextBlock Text="Canvas grid" FontSize="16" FontWeight="SemiBold"/>
@@ -1235,19 +1235,45 @@
                                                             <NumberBox Header="Cell spacing (image px)" AutomationProperties.Name="Grid cell spacing" Minimum="4" Maximum="512"
                                                                 Visibility="{x:Bind ViewModel.RectangularGridSettingsVisibility, Mode=OneWay}" Value="{x:Bind ViewModel.CanvasGridCellSize, Mode=TwoWay}" SpinButtonPlacementMode="Compact" SmallChange="1" LargeChange="8"/>
                                                             <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.PerspectiveGridSettingsVisibility, Mode=OneWay}">
-                                                                <NumberBox Header="Guide density" AutomationProperties.Name="Perspective guide density" Minimum="4" Maximum="32" Value="{x:Bind ViewModel.PerspectiveDensity, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
                                                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                    <NumberBox Width="142" Header="Center X (%)" Minimum="-300" Maximum="400" Visibility="{x:Bind ViewModel.PerspectiveCenterVisibility, Mode=OneWay}" Value="{x:Bind ViewModel.PerspectiveCenterX, Mode=TwoWay}"/>
-                                                                    <NumberBox Width="142" Header="Horizon Y (%)" Minimum="-300" Maximum="400" Value="{x:Bind ViewModel.PerspectiveHorizon, Mode=TwoWay}"/>
+                                                                    <StackPanel Width="142" Visibility="{x:Bind ViewModel.PerspectiveCenterVisibility, Mode=OneWay}">
+                                                                        <NumberBox Header="Center X (%)" AutomationProperties.Name="Perspective center X percent" Minimum="-300" Maximum="400" Value="{x:Bind ViewModel.PerspectiveCenterX, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
+                                                                        <Slider AutomationProperties.Name="Perspective center X slider" Minimum="-300" Maximum="400" StepFrequency="1" Value="{x:Bind ViewModel.PerspectiveCenterX, Mode=TwoWay}"/>
+                                                                    </StackPanel>
+                                                                    <StackPanel Width="142">
+                                                                        <NumberBox Header="Horizon Y (%)" AutomationProperties.Name="Perspective horizon Y percent" Minimum="-300" Maximum="400" Value="{x:Bind ViewModel.PerspectiveHorizon, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
+                                                                        <Slider AutomationProperties.Name="Perspective horizon Y slider" Minimum="-300" Maximum="400" StepFrequency="1" Value="{x:Bind ViewModel.PerspectiveHorizon, Mode=TwoWay}"/>
+                                                                    </StackPanel>
                                                                 </StackPanel>
                                                                 <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind ViewModel.PerspectiveHorizontalPointsVisibility, Mode=OneWay}">
-                                                                    <NumberBox Width="142" Header="Left VP X (%)" Minimum="-500" Maximum="500" Value="{x:Bind ViewModel.PerspectiveLeft, Mode=TwoWay}"/>
-                                                                    <NumberBox Width="142" Header="Right VP X (%)" Minimum="-500" Maximum="500" Value="{x:Bind ViewModel.PerspectiveRight, Mode=TwoWay}"/>
+                                                                    <StackPanel Width="142">
+                                                                        <NumberBox Header="Left VP X (%)" AutomationProperties.Name="Left vanishing point X percent" Minimum="-500" Maximum="500" Value="{x:Bind ViewModel.PerspectiveLeft, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
+                                                                        <Slider AutomationProperties.Name="Left vanishing point X slider" Minimum="-500" Maximum="500" StepFrequency="1" Value="{x:Bind ViewModel.PerspectiveLeft, Mode=TwoWay}"/>
+                                                                    </StackPanel>
+                                                                    <StackPanel Width="142">
+                                                                        <NumberBox Header="Right VP X (%)" AutomationProperties.Name="Right vanishing point X percent" Minimum="-500" Maximum="500" Value="{x:Bind ViewModel.PerspectiveRight, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
+                                                                        <Slider AutomationProperties.Name="Right vanishing point X slider" Minimum="-500" Maximum="500" StepFrequency="1" Value="{x:Bind ViewModel.PerspectiveRight, Mode=TwoWay}"/>
+                                                                    </StackPanel>
                                                                 </StackPanel>
-                                                                <NumberBox Header="Third VP Y (%)" Minimum="-500" Maximum="500" Visibility="{x:Bind ViewModel.PerspectiveThirdPointVisibility, Mode=OneWay}" Value="{x:Bind ViewModel.PerspectiveVertical, Mode=TwoWay}"/>
-                                                                <NumberBox Header="Curve radius (% of shorter side)" Minimum="10" Maximum="300" Visibility="{x:Bind ViewModel.PerspectiveRadiusVisibility, Mode=OneWay}" Value="{x:Bind ViewModel.PerspectiveRadius, Mode=TwoWay}"/>
+                                                                <StackPanel Visibility="{x:Bind ViewModel.PerspectiveThirdPointVisibility, Mode=OneWay}">
+                                                                    <NumberBox Header="Third VP Y (%)" AutomationProperties.Name="Third vanishing point Y percent" Minimum="-500" Maximum="500" Value="{x:Bind ViewModel.PerspectiveVertical, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
+                                                                    <Slider AutomationProperties.Name="Third vanishing point Y slider" Minimum="-500" Maximum="500" StepFrequency="1" Value="{x:Bind ViewModel.PerspectiveVertical, Mode=TwoWay}"/>
+                                                                </StackPanel>
+                                                                <StackPanel Visibility="{x:Bind ViewModel.PerspectiveRadiusVisibility, Mode=OneWay}">
+                                                                    <NumberBox Header="Curve radius (% of shorter side)" AutomationProperties.Name="Perspective curve radius percent" Minimum="10" Maximum="300" Value="{x:Bind ViewModel.PerspectiveRadius, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
+                                                                    <Slider AutomationProperties.Name="Perspective curve radius slider" Minimum="10" Maximum="300" StepFrequency="1" Value="{x:Bind ViewModel.PerspectiveRadius, Mode=TwoWay}"/>
+                                                                </StackPanel>
                                                                 <Button Content="Reset perspective" Click="ResetPerspectiveGrid_Click"/>
                                                             </StackPanel>
+                                                            <TextBlock Text="Grid and VP families" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="Each family has its own color, opacity, and density. Zero opacity hides that family's guides." FontSize="11" TextWrapping="Wrap"/>
+                                                            <controls:GridFamilyEditor Title="Base grid" Settings="{x:Bind ViewModel.BaseGridStyle, Mode=TwoWay}" DensityVisibility="{x:Bind ViewModel.PerspectiveGridSettingsVisibility, Mode=OneWay}"/>
+                                                            <controls:GridFamilyEditor Title="{x:Bind ViewModel.CenterGridFamilyTitle, Mode=OneWay}" Settings="{x:Bind ViewModel.CenterGridStyle, Mode=TwoWay}" Visibility="{x:Bind ViewModel.CenterGridFamilyVisibility, Mode=OneWay}"/>
+                                                            <controls:GridFamilyEditor Title="Left VP" Settings="{x:Bind ViewModel.LeftGridStyle, Mode=TwoWay}" Visibility="{x:Bind ViewModel.SideGridFamiliesVisibility, Mode=OneWay}"/>
+                                                            <controls:GridFamilyEditor Title="Right VP" Settings="{x:Bind ViewModel.RightGridStyle, Mode=TwoWay}" Visibility="{x:Bind ViewModel.SideGridFamiliesVisibility, Mode=OneWay}"/>
+                                                            <controls:GridFamilyEditor Title="{x:Bind ViewModel.TopGridFamilyTitle, Mode=OneWay}" Settings="{x:Bind ViewModel.TopGridStyle, Mode=TwoWay}" Visibility="{x:Bind ViewModel.TopGridFamilyVisibility, Mode=OneWay}"/>
+                                                            <controls:GridFamilyEditor Title="Bottom VP" Settings="{x:Bind ViewModel.BottomGridStyle, Mode=TwoWay}" Visibility="{x:Bind ViewModel.BottomGridFamilyVisibility, Mode=OneWay}"/>
+                                                            <Button Content="Reset guide families" Click="ResetGridFamilies_Click"/>
                                                             <TextBlock Text="{x:Bind ViewModel.CanvasGridSpacingDescription, Mode=OneWay}" FontSize="11" TextWrapping="Wrap"/>
                                                             <CheckBox Content="Snap to grid" IsChecked="{x:Bind ViewModel.SnapToCanvasGrid, Mode=TwoWay}"
                                                                 IsEnabled="{x:Bind ViewModel.ShowCanvasGrid, Mode=OneWay}"/>

@@ -112,7 +112,6 @@ public sealed partial class MainPage
         if (item is null && !pointer) item = GetSelectedObjectItem();
         if (item is null)
         {
-            if (ViewModel.HasSelectedAnnotation) return;
             if (!pointer) position = CanvasScrollViewer.TransformToVisual(this)
                 .TransformPoint(new Point(CanvasScrollViewer.ActualWidth / 2, CanvasScrollViewer.ActualHeight / 2));
             args.Handled = true;
@@ -198,6 +197,8 @@ public sealed partial class MainPage
         menu.Items.Add(layers);
         menu.Items.Add(new MenuFlyoutSeparator());
         menu.Items.Add(CreateObjectMenuAction("Delete", "Delete", ObjectAction.Delete));
+        menu.Items.Add(new MenuFlyoutSeparator());
+        menu.Items.Add(CreateGridSettingsMenuItem(position));
         menu.Closed += (_, _) => { if (ReferenceEquals(_objectContextMenu, menu)) _objectContextMenu = null; };
         _objectContextMenu = menu;
         menu.ShowAt(this, new FlyoutShowOptions { Position = position });
