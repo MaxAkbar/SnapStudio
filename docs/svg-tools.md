@@ -32,27 +32,35 @@ object and group movement, resize corners, new shape endpoints, and path
 anchors. Freehand strokes and Bézier control handles remain free to draw curves;
 existing Shift constraints and Alt controls continue to work.
 
-The same **Grid settings** contain icons for **Rectangular**, **1-point**,
+The **Guides** inspector contains icons for **Rectangular**, **1-point**,
 **2-point**, **3-point**, **4-point curved**, and **5-point fisheye**. Perspective
-modes replace cell spacing with **Guide density**. Adjust the horizon and the
+modes use a separate density for each guide family. Adjust the horizon and the
 displayed vanishing-point positions as percentages of the SVG viewBox; points
 can sit outside the artwork. Three-point mode adds a third vertical vanishing
 point. Four-point mode combines two horizontal vanishing points with curved
 vertical guides; five-point mode curves both guide families and adds depth
 lines through the center. The curve radius is a percentage of the shorter side.
-**Reset perspective** restores defaults for the selected mode.
+**Reset perspective positions** in **More options** restores positions for the selected mode.
 
-Type an exact value in a number box or drag its slider to preview the guides.
-Horizon, vanishing-point positions, guide density, and curve radius each have
-paired controls. Right-click the canvas and choose **Grid and perspective…**
-to open them at the pointer, or use the Grid settings arrow as before. This
-also works with artwork selected. Press **Escape** to dismiss the controls;
-**Shift+F10** opens the canvas menu from the keyboard.
+Open **Guides** beside **Properties**, use the Grid settings arrow, or right-click
+the canvas and choose **Grid and perspective…**. The inspector stays beside the
+canvas. **Shift+F10** also opens the canvas menu. Switch back to **Properties**
+for ordinary object and layer editing.
 
-Under **Grid and VP families**, each family has an independent color, opacity,
-and density, with number boxes and sliders. Density changes only that family's
-visible guides and corresponding object snap targets. Rectangular mode uses
-the existing cell spacing control for its base grid.
+The compact **Guide families** list shows each family's color, opacity, density,
+and visibility. Select a row to expand one family editor. Type exact values or
+drag sliders for that family's appearance and available VP coordinates. The eye
+button hides a family and restores its previous opacity when shown again.
+Rectangular mode uses cell spacing for its base grid.
+
+With **Edit points on canvas** on, drag a VP or the horizon to reposition the
+guides. Off-canvas VPs appear at the artwork edges; dragging changes their actual
+position by the drag distance, without jumping to that edge. Use the coordinate
+fields for exact values outside the artwork. Focus a handle and use arrow keys
+to move it by one SVG unit (one image pixel on the main canvas), or **Shift** for
+ten. **Escape** cancels the active drag. Curved poles share the curve radius,
+so moving one updates its linked poles. Guide changes leave artwork and its
+undo history untouched and remain excluded from exports.
 
 | Mode | Independent families |
 | --- | --- |
@@ -69,7 +77,7 @@ hides a family's guides and removes those guides from object snapping. Straight
 and perspective drawing tools still follow the selected mode's directions.
 Settings are shared with the canvas for the workspace session and stay out of
 saved artwork and exports. **Reset guide families** restores colors, opacity,
-and densities; **Reset perspective** resets positions while keeping family settings.
+and densities; **Reset perspective positions** resets positions while keeping family settings.
 
 Perspective settings are shared with the canvas for the workspace session.
 With perspective snapping on, the ordinary **Line and Arrow** tools follow a direction through
@@ -81,7 +89,7 @@ vanishing-point direction, keeping lines and arrows straight. Perspective
 directions take priority over Shift's 15° angles. Turn off **Snap to grid** or
 hold **Alt** to draw freely.
 
-Choose the separate **Perspective line** icon in the SVG toolbar to follow a
+Choose **Perspective line** in Guides or its SVG toolbar icon to follow a
 whole guide curve. On the main canvas, open the **Line** tool drawer and choose
 **Perspective line**. Your click fixes the start, even between the visible
 guides. The initial drag chooses a guide direction and locks it for the stroke;
@@ -94,6 +102,13 @@ straight depth line through the center. Curved strokes stop at the canvas or
 curved-grid rim. Selecting the tool shows the grid and chooses four-point mode
 if the grid was rectangular; existing perspective settings are retained.
 
+Guides groups both perspective tools and the rectangle plane selector. Selecting
+a perspective tool opens Guides with point editing off, so handles do not catch
+drawing gestures. Open Guides manually or check **Edit points on canvas** when
+you want to move the guides. The contextual toolbar provides stroke color and
+width; rectangles also show their plane. The existing tool drawers remain
+available on the main canvas.
+
 Keep the grid and **Snap to grid** on, plus the main canvas **Snap** switch when
 drawing there. Hold **Alt**, turn snapping off, or hide the grid to draw a free
 straight line. Each stroke is an open SVG path with no fill, its own stroke
@@ -101,8 +116,8 @@ color, width, dash style, opacity, and one undo step. Choose **Edit SVG** on the
 main canvas to edit its path. The ordinary Line and Arrow
 tools continue to stay straight, using a curve's local direction when snapping.
 
-**Perspective rectangle** is a separate tool beside Rectangle in the SVG
-toolbar. Choose **Front**, **Side**, or **Ground** in its **Perspective plane**
+**Perspective rectangle** is available in Guides and beside Rectangle in the SVG
+toolbar. Choose **Front**, **Side**, or **Ground** in its contextual **Perspective plane**
 selector, then drag opposite corners. Opposite edges follow the selected
 plane's guide families even between visible guides; four- and five-point modes
 use curved edges where the plane calls for them. The clicked corner stays

@@ -43,6 +43,8 @@ public sealed class WorkspaceIcon : UserControl
             case "Grid3": Path("M2 7L12 22L22 7Z M12 2L8 15 M12 2L16 15 M2 7L16 15 M22 7L8 15"); Circle(12, 2, 1); break;
             case "Grid4": Path("M12 2C2 7 2 17 12 22 M12 2C22 7 22 17 12 22 M2 10L20 17 M22 10L4 17 M12 2V22"); break;
             case "Grid5": Circle(12, 12, 10); Path("M12 2C3 7 3 17 12 22 M12 2C21 7 21 17 12 22 M2 12C7 3 17 3 22 12 M2 12C7 21 17 21 22 12 M2 12H22 M12 2V22"); break;
+            case "PerspectiveLine": Path("M5 21C20 17 20 7 5 3 M3 3H7 M3 21H7"); break;
+            case "PerspectiveRectangle": Path("M3 6L20 3V20L3 16Z"); break;
             case "Library":
                 Rectangle(3, 4, 18, 16, 2);
                 Path("M8 4V20 M12 9H17 M12 14H17");

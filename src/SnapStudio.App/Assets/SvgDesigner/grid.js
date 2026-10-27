@@ -1,8 +1,10 @@
 (() => {
  'use strict';
  const NS='http://www.w3.org/2000/svg',MIN_DISPLAY_SPACING=8,TOLERANCE=6,P=window.snapPerspective;
- window.createSvgGrid=({root,frame,onChange})=>{
+ window.createSvgGrid=({root,frame,onChange,onToolRequested})=>{
   let settings={visible:false,spacing:32,snap:true,...P.normalize()},lastKey='',lastScale={x:1,y:1},geometryKey='',geometry=[];
+  let selectedFamily='grid',guideHandles=null;
+  const familyRows=new Map(),previousOpacity={};
   const $=id=>document.getElementById(id),make=(tag,attrs)=>{const el=document.createElementNS(NS,tag);for(const [key,value]of Object.entries(attrs))el.setAttribute(key,String(value));return el;};
   // Artwork styles stay inside the frame's shadow root; guides have their own isolated surface.
   const host=document.createElement('div');host.setAttribute('data-editor-grid-host','');host.setAttribute('aria-hidden','true');
@@ -10,7 +12,7 @@
   const gridRoot=host.attachShadow({mode:'open'}),style=document.createElement('style');style.textContent='svg{display:block;width:100%;height:100%;overflow:hidden;pointer-events:none}svg[hidden]{display:none}';gridRoot.append(style);
   const overlay=make('svg',{'data-editor-grid':'','aria-hidden':'true',focusable:'false',preserveAspectRatio:'none'});gridRoot.append(overlay);
   const names=['Rectangular','1-point perspective','2-point perspective','3-point perspective','4-point curved','5-point fisheye'];
-  for(let mode=0;mode<names.length;mode++){const button=document.createElement('button');button.type='button';button.dataset.gridMode=mode;button.setAttribute('aria-label',names[mode]);button.title=names[mode];const icon=make('svg',{viewBox:'0 0 24 24','aria-hidden':'true'});icon.append(make('path',{d:P.icons[mode]}));const label=document.createElement('span');label.textContent=mode?`${mode} pt`:'Grid';button.append(icon,label);button.onclick=()=>setSettings({mode,visible:true});$('gridModes').append(button);}
+  for(let mode=0;mode<names.length;mode++){const button=document.createElement('button');button.type='button';button.dataset.gridMode=mode;button.setAttribute('aria-label',names[mode]);button.title=names[mode];const icon=make('svg',{viewBox:'0 0 24 24','aria-hidden':'true'});icon.append(make('path',{d:P.icons[mode]}));const label=document.createElement('span');label.textContent=mode?`${mode} pt`:'Grid';button.append(icon,label);button.onclick=()=>{$('guideEditPoints').checked=true;setSettings({mode,visible:true});};$('gridModes').append(button);}
   const familyFields=new Map();
   for(const key of Object.keys(P.normalizeFamilies())){
    const card=document.createElement('section');card.className='guide-family';card.dataset.family=key;
@@ -24,9 +26,16 @@
     slider.oninput=()=>updateFamily(key,{[field]:Number(slider.value)});
    }
    color.oninput=()=>updateFamily(key,{color:color.value});$('gridFamilies').append(card);familyFields.set(key,controls);
+   const row=document.createElement('div');row.className='guide-family-row';row.dataset.guideFamily=key;
+   const select=document.createElement('button');select.type='button';const dot=document.createElement('span');dot.className='guide-family-dot';const name=document.createElement('span');name.className='guide-family-name';const summary=document.createElement('span');summary.className='guide-family-summary';select.append(dot,name,summary);
+   select.onclick=()=>selectFamily(key);
+   const eye=document.createElement('button');eye.type='button';eye.className='guide-family-eye';eye.textContent='◉';eye.onclick=()=>{const opacity=settings.families[key].opacity;if(opacity)previousOpacity[key]=opacity;updateFamily(key,{opacity:opacity?0:previousOpacity[key]||75});};
+   row.append(select,eye);$('guideFamilyList').append(row);familyRows.set(key,{row,select,dot,name,summary,eye});
   }
   function updateFamily(key,patch){setSettings({families:{[key]:{...settings.families[key],...patch}}});}
+  function selectFamily(key){selectedFamily=key;render();}
   function strokes(state){const key=JSON.stringify([state.view,P.normalize(settings)]);if(key!==geometryKey){geometryKey=key;geometry=P.create(state.view,settings);}return geometry;}
+  const displayNumber=value=>String(Number(value.toFixed(4)));
   const pathData=points=>points.map((p,i)=>`${i?'L':'M'}${p.x} ${p.y}`).join(' ');
   function paint(family,major){
    const style=settings.families[family],hex=style.color,rgb=parseInt(hex.slice(1),16),r=rgb>>16,g=(rgb>>8)&255,b=rgb&255;
@@ -43,21 +52,27 @@
   function render(){
    const state=layout(),v=state.view,key=JSON.stringify([settings,v,state.scale]);
    const rect=root().getBoundingClientRect(),stage=frame.parentElement,stageRect=stage.getBoundingClientRect();
+   host.hidden=!settings.visible||rect.width<=0||rect.height<=0;
    if(rect.width>0&&rect.height>0)Object.assign(host.style,{left:`${rect.left-stageRect.left+stage.scrollLeft-stage.clientLeft}px`,top:`${rect.top-stageRect.top+stage.scrollTop-stage.clientTop}px`,width:`${rect.width}px`,height:`${rect.height}px`});
    $('gridToggle').setAttribute('aria-pressed',String(settings.visible));$('gridSnap').checked=settings.snap;$('gridSnap').disabled=!settings.visible;
    $('gridModeIcon').replaceChildren(make('path',{d:P.icons[settings.mode]}));
    for(const button of $('gridModes').children)button.setAttribute('aria-pressed',String(Number(button.dataset.gridMode)===settings.mode));
    $('rectangularGridFields').hidden=!!settings.mode;$('perspectiveFields').hidden=!settings.mode;
-   $('horizontalVanishingPoints').hidden=settings.mode<2||settings.mode>4;$('verticalVanishingPoint').hidden=settings.mode!==3;$('perspectiveRadiusField').hidden=settings.mode<4;
-   $('perspectiveCenterField').hidden=settings.mode===2;
-   for(const key of ['centerX','horizon','left','right','vertical','radius']){const id='grid'+key[0].toUpperCase()+key.slice(1),input=$(id);if(document.activeElement!==input)input.value=settings[key];$(id+'Slider').value=settings[key];}
+   const side=['left','right'].includes(selectedFamily)&&settings.mode>=2&&settings.mode<=4;
+   $('horizontalVanishingPoints').hidden=!side;$('guideLeftPosition').hidden=selectedFamily!=='left';$('guideRightPosition').hidden=selectedFamily!=='right';
+   $('verticalVanishingPoint').hidden=!(selectedFamily==='top'&&settings.mode===3);$('perspectiveRadiusField').hidden=settings.mode<4;
+   $('perspectiveCenterField').hidden=!(selectedFamily==='center'||selectedFamily==='top'&&settings.mode===3);
+   $('guideRadiusLink').hidden=!(settings.mode>=4&&selectedFamily!=='grid'&&selectedFamily!=='center'&&!side);
+   for(const key of ['centerX','horizon','left','right','vertical','radius']){const id='grid'+key[0].toUpperCase()+key.slice(1),input=$(id);if(document.activeElement!==input)input.value=displayNumber(settings[key]);$(id+'Slider').value=settings[key];}
    if(document.activeElement!==$('gridSpacing'))$('gridSpacing').value=settings.spacing;
    for(const [key,controls]of familyFields){
-    const active=P.activeFamilies(settings.mode).includes(key),title=P.familyTitle(key,settings.mode),style=settings.families[key];controls.card.hidden=!active;controls.card.setAttribute('aria-label',title);controls.title.textContent=title;controls.color.value=style.color;controls.color.setAttribute('aria-label',title+' color');
+    const active=P.activeFamilies(settings.mode).includes(key),title=P.familyTitle(key,settings.mode),style=settings.families[key];controls.card.hidden=!active||key!==selectedFamily;controls.card.setAttribute('aria-label',title);controls.title.textContent=title;controls.color.value=style.color;controls.color.setAttribute('aria-label',title+' color');
     for(const field of ['opacity','density']){const {wrap,input,slider}=controls[field];wrap.hidden=field==='density'&&!settings.mode;if(document.activeElement!==input)input.value=style[field];slider.value=style[field];input.setAttribute('aria-label',title+' '+field);slider.setAttribute('aria-label',title+' '+field+' slider');}
+    const row=familyRows.get(key);row.row.hidden=!active;row.row.classList.toggle('active',key===selectedFamily);row.row.classList.toggle('off',style.opacity===0);row.dot.style.background=style.color;row.name.textContent=title;row.summary.textContent=`${style.opacity.toFixed(0)}% · ${settings.mode?style.density:settings.spacing+'px'}`;row.select.setAttribute('aria-label','Edit '+title);row.select.setAttribute('aria-expanded',String(key===selectedFamily));row.eye.setAttribute('aria-label',(style.opacity?'Hide ':'Show ')+title);
    }
    $('gridSpacingDescription').textContent=settings.mode?'Perspective positions are percentages of the SVG viewBox. Vanishing points can be outside the artwork.':state.stride===1?'Spacing is measured in SVG coordinate units.':`At this scale, visible lines are ${state.effectiveSpacing} SVG units apart. Enlarge the editor for a finer grid.`;
-   if(!panel.hidden&&panel.classList.contains('contextual'))positionPopup(panel,contextPoint);
+   $('guideShowToggle').setAttribute('aria-pressed',String(settings.visible));$('guideShowToggle').textContent=settings.visible?'On':'Off';$('guideEditPoints').disabled=!settings.visible||!settings.mode;
+   guideHandles?.render(state);
    overlay.toggleAttribute('hidden',!settings.visible);
    if(key===lastKey)return;lastKey=key;overlay.replaceChildren();overlay.setAttribute('viewBox',`${v.x} ${v.y} ${v.width} ${v.height}`);
    if(!settings.visible)return;
@@ -74,12 +89,14 @@
    }
   }
   function setSettings(value={},notify=true){
+   const oldMode=settings.mode;
    if(typeof value.visible==='boolean')settings.visible=value.visible;
    if(typeof value.snap==='boolean')settings.snap=value.snap;
    if(Object.hasOwn(value,'spacing')){const n=Number(value.spacing);settings.spacing=Number.isFinite(n)?Math.max(4,Math.min(512,Math.round(n))):32;}
    let families=Object.fromEntries(Object.entries(settings.families).map(([key,style])=>[key,{...style,...value.families?.[key]}]));
    if(Object.hasOwn(value,'density')&&!Object.hasOwn(value,'families'))for(const style of Object.values(families))style.density=value.density;
    Object.assign(settings,P.normalize({...settings,...value,families}));
+   const activeFamilies=P.activeFamilies(settings.mode);if(!activeFamilies.includes(selectedFamily)||oldMode===0&&settings.mode)selectedFamily=activeFamilies.find(k=>k!=='grid')||'grid';
    render();if(notify)onChange({...settings});return getState();
   }
   function nearest(value,axis,state){
@@ -130,7 +147,7 @@
   const getState=()=>{const{effectiveSpacing,stride}=layout();return{...settings,families:P.normalizeFamilies(settings.families),effectiveSpacing,stride};};
   for(const key of ['centerX','horizon','left','right','vertical','radius']){
    const id='grid'+key[0].toUpperCase()+key.slice(1),input=$(id),slider=$(id+'Slider');
-   input.onchange=()=>{const value=input.value.trim();setSettings({[key]:value===''?settings[key]:Number(value)});input.value=settings[key];};
+   input.onchange=()=>{const value=input.value.trim();setSettings({[key]:value===''?settings[key]:Number(value)});input.value=displayNumber(settings[key]);};
    slider.oninput=()=>setSettings({[key]:Number(slider.value)});
   }
   $('resetPerspective').onclick=()=>setSettings({...P.normalize(),mode:settings.mode,families:settings.families});
@@ -140,29 +157,35 @@
   $('gridSpacing').onchange=()=>{setSettings({spacing:$('gridSpacing').value});$('gridSpacing').value=settings.spacing;};
   $('gridSnap').onchange=()=>setSettings({snap:$('gridSnap').checked});
   const panel=$('gridPanel'),toggle=$('gridSettingsToggle'),context=$('gridContextMenu'),contextSettings=$('gridContextSettings'),stage=frame.parentElement;
-  let contextPoint=null,panelFocus=toggle;
   function positionPopup(element,p){const rect=element.getBoundingClientRect();element.style.left=`${Math.max(10,Math.min(p.x,innerWidth-rect.width-10))}px`;element.style.top=`${Math.max(10,Math.min(p.y,innerHeight-rect.height-10))}px`;}
   function closeContext(){context.hidden=true;}
-  function close(){panel.hidden=true;panel.classList.remove('contextual');panel.style.removeProperty('left');panel.style.removeProperty('top');toggle.setAttribute('aria-expanded','false');}
-  function open(p=null){
-   closeContext();close();panel.hidden=false;panel.scrollTop=0;panelFocus=p?stage:toggle;
-   panel.classList.toggle('contextual',!!p);if(p)positionPopup(panel,p);toggle.setAttribute('aria-expanded','true');
-   $(settings.mode?'gridHorizon':'gridSpacing').focus({preventScroll:true});
+  function close(){
+   guideHandles?.cancel();panel.hidden=true;$('guideInspectorPanel').hidden=true;$('objectInspectorPanel').hidden=false;
+   document.body.classList.remove('guides-active');$('objectInspectorTab').setAttribute('aria-selected','true');$('guideInspectorTab').setAttribute('aria-selected','false');toggle.setAttribute('aria-expanded','false');render();
   }
-  function openContext(p){close();contextPoint=p;context.hidden=false;positionPopup(context,p);contextSettings.focus({preventScroll:true});}
-  toggle.onclick=()=>{if(panel.hidden)open();else close();};
+  function open(editPoints=true){
+   closeContext();panel.hidden=false;$('guideInspectorPanel').hidden=false;$('objectInspectorPanel').hidden=true;document.body.classList.add('guides-active');
+   $('objectInspectorTab').setAttribute('aria-selected','false');$('guideInspectorTab').setAttribute('aria-selected','true');toggle.setAttribute('aria-expanded','true');$('guideEditPoints').checked=editPoints;
+   render();if(editPoints)$(settings.mode?'gridHorizon':'gridSpacing').focus({preventScroll:true});
+  }
+  function openContext(p){closeContext();context.hidden=false;positionPopup(context,p);contextSettings.focus({preventScroll:true});}
+  toggle.onclick=()=>open();$('guideInspectorTab').onclick=()=>open();$('objectInspectorTab').onclick=close;
+  $('guideShowToggle').onclick=()=>setSettings({visible:!settings.visible});$('guideEditPoints').onchange=render;
+  $('guideLineTool').onclick=()=>onToolRequested?.('perspectiveLine');$('guideRectangleTool').onclick=()=>onToolRequested?.('perspectiveRect');
+  $('perspectiveOpenGuides').onclick=()=>open();
   stage.addEventListener('contextmenu',e=>{e.preventDefault();openContext({x:e.clientX,y:e.clientY});});
   stage.addEventListener('keydown',e=>{if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();e.stopPropagation();const rect=frame.getBoundingClientRect();openContext({x:rect.left+rect.width/2,y:rect.top+rect.height/2});}});
-  contextSettings.onclick=()=>open(contextPoint);
-  panel.addEventListener('keydown',e=>e.stopPropagation());
+  contextSettings.onclick=()=>open();panel.addEventListener('keydown',e=>e.stopPropagation());
   context.addEventListener('keydown',e=>{e.stopPropagation();if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();contextSettings.focus();}});
-  document.addEventListener('pointerdown',e=>{if(!context.hidden&&!context.contains(e.target))closeContext();if(!panel.hidden&&!panel.contains(e.target)&&!toggle.contains(e.target))close();});
+  document.addEventListener('pointerdown',e=>{if(!context.hidden&&!context.contains(e.target))closeContext();});
   document.addEventListener('keydown',e=>{
-   if(e.key==='Escape'&&(!context.hidden||!panel.hidden)){const focus=context.hidden?panelFocus:stage;closeContext();close();focus.focus({preventScroll:true});e.preventDefault();e.stopImmediatePropagation();}
+   if(e.key==='Escape'&&guideHandles?.isDragging()){guideHandles.cancel();e.preventDefault();e.stopImmediatePropagation();}
+   else if(e.key==='Escape'&&!context.hidden){closeContext();stage.focus({preventScroll:true});e.preventDefault();e.stopImmediatePropagation();}
    else if(!context.hidden&&e.key==='Tab'){closeContext();stage.focus({preventScroll:true});}
   },true);
-  window.addEventListener('resize',()=>{closeContext();if(!panel.hidden&&panel.classList.contains('contextual'))positionPopup(panel,contextPoint);});
+  window.addEventListener('resize',closeContext);
+  guideHandles=window.createPerspectiveGuideHandles({frame,root,getState:layout,setSettings,isEnabled:()=>!panel.hidden&&$('guideEditPoints').checked,onSelect:selectFamily});
   new ResizeObserver(render).observe(frame);
-  return{render,setSettings,snapPoint,snapRay,snapMove,snapStraightLine,snapPerspectiveLine,snapRectangle,clearMatch:()=>showMatch(null),getState,projectionContext:layout,showBindingMatch:stroke=>showMatch(stroke?{stroke}:null)};
+  return{render,setSettings,open,showProperties:close,setToolState:tool=>{$('guideLineTool').setAttribute('aria-pressed',String(tool==='perspectiveLine'));$('guideRectangleTool').setAttribute('aria-pressed',String(tool==='perspectiveRect'));},snapPoint,snapRay,snapMove,snapStraightLine,snapPerspectiveLine,snapRectangle,clearMatch:()=>showMatch(null),getState,projectionContext:layout,showBindingMatch:stroke=>showMatch(stroke?{stroke}:null)};
  };
 })();

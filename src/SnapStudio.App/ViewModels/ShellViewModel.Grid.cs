@@ -14,8 +14,10 @@ public sealed partial class ShellViewModel
     private (double Width, double Height, PerspectiveGridSettings Settings, CanvasGridFamilies Families)? _perspectiveCacheKey;
     private IReadOnlyList<PerspectiveGridStroke> _perspectiveCache = [];
 
-    public PerspectiveGridSettings CanvasGridPerspective => _perspectiveGrid;
-    public CanvasGridFamilies GridFamilies => _gridFamilies;
+    public PerspectiveGridSettings CanvasGridPerspective { get => _perspectiveGrid; set => SetPerspectiveGrid(value); }
+    public CanvasGridFamilies GridFamilies { get => _gridFamilies; set => SetGridFamilies(value); }
+    public int ActivePerspectiveToolIndex => IsPerspectiveLineToolActive ? 1 : IsPerspectiveRectangleToolActive ? 2 : 0;
+    public int PerspectiveRectanglePlaneIndex => (int)RectanglePerspectivePlane;
     public GridGuideSettings BaseGridStyle { get => _gridFamilies.Get(GridGuideFamily.Grid); set => SetGridFamilies(_gridFamilies with { Grid = value }); }
     public GridGuideSettings CenterGridStyle { get => _gridFamilies.Get(GridGuideFamily.Center); set => SetGridFamilies(_gridFamilies with { Center = value }); }
     public GridGuideSettings LeftGridStyle { get => _gridFamilies.Get(GridGuideFamily.Left); set => SetGridFamilies(_gridFamilies with { Left = value }); }

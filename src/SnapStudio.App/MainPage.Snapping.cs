@@ -30,7 +30,7 @@ public sealed partial class MainPage
             DispatcherQueue.TryEnqueue(() =>
             {
                 if (ViewModel.HasCurrentDocument && ViewModel.CurrentDocumentId == documentId && _canvasDragMode == CanvasDragMode.None)
-                    CanvasGridSettingsFlyout.ShowAt(this, new FlyoutShowOptions { Position = position, Placement = FlyoutPlacementMode.Auto });
+                    ShowPerspectiveGuides();
             });
         };
         return item;

@@ -69,8 +69,9 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         InitializeComponent();
+        InitializePerspectiveControls();
         Loaded += (_, _) => ApplyAppTheme();
-        Unloaded += (_, _) => StopMarqueeAnimation();
+        Unloaded += (_, _) => { StopMarqueeAnimation(); PerspectiveHandles.CancelEdit(); };
         ActualThemeChanged += (_, _) =>
         {
             UpdateAnnotationToolbarSelection();
@@ -1133,6 +1134,8 @@ public sealed partial class MainPage : Page
 
     private void CollapseRightControlsPane()
     {
+        PerspectiveHandles.CancelEdit();
+        PerspectiveHandles.Visibility = Visibility.Collapsed;
         if (!_rightControlsPaneIsExpanded)
         {
             return;
@@ -1174,6 +1177,7 @@ public sealed partial class MainPage : Page
         RightControlsColumn.Width = new GridLength(restoredWidth);
         RightControlsCollapsedView.Visibility = Visibility.Collapsed;
         RightControlsExpandedView.Visibility = Visibility.Visible;
+        UpdatePerspectiveControls();
     }
 
     private double GetRightControlsMaximumWidth()
@@ -1986,6 +1990,7 @@ public sealed partial class MainPage : Page
             || _selectionFillDialogIsOpen
             || _stampDialogIsOpen
             || ViewModel.FirstRunSetupIsOpen
+            || PerspectiveHandles.IsEditing || PerspectiveHandles.OwnsKeyboardFocus
             || IsEditableFocusedElement(FocusManager.GetFocusedElement(XamlRoot));
     }
 
@@ -2994,6 +2999,7 @@ public sealed partial class MainPage : Page
         }
 
         UpdateAnnotationToolbarSelection();
+        UpdatePerspectiveControls();
         RefreshPersistentSelectionMarquee();
     }
 

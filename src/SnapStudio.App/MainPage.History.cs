@@ -51,6 +51,7 @@ public sealed partial class MainPage
         _focusWorkspace = !_focusWorkspace;
         AutomationProperties.SetName(FocusWorkspaceButton, _focusWorkspace ? "Exit focus mode" : "Focus mode");
         ToolTipService.SetToolTip(FocusWorkspaceButton, _focusWorkspace ? "Exit focus mode (F8)" : "Focus mode (F8)");
+        UpdatePerspectiveControls();
     }
 
     private void InspectorSection_Expanding(Expander sender, ExpanderExpandingEventArgs args)

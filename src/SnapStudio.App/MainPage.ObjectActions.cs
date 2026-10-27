@@ -58,6 +58,8 @@ public sealed partial class MainPage
 
     private async void CanvasScrollViewer_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (PerspectiveHandles.OwnsKeyboardFocus) return;
+        if (PerspectiveHandles.IsEditing) { if (e.Key == VirtualKey.Escape) PerspectiveHandles.CancelEdit(); e.Handled = true; return; }
         if (await HandlePolygonSelectionKeyAsync(e)) return;
         if (_canvasDragMode != CanvasDragMode.None || !ViewModel.HasCanvasSelection || ShouldIgnoreApplicationShortcut()
             || IsObjectModifierDown(VirtualKey.Menu)) return;
