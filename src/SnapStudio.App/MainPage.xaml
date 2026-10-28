@@ -1577,427 +1577,567 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="39"/>
                     </Grid.RowDefinitions>
-                    <Grid
-                        Margin="0,0,12,14"
-                        Height="54"
-                        Padding="16,0"
-                        BorderBrush="{ThemeResource SnapStrokeBrush}"
-                        BorderThickness="0,0,0,1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center" Spacing="6" Orientation="Horizontal">
-                            <ToggleButton x:Name="PerspectivePropertiesTab" Content="Properties" IsChecked="True" Click="PerspectivePropertiesTab_Click" FontSize="11" Padding="7,3" MinWidth="0"/>
-                            <ToggleButton x:Name="PerspectiveGuidesTab" Content="Guides" Click="PerspectiveGuidesTab_Click" AutomationProperties.Name="Perspective guides" FontSize="11" Padding="7,3" MinWidth="0" IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"/>
-                        </StackPanel>
-                        <Button
-                            Grid.Column="1"
-                            AutomationProperties.HelpText="Collapse the right-side tools pane."
-                            AutomationProperties.Name="Unpin right tools pane"
-                            Click="RightControlsPanePinButton_Click"
-                            Style="{StaticResource ToolIconButtonStyle}"
-                            ToolTipService.ToolTip="Unpin tools pane">
+                    <Grid Height="38" Padding="12,0,8,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="Inspector" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" AutomationProperties.HelpText="Collapse the right-side tools pane." AutomationProperties.Name="Unpin right tools pane"
+                            Click="RightControlsPanePinButton_Click" Style="{StaticResource ToolIconButtonStyle}" ToolTipService.ToolTip="Unpin tools pane">
                             <controls:WorkspaceIcon Kind="PanelRight" Width="16" Height="16"/>
                         </Button>
                     </Grid>
-                    <ScrollViewer x:Name="PerspectiveGuidesScroll" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,0,12,14">
-                        <controls:PerspectiveGuidesPanel x:Name="PerspectivePanel" Perspective="{x:Bind ViewModel.CanvasGridPerspective, Mode=TwoWay}"
-                            Families="{x:Bind ViewModel.GridFamilies, Mode=TwoWay}" ShowGrid="{x:Bind ViewModel.ShowCanvasGrid, Mode=TwoWay}"
-                            SnapEnabled="{x:Bind ViewModel.SnapToCanvasGrid, Mode=TwoWay}" CellSize="{x:Bind ViewModel.CanvasGridCellSize, Mode=TwoWay}"
-                            ToolIndex="{x:Bind ViewModel.ActivePerspectiveToolIndex, Mode=OneWay}" Plane="{x:Bind ViewModel.RectanglePerspectivePlane, Mode=OneWay}"/>
-                    </ScrollViewer>
-                    <Grid Grid.Row="1" RowSpacing="0" SizeChanged="InspectorBody_SizeChanged" x:Name="InspectorBodyGrid">
+                    <Grid x:Name="InspectorBodyGrid" Grid.Row="1" SizeChanged="InspectorBody_SizeChanged">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition x:Name="InspectorLayersRow" Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="3*"/>
+                            <RowDefinition x:Name="InspectorLayersRow" Height="2*"/>
                         </Grid.RowDefinitions>
-                        <Expander
-                            Header="Properties"
-                            IsExpanded="True"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Stretch"
-                            Padding="16,0"
-                            MinWidth="0"
-                            Expanding="InspectorSection_Expanding"
-                            AutomationProperties.Name="Properties"
-                            x:Name="PropertiesSectionExpander" SizeChanged="InspectorSection_SizeChanged"
-                            Style="{StaticResource WorkspaceExpanderStyle}">
-                            <ScrollViewer
-                                HorizontalScrollMode="Disabled"
-                                HorizontalScrollBarVisibility="Disabled"
-                                VerticalScrollMode="Auto"
-                                VerticalScrollBarVisibility="Auto"
-                                MaxHeight="230"
-                                Padding="17,0,17,17"
-                                x:Name="PropertiesSectionExpanderScroll">
-                                <StackPanel Spacing="4">
-                                    <StackPanel Spacing="7" Margin="0,0,0,8">
-                                        <TextBlock Text="Selected object / tool" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
-                                        <Border
-                                            Height="31"
-                                            Padding="9,0"
-                                            Background="{ThemeResource WorkspaceFieldBrush}"
-                                            BorderBrush="{ThemeResource WorkspaceFieldBorderBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="5">
-                                            <TextBlock
-                                                Text="{x:Bind WorkspaceObjectLabel, Mode=OneWay}"
-                                                FontSize="11"
-                                                VerticalAlignment="Center"
-                                                Foreground="{ThemeResource WorkspaceSecondaryTextBrush}"
-                                                TextTrimming="CharacterEllipsis" />
-                                        </Border>
-                                    </StackPanel>
-                                    <TextBlock Text="{x:Bind ViewModel.AnnotationSelectionDescription, Mode=OneWay}"
-                                        TextWrapping="Wrap" FontSize="11" Margin="0,4,0,8" Foreground="{ThemeResource SnapMutedBrush}"
-                                        Visibility="{x:Bind ViewModel.AnnotationSelectionControlsVisibility, Mode=OneWay}"/>
-                                    <StackPanel Spacing="8" Margin="0,8,0,8" Visibility="{x:Bind ViewModel.StampControlsVisibility, Mode=OneWay}">
-                                        <TextBlock Text="Click the image to place copies. Use Move (V) to move or resize a placed stamp." TextWrapping="Wrap" FontSize="11" Foreground="{ThemeResource SnapMutedBrush}"/>
-                                        <NumberBox Header="Stamp size (px)" AutomationProperties.Name="Stamp size" Minimum="16" Maximum="1024"
-                                            Value="{x:Bind ViewModel.StampSize, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
-                                        <Button Content="Choose stamp…" Click="StampToolButton_Click" HorizontalAlignment="Stretch"/>
-                                        <Button Content="Import SVG stamp…" Click="ImportStamp_Click" HorizontalAlignment="Stretch"/>
-                                    </StackPanel>
-                                    <Button Content="Crop selected area" Click="CropButton_Click" HorizontalAlignment="Stretch"
-                                        IsEnabled="{x:Bind ViewModel.CanCropToSelection, Mode=OneWay}"
-                                        Visibility="{x:Bind ViewModel.AnnotationSelectionCropVisibility, Mode=OneWay}"/>
-                                    <StackPanel Spacing="8" Margin="0,6,0,8" Visibility="{x:Bind ViewModel.PixelSelectionControlsVisibility, Mode=OneWay}">
-                                        <ComboBox Header="Selection tool" AutomationProperties.Name="Selection tool" HorizontalAlignment="Stretch"
-                                            SelectedIndex="{x:Bind ViewModel.PixelSelectionToolIndex, Mode=TwoWay}">
-                                            <x:String>Rectangular marquee</x:String><x:String>Elliptical marquee</x:String><x:String>Lasso</x:String>
-                                            <x:String>Magic wand</x:String><x:String>Polygonal lasso</x:String>
-                                        </ComboBox>
-                                        <ComboBox Header="Selection mode" AutomationProperties.Name="Selection mode" HorizontalAlignment="Stretch"
-                                            SelectedIndex="{x:Bind ViewModel.PixelSelectionModeIndex, Mode=TwoWay}">
-                                            <x:String>New selection</x:String><x:String>Add to selection</x:String><x:String>Subtract from selection</x:String><x:String>Intersect with selection</x:String>
-                                        </ComboBox>
-                                        <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.WandControlsVisibility, Mode=OneWay}">
-                                            <NumberBox Header="Color tolerance (0–255)" AutomationProperties.Name="Magic wand tolerance" Minimum="0" Maximum="255"
-                                                Value="{x:Bind ViewModel.WandTolerance, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
-                                            <CheckBox Content="Contiguous pixels only" IsChecked="{x:Bind ViewModel.WandContiguous, Mode=TwoWay}"/>
-                                            <TextBlock Text="Samples the visible image, including visible layers." FontSize="10" TextWrapping="Wrap" Foreground="{ThemeResource SnapMutedBrush}"/>
+                        <TabView x:Name="InspectorTabs" SelectedIndex="0" TabWidthMode="Equal" IsAddTabButtonVisible="False" CanDragTabs="False" CanReorderTabs="False"
+                            SelectionChanged="InspectorTabs_SelectionChanged" AutomationProperties.Name="Inspector sections">
+                            <TabView.TabItems>
+                            <TabViewItem x:Name="PropertiesInspectorTab" IsClosable="False" Padding="4,0" AutomationProperties.Name="Properties" ToolTipService.ToolTip="Properties">
+                                <TabViewItem.Header><TextBlock Text="Properties" FontSize="10" TextAlignment="Center" TextTrimming="CharacterEllipsis"/></TabViewItem.Header>
+                                <ScrollViewer
+                                    HorizontalScrollMode="Disabled"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollMode="Auto"
+                                    VerticalScrollBarVisibility="Auto"
+                                    Padding="12,12,12,16"
+                                    x:Name="PropertiesInspectorScroll">
+                                    <StackPanel Spacing="4">
+                                        <StackPanel Spacing="7" Margin="0,0,0,8">
+                                            <TextBlock Text="Selected object / tool" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
+                                            <Border
+                                                Height="31"
+                                                Padding="9,0"
+                                                Background="{ThemeResource WorkspaceFieldBrush}"
+                                                BorderBrush="{ThemeResource WorkspaceFieldBorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="5">
+                                                <TextBlock
+                                                    Text="{x:Bind WorkspaceObjectLabel, Mode=OneWay}"
+                                                    FontSize="11"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{ThemeResource WorkspaceSecondaryTextBrush}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                            </Border>
                                         </StackPanel>
-                                    </StackPanel>
-                                    <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.PixelSelectionActionsVisibility, Mode=OneWay}">
-                                        <Button Content="Copy selection" Click="CopyButton_Click" HorizontalAlignment="Stretch"/>
-                                        <Button Content="Fill selection…" Click="FillPixelSelection_Click" HorizontalAlignment="Stretch"/>
-                                        <Button Content="Invert selection" Click="InvertPixelSelection_Click" HorizontalAlignment="Stretch"/>
-                                        <Button Content="Deselect" Click="DeselectPixelSelection_Click" HorizontalAlignment="Stretch"/>
-                                    </StackPanel>
-                                    <TextBlock Text="Only shared properties are shown. Select one object to edit its other properties."
-                                        TextWrapping="Wrap" FontSize="10" Margin="0,4,0,8" Foreground="{ThemeResource SnapMutedBrush}"
-                                        Visibility="{x:Bind ViewModel.AnnotationMultipleSelectionVisibility, Mode=OneWay}"/>
-                                    <Grid ColumnSpacing="8" RowSpacing="2" Margin="0,2,0,6"
-                                        Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{x:Bind ViewModel.AnnotationSizeHeader, Mode=OneWay}" FontSize="10"
-                                            VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
-                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Grid.Column="1">
-                                            <TextBox
-                                                x:Name="AnnotationSizeTextBox"
-                                                AutomationProperties.HelpText="Enter a stroke width in pixels or a text size. Valid numbers apply immediately and can exceed the slider range."
-                                                AutomationProperties.Name="Annotation size value"
-                                                InputScope="Number"
-                                                Text="{x:Bind ViewModel.AnnotationSizeText, Mode=OneWay}"
-                                                TextChanged="AnnotationSizeText_TextChanged"
-                                                LostFocus="AnnotationSizeText_LostFocus"
-                                                Width="80"
-                                                MinWidth="0"
-                                                MinHeight="28"
-                                                Height="28"
-                                                Padding="7,0"
-                                                FontSize="11" />
-                                            <TextBlock Text="px" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.AnnotationSelectionDescription, Mode=OneWay}"
+                                            TextWrapping="Wrap" FontSize="11" Margin="0,4,0,8" Foreground="{ThemeResource SnapMutedBrush}"
+                                            Visibility="{x:Bind ViewModel.AnnotationSelectionControlsVisibility, Mode=OneWay}"/>
+                                        <StackPanel Spacing="8" Margin="0,8,0,8" Visibility="{x:Bind ViewModel.StampControlsVisibility, Mode=OneWay}">
+                                            <TextBlock Text="Click the image to place copies. Use Move (V) to move or resize a placed stamp." TextWrapping="Wrap" FontSize="11" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                            <NumberBox Header="Stamp size (px)" AutomationProperties.Name="Stamp size" Minimum="16" Maximum="1024"
+                                                Value="{x:Bind ViewModel.StampSize, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
+                                            <Button Content="Choose stamp…" Click="StampToolButton_Click" HorizontalAlignment="Stretch"/>
+                                            <Button Content="Import SVG stamp…" Click="ImportStamp_Click" HorizontalAlignment="Stretch"/>
                                         </StackPanel>
-                                        <Slider
-                                            x:Name="AnnotationSizeSlider"
-                                            Grid.Row="1" Grid.ColumnSpan="2"
-                                            AutomationProperties.HelpText="Adjust common sizes with the slider. Use the adjacent textbox for larger values."
-                                            AutomationProperties.Name="Annotation size slider"
-                                            Maximum="{x:Bind ViewModel.AnnotationSizeMaximum, Mode=OneWay}"
-                                            Minimum="1"
-                                            StepFrequency="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
-                                            Value="{x:Bind ViewModel.AnnotationSizeSliderValue, Mode=OneWay}"
-                                            ValueChanged="AnnotationStrokeSize_ValueChanged"
-                                            Height="28" MinHeight="0"/>
-                                    </Grid>
-                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{x:Bind ViewModel.AnnotationColorHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
-                                        <Button
-                                            AutomationProperties.HelpText="Open the custom annotation color picker."
-                                            AutomationProperties.Name="Custom annotation color"
-                                            Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}"
-                                            ToolTipService.ToolTip="Custom color"
-                                            Style="{StaticResource WorkspaceCommandButtonStyle}"
-                                            Height="28"
-                                            MinHeight="0"
-                                            Padding="5,0"
-                                            MinWidth="88"
-                                            Grid.Column="1">
-                                            <Button.Flyout>
-                                                <Flyout>
-                                                    <ColorPicker AutomationProperties.HelpText="Choose a custom annotation color." AutomationProperties.Name="Custom annotation color picker" Color="{x:Bind WorkspaceAnnotationColor, Mode=OneWay}" ColorChanged="AnnotationCustomColor_ColorChanged" IsAlphaEnabled="False"/>
-                                                </Flyout>
-                                            </Button.Flyout>
-                                            <StackPanel Orientation="Horizontal" Spacing="7">
-                                                <Border Width="16" Height="16" CornerRadius="3" Background="{x:Bind WorkspaceStrokeBrush, Mode=OneWay}"/>
-                                                <TextBlock Text="{x:Bind WorkspaceColorHex, Mode=OneWay}" FontSize="9" VerticalAlignment="Center" CharacterSpacing="30"/>
+                                        <Button Content="Crop selected area" Click="CropButton_Click" HorizontalAlignment="Stretch"
+                                            IsEnabled="{x:Bind ViewModel.CanCropToSelection, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.AnnotationSelectionCropVisibility, Mode=OneWay}"/>
+                                        <StackPanel Spacing="8" Margin="0,6,0,8" Visibility="{x:Bind ViewModel.PixelSelectionControlsVisibility, Mode=OneWay}">
+                                            <ComboBox Header="Selection tool" AutomationProperties.Name="Selection tool" HorizontalAlignment="Stretch"
+                                                SelectedIndex="{x:Bind ViewModel.PixelSelectionToolIndex, Mode=TwoWay}">
+                                                <x:String>Rectangular marquee</x:String><x:String>Elliptical marquee</x:String><x:String>Lasso</x:String>
+                                                <x:String>Magic wand</x:String><x:String>Polygonal lasso</x:String>
+                                            </ComboBox>
+                                            <ComboBox Header="Selection mode" AutomationProperties.Name="Selection mode" HorizontalAlignment="Stretch"
+                                                SelectedIndex="{x:Bind ViewModel.PixelSelectionModeIndex, Mode=TwoWay}">
+                                                <x:String>New selection</x:String><x:String>Add to selection</x:String><x:String>Subtract from selection</x:String><x:String>Intersect with selection</x:String>
+                                            </ComboBox>
+                                            <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.WandControlsVisibility, Mode=OneWay}">
+                                                <NumberBox Header="Color tolerance (0–255)" AutomationProperties.Name="Magic wand tolerance" Minimum="0" Maximum="255"
+                                                    Value="{x:Bind ViewModel.WandTolerance, Mode=TwoWay}" SpinButtonPlacementMode="Compact"/>
+                                                <CheckBox Content="Contiguous pixels only" IsChecked="{x:Bind ViewModel.WandContiguous, Mode=TwoWay}"/>
+                                                <TextBlock Text="Samples the visible image, including visible layers." FontSize="10" TextWrapping="Wrap" Foreground="{ThemeResource SnapMutedBrush}"/>
                                             </StackPanel>
-                                        </Button>
-                                    </Grid>
-                                    <StackPanel
-                                        AutomationProperties.HelpText="Choose the annotation stroke color."
-                                        AutomationProperties.Name="Annotation color"
-                                        Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}"
-                                        Orientation="Horizontal"
-                                        Spacing="9"
-                                        HorizontalAlignment="Right"
-                                        Margin="0,5,0,7">
-                                        <Button
-                                            Background="#4CC2FF"
-                                            Click="AnnotationStrokeButton_Click"
-                                            Style="{StaticResource SwatchButtonStyle}"
-                                            Tag="0"
-                                            ToolTipService.ToolTip="Sky blue"
-                                            Width="17"
-                                            Height="17"
-                                            MinWidth="17"
-                                            MinHeight="17"
-                                            CornerRadius="9" />
-                                        <Button
-                                            Background="#FFFFFF"
-                                            Click="AnnotationStrokeButton_Click"
-                                            Style="{StaticResource SwatchButtonStyle}"
-                                            Tag="1"
-                                            ToolTipService.ToolTip="White"
-                                            Width="17"
-                                            Height="17"
-                                            MinWidth="17"
-                                            MinHeight="17"
-                                            CornerRadius="9" />
-                                        <Button
-                                            Background="#FFB85C"
-                                            Click="AnnotationStrokeButton_Click"
-                                            Style="{StaticResource SwatchButtonStyle}"
-                                            Tag="2"
-                                            ToolTipService.ToolTip="Amber"
-                                            Width="17"
-                                            Height="17"
-                                            MinWidth="17"
-                                            MinHeight="17"
-                                            CornerRadius="9" />
-                                        <Button
-                                            Background="#FF747D"
-                                            Click="AnnotationStrokeButton_Click"
-                                            Style="{StaticResource SwatchButtonStyle}"
-                                            Tag="3"
-                                            ToolTipService.ToolTip="Coral"
-                                            Width="17"
-                                            Height="17"
-                                            MinWidth="17"
-                                            MinHeight="17"
-                                            CornerRadius="9" />
-                                        <Button
-                                            Background="#94DCB1"
-                                            Click="AnnotationStrokeButton_Click"
-                                            Style="{StaticResource SwatchButtonStyle}"
-                                            Tag="4"
-                                            ToolTipService.ToolTip="Mint"
-                                            Width="17"
-                                            Height="17"
-                                            MinWidth="17"
-                                            MinHeight="17"
-                                            CornerRadius="9" />
-                                    </StackPanel>
-                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationFillControlsVisibility, Mode=OneWay}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Fill" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
-                                        <Button
-                                            Style="{StaticResource WorkspaceCommandButtonStyle}"
-                                            Click="WorkspaceFill_Click"
-                                            ToolTipService.ToolTip="Use the fill bucket to color a shape or image area"
-                                            Height="27"
-                                            Padding="8,0"
-                                            FontSize="9"
-                                            Grid.Column="1">
-                                            <TextBlock Text="Fill bucket" FontSize="9" VerticalAlignment="Center"/>
-                                        </Button>
-                                    </Grid>
-                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationOpacityControlsVisibility, Mode=OneWay}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{x:Bind ViewModel.AnnotationOpacityHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
-                                        <Slider
-                                            AutomationProperties.HelpText="Set annotation opacity."
-                                            AutomationProperties.Name="{x:Bind ViewModel.AnnotationOpacityHeader, Mode=OneWay}"
-                                            Maximum="1"
-                                            Minimum="0.1"
-                                            StepFrequency="0.05"
-                                            Value="{x:Bind ViewModel.AnnotationOpacity, Mode=OneWay}"
-                                            ValueChanged="AnnotationOpacity_ValueChanged"
-                                            Width="100"
-                                            Height="28"
-                                            MinHeight="0"
-                                            Grid.Column="1" />
-                                        <TextBlock
-                                            Text="{x:Bind WorkspaceOpacityLabel, Mode=OneWay}"
-                                            FontSize="10"
-                                            VerticalAlignment="Center"
-                                            MinWidth="32"
-                                            TextAlignment="Right"
-                                            Grid.Column="2" />
-                                    </Grid>
-                                    <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationCornerStyleControlsVisibility, Mode=OneWay}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Corner style" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
-                                        <Grid Grid.Column="1">
+                                        </StackPanel>
+                                        <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.PixelSelectionActionsVisibility, Mode=OneWay}">
+                                            <Button Content="Copy selection" Click="CopyButton_Click" HorizontalAlignment="Stretch"/>
+                                            <Button Content="Fill selection…" Click="FillPixelSelection_Click" HorizontalAlignment="Stretch"/>
+                                            <Button Content="Invert selection" Click="InvertPixelSelection_Click" HorizontalAlignment="Stretch"/>
+                                            <Button Content="Deselect" Click="DeselectPixelSelection_Click" HorizontalAlignment="Stretch"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Only shared properties are shown. Select one object to edit its other properties."
+                                            TextWrapping="Wrap" FontSize="10" Margin="0,4,0,8" Foreground="{ThemeResource SnapMutedBrush}"
+                                            Visibility="{x:Bind ViewModel.AnnotationMultipleSelectionVisibility, Mode=OneWay}"/>
+                                        <Grid ColumnSpacing="8" RowSpacing="2" Margin="0,2,0,6"
+                                            Visibility="{x:Bind ViewModel.AnnotationShapeControlsVisibility, Mode=OneWay}">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{x:Bind ViewModel.AnnotationSizeHeader, Mode=OneWay}" FontSize="10"
+                                                VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Grid.Column="1">
+                                                <TextBox
+                                                    x:Name="AnnotationSizeTextBox"
+                                                    AutomationProperties.HelpText="Enter a stroke width in pixels or a text size. Valid numbers apply immediately and can exceed the slider range."
+                                                    AutomationProperties.Name="Annotation size value"
+                                                    InputScope="Number"
+                                                    Text="{x:Bind ViewModel.AnnotationSizeText, Mode=OneWay}"
+                                                    TextChanged="AnnotationSizeText_TextChanged"
+                                                    LostFocus="AnnotationSizeText_LostFocus"
+                                                    Width="80"
+                                                    MinWidth="0"
+                                                    MinHeight="28"
+                                                    Height="28"
+                                                    Padding="7,0"
+                                                    FontSize="11" />
+                                                <TextBlock Text="px" FontSize="9" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceMutedBrush}"/>
+                                            </StackPanel>
+                                            <Slider
+                                                x:Name="AnnotationSizeSlider"
+                                                Grid.Row="1" Grid.ColumnSpan="2"
+                                                AutomationProperties.HelpText="Adjust common sizes with the slider. Use the adjacent textbox for larger values."
+                                                AutomationProperties.Name="Annotation size slider"
+                                                Maximum="{x:Bind ViewModel.AnnotationSizeMaximum, Mode=OneWay}"
+                                                Minimum="1"
+                                                StepFrequency="{x:Bind ViewModel.AnnotationSizeStepFrequency, Mode=OneWay}"
+                                                Value="{x:Bind ViewModel.AnnotationSizeSliderValue, Mode=OneWay}"
+                                                ValueChanged="AnnotationStrokeSize_ValueChanged"
+                                                Height="28" MinHeight="0"/>
+                                        </Grid>
+                                        <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{x:Bind ViewModel.AnnotationColorHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                            <Button
+                                                AutomationProperties.HelpText="Open the custom annotation color picker."
+                                                AutomationProperties.Name="Custom annotation color"
+                                                Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}"
+                                                ToolTipService.ToolTip="Custom color"
+                                                Style="{StaticResource WorkspaceCommandButtonStyle}"
+                                                Height="28"
+                                                MinHeight="0"
+                                                Padding="5,0"
+                                                MinWidth="88"
+                                                Grid.Column="1">
+                                                <Button.Flyout>
+                                                    <Flyout>
+                                                        <ColorPicker AutomationProperties.HelpText="Choose a custom annotation color." AutomationProperties.Name="Custom annotation color picker" Color="{x:Bind WorkspaceAnnotationColor, Mode=OneWay}" ColorChanged="AnnotationCustomColor_ColorChanged" IsAlphaEnabled="False"/>
+                                                    </Flyout>
+                                                </Button.Flyout>
+                                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                                    <Border Width="16" Height="16" CornerRadius="3" Background="{x:Bind WorkspaceStrokeBrush, Mode=OneWay}"/>
+                                                    <TextBlock Text="{x:Bind WorkspaceColorHex, Mode=OneWay}" FontSize="9" VerticalAlignment="Center" CharacterSpacing="30"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                        <StackPanel
+                                            AutomationProperties.HelpText="Choose the annotation stroke color."
+                                            AutomationProperties.Name="Annotation color"
+                                            Visibility="{x:Bind ViewModel.AnnotationColorControlsVisibility, Mode=OneWay}"
+                                            Orientation="Horizontal"
+                                            Spacing="9"
+                                            HorizontalAlignment="Right"
+                                            Margin="0,5,0,7">
+                                            <Button
+                                                Background="#4CC2FF"
+                                                Click="AnnotationStrokeButton_Click"
+                                                Style="{StaticResource SwatchButtonStyle}"
+                                                Tag="0"
+                                                ToolTipService.ToolTip="Sky blue"
+                                                Width="17"
+                                                Height="17"
+                                                MinWidth="17"
+                                                MinHeight="17"
+                                                CornerRadius="9" />
+                                            <Button
+                                                Background="#FFFFFF"
+                                                Click="AnnotationStrokeButton_Click"
+                                                Style="{StaticResource SwatchButtonStyle}"
+                                                Tag="1"
+                                                ToolTipService.ToolTip="White"
+                                                Width="17"
+                                                Height="17"
+                                                MinWidth="17"
+                                                MinHeight="17"
+                                                CornerRadius="9" />
+                                            <Button
+                                                Background="#FFB85C"
+                                                Click="AnnotationStrokeButton_Click"
+                                                Style="{StaticResource SwatchButtonStyle}"
+                                                Tag="2"
+                                                ToolTipService.ToolTip="Amber"
+                                                Width="17"
+                                                Height="17"
+                                                MinWidth="17"
+                                                MinHeight="17"
+                                                CornerRadius="9" />
+                                            <Button
+                                                Background="#FF747D"
+                                                Click="AnnotationStrokeButton_Click"
+                                                Style="{StaticResource SwatchButtonStyle}"
+                                                Tag="3"
+                                                ToolTipService.ToolTip="Coral"
+                                                Width="17"
+                                                Height="17"
+                                                MinWidth="17"
+                                                MinHeight="17"
+                                                CornerRadius="9" />
+                                            <Button
+                                                Background="#94DCB1"
+                                                Click="AnnotationStrokeButton_Click"
+                                                Style="{StaticResource SwatchButtonStyle}"
+                                                Tag="4"
+                                                ToolTipService.ToolTip="Mint"
+                                                Width="17"
+                                                Height="17"
+                                                MinWidth="17"
+                                                MinHeight="17"
+                                                CornerRadius="9" />
+                                        </StackPanel>
+                                        <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationFillControlsVisibility, Mode=OneWay}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Fill" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                            <Button
+                                                Style="{StaticResource WorkspaceCommandButtonStyle}"
+                                                Click="WorkspaceFill_Click"
+                                                ToolTipService.ToolTip="Use the fill bucket to color a shape or image area"
+                                                Height="27"
+                                                Padding="8,0"
+                                                FontSize="9"
+                                                Grid.Column="1">
+                                                <TextBlock Text="Fill bucket" FontSize="9" VerticalAlignment="Center"/>
+                                            </Button>
+                                        </Grid>
+                                        <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationOpacityControlsVisibility, Mode=OneWay}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Button
-                                                Grid.Column="0"
-                                                Click="WorkspaceCorners_Click"
-                                                Tag="0"
-                                                Style="{StaticResource WorkspaceIconButtonStyle}"
-                                                Width="32"
-                                                Height="26"
-                                                Background="{x:Bind WorkspaceSquareCornersBrush, Mode=OneWay}"
-                                                AutomationProperties.Name="Square corners"
-                                                ToolTipService.ToolTip="Square corners">
-                                                <Rectangle
-                                                    Width="13"
-                                                    Height="10"
-                                                    RadiusX="0"
-                                                    RadiusY="0"
-                                                    Stroke="{ThemeResource WorkspaceAccentBrush}"
-                                                    StrokeThickness="1.5" />
-                                            </Button>
-                                            <Button
-                                                Grid.Column="1"
-                                                Click="WorkspaceCorners_Click"
-                                                Tag="1"
-                                                Style="{StaticResource WorkspaceIconButtonStyle}"
-                                                Width="32"
-                                                Height="26"
-                                                Background="{x:Bind WorkspaceRoundedCornersBrush, Mode=OneWay}"
-                                                AutomationProperties.Name="Round corners"
-                                                ToolTipService.ToolTip="Round corners">
-                                                <Rectangle
-                                                    Width="13"
-                                                    Height="10"
-                                                    RadiusX="3"
-                                                    RadiusY="3"
-                                                    Stroke="{ThemeResource WorkspaceAccentBrush}"
-                                                    StrokeThickness="1.5" />
-                                            </Button>
+                                            <TextBlock Text="{x:Bind ViewModel.AnnotationOpacityHeader, Mode=OneWay}" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                            <Slider
+                                                AutomationProperties.HelpText="Set annotation opacity."
+                                                AutomationProperties.Name="{x:Bind ViewModel.AnnotationOpacityHeader, Mode=OneWay}"
+                                                Maximum="1"
+                                                Minimum="0.1"
+                                                StepFrequency="0.05"
+                                                Value="{x:Bind ViewModel.AnnotationOpacity, Mode=OneWay}"
+                                                ValueChanged="AnnotationOpacity_ValueChanged"
+                                                Width="100"
+                                                Height="28"
+                                                MinHeight="0"
+                                                Grid.Column="1" />
+                                            <TextBlock
+                                                Text="{x:Bind WorkspaceOpacityLabel, Mode=OneWay}"
+                                                FontSize="10"
+                                                VerticalAlignment="Center"
+                                                MinWidth="32"
+                                                TextAlignment="Right"
+                                                Grid.Column="2" />
                                         </Grid>
-                                    </Grid>
-                                    <ComboBox
-                                        Header="Font"
-                                        AutomationProperties.Name="Text font"
-                                        AutomationProperties.HelpText="Choose a font installed on this computer. Applies to selected text objects or new text."
-                                        ItemsSource="{x:Bind ViewModel.AnnotationFontFamilies, Mode=OneWay}"
-                                        SelectedItem="{x:Bind ViewModel.AnnotationFontFamily, Mode=OneWay}"
-                                        IsTextSearchEnabled="True"
-                                        SelectionChanged="AnnotationFontFamily_SelectionChanged"
-                                        Visibility="{x:Bind ViewModel.AnnotationFontControlsVisibility, Mode=OneWay}"
-                                        Margin="0,6,0,4" />
-                                    <Slider
-                                        AutomationProperties.Name="Fill tolerance"
-                                        AutomationProperties.HelpText="For image areas, higher tolerance fills a wider range of similar colors. Zero fills only matching colors. Shape fills do not use tolerance."
-                                        Header="Fill tolerance"
-                                        Minimum="0"
-                                        Maximum="255"
-                                        StepFrequency="1"
-                                        Value="{x:Bind ViewModel.FillTolerance, Mode=TwoWay}"
-                                        Visibility="{x:Bind ViewModel.FillToleranceControlsVisibility, Mode=OneWay}" />
-                                    <TextBox
-                                        AutomationProperties.HelpText="Edit the selected text annotation."
-                                        Visibility="{x:Bind ViewModel.AnnotationTextControlsVisibility, Mode=OneWay}"
-                                        AutomationProperties.Name="Annotation text"
-                                        Header="Text"
-                                        LostFocus="AnnotationText_LostFocus"
-                                        IsEnabled="{x:Bind ViewModel.CanEditAnnotationText, Mode=OneWay}"
-                                        Text="{x:Bind ViewModel.AnnotationText, Mode=OneWay}" />
-                                    <Button Content="Edit SVG…" Click="EditSelectedVector_Click" HorizontalAlignment="Stretch"
-                                        Visibility="{x:Bind ViewModel.SelectedVectorControlsVisibility, Mode=OneWay}"/>
-                                    <Button Content="Save as stamp…" Click="SaveSelectedVectorAsStamp_Click" HorizontalAlignment="Stretch"
-                                        Visibility="{x:Bind ViewModel.SelectedVectorControlsVisibility, Mode=OneWay}"/>
-                                    <Button Content="Source and license…" Click="SelectedStampAttribution_Click" HorizontalAlignment="Stretch"
-                                        Visibility="{x:Bind ViewModel.SelectedStampAttributionVisibility, Mode=OneWay}"/>
-                                    <Expander
-                                        Header="More properties"
-                                        Visibility="{x:Bind ViewModel.AnnotationMorePropertiesVisibility, Mode=OneWay}"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Stretch"
-                                        Padding="0"
-                                        IsExpanded="False"
-                                        Style="{StaticResource WorkspaceExpanderStyle}"
-                                        FontSize="9">
-                                        <StackPanel Spacing="10">
-                                            <ComboBox Header="Line style" AutomationProperties.Name="Annotation line style"
-                                                SelectedIndex="{x:Bind ViewModel.AnnotationPatternIndex, Mode=OneWay}"
-                                                SelectionChanged="AnnotationPattern_SelectionChanged"
-                                                Visibility="{x:Bind ViewModel.AnnotationPatternControlsVisibility, Mode=OneWay}">
-                                                <ComboBoxItem Content="Solid"/><ComboBoxItem Content="Dashed"/><ComboBoxItem Content="Dotted"/><ComboBoxItem Content="Dash dot"/>
-                                            </ComboBox>
-                                            <ComboBox
-                                                AutomationProperties.HelpText="Choose whether rectangle annotations use sharp or rounded corners."
-                                                AutomationProperties.Name="Rectangle corner style"
-                                                Header="Corners"
-                                                SelectedIndex="{x:Bind ViewModel.AnnotationCornerStyleIndex, Mode=OneWay}"
-                                                SelectionChanged="AnnotationCornerStyle_SelectionChanged"
-                                                Visibility="{x:Bind ViewModel.AnnotationCornerStyleControlsVisibility, Mode=OneWay}">
-                                                <ComboBoxItem Content="Edges"/>
-                                                <ComboBoxItem Content="Rounded"/>
-                                            </ComboBox>
-                                            <ComboBox
-                                                AutomationProperties.HelpText="Choose a common annotation preset for new annotations."
-                                                AutomationProperties.Name="Annotation preset"
-                                                Visibility="{x:Bind ViewModel.AnnotationPresetControlsVisibility, Mode=OneWay}"
-                                                Header="Preset"
-                                                SelectedIndex="{x:Bind ViewModel.AnnotationPresetIndex, Mode=OneWay}"
-                                                SelectionChanged="AnnotationPreset_SelectionChanged">
-                                                <ComboBoxItem Content="Custom"/>
-                                                <ComboBoxItem Content="Standard box"/>
-                                                <ComboBoxItem Content="Emphasis box"/>
-                                                <ComboBoxItem Content="Pointer arrow"/>
-                                                <ComboBoxItem Content="Text label"/>
-                                                <ComboBoxItem Content="Highlighter"/>
-                                                <ComboBoxItem Content="Blur region"/>
-                                            </ComboBox>
+                                        <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationCornerStyleControlsVisibility, Mode=OneWay}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Corner style" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                            <Grid Grid.Column="1">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Button
+                                                    Grid.Column="0"
+                                                    Click="WorkspaceCorners_Click"
+                                                    Tag="0"
+                                                    Style="{StaticResource WorkspaceIconButtonStyle}"
+                                                    Width="32"
+                                                    Height="26"
+                                                    Background="{x:Bind WorkspaceSquareCornersBrush, Mode=OneWay}"
+                                                    AutomationProperties.Name="Square corners"
+                                                    ToolTipService.ToolTip="Square corners">
+                                                    <Rectangle
+                                                        Width="13"
+                                                        Height="10"
+                                                        RadiusX="0"
+                                                        RadiusY="0"
+                                                        Stroke="{ThemeResource WorkspaceAccentBrush}"
+                                                        StrokeThickness="1.5" />
+                                                </Button>
+                                                <Button
+                                                    Grid.Column="1"
+                                                    Click="WorkspaceCorners_Click"
+                                                    Tag="1"
+                                                    Style="{StaticResource WorkspaceIconButtonStyle}"
+                                                    Width="32"
+                                                    Height="26"
+                                                    Background="{x:Bind WorkspaceRoundedCornersBrush, Mode=OneWay}"
+                                                    AutomationProperties.Name="Round corners"
+                                                    ToolTipService.ToolTip="Round corners">
+                                                    <Rectangle
+                                                        Width="13"
+                                                        Height="10"
+                                                        RadiusX="3"
+                                                        RadiusY="3"
+                                                        Stroke="{ThemeResource WorkspaceAccentBrush}"
+                                                        StrokeThickness="1.5" />
+                                                </Button>
+                                            </Grid>
+                                        </Grid>
+                                        <ComboBox
+                                            Header="Font"
+                                            AutomationProperties.Name="Text font"
+                                            AutomationProperties.HelpText="Choose a font installed on this computer. Applies to selected text objects or new text."
+                                            ItemsSource="{x:Bind ViewModel.AnnotationFontFamilies, Mode=OneWay}"
+                                            SelectedItem="{x:Bind ViewModel.AnnotationFontFamily, Mode=OneWay}"
+                                            IsTextSearchEnabled="True"
+                                            SelectionChanged="AnnotationFontFamily_SelectionChanged"
+                                            Visibility="{x:Bind ViewModel.AnnotationFontControlsVisibility, Mode=OneWay}"
+                                            Margin="0,6,0,4" />
+                                        <Slider
+                                            AutomationProperties.Name="Fill tolerance"
+                                            AutomationProperties.HelpText="For image areas, higher tolerance fills a wider range of similar colors. Zero fills only matching colors. Shape fills do not use tolerance."
+                                            Header="Fill tolerance"
+                                            Minimum="0"
+                                            Maximum="255"
+                                            StepFrequency="1"
+                                            Value="{x:Bind ViewModel.FillTolerance, Mode=TwoWay}"
+                                            Visibility="{x:Bind ViewModel.FillToleranceControlsVisibility, Mode=OneWay}" />
+                                        <TextBox
+                                            AutomationProperties.HelpText="Edit the selected text annotation."
+                                            Visibility="{x:Bind ViewModel.AnnotationTextControlsVisibility, Mode=OneWay}"
+                                            AutomationProperties.Name="Annotation text"
+                                            Header="Text"
+                                            LostFocus="AnnotationText_LostFocus"
+                                            IsEnabled="{x:Bind ViewModel.CanEditAnnotationText, Mode=OneWay}"
+                                            Text="{x:Bind ViewModel.AnnotationText, Mode=OneWay}" />
+                                        <Button Content="Edit SVG…" Click="EditSelectedVector_Click" HorizontalAlignment="Stretch"
+                                            Visibility="{x:Bind ViewModel.SelectedVectorControlsVisibility, Mode=OneWay}"/>
+                                        <Button Content="Save as stamp…" Click="SaveSelectedVectorAsStamp_Click" HorizontalAlignment="Stretch"
+                                            Visibility="{x:Bind ViewModel.SelectedVectorControlsVisibility, Mode=OneWay}"/>
+                                        <Button Content="Source and license…" Click="SelectedStampAttribution_Click" HorizontalAlignment="Stretch"
+                                            Visibility="{x:Bind ViewModel.SelectedStampAttributionVisibility, Mode=OneWay}"/>
+                                        <Expander
+                                            Header="More properties"
+                                            Visibility="{x:Bind ViewModel.AnnotationMorePropertiesVisibility, Mode=OneWay}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Padding="0"
+                                            IsExpanded="False"
+                                            Style="{StaticResource WorkspaceExpanderStyle}"
+                                            FontSize="9">
+                                            <StackPanel Spacing="10">
+                                                <ComboBox Header="Line style" AutomationProperties.Name="Annotation line style"
+                                                    SelectedIndex="{x:Bind ViewModel.AnnotationPatternIndex, Mode=OneWay}"
+                                                    SelectionChanged="AnnotationPattern_SelectionChanged"
+                                                    Visibility="{x:Bind ViewModel.AnnotationPatternControlsVisibility, Mode=OneWay}">
+                                                    <ComboBoxItem Content="Solid"/><ComboBoxItem Content="Dashed"/><ComboBoxItem Content="Dotted"/><ComboBoxItem Content="Dash dot"/>
+                                                </ComboBox>
+                                                <ComboBox
+                                                    AutomationProperties.HelpText="Choose whether rectangle annotations use sharp or rounded corners."
+                                                    AutomationProperties.Name="Rectangle corner style"
+                                                    Header="Corners"
+                                                    SelectedIndex="{x:Bind ViewModel.AnnotationCornerStyleIndex, Mode=OneWay}"
+                                                    SelectionChanged="AnnotationCornerStyle_SelectionChanged"
+                                                    Visibility="{x:Bind ViewModel.AnnotationCornerStyleControlsVisibility, Mode=OneWay}">
+                                                    <ComboBoxItem Content="Edges"/>
+                                                    <ComboBoxItem Content="Rounded"/>
+                                                </ComboBox>
+                                                <ComboBox
+                                                    AutomationProperties.HelpText="Choose a common annotation preset for new annotations."
+                                                    AutomationProperties.Name="Annotation preset"
+                                                    Visibility="{x:Bind ViewModel.AnnotationPresetControlsVisibility, Mode=OneWay}"
+                                                    Header="Preset"
+                                                    SelectedIndex="{x:Bind ViewModel.AnnotationPresetIndex, Mode=OneWay}"
+                                                    SelectionChanged="AnnotationPreset_SelectionChanged">
+                                                    <ComboBoxItem Content="Custom"/>
+                                                    <ComboBoxItem Content="Standard box"/>
+                                                    <ComboBoxItem Content="Emphasis box"/>
+                                                    <ComboBoxItem Content="Pointer arrow"/>
+                                                    <ComboBoxItem Content="Text label"/>
+                                                    <ComboBoxItem Content="Highlighter"/>
+                                                    <ComboBoxItem Content="Blur region"/>
+                                                </ComboBox>
+                                            </StackPanel>
+                                        </Expander>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabViewItem>
+                            <TabViewItem x:Name="ImageDetailsInspectorTab" IsClosable="False" Padding="4,0" AutomationProperties.Name="Image details" ToolTipService.ToolTip="Image details">
+                                <TabViewItem.Header><TextBlock Text="Image details" FontSize="10" TextAlignment="Center" TextWrapping="Wrap"/></TabViewItem.Header>
+                                <ScrollViewer
+                                    HorizontalScrollMode="Disabled"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollMode="Auto"
+                                    VerticalScrollBarVisibility="Auto"
+                                    Padding="12,12,12,16"
+                                    x:Name="ImageDetailsInspectorScroll">
+                                    <StackPanel Spacing="10">
+                                        <StackPanel AutomationProperties.Name="Selected capture properties" Spacing="10">
+                                            <Grid ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <TextBlock Text="Tags" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                                <Button Grid.Column="1" Content="Edit…" Click="EditCurrentCaptureTags_Click"
+                                                    AutomationProperties.Name="Edit image tags" IsEnabled="{x:Bind ViewModel.CanEditCurrentCaptureTags, Mode=OneWay}"
+                                                    Style="{StaticResource WorkspaceCommandButtonStyle}"/>
+                                            </Grid>
+                                            <TextBlock Text="{x:Bind ViewModel.CurrentCaptureTagsLabel, Mode=OneWay}" TextWrapping="Wrap" FontSize="12"/>
+                                            <TextBlock Foreground="{ThemeResource SnapMutedBrush}" Text="Image size"/>
+                                            <Grid ColumnSpacing="10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock FontSize="12" Foreground="{ThemeResource SnapMutedBrush}" Text="W"/>
+                                                    <TextBlock
+                                                        AutomationProperties.Name="Selected capture width"
+                                                        FontSize="12"
+                                                        Foreground="{ThemeResource SnapMutedBrush}"
+                                                        Text="{x:Bind ViewModel.CurrentDocumentWidthLabel, Mode=OneWay}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <NumberBox
+                                                        AutomationProperties.HelpText="Set the resized capture width using the selected resize unit."
+                                                        AutomationProperties.Name="Resize width"
+                                                        Maximum="{x:Bind ViewModel.ResizeMaximumValue, Mode=OneWay}"
+                                                        Minimum="1"
+                                                        SmallChange="{x:Bind ViewModel.ResizeStepFrequency, Mode=OneWay}"
+                                                        SpinButtonPlacementMode="Hidden"
+                                                        Value="{x:Bind ViewModel.ResizeWidth, Mode=TwoWay}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <TextBlock FontSize="12" Foreground="{ThemeResource SnapMutedBrush}" Text="H"/>
+                                                    <TextBlock
+                                                        AutomationProperties.Name="Selected capture height"
+                                                        FontSize="12"
+                                                        Foreground="{ThemeResource SnapMutedBrush}"
+                                                        Text="{x:Bind ViewModel.CurrentDocumentHeightLabel, Mode=OneWay}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <NumberBox
+                                                        AutomationProperties.HelpText="Set the resized capture height using the selected resize unit."
+                                                        AutomationProperties.Name="Resize height"
+                                                        Maximum="{x:Bind ViewModel.ResizeMaximumValue, Mode=OneWay}"
+                                                        Minimum="1"
+                                                        SmallChange="{x:Bind ViewModel.ResizeStepFrequency, Mode=OneWay}"
+                                                        SpinButtonPlacementMode="Hidden"
+                                                        Value="{x:Bind ViewModel.ResizeHeight, Mode=TwoWay}" />
+                                                </StackPanel>
+                                            </Grid>
+                                            <TextBlock
+                                                AutomationProperties.Name="Selected capture file size"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource SnapMutedBrush}"
+                                                Text="{x:Bind ViewModel.CurrentDocumentFileSizeLabel, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                AutomationProperties.Name="Selected capture file name"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource SnapMutedBrush}"
+                                                Text="{x:Bind ViewModel.CurrentDocumentFileNameLabel, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                AutomationProperties.Name="Selected capture file location"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource SnapMutedBrush}"
+                                                Text="{x:Bind ViewModel.CurrentDocumentLocationLabel, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
-                                    </Expander>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Expander>
+                                        <ComboBox AutomationProperties.HelpText="Choose whether resize width and height are entered as pixels or percentages." AutomationProperties.Name="Resize unit" Header="Resize by" SelectedIndex="{x:Bind ViewModel.ResizeUnitIndex, Mode=TwoWay}">
+                                            <ComboBoxItem Content="Pixels"/>
+                                            <ComboBoxItem Content="Percent"/>
+                                        </ComboBox>
+                                        <ToggleSwitch
+                                            AutomationProperties.HelpText="Keep the resized capture width and height proportional to the selected image."
+                                            AutomationProperties.Name="Lock resize aspect ratio"
+                                            Header="Aspect ratio"
+                                            IsOn="{x:Bind ViewModel.ResizeAspectRatioIsLocked, Mode=TwoWay}"
+                                            OffContent="Free"
+                                            OnContent="Locked" />
+                                        <Button
+                                            AccessKey="R"
+                                            AutomationProperties.HelpText="Resize the current capture to the specified dimensions."
+                                            AutomationProperties.Name="Resize document"
+                                            Click="ResizeButton_Click"
+                                            IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
+                                            ToolTipService.ToolTip="Resize document">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon Glyph=""/>
+                                                <TextBlock Text="Resize"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button
+                                            AccessKey="T"
+                                            AutomationProperties.HelpText="Extract text from the selected annotation bounds, or from the full capture when no annotation is selected, and copy it to the clipboard."
+                                            AutomationProperties.Name="Copy recognized text"
+                                            Click="CopyRecognizedTextButton_Click"
+                                            IsEnabled="{x:Bind ViewModel.CanCopyRecognizedText, Mode=OneWay}"
+                                            ToolTipService.ToolTip="Copy recognized text"
+                                            Visibility="{x:Bind ViewModel.OcrControlsVisibility, Mode=OneWay}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <controls:WorkspaceIcon Kind="Copy" Width="16" Height="16"/>
+                                                <TextBlock Text="Copy Text"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Rectangle Height="1" Fill="{ThemeResource SnapStrokeBrush}"/>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabViewItem>
+                            <TabViewItem x:Name="CaptureOptionsInspectorTab" IsClosable="False" Padding="4,0" AutomationProperties.Name="Capture options" ToolTipService.ToolTip="Capture options">
+                                <TabViewItem.Header><TextBlock Text="Capture options" FontSize="10" TextAlignment="Center" TextWrapping="Wrap"/></TabViewItem.Header>
+                                <ScrollViewer
+                                    HorizontalScrollMode="Disabled"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollMode="Auto"
+                                    VerticalScrollBarVisibility="Auto"
+                                    Padding="12,12,12,16"
+                                    x:Name="CaptureOptionsInspectorScroll">
+                                    <StackPanel Spacing="10">
+                                        <ToggleSwitch AutomationProperties.HelpText="Capture the mouse pointer as a movable object in its own layer." AutomationProperties.Name="Include cursor" Header="Cursor" IsOn="{x:Bind ViewModel.IncludeCursor, Mode=TwoWay}"/>
+                                        <ComboBox AutomationProperties.HelpText="Choose a delay before each new capture starts." AutomationProperties.Name="Capture delay" Header="Delay" SelectedIndex="{x:Bind ViewModel.CaptureDelayIndex, Mode=TwoWay}">
+                                            <ComboBoxItem Content="None"/>
+                                            <ComboBoxItem Content="3 seconds"/>
+                                            <ComboBoxItem Content="5 seconds"/>
+                                        </ComboBox>
+                                        <ComboBox
+                                            AutomationProperties.HelpText="Choose the global capture hotkey."
+                                            AutomationProperties.Name="Capture hotkey"
+                                            Header="Hotkey"
+                                            SelectedIndex="{x:Bind ViewModel.CaptureHotkeyIndex, Mode=OneWay}"
+                                            SelectionChanged="CaptureHotkey_SelectionChanged">
+                                            <ComboBoxItem Content="PrintScreen"/>
+                                            <ComboBoxItem Content="Ctrl+Shift+S"/>
+                                            <ComboBoxItem Content="Ctrl+Alt+S"/>
+                                        </ComboBox>
+                                        <ComboBox
+                                            AutomationProperties.HelpText="Choose the audio source for new screen recordings."
+                                            AutomationProperties.Name="Recording audio"
+                                            Header="Recording audio"
+                                            IsEnabled="{x:Bind ViewModel.CanChangeScreenRecordingAudioMode, Mode=OneWay}"
+                                            SelectedIndex="{x:Bind ViewModel.ScreenRecordingAudioModeIndex, Mode=OneWay}"
+                                            SelectionChanged="ScreenRecordingAudioMode_SelectionChanged"
+                                            Visibility="{x:Bind ViewModel.ScreenRecordingControlsVisibility, Mode=OneWay}">
+                                            <ComboBoxItem Content="None"/>
+                                            <ComboBoxItem Content="Microphone"/>
+                                            <ComboBoxItem Content="System audio"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabViewItem>
+                            <TabViewItem x:Name="GuidesInspectorTab" IsClosable="False" Padding="4,0" AutomationProperties.Name="Guides" ToolTipService.ToolTip="Guides" IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}">
+                                <TabViewItem.Header><TextBlock Text="Guides" FontSize="10" TextAlignment="Center" TextWrapping="Wrap"/></TabViewItem.Header>
+                                <ScrollViewer x:Name="PerspectiveGuidesScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,12,12,16">
+                                    <controls:PerspectiveGuidesPanel x:Name="PerspectivePanel" Perspective="{x:Bind ViewModel.CanvasGridPerspective, Mode=TwoWay}"
+                                        Families="{x:Bind ViewModel.GridFamilies, Mode=TwoWay}" ShowGrid="{x:Bind ViewModel.ShowCanvasGrid, Mode=TwoWay}"
+                                        SnapEnabled="{x:Bind ViewModel.SnapToCanvasGrid, Mode=TwoWay}" CellSize="{x:Bind ViewModel.CanvasGridCellSize, Mode=TwoWay}"
+                                        ToolIndex="{x:Bind ViewModel.ActivePerspectiveToolIndex, Mode=OneWay}" Plane="{x:Bind ViewModel.RectanglePerspectivePlane, Mode=OneWay}"/>
+                                </ScrollViewer>
+                            </TabViewItem>
+                            </TabView.TabItems>
+                        </TabView>
                         <Border
                             x:Name="InspectorLayersSection"
-                            SizeChanged="InspectorSection_SizeChanged"
+
                             Padding="0"
                             Style="{StaticResource SidebarSectionBorderStyle}"
                             AutomationProperties.Name="Layers section"
@@ -2368,188 +2508,6 @@
                                 </Grid>
                             </Grid>
                         </Border>
-                        <Expander
-                            Header="Image details"
-                            IsExpanded="False"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Stretch"
-                            Padding="16,0"
-                            MinWidth="0"
-                            Expanding="InspectorSection_Expanding"
-                            AutomationProperties.Name="Image details"
-                            x:Name="ImageDetailsExpander" SizeChanged="InspectorSection_SizeChanged"
-                            Grid.Row="2"
-                            Style="{StaticResource WorkspaceExpanderStyle}">
-                            <ScrollViewer
-                                HorizontalScrollMode="Disabled"
-                                HorizontalScrollBarVisibility="Disabled"
-                                VerticalScrollMode="Auto"
-                                VerticalScrollBarVisibility="Auto"
-                                MaxHeight="230"
-                                Padding="12,0,12,12"
-                                x:Name="ImageDetailsExpanderScroll">
-                                <StackPanel Spacing="10">
-                                    <StackPanel AutomationProperties.Name="Selected capture properties" Spacing="10">
-                                        <Grid ColumnSpacing="8">
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                            <TextBlock Text="Tags" VerticalAlignment="Center" Foreground="{ThemeResource SnapMutedBrush}"/>
-                                            <Button Grid.Column="1" Content="Edit…" Click="EditCurrentCaptureTags_Click"
-                                                AutomationProperties.Name="Edit image tags" IsEnabled="{x:Bind ViewModel.CanEditCurrentCaptureTags, Mode=OneWay}"
-                                                Style="{StaticResource WorkspaceCommandButtonStyle}"/>
-                                        </Grid>
-                                        <TextBlock Text="{x:Bind ViewModel.CurrentCaptureTagsLabel, Mode=OneWay}" TextWrapping="Wrap" FontSize="12"/>
-                                        <TextBlock Foreground="{ThemeResource SnapMutedBrush}" Text="Image size"/>
-                                        <Grid ColumnSpacing="10">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Spacing="4">
-                                                <TextBlock FontSize="12" Foreground="{ThemeResource SnapMutedBrush}" Text="W"/>
-                                                <TextBlock
-                                                    AutomationProperties.Name="Selected capture width"
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource SnapMutedBrush}"
-                                                    Text="{x:Bind ViewModel.CurrentDocumentWidthLabel, Mode=OneWay}"
-                                                    TextTrimming="CharacterEllipsis" />
-                                                <NumberBox
-                                                    AutomationProperties.HelpText="Set the resized capture width using the selected resize unit."
-                                                    AutomationProperties.Name="Resize width"
-                                                    Maximum="{x:Bind ViewModel.ResizeMaximumValue, Mode=OneWay}"
-                                                    Minimum="1"
-                                                    SmallChange="{x:Bind ViewModel.ResizeStepFrequency, Mode=OneWay}"
-                                                    SpinButtonPlacementMode="Hidden"
-                                                    Value="{x:Bind ViewModel.ResizeWidth, Mode=TwoWay}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Spacing="4">
-                                                <TextBlock FontSize="12" Foreground="{ThemeResource SnapMutedBrush}" Text="H"/>
-                                                <TextBlock
-                                                    AutomationProperties.Name="Selected capture height"
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource SnapMutedBrush}"
-                                                    Text="{x:Bind ViewModel.CurrentDocumentHeightLabel, Mode=OneWay}"
-                                                    TextTrimming="CharacterEllipsis" />
-                                                <NumberBox
-                                                    AutomationProperties.HelpText="Set the resized capture height using the selected resize unit."
-                                                    AutomationProperties.Name="Resize height"
-                                                    Maximum="{x:Bind ViewModel.ResizeMaximumValue, Mode=OneWay}"
-                                                    Minimum="1"
-                                                    SmallChange="{x:Bind ViewModel.ResizeStepFrequency, Mode=OneWay}"
-                                                    SpinButtonPlacementMode="Hidden"
-                                                    Value="{x:Bind ViewModel.ResizeHeight, Mode=TwoWay}" />
-                                            </StackPanel>
-                                        </Grid>
-                                        <TextBlock
-                                            AutomationProperties.Name="Selected capture file size"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SnapMutedBrush}"
-                                            Text="{x:Bind ViewModel.CurrentDocumentFileSizeLabel, Mode=OneWay}"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            AutomationProperties.Name="Selected capture file name"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SnapMutedBrush}"
-                                            Text="{x:Bind ViewModel.CurrentDocumentFileNameLabel, Mode=OneWay}"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            AutomationProperties.Name="Selected capture file location"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SnapMutedBrush}"
-                                            Text="{x:Bind ViewModel.CurrentDocumentLocationLabel, Mode=OneWay}"
-                                            TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                    <ComboBox AutomationProperties.HelpText="Choose whether resize width and height are entered as pixels or percentages." AutomationProperties.Name="Resize unit" Header="Resize by" SelectedIndex="{x:Bind ViewModel.ResizeUnitIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="Pixels"/>
-                                        <ComboBoxItem Content="Percent"/>
-                                    </ComboBox>
-                                    <ToggleSwitch
-                                        AutomationProperties.HelpText="Keep the resized capture width and height proportional to the selected image."
-                                        AutomationProperties.Name="Lock resize aspect ratio"
-                                        Header="Aspect ratio"
-                                        IsOn="{x:Bind ViewModel.ResizeAspectRatioIsLocked, Mode=TwoWay}"
-                                        OffContent="Free"
-                                        OnContent="Locked" />
-                                    <Button
-                                        AccessKey="R"
-                                        AutomationProperties.HelpText="Resize the current capture to the specified dimensions."
-                                        AutomationProperties.Name="Resize document"
-                                        Click="ResizeButton_Click"
-                                        IsEnabled="{x:Bind ViewModel.HasCurrentDocument, Mode=OneWay}"
-                                        ToolTipService.ToolTip="Resize document">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <FontIcon Glyph=""/>
-                                            <TextBlock Text="Resize"/>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button
-                                        AccessKey="T"
-                                        AutomationProperties.HelpText="Extract text from the selected annotation bounds, or from the full capture when no annotation is selected, and copy it to the clipboard."
-                                        AutomationProperties.Name="Copy recognized text"
-                                        Click="CopyRecognizedTextButton_Click"
-                                        IsEnabled="{x:Bind ViewModel.CanCopyRecognizedText, Mode=OneWay}"
-                                        ToolTipService.ToolTip="Copy recognized text"
-                                        Visibility="{x:Bind ViewModel.OcrControlsVisibility, Mode=OneWay}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <controls:WorkspaceIcon Kind="Copy" Width="16" Height="16"/>
-                                            <TextBlock Text="Copy Text"/>
-                                        </StackPanel>
-                                    </Button>
-                                    <Rectangle Height="1" Fill="{ThemeResource SnapStrokeBrush}"/>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Expander>
-                        <Expander
-                            Header="Capture options"
-                            IsExpanded="False"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Stretch"
-                            Padding="16,0"
-                            MinWidth="0"
-                            Expanding="InspectorSection_Expanding"
-                            AutomationProperties.Name="Capture options"
-                            x:Name="CaptureOptionsExpander" SizeChanged="InspectorSection_SizeChanged"
-                            Grid.Row="3"
-                            Style="{StaticResource WorkspaceExpanderStyle}">
-                            <ScrollViewer
-                                HorizontalScrollMode="Disabled"
-                                HorizontalScrollBarVisibility="Disabled"
-                                VerticalScrollMode="Auto"
-                                VerticalScrollBarVisibility="Auto"
-                                MaxHeight="230"
-                                Padding="12,0,12,12"
-                                x:Name="CaptureOptionsExpanderScroll">
-                                <StackPanel Spacing="10">
-                                    <ToggleSwitch AutomationProperties.HelpText="Capture the mouse pointer as a movable object in its own layer." AutomationProperties.Name="Include cursor" Header="Cursor" IsOn="{x:Bind ViewModel.IncludeCursor, Mode=TwoWay}"/>
-                                    <ComboBox AutomationProperties.HelpText="Choose a delay before each new capture starts." AutomationProperties.Name="Capture delay" Header="Delay" SelectedIndex="{x:Bind ViewModel.CaptureDelayIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="None"/>
-                                        <ComboBoxItem Content="3 seconds"/>
-                                        <ComboBoxItem Content="5 seconds"/>
-                                    </ComboBox>
-                                    <ComboBox
-                                        AutomationProperties.HelpText="Choose the global capture hotkey."
-                                        AutomationProperties.Name="Capture hotkey"
-                                        Header="Hotkey"
-                                        SelectedIndex="{x:Bind ViewModel.CaptureHotkeyIndex, Mode=OneWay}"
-                                        SelectionChanged="CaptureHotkey_SelectionChanged">
-                                        <ComboBoxItem Content="PrintScreen"/>
-                                        <ComboBoxItem Content="Ctrl+Shift+S"/>
-                                        <ComboBoxItem Content="Ctrl+Alt+S"/>
-                                    </ComboBox>
-                                    <ComboBox
-                                        AutomationProperties.HelpText="Choose the audio source for new screen recordings."
-                                        AutomationProperties.Name="Recording audio"
-                                        Header="Recording audio"
-                                        IsEnabled="{x:Bind ViewModel.CanChangeScreenRecordingAudioMode, Mode=OneWay}"
-                                        SelectedIndex="{x:Bind ViewModel.ScreenRecordingAudioModeIndex, Mode=OneWay}"
-                                        SelectionChanged="ScreenRecordingAudioMode_SelectionChanged"
-                                        Visibility="{x:Bind ViewModel.ScreenRecordingControlsVisibility, Mode=OneWay}">
-                                        <ComboBoxItem Content="None"/>
-                                        <ComboBoxItem Content="Microphone"/>
-                                        <ComboBoxItem Content="System audio"/>
-                                    </ComboBox>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Expander>
                     </Grid>
                     <StackPanel
                         Grid.Row="2"

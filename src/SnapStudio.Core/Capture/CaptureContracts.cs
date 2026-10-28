@@ -46,3 +46,9 @@ public interface ICaptureWorkflow
         CaptureWorkflowRequest request,
         CancellationToken cancellationToken);
 }
+
+public interface ICaptureWindowController
+{
+    // Disposing the returned scope restores the window, even after capture cancellation.
+    Task<IAsyncDisposable> MinimizeAsync(CancellationToken cancellationToken);
+}

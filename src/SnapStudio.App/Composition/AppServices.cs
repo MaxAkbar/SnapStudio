@@ -72,7 +72,8 @@ public sealed record AppServices(
         IRegionSelectionService? regionSelection = null,
         ICrashRecoveryJournal? crashRecoveryJournal = null,
         string? recoverySessionId = null,
-        IWindowsCaptureTargetPicker? captureTargetPicker = null)
+        IWindowsCaptureTargetPicker? captureTargetPicker = null,
+        ICaptureWindowController? captureWindow = null)
     {
         string appDataRoot = ResolveAppDataRoot();
 
@@ -112,7 +113,8 @@ public sealed record AppServices(
             captureTargetSelector,
             stillCapture,
             documentRepository,
-            new NoOpEditorMessageClient());
+            new NoOpEditorMessageClient(),
+            captureWindow);
         var imageImportService = new WindowsImageImportService(
             ownerWindowHandle,
             Path.Combine(storageRoot, "SourceImages"));

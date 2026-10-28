@@ -48,7 +48,7 @@ public sealed partial class MainPage
         var content = new StackPanel { Width = 290, Spacing = 10 };
         content.Children.Add(new TextBlock { Text = $"{ToolName(kind)} designs · {ToolShortcut(ViewModels.ShellViewModel.ToolIndex(kind))}", FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
         var defaults = new Button { Content = kind == AnnotationKind.Vector ? "Default shape" : "Default / solid", HorizontalAlignment = HorizontalAlignment.Stretch };
-        defaults.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UseDefaultToolDesign(kind); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+        defaults.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UseDefaultToolDesign(kind); ShowActiveToolInspector(); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
         content.Children.Add(defaults);
         if (kind == AnnotationKind.Line)
         {
@@ -57,7 +57,7 @@ public sealed partial class MainPage
             row.Children.Add(new TextBlock { Text = "Perspective line", VerticalAlignment = VerticalAlignment.Center });
             var perspective = new Button { Content = row, HorizontalAlignment = HorizontalAlignment.Stretch };
             AutomationProperties.SetName(perspective, "Use perspective line");
-            perspective.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UsePerspectiveLineTool(); PropertiesSectionExpander.IsExpanded = true; UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+            perspective.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UsePerspectiveLineTool(); ShowActiveToolInspector(); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
             content.Children.Add(perspective);
         }
         if (kind == AnnotationKind.Rectangle)
@@ -70,7 +70,7 @@ public sealed partial class MainPage
             row.Children.Add(new TextBlock { Text = "Perspective rectangle", VerticalAlignment = VerticalAlignment.Center });
             var perspective = new Button { Content = row, HorizontalAlignment = HorizontalAlignment.Stretch };
             AutomationProperties.SetName(perspective, "Use perspective rectangle");
-            perspective.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UsePerspectiveRectangleTool((PerspectiveRectanglePlane)plane.SelectedIndex); PropertiesSectionExpander.IsExpanded = true; UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+            perspective.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UsePerspectiveRectangleTool((PerspectiveRectanglePlane)plane.SelectedIndex); ShowActiveToolInspector(); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
             content.Children.Add(perspective);
         }
         var list = new StackPanel { Spacing = 6 };
@@ -81,7 +81,7 @@ public sealed partial class MainPage
             row.Children.Add(preview); row.Children.Add(new TextBlock { Text = design.Name, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 220 });
             var button = new Button { Content = row, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left };
             AutomationProperties.SetName(button, $"Use {design.Name} design");
-            button.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UseToolDesign(design); PropertiesSectionExpander.IsExpanded = true; UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+            button.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UseToolDesign(design); ShowActiveToolInspector(); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
             button.ContextRequested += (_, args) =>
             {
                 args.Handled = true;

@@ -45,7 +45,7 @@ public sealed partial class MainPage
             if (index == 2)
             {
                 var perspective = new RadioMenuFlyoutItem { Text = "Perspective line", GroupName = group, IsChecked = ViewModel.IsPerspectiveLineToolActive };
-                perspective.Click += (_, _) => { if (ViewModel.CurrentDocumentId != documentId || _canvasDragMode != CanvasDragMode.None) return; HideToolDesignDrawer(); _objectContextMenu?.Hide(); ViewModel.UsePerspectiveLineTool(); PropertiesSectionExpander.IsExpanded = true; UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
+                perspective.Click += (_, _) => { if (ViewModel.CurrentDocumentId != documentId || _canvasDragMode != CanvasDragMode.None) return; HideToolDesignDrawer(); _objectContextMenu?.Hide(); ViewModel.UsePerspectiveLineTool(); ShowActiveToolInspector(); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
                 menu.Items.Add(perspective);
             }
             if (index == 0)
@@ -92,7 +92,7 @@ public sealed partial class MainPage
         if (toolIndex == -1) ViewModel.UseMoveTool();
         else if (toolIndex is int index) ViewModel.UpdateAnnotationTool(index);
         else ViewModel.UseSelectionTool();
-        PropertiesSectionExpander.IsExpanded = true;
+        ShowActiveToolInspector();
         UpdateBindingsFromViewModel();
         RefreshAnnotationCanvas();
         CanvasScrollViewer.Focus(FocusState.Programmatic);

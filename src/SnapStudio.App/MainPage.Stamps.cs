@@ -77,7 +77,7 @@ public sealed partial class MainPage
     {
         _stampPicker?.Hide();
         ViewModel.UseStamp(stamp);
-        PropertiesSectionExpander.IsExpanded = true;
+        ShowActiveToolInspector();
         UpdateBindingsFromViewModel();
         CanvasScrollViewer.Focus(FocusState.Programmatic);
     }
@@ -88,7 +88,7 @@ public sealed partial class MainPage
         try
         {
             if (!await ViewModel.ImportStampAsync(CancellationToken.None)) return;
-            PropertiesSectionExpander.IsExpanded = true;
+            ShowActiveToolInspector();
             UpdateBindingsFromViewModel();
             CanvasScrollViewer.Focus(FocusState.Programmatic);
         }

@@ -12,6 +12,9 @@
                      palette here as well as in the editor's local resources. -->
                 <ResourceDictionary Source="Controls/WorkspaceStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <!-- TabView reads its width limits from application resources. Keep inspector tabs usable in the narrow side pane. -->
+            <x:Double x:Key="TabViewItemMinWidth">48</x:Double>
+            <Thickness x:Key="TabViewItemHeaderPaddingWithoutCloseButton">2,3,2,3</Thickness>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

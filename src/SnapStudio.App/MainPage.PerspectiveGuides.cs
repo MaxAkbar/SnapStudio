@@ -7,7 +7,6 @@ namespace SnapStudio.App;
 
 public sealed partial class MainPage
 {
-    private bool _guidesInspectorOpen;
     private int _lastPerspectiveTool;
     private object? _guideDocument;
     public IReadOnlyList<string> PerspectivePlaneNames { get; } = new[] { "Front", "Side", "Ground" };
@@ -27,16 +26,12 @@ public sealed partial class MainPage
     private void ShowPerspectiveGuides(bool editPoints = true)
     {
         if (_focusWorkspace) ToggleWorkspaceFocus();
-        CanvasGridSettingsFlyout.Hide(); ExpandRightControlsPane(); _guidesInspectorOpen = true;
+        CanvasGridSettingsFlyout.Hide();
+        ExpandRightControlsPane();
         PerspectivePanel.PointEditingEnabled = editPoints;
-        UpdatePerspectiveControls();
+        ShowInspectorTab(GuidesInspectorTab);
     }
 
-    private void PerspectiveGuidesTab_Click(object sender, RoutedEventArgs args) => ShowPerspectiveGuides();
-    private void PerspectivePropertiesTab_Click(object sender, RoutedEventArgs args)
-    {
-        _guidesInspectorOpen = false; PerspectiveHandles.CancelEdit(); UpdatePerspectiveControls(); UpdateInspectorViewport();
-    }
     private void OpenPerspectiveGuides_Click(object sender, RoutedEventArgs args) => ShowPerspectiveGuides();
     private void CanvasGridSettingsButton_Click(object sender, RoutedEventArgs args)
     {
@@ -61,10 +56,7 @@ public sealed partial class MainPage
         }
         _lastPerspectiveTool = tool;
         if (!Equals(_guideDocument, ViewModel.CurrentDocumentId)) { PerspectiveHandles.CancelEdit(); _guideDocument = ViewModel.CurrentDocumentId; }
-        InspectorBodyGrid.Visibility = _guidesInspectorOpen ? Visibility.Collapsed : Visibility.Visible;
-        PerspectiveGuidesScroll.Visibility = _guidesInspectorOpen ? Visibility.Visible : Visibility.Collapsed;
-        PerspectivePropertiesTab.IsChecked = !_guidesInspectorOpen; PerspectiveGuidesTab.IsChecked = _guidesInspectorOpen;
-        bool handles = _guidesInspectorOpen && _rightControlsPaneIsExpanded && !_focusWorkspace && ViewModel.HasCurrentDocument
+        bool handles = ReferenceEquals(InspectorTabs.SelectedItem, GuidesInspectorTab) && _rightControlsPaneIsExpanded && !_focusWorkspace && ViewModel.HasCurrentDocument
             && ViewModel.ShowCanvasGrid && ViewModel.CanvasGridMode != 0 && PerspectivePanel.PointEditingEnabled;
         if (!handles) PerspectiveHandles.CancelEdit();
         PerspectiveHandles.Visibility = handles ? Visibility.Visible : Visibility.Collapsed;

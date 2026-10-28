@@ -27,7 +27,8 @@ public sealed partial class MainWindow : Window
             new RegionSelectionOverlay(new WindowsScreenPreviewService()),
             app?.CrashRecoveryJournal,
             app?.RecoverySessionId,
-            new CaptureTargetPicker(() => RootFrame.XamlRoot));
+            new CaptureTargetPicker(() => RootFrame.XamlRoot),
+            new CaptureWindowController(this));
         Closed += MainWindow_Closed;
         RootFrame.Navigate(typeof(MainPage), _services);
     }

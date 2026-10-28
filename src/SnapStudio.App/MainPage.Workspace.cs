@@ -123,7 +123,7 @@ public sealed partial class MainPage : INotifyPropertyChanged
     {
         if (ShouldIgnoreControlEvent()) return;
         ViewModel.UpdateAnnotationTool(8);
-        PropertiesSectionExpander.IsExpanded = true;
+        ShowActiveToolInspector();
         UpdateBindingsFromViewModel();
         RefreshAnnotationCanvas();
     }

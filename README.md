@@ -49,9 +49,11 @@ The release runs on **Windows 11 x64** and includes .NET and the Windows App SDK
 
 **Copy only part of an image:** make a pixel selection first. Areas outside the selected shape stay transparent. To copy the whole edited image, clear the selection with **Ctrl+D**.
 
+In source builds, SnapStudio minimizes before region selection or screen capture so its window stays out of the screenshot. Window and display choices remain visible until you choose a target. The workspace returns after the capture completes, is cancelled, or fails.
+
 ## A workspace that grows with your work
 
-The **Library** on the left keeps your images within reach. The canvas is in the middle, and the **Inspector** on the right holds Properties and Layers. Resize or collapse either side pane, or press **F8** for Focus mode.
+The **Library** on the left keeps your images within reach. The canvas is in the middle. The **Inspector** on the right has **Properties**, **Image details**, **Capture options**, and **Guides** tabs, with **Layers** always available below. Each tab scrolls independently, so you can switch tasks without a stack of open sections. Resize or collapse either side pane, or press **F8** for Focus mode.
 
 When you need more than a quick arrow:
 

@@ -54,30 +54,13 @@ public sealed partial class MainPage
         UpdatePerspectiveControls();
     }
 
-    private void InspectorSection_Expanding(Expander sender, ExpanderExpandingEventArgs args)
-    {
-        if (PropertiesSectionExpander is null || ImageDetailsExpander is null || CaptureOptionsExpander is null) return;
-        // Keep the layer list accessible when a longer settings section is opened.
-        foreach (Expander section in new[] { PropertiesSectionExpander, ImageDetailsExpander, CaptureOptionsExpander })
-            if (section != sender) section.IsExpanded = false;
-    }
-
     private void InspectorBody_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateInspectorViewport();
-
-    private void InspectorSection_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateInspectorViewport();
 
     private void UpdateInspectorViewport()
     {
-        if (InspectorBodyGrid is null || PropertiesSectionExpanderScroll is null
-            || ImageDetailsExpanderScroll is null || CaptureOptionsExpanderScroll is null
-            || InspectorLayersSection is null || InspectorLayersRow is null) return;
-        InspectorLayersRow.Height = _layersSectionExpanded ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+        if (InspectorLayersSection is null || InspectorLayersRow is null) return;
+        InspectorLayersRow.Height = _layersSectionExpanded ? new GridLength(2, GridUnitType.Star) : GridLength.Auto;
         InspectorLayersSection.MinHeight = _layersSectionExpanded ? 120 : 0;
-        double layerSpace = _layersSectionExpanded ? 140 : 40;
-        double settingsSpace = Math.Clamp(InspectorBodyGrid.ActualHeight - layerSpace - 3 * 44 - 12, 80, _layersSectionExpanded ? 280 : 480);
-        PropertiesSectionExpanderScroll.MaxHeight = settingsSpace;
-        ImageDetailsExpanderScroll.MaxHeight = settingsSpace;
-        CaptureOptionsExpanderScroll.MaxHeight = settingsSpace;
     }
 
     private void ToggleLayersSection_Click(object sender, RoutedEventArgs e)
