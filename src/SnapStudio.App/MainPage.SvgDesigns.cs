@@ -27,7 +27,7 @@ public sealed partial class MainPage
             ToolDesign design = ToolDesigns.Validate(new(id, name.Text, selected, AnnotationStyle.Default) { Svg = source });
             await ViewModel.SaveToolDesignAsync(design, CancellationToken.None);
             ViewModel.UseToolDesign(design);
-        }, "Save tool", importedName => { if (existing is null) name.Text = importedName; });
+        }, "Save tool", importedName => { if (existing is null) name.Text = importedName; }, style.Pattern == StrokePattern.Custom ? style.CustomPattern : null);
     }
 
     private async void EditSelectedVector_Click(object sender, RoutedEventArgs args) => await EditSelectedVectorAsync();
@@ -38,14 +38,14 @@ public sealed partial class MainPage
             || ViewModel.SelectedAnnotationId is not { } annotationId) return;
         var heading = new TextBlock { Text = "Edit this object's artwork. The reusable tool keeps its own design.", TextWrapping = TextWrapping.Wrap };
         await ShowSvgDesignerAsync($"Edit SVG · {vector.Name}", heading, vector.Svg,
-            source => ViewModel.UpdateVectorAsync(documentId, annotationId, source, CancellationToken.None), "Apply to object");
+            source => ViewModel.UpdateVectorAsync(documentId, annotationId, source, CancellationToken.None), "Apply to object", initialStroke: ViewModel.SelectedCustomStrokePattern);
     }
 
-    private async Task ShowSvgDesignerAsync(string title, UIElement heading, string svg, Func<string, Task> save, string saveLabel, Action<string>? importedName = null)
+    private async Task ShowSvgDesignerAsync(string title, UIElement heading, string svg, Func<string, Task> save, string saveLabel, Action<string>? importedName = null, CustomLinePattern? initialStroke = null)
     {
         HideToolDesignDrawer(); _toolDesignDialogIsOpen = true;
         using var editor = new SvgDesignerControl(svg, ViewModel.AnnotationFontFamilies.ToArray(), ActualTheme,
-            new(ViewModel.ShowCanvasGrid, ViewModel.CanvasGridCellSize, ViewModel.SnapToCanvasGrid, ViewModel.CanvasGridPerspective, ViewModel.GridFamilies));
+            new(ViewModel.ShowCanvasGrid, ViewModel.CanvasGridCellSize, ViewModel.SnapToCanvasGrid, ViewModel.CanvasGridPerspective, ViewModel.GridFamilies), ViewModel.SavedStrokePatterns, initialStroke, ViewModel.SvgEditorInitialTargets);
         editor.GridSettingsChanged += (_, settings) =>
         {
             ViewModel.SetPerspectiveGrid(settings.Perspective);

@@ -28,7 +28,7 @@ public enum DestructiveOperationKind
 
 public sealed class CaptureDocument
 {
-    public const int CurrentSchemaVersion = 8;
+    public const int CurrentSchemaVersion = 11;
 
     public DocumentId Id { get; set; } = DocumentId.New();
 
@@ -115,6 +115,15 @@ public sealed class AnnotationLayer
     public ColorRgba? CustomColor { get; set; }
 
     public bool IsVisible { get; set; } = true;
+
+    public LayerMask? Mask { get; set; }
+    public RectD? CropBounds { get; set; }
+}
+
+// Source-coordinate rectangles preserve disjoint selections and holes without rasterizing artwork.
+public sealed record LayerMask(IReadOnlyList<RectD> Rectangles, bool IsEnabled = true)
+{
+    public LayerMask DeepCopy() => this with { Rectangles = Rectangles.ToArray() };
 }
 
 public sealed record AnnotationStyle(
@@ -129,6 +138,8 @@ public sealed record AnnotationStyle(
 
     public string FontFamily { get; init; } = DefaultFontFamily;
     public StrokePattern Pattern { get; init; } = StrokePattern.Solid;
+    public CustomLinePattern? CustomPattern { get; init; }
+    public PerspectiveSnapTargets PerspectiveTargets { get; init; } = PerspectiveSnapTargets.All;
 
     public static AnnotationStyle Default => new(
         ColorRgba.Black,

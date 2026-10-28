@@ -45,7 +45,7 @@ public static class SvgRasterizer
     public static Bitmap Render(string svg, int width, int height)
     {
         if (width < 1 || height < 1) throw new ArgumentOutOfRangeException(nameof(width));
-        SvgDocument document = SvgDocument.FromSvg<SvgDocument>(SvgShape.Normalize(svg));
+        SvgDocument document = SvgDocument.FromSvg<SvgDocument>(SvgPatternBaker.Bake(SvgShape.Normalize(svg)));
         document.Width = new SvgUnit(width); document.Height = new SvgUnit(height);
         var bitmap = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
         try { using Graphics graphics = Graphics.FromImage(bitmap); document.Draw(graphics); return bitmap; }

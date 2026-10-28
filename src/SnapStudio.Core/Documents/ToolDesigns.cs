@@ -3,15 +3,16 @@ using System.Text.Json.Serialization;
 namespace SnapStudio.Core.Documents;
 
 [JsonConverter(typeof(JsonStringEnumConverter<StrokePattern>))]
-public enum StrokePattern { Solid, Dashed, Dotted, DashDot }
+public enum StrokePattern { Solid, Dashed, Dotted, DashDot, Custom }
 
 public sealed record ToolDesign(Guid Id, string Name, AnnotationKind Kind, AnnotationStyle Style)
 {
     public string? Svg { get; init; }
+    public bool IsStrokePattern { get; init; }
 }
 public sealed record ToolDesignPack(int SchemaVersion, List<ToolDesign> Designs)
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 }
 
 public interface IToolDesignStore
@@ -61,6 +62,11 @@ public static class ToolDesigns
             || !Enum.IsDefined(style.Pattern) || (!SupportsPattern(design.Kind) && style.Pattern != StrokePattern.Solid))
             throw new InvalidDataException("The design has an invalid width, opacity, corner radius, or stroke pattern.");
         if (design.Kind == AnnotationKind.Vector && string.IsNullOrWhiteSpace(design.Svg)) throw new InvalidDataException("A custom shape needs SVG artwork.");
+        CustomLinePattern.ValidateStyle(style);
+        PerspectiveTargetFilter.Validate(style.PerspectiveTargets);
+        if (design.IsStrokePattern && (design.Kind != AnnotationKind.Line || design.Svg is null || style.Pattern != StrokePattern.Solid))
+            throw new InvalidDataException("A line pattern needs SVG artwork and cannot contain another custom stroke.");
+        if (design.IsStrokePattern) CustomLinePattern.Normalize(new(design.Svg!, design.Name));
         return design with { Name = design.Name.Trim(), Svg = design.Svg is null ? null : SvgShape.Normalize(design.Svg), Style = style with { FontFamily = string.IsNullOrWhiteSpace(style.FontFamily) ? AnnotationStyle.DefaultFontFamily : style.FontFamily.Trim() } };
     }
 
@@ -68,7 +74,7 @@ public static class ToolDesigns
     {
         var result = designs.Select(Validate).ToList();
         if (result.Select(item => item.Id).Distinct().Count() != result.Count
-            || result.GroupBy(item => (item.Kind, item.Name.ToUpperInvariant())).Any(group => group.Count() > 1))
+            || result.GroupBy(item => (item.IsStrokePattern, item.Kind, item.Name.ToUpperInvariant())).Any(group => group.Count() > 1))
             throw new InvalidDataException("Design IDs and names within each tool must be unique.");
         return result;
     }

@@ -11,7 +11,7 @@ public static class PerspectiveLineDrawing
 
     // A ruler passes through the clicked point. Its direction is continuous, independent of displayed grid density.
     public static PerspectiveDrawingSnapResult Constrain(PointD start, PointD end, RectD view, PerspectiveGridSettings settings,
-        double scaleX = 1, double scaleY = 1, PerspectiveLineFamily? locked = null)
+        double scaleX = 1, double scaleY = 1, PerspectiveLineFamily? locked = null, PerspectiveSnapTargets targets = PerspectiveSnapTargets.All)
     {
         var free = new PerspectiveDrawingSnapResult(start, end, []);
         if (!new[] { start.X, start.Y, end.X, end.Y, view.X, view.Y, view.Width, view.Height, scaleX, scaleY }.All(double.IsFinite)
@@ -61,6 +61,7 @@ public static class PerspectiveLineDrawing
                 Tangent(PerspectiveLineFamily.CurvedVertical, false); Tangent(PerspectiveLineFamily.CurvedHorizontal, true);
                 Vanish(PerspectiveLineFamily.CenterVanishingPoint, cx, cy); break;
         }
+        candidates = candidates.Where(c => targets.Allows(c.Family, s.Mode)).ToList();
         if (candidates.Any(c => c.Family == locked)) candidates = candidates.Where(c => c.Family == locked).ToList();
         double best = double.PositiveInfinity; PointD chosen = default, projected = end; PerspectiveLineFamily? selected = null;
         foreach (var candidate in candidates)

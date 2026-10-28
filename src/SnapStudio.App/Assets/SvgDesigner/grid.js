@@ -1,9 +1,9 @@
 (() => {
  'use strict';
  const NS='http://www.w3.org/2000/svg',MIN_DISPLAY_SPACING=8,TOLERANCE=6,P=window.snapPerspective;
- window.createSvgGrid=({root,frame,onChange,onToolRequested})=>{
+ window.createSvgGrid=({root,frame,onChange,onToolRequested,onOpen=()=>{},getTargets=()=>63,isSnappingEnabled=()=>true})=>{
   let settings={visible:false,spacing:32,snap:true,...P.normalize()},lastKey='',lastScale={x:1,y:1},geometryKey='',geometry=[];
-  let selectedFamily='grid',guideHandles=null;
+  let selectedFamily='grid',guideHandles=null,snapMatch={x:false,y:false,coupled:false};
   const familyRows=new Map(),previousOpacity={};
   const $=id=>document.getElementById(id),make=(tag,attrs)=>{const el=document.createElementNS(NS,tag);for(const [key,value]of Object.entries(attrs))el.setAttribute(key,String(value));return el;};
   // Artwork styles stay inside the frame's shadow root; guides have their own isolated surface.
@@ -35,6 +35,7 @@
   function updateFamily(key,patch){setSettings({families:{[key]:{...settings.families[key],...patch}}});}
   function selectFamily(key){selectedFamily=key;render();}
   function strokes(state){const key=JSON.stringify([state.view,P.normalize(settings)]);if(key!==geometryKey){geometryKey=key;geometry=P.create(state.view,settings);}return geometry;}
+  const snapStrokes=(state,targets=getTargets())=>strokes(state).filter(stroke=>targets&P.targets.bit(stroke.family));
   const displayNumber=value=>String(Number(value.toFixed(4)));
   const pathData=points=>points.map((p,i)=>`${i?'L':'M'}${p.x} ${p.y}`).join(' ');
   function paint(family,major){
@@ -47,7 +48,7 @@
    const svg=root(),v=svg.viewBox.baseVal,m=svg.getScreenCTM();
    if(m){const x=Math.hypot(m.a,m.b),y=Math.hypot(m.c,m.d);if(x>0&&y>0)lastScale={x,y};}
    let stride=1;while(settings.spacing*Math.min(lastScale.x,lastScale.y)*stride<MIN_DISPLAY_SPACING&&stride<1048576)stride*=2;
-   return{...settings,effectiveSpacing:settings.spacing*stride,stride,scale:lastScale,view:{x:v.x,y:v.y,width:v.width,height:v.height}};
+   return{...settings,targets:getTargets(),snap:settings.snap&&isSnappingEnabled(),effectiveSpacing:settings.spacing*stride,stride,scale:lastScale,view:{x:v.x,y:v.y,width:v.width,height:v.height}};
   }
   function render(){
    const state=layout(),v=state.view,key=JSON.stringify([settings,v,state.scale]);
@@ -103,20 +104,20 @@
    const start=state.view[axis],extent=state.view[axis==='x'?'width':'height'],step=state.effectiveSpacing,index=Math.round((value-start)/step),position=start+index*step;
    return position>=start&&position<=start+extent&&Math.abs(position-value)*state.scale[axis]<=TOLERANCE+1e-6?position-value:null;
   }
-  const active=(state,event)=>state.visible&&state.snap&&!event?.altKey&&(state.mode||state.families.grid.opacity>0);
-  function snapPoint(p,event){
-   const state=layout();if(!active(state,event)){showMatch(null);return p;}
-   if(settings.mode){const match=P.find(p,strokes(state),TOLERANCE,null,null,state.scale.x,state.scale.y);showMatch(match);return match?.point||p;}
-   return{x:p.x+(nearest(p.x,'x',state)??0),y:p.y+(nearest(p.y,'y',state)??0)};
+  const active=(state,event,targets=getTargets())=>state.visible&&state.snap&&!event?.altKey&&targets!==0&&(state.mode||state.families.grid.opacity>0&&!!(targets&1));
+  function snapPoint(p,event,targets=getTargets()){
+   snapMatch={x:false,y:false,coupled:false};const state=layout();if(!active(state,event,targets)){showMatch(null);return p;}
+   if(settings.mode){const match=P.find(p,snapStrokes(state,targets),TOLERANCE,null,null,state.scale.x,state.scale.y);showMatch(match);snapMatch={x:!!match,y:!!match,coupled:true};return match?.point||p;}
+   const x=nearest(p.x,'x',state),y=nearest(p.y,'y',state);snapMatch={x:x!==null,y:y!==null,coupled:false};return{x:p.x+(x??0),y:p.y+(y??0)};
   }
   function snapStraightLine(start,end,event,direction=null){
    const state=layout();if(!settings.mode||!active(state,event)){showMatch(null);return null;}
-   const result=P.constrainLine(start,end,state.view,settings,state.scale.x,state.scale.y,direction);
+   const result=P.constrainLine(start,end,state.view,settings,state.scale.x,state.scale.y,direction,getTargets());
    showMatch(result.stroke?{stroke:result.stroke}:null);return result;
   }
   function snapPerspectiveLine(start,end,event,direction=null){
    const state=layout();if(!settings.mode||!active(state,event)){showMatch(null);return{points:[start,end],stroke:null,direction:null};}
-   const result=P.curveLine(start,end,state.view,settings,state.scale.x,state.scale.y,direction);
+   const result=P.curveLine(start,end,state.view,settings,state.scale.x,state.scale.y,direction,getTargets());
    showMatch(result.stroke?{stroke:result.stroke}:null);return result;
   }
   function snapRectangle(start,end,event,plane){
@@ -133,15 +134,15 @@
     const distance=delta/unit[axis],change={x:unit.x*distance,y:unit.y*distance},pixels=Math.hypot(change.x*state.scale.x,change.y*state.scale.y);
     if(pixels<=TOLERANCE+1e-6&&(!best||pixels<best.pixels))best={...change,pixels};
    }
-   return best||{x:0,y:0};
+   return{...(best||{x:0,y:0}),matched:!!best};
   }
-  function snapRay(start,end,event){const state=layout();if(!active(state,event)){showMatch(null);return end;}if(settings.mode){const match=P.find(end,strokes(state),TOLERANCE,{x:end.x-start.x,y:end.y-start.y},null,state.scale.x,state.scale.y);showMatch(match);return match?.point||end;}const delta=alongRay([end],{x:end.x-start.x,y:end.y-start.y},state);return{x:end.x+delta.x,y:end.y+delta.y};}
+  function snapRay(start,end,event){snapMatch={x:false,y:false,coupled:true};const state=layout();if(!active(state,event)){showMatch(null);return end;}if(settings.mode){const match=P.find(end,snapStrokes(state),TOLERANCE,{x:end.x-start.x,y:end.y-start.y},null,state.scale.x,state.scale.y);showMatch(match);snapMatch={x:!!match,y:!!match,coupled:true};return match?.point||end;}const delta=alongRay([end],{x:end.x-start.x,y:end.y-start.y},state);snapMatch={x:delta.matched,y:delta.matched,coupled:true};return{x:end.x+delta.x,y:end.y+delta.y};}
   function snapMove(box,delta,event){
-   const state=layout();if(!active(state,event)){showMatch(null);return delta;}
-   if(settings.mode){let best=null,change={x:0,y:0};for(const u of [0,.5,1])for(const v of [0,.5,1]){const anchor={x:box.x+box.width*u+delta.x,y:box.y+box.height*v+delta.y},match=P.find(anchor,strokes(state),TOLERANCE,event?.shiftKey?delta:null,null,state.scale.x,state.scale.y);if(match&&(!best||match.distance<best.distance-1e-8)){best=match;change={x:match.point.x-anchor.x,y:match.point.y-anchor.y};}}showMatch(best);return{x:delta.x+change.x,y:delta.y+change.y};}
+   snapMatch={x:false,y:false,coupled:false};const state=layout();if(!active(state,event)){showMatch(null);return delta;}
+   if(settings.mode){let best=null,change={x:0,y:0};for(const u of [0,.5,1])for(const v of [0,.5,1]){const anchor={x:box.x+box.width*u+delta.x,y:box.y+box.height*v+delta.y},match=P.find(anchor,snapStrokes(state),TOLERANCE,event?.shiftKey?delta:null,null,state.scale.x,state.scale.y);if(match&&(!best||match.distance<best.distance-1e-8)){best=match;change={x:match.point.x-anchor.x,y:match.point.y-anchor.y};}}showMatch(best);snapMatch={x:!!best,y:!!best,coupled:true};return{x:delta.x+change.x,y:delta.y+change.y};}
    const anchors=[0,.5,1].map(n=>({x:box.x+box.width*n+delta.x,y:box.y+box.height*n+delta.y}));
-   if(event?.shiftKey){const change=alongRay(anchors,delta,state);return{x:delta.x+change.x,y:delta.y+change.y};}
-   const correction={x:0,y:0};for(const axis of ['x','y']){let best=null;for(const anchor of anchors){const candidate=nearest(anchor[axis],axis,state);if(candidate!==null&&(best===null||Math.abs(candidate)<Math.abs(best)))best=candidate;}correction[axis]=best??0;}
+   if(event?.shiftKey){const change=alongRay(anchors,delta,state);snapMatch={x:change.matched,y:change.matched,coupled:true};return{x:delta.x+change.x,y:delta.y+change.y};}
+   const correction={x:0,y:0};for(const axis of ['x','y']){let best=null;for(const anchor of anchors){const candidate=nearest(anchor[axis],axis,state);if(candidate!==null&&(best===null||Math.abs(candidate)<Math.abs(best)))best=candidate;}correction[axis]=best??0;snapMatch[axis]=best!==null;}
    return{x:delta.x+correction.x,y:delta.y+correction.y};
   }
   const getState=()=>{const{effectiveSpacing,stride}=layout();return{...settings,families:P.normalizeFamilies(settings.families),effectiveSpacing,stride};};
@@ -156,36 +157,26 @@
   $('gridToggle').onclick=()=>setSettings({visible:!settings.visible});
   $('gridSpacing').onchange=()=>{setSettings({spacing:$('gridSpacing').value});$('gridSpacing').value=settings.spacing;};
   $('gridSnap').onchange=()=>setSettings({snap:$('gridSnap').checked});
-  const panel=$('gridPanel'),toggle=$('gridSettingsToggle'),context=$('gridContextMenu'),contextSettings=$('gridContextSettings'),stage=frame.parentElement;
-  function positionPopup(element,p){const rect=element.getBoundingClientRect();element.style.left=`${Math.max(10,Math.min(p.x,innerWidth-rect.width-10))}px`;element.style.top=`${Math.max(10,Math.min(p.y,innerHeight-rect.height-10))}px`;}
-  function closeContext(){context.hidden=true;}
+  const panel=$('gridPanel'),toggle=$('gridSettingsToggle');
   function close(){
    guideHandles?.cancel();panel.hidden=true;$('guideInspectorPanel').hidden=true;$('objectInspectorPanel').hidden=false;
    document.body.classList.remove('guides-active');$('objectInspectorTab').setAttribute('aria-selected','true');$('guideInspectorTab').setAttribute('aria-selected','false');toggle.setAttribute('aria-expanded','false');render();
   }
   function open(editPoints=true){
-   closeContext();panel.hidden=false;$('guideInspectorPanel').hidden=false;$('objectInspectorPanel').hidden=true;document.body.classList.add('guides-active');
+   onOpen();panel.hidden=false;$('guideInspectorPanel').hidden=false;$('objectInspectorPanel').hidden=true;document.body.classList.add('guides-active');
    $('objectInspectorTab').setAttribute('aria-selected','false');$('guideInspectorTab').setAttribute('aria-selected','true');toggle.setAttribute('aria-expanded','true');$('guideEditPoints').checked=editPoints;
    render();if(editPoints)$(settings.mode?'gridHorizon':'gridSpacing').focus({preventScroll:true});
   }
-  function openContext(p){closeContext();context.hidden=false;positionPopup(context,p);contextSettings.focus({preventScroll:true});}
   toggle.onclick=()=>open();$('guideInspectorTab').onclick=()=>open();$('objectInspectorTab').onclick=close;
   $('guideShowToggle').onclick=()=>setSettings({visible:!settings.visible});$('guideEditPoints').onchange=render;
   $('guideLineTool').onclick=()=>onToolRequested?.('perspectiveLine');$('guideRectangleTool').onclick=()=>onToolRequested?.('perspectiveRect');
   $('perspectiveOpenGuides').onclick=()=>open();
-  stage.addEventListener('contextmenu',e=>{e.preventDefault();openContext({x:e.clientX,y:e.clientY});});
-  stage.addEventListener('keydown',e=>{if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();e.stopPropagation();const rect=frame.getBoundingClientRect();openContext({x:rect.left+rect.width/2,y:rect.top+rect.height/2});}});
-  contextSettings.onclick=()=>open();panel.addEventListener('keydown',e=>e.stopPropagation());
-  context.addEventListener('keydown',e=>{e.stopPropagation();if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();contextSettings.focus();}});
-  document.addEventListener('pointerdown',e=>{if(!context.hidden&&!context.contains(e.target))closeContext();});
+  panel.addEventListener('keydown',e=>e.stopPropagation());
   document.addEventListener('keydown',e=>{
    if(e.key==='Escape'&&guideHandles?.isDragging()){guideHandles.cancel();e.preventDefault();e.stopImmediatePropagation();}
-   else if(e.key==='Escape'&&!context.hidden){closeContext();stage.focus({preventScroll:true});e.preventDefault();e.stopImmediatePropagation();}
-   else if(!context.hidden&&e.key==='Tab'){closeContext();stage.focus({preventScroll:true});}
   },true);
-  window.addEventListener('resize',closeContext);
   guideHandles=window.createPerspectiveGuideHandles({frame,root,getState:layout,setSettings,isEnabled:()=>!panel.hidden&&$('guideEditPoints').checked,onSelect:selectFamily});
   new ResizeObserver(render).observe(frame);
-  return{render,setSettings,open,showProperties:close,setToolState:tool=>{$('guideLineTool').setAttribute('aria-pressed',String(tool==='perspectiveLine'));$('guideRectangleTool').setAttribute('aria-pressed',String(tool==='perspectiveRect'));},snapPoint,snapRay,snapMove,snapStraightLine,snapPerspectiveLine,snapRectangle,clearMatch:()=>showMatch(null),getState,projectionContext:layout,showBindingMatch:stroke=>showMatch(stroke?{stroke}:null)};
+  return{render,setSettings,open,showProperties:close,setToolState:tool=>{$('guideLineTool').setAttribute('aria-pressed',String(tool==='perspectiveLine'));$('guideRectangleTool').setAttribute('aria-pressed',String(tool==='perspectiveRect'));},snapPoint,snapRay,snapMove,snapStraightLine,snapPerspectiveLine,snapRectangle,getSnapMatch:()=>({...snapMatch}),clearMatch:()=>showMatch(null),getState,projectionContext:layout,showBindingMatch:stroke=>showMatch(stroke?{stroke}:null)};
  };
 })();

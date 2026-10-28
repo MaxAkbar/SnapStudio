@@ -91,19 +91,26 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             {
                 ConfigureGraphics(graphics);
 
-                foreach (AnnotationObject annotation in DocumentLayers.InPaintOrder(document))
+                foreach (AnnotationLayer layer in document.Layers.Where(layer => layer.IsVisible))
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (!DocumentLayers.IsEffectivelyVisible(document, annotation))
+                    GraphicsState state = graphics.Save();
+                    try
                     {
-                        continue;
+                        if (LayerClipping.GetRectangles(layer, document.SourceImage.Width, document.SourceImage.Height) is { } regions)
+                        {
+                            using var clip = new Region(); clip.MakeEmpty();
+                            foreach (RectD region in regions)
+                                clip.Union(new RectangleF((float)((region.X - viewport.X) * scale), (float)((region.Y - viewport.Y) * scale),
+                                    (float)(region.Width * scale), (float)(region.Height * scale)));
+                            graphics.SetClip(clip, CombineMode.Intersect);
+                        }
+                        foreach (AnnotationObject annotation in document.Annotations.Where(item => item.LayerId == layer.Id && item.IsVisible))
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            DrawAnnotation(graphics, outputBitmap, TransformAnnotationForRender(annotation, viewport, scale), scale);
+                        }
                     }
-
-                    DrawAnnotation(
-                        graphics,
-                        outputBitmap,
-                        TransformAnnotationForRender(annotation, viewport, scale),
-                        scale);
+                    finally { graphics.Restore(state); }
                 }
             }
 
@@ -248,6 +255,14 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
         AnnotationObject annotation,
         double scale)
     {
+        if (annotation.Style is { Pattern: StrokePattern.Custom, CustomPattern: not null } && (ToolDesigns.SupportsPattern(annotation.Kind) || annotation.Kind == AnnotationKind.Vector))
+        {
+            var plain = TransformAnnotationForRender(annotation, new(0, 0, 1, 1), 1);
+            plain.Style = annotation.Style with { Pattern = StrokePattern.Solid, CustomPattern = null, Stroke = ColorRgba.Transparent };
+            if (plain.Vector is { } vector) plain.Vector = vector with { Svg = CustomStrokeRenderer.HideSvgStrokes(vector.Svg) };
+            DrawAnnotation(graphics, bitmap, plain, scale);
+            CustomStrokeRenderer.Draw(graphics, annotation); return;
+        }
         switch (annotation.Kind)
         {
             case AnnotationKind.Vector:
@@ -281,7 +296,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
                 DrawHighlight(graphics, annotation);
                 break;
             case AnnotationKind.Blur:
-                BlurRegionInPlace(bitmap, annotation.Bounds, ResolveBlurRadius(annotation.Style.Opacity));
+                DrawClippedBlur(graphics, bitmap, annotation.Bounds, ResolveBlurRadius(annotation.Style.Opacity));
                 break;
         }
     }
@@ -490,6 +505,17 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
         return output;
     }
 
+    private static void DrawClippedBlur(Graphics graphics, Bitmap bitmap, RectD bounds, int radius)
+    {
+        Rectangle rectangle = ClampRectangle(bounds, bitmap.Width, bitmap.Height);
+        if (rectangle.Width <= 0 || rectangle.Height <= 0) return;
+        using Bitmap region = bitmap.Clone(rectangle, PixelFormat.Format32bppPArgb);
+        using Bitmap blurred = BoxBlur(region, Math.Clamp(radius, 1, 48));
+        CompositingMode mode = graphics.CompositingMode;
+        try { graphics.CompositingMode = CompositingMode.SourceCopy; graphics.DrawImageUnscaled(blurred, rectangle.X, rectangle.Y); }
+        finally { graphics.CompositingMode = mode; }
+    }
+
     private static void BlurRegionInPlace(Bitmap bitmap, RectD bounds, int radius)
     {
         Rectangle rectangle = ClampRectangle(bounds, bitmap.Width, bitmap.Height);
@@ -607,7 +633,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             EndCap = LineCap.Round,
             LineJoin = LineJoin.Round
         };
-        if (pattern != StrokePattern.Solid) pen.DashPattern = ToolDesigns.DashArray(pattern).Select(value => (float)value).ToArray();
+        if (ToolDesigns.DashArray(pattern) is { Length: > 0 } dash) pen.DashPattern = dash.Select(value => (float)value).ToArray();
         return pen;
     }
 

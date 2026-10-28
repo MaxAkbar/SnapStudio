@@ -28,7 +28,7 @@ public sealed class JsonToolDesignStore(string path) : IToolDesignStore
         if (new FileInfo(path).Length > 8 * 1024 * 1024) throw new InvalidDataException("The tool design file is too large (maximum 8 MB).");
         await using var stream = File.OpenRead(path);
         ToolDesignPack? pack = await JsonSerializer.DeserializeAsync<ToolDesignPack>(stream, Options, cancellationToken).ConfigureAwait(false);
-        if (pack?.SchemaVersion is not (1 or ToolDesignPack.CurrentSchemaVersion) || pack.Designs is null)
+        if (pack?.SchemaVersion is not (1 or 2 or ToolDesignPack.CurrentSchemaVersion) || pack.Designs is null)
             throw new InvalidDataException("This is not a supported SnapStudio tool design file.");
         return ToolDesigns.ValidateLibrary(pack.Designs);
     }

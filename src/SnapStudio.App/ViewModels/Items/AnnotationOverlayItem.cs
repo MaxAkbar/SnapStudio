@@ -15,11 +15,15 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
     public StrokePattern Pattern { get; private set; }
     public DoubleCollection StrokeDashes => [.. ToolDesigns.DashArray(Pattern)];
     public bool ShowTransformHandles { get; private set; } = true;
+    public IReadOnlyList<RectD>? LayerClipRectangles { get; private set; }
+    public CustomStrokePreview? CustomStroke { get; private set; }
 
     internal void UpdateFrom(AnnotationOverlayItem next)
     {
         bool drawingChanged = (ShowTransformHandles != next.ShowTransformHandles && (IsSelected || next.IsSelected))
-            || Pattern != next.Pattern || Kind != next.Kind || Width != next.Width || Height != next.Height
+            || (LayerClipRectangles is null) != (next.LayerClipRectangles is null)
+            || LayerClipRectangles is not null && next.LayerClipRectangles is not null && !LayerClipRectangles.SequenceEqual(next.LayerClipRectangles)
+            || CustomStroke != next.CustomStroke || Pattern != next.Pattern || Kind != next.Kind || Width != next.Width || Height != next.Height
             || StartX != next.StartX || StartY != next.StartY || EndX != next.EndX || EndY != next.EndY
             || Text != next.Text || !SameColor(StrokeBrush, next.StrokeBrush) || !SameColor(FillBrush, next.FillBrush)
             || !SameColor(TextBrush, next.TextBrush) || StrokeThicknessValue != next.StrokeThicknessValue
@@ -39,6 +43,8 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         CanMoveUp = next.CanMoveUp; CanMoveDown = next.CanMoveDown;
         Pattern = next.Pattern;
         ShowTransformHandles = next.ShowTransformHandles;
+        LayerClipRectangles = next.LayerClipRectangles;
+        CustomStroke = next.CustomStroke;
         if (drawingChanged) VisualVersion++;
         if (rowChanged) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
@@ -186,7 +192,8 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         Guid? selectedAnnotationId,
         bool canMoveUp = false,
         bool canMoveDown = false,
-        bool showTransformHandles = true)
+        bool showTransformHandles = true,
+        IReadOnlyList<RectD>? layerClip = null)
     {
         ArgumentNullException.ThrowIfNull(annotation);
 
@@ -209,7 +216,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
             CalculateRelativeEndX(annotation, bounds, zoom),
             CalculateRelativeEndY(annotation, bounds, zoom),
             string.IsNullOrWhiteSpace(annotation.Text) ? "Text" : annotation.Text,
-            ToBrush(annotation.Style.Stroke, opacity),
+            ToBrush(annotation.Style.Pattern == StrokePattern.Custom ? SnapStudio.Core.Primitives.ColorRgba.Transparent : annotation.Style.Stroke, opacity),
             ToBrush(annotation.Style.Fill, opacity),
             ToBrush(annotation.Style.Text, opacity),
             new Thickness(strokeThickness),
@@ -221,10 +228,12 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
             isSelected)
         {
             Vector = annotation.Vector,
+            CustomStroke = CustomStrokeRenderer.Preview(annotation, zoom),
             Image = annotation.Kind == AnnotationKind.Vector && annotation.Vector is not null
-                ? SvgRasterizer.Preview(annotation.Vector.Svg, Math.Max(1, bounds.Width * zoom), Math.Max(1, bounds.Height * zoom)) : annotation.Image,
+                ? SvgRasterizer.Preview(annotation.Style.Pattern == StrokePattern.Custom ? CustomStrokeRenderer.HideSvgStrokes(annotation.Vector.Svg) : annotation.Vector.Svg, Math.Max(1, bounds.Width * zoom), Math.Max(1, bounds.Height * zoom)) : annotation.Image,
             Pattern = annotation.Style.Pattern,
             ShowTransformHandles = showTransformHandles,
+            LayerClipRectangles = layerClip?.Select(r => new RectD((r.X - bounds.X) * zoom, (r.Y - bounds.Y) * zoom, r.Width * zoom, r.Height * zoom)).ToArray(),
             FontFamily = SystemFontCatalog.ResolveFamily(annotation.Style.FontFamily),
             CanMoveUp = canMoveUp,
             CanMoveDown = canMoveDown,

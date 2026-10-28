@@ -27,7 +27,7 @@ public sealed partial class ShellViewModel
     private AnnotationObject? CreatePerspectiveRectangleAnnotation(PointD start, PointD end, bool bypass)
     {
         if (_currentDocument is null) return null;
-        bool snap = ObjectSnappingEnabled && IsPerspectiveGridSnapEnabled && !bypass;
+        bool snap = ObjectSnappingEnabled && IsPerspectiveGridSnapEnabled && !bypass && _defaultPerspectiveTargets != PerspectiveSnapTargets.None;
         var geometry = snap ? PerspectiveRectangle.Create(start, end,
             new(0, 0, _currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height), CanvasGridPerspective, RectanglePerspectivePlane)
             : PerspectiveRectangle.Flat(start, end) is { } flat ? flat with { Plane = RectanglePerspectivePlane } : null;

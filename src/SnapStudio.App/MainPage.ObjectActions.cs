@@ -58,6 +58,7 @@ public sealed partial class MainPage
 
     private async void CanvasScrollViewer_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (e.Key == VirtualKey.Control) RefreshObjectHoverPresentation();
         if (PerspectiveHandles.OwnsKeyboardFocus) return;
         if (PerspectiveHandles.IsEditing) { if (e.Key == VirtualKey.Escape) PerspectiveHandles.CancelEdit(); e.Handled = true; return; }
         if (await HandlePolygonSelectionKeyAsync(e)) return;
@@ -94,6 +95,11 @@ public sealed partial class MainPage
             return;
         }
         await RunSelectedObjectOperationAsync(token => ViewModel.NudgeSelectedAnnotationAsync(x * step, y * step, token));
+    }
+
+    private void CanvasScrollViewer_KeyUp(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == VirtualKey.Control) RefreshObjectHoverPresentation();
     }
 
     private static bool IsObjectModifierDown(VirtualKey key) =>

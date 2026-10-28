@@ -13,7 +13,7 @@ public sealed partial class ShellViewModel
         var document = _currentDocument;
         return CanReprojectPerspectiveMoves && document is not null && PerspectiveObjectBinding.TryReproject(original, proposed,
             new(0, 0, document.SourceImage.Width, document.SourceImage.Height), CanvasGridPerspective,
-            CanvasZoom, CanvasZoom, out projected);
+            CanvasZoom, CanvasZoom, out projected, SelectionPerspectiveTargets(original.Id));
     }
 
     // The same proposed bounds drive preview and commit. Re-projected bounds must not become another input delta.

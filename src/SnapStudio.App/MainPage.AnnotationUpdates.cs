@@ -23,6 +23,7 @@ public sealed partial class MainPage
             _annotationVisuals.Clear();
             _annotationVisualDocument = ViewModel.CurrentDocumentId;
             _annotationVisualSource = ViewModel.CanvasImageSource;
+            ClearObjectHover();
         }
         var retained = ViewModel.AnnotationOverlays.Select(item => item.Id).ToHashSet();
         foreach (Guid id in _annotationVisuals.Keys.Where(id => !retained.Contains(id)).ToArray())
@@ -51,9 +52,11 @@ public sealed partial class MainPage
             if (target is Panel panel)
             {
                 var clip = new Rect(-item.Left, -item.Top, ViewModel.CanvasDisplayWidth, ViewModel.CanvasDisplayHeight);
-                foreach (Canvas drawing in panel.Children.OfType<Canvas>())
+                Panel content = panel.Children.OfType<Grid>().FirstOrDefault(child => child.Tag is "LayerContent") ?? panel;
+                foreach (Canvas drawing in content.Children.OfType<Canvas>())
                     if (drawing.Clip is RectangleGeometry geometry && geometry.Rect != clip) geometry.Rect = clip;
             }
         }
+        RefreshObjectHoverPresentation();
     }
 }

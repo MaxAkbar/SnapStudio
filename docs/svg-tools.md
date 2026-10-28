@@ -13,10 +13,74 @@ Stroke width and text size accept typed values without a slider cap. Use **Fit
 artwork** to fit the SVG viewBox around the drawing, including its strokes.
 Import and export in the editor operate on actual SVG files; library import and
 export use SnapStudio JSON files containing both style presets and SVG designs.
+
+In source builds, the main editor's **Line style → Custom SVG → Choose / design
+SVG pattern…** opens the shared pattern library. Choose **New SVG pattern…** to
+draw one repeat, name it, and save it. The motif repeats along a stroked shape
+and rotates with curves, retaining its SVG colors. Line width controls motif
+size; **Scale** and **Spacing** adjust the repeats. The SVG designer's **Custom
+SVG** line style uses the same saved patterns. Existing objects keep their
+embedded motif when a library pattern is edited. Choose Solid or another line
+style to remove a custom pattern.
+
+With a drawing tool active, hover over existing artwork to see its outline and move cursor. Click or drag to select and move it, then use its handles to resize or rotate. The current drawing tool stays active. Hold **Ctrl** to draw overlapping artwork instead. Shift-click still adds or removes objects from the selection; node editing and an unfinished Bézier path retain their own controls. Hover guides remain outside saved and exported artwork.
+
+In source builds, open **Edit** in the toolbar, use **More object actions** above
+the Objects list, or right-click artwork or an Objects row for all editing
+commands. **Duplicate** and **Delete** also have buttons above the Objects list.
+Right-clicking an object selects it; right-clicking a selected object keeps the
+whole multiple selection. Right-clicking empty canvas keeps the selection too.
+The menu includes cut/copy/paste, grouping, one-step or full stacking order,
+rotation, horizontal/vertical flips, path nodes, Properties, and Guides.
+Unavailable actions are disabled. **Shift+F10** opens the same menu from the
+canvas or a focused Objects row; arrow keys navigate and Escape closes it.
+
+**Ctrl+C**, **Ctrl+X**, and **Ctrl+V** copy, cut, and paste objects within the
+current SVG editor session, including their embedded vector resources and custom
+line patterns. They leave normal text editing alone in input fields and SVG
+source. **Ctrl+D** duplicates with an offset. **Delete** removes selected objects
+(or the active path anchor while editing nodes). **Ctrl+G** groups;
+**Ctrl+Shift+G** ungroups. **Ctrl+[ / ]** moves backward/forward one step; add
+**Shift** to send to the back or bring to the front. Each object edit supports
+Undo/Redo. These additions are not in the 1.0.0 download.
+
 Hold **Shift** while drawing a line or arrow with perspective snapping off,
 moving objects, or rotating to snap the angle in **15° increments**.
 Shift still makes rectangles square and ellipses
 circular, and preserves proportions when resizing.
+
+In source builds, **Snap** beside Grid aligns moving objects by their edges or
+centers, including the SVG canvas edges and center. Resize corners also align
+with nearby object edges and centers. Magenta guides show the match during the
+drag. Groups and multiple selected objects use their combined bounds. Hold
+**Alt** to bypass snapping, or turn **Snap** off for free object positioning.
+The preference lasts while the designer is open and stays out of artwork and
+undo history. With **Snap** on, **Snap to grid** adds alignment to visible grid
+guides; the closest alignment wins. Turning **Snap** off also disables grid and
+perspective snapping. Perspective-bound artwork continues to follow its guide family
+while perspective snapping is active.
+
+In source builds, **Perspective targets** in Properties limits the guide
+families an object can snap to. Select an object, expand the control, choose
+**None**, then enable the VP or VPs you want. **All guides** restores automatic
+choice. Guides remain visible and object-to-object alignment stays available.
+With nothing selected, these controls set the default for new drawings in the
+current editor session. Existing objects retain their own choices.
+
+Multiple selections show mixed checkboxes. Toggling one VP preserves each
+object's other choices, and a combined move uses only targets allowed by every
+selected object. Object choices support Undo/Redo and survive duplicate,
+copy/paste, save, and reopen. The main canvas has the same control in Properties.
+**Alt**, hiding the whole grid, and the master Snap switch still bypass perspective
+snapping. Selecting **None** lets a bound perspective path move freely.
+
+Perspective lines use their allowed directions even between visible guides;
+changing targets takes effect on the next draw or move. In curved modes,
+opposing poles share a geometric curve direction: Top/Bottom permit vertical
+curves, and Left/Right permit horizontal curves in five-point mode. Alignment
+to displayed guides still distinguishes each colored half. Perspective
+rectangles retain the two axes of their selected plane; target choices control
+guide alignment, while **None** disables their perspective drawing and movement.
 
 In source builds, **Grid** shows or hides a square editing grid in the SVG
 designer. Open **Grid settings** to adjust cell spacing from **4 to 512 SVG
@@ -168,7 +232,7 @@ their own artwork. Individual fills, strokes, paths and text inside an SVG are
 edited in the SVG designer. Existing native shape tools keep their usual shape
 properties and fill-bucket behavior.
 
-Documents store SVG source in schema 8; earlier documents migrate on load. Tool
+Documents store SVG source and layer clipping in schema 9; earlier documents migrate on load. Tool
 libraries use schema 2 and still read schema 1 style libraries. The canvas uses
 a cached transparent preview, while image exports render the saved SVG at the
 output size. Moving an unchanged object reuses its preview.

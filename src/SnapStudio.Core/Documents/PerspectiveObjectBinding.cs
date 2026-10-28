@@ -34,10 +34,11 @@ public static class PerspectiveObjectBinding
     // A cheap eligibility check; legacy paths are fitted against the active grid by TryReproject.
     public static bool IsPerspectiveObject(AnnotationObject annotation)
     {
-        if (annotation.Kind != AnnotationKind.Vector || annotation.Vector is null) return false;
+        if (annotation.Kind != AnnotationKind.Vector || annotation.Vector is null || annotation.Style.PerspectiveTargets == PerspectiveSnapTargets.None) return false;
         try
         {
             if (!ReadDocument(annotation.Vector.Svg, out _, out var path, out _, out _)) return false;
+            if ((annotation.Style.PerspectiveTargets & PerspectiveTargetFilter.FromSvg(path)) == PerspectiveSnapTargets.None) return false;
             if (path.Attribute("data-perspective-tool") is not null) return ReadMetadata(path) is not null;
             return LegacyTool(annotation.Vector.Name, path) is not null && TryPoints(path, out _, out _);
         }
@@ -49,13 +50,15 @@ public static class PerspectiveObjectBinding
     /// cannot occupy the requested position; callers should keep its original geometry until a valid move.
     /// </summary>
     public static bool TryReproject(AnnotationObject original, RectD proposedBounds, RectD view, PerspectiveGridSettings settings,
-        double scaleX, double scaleY, out AnnotationObject? projected)
+        double scaleX, double scaleY, out AnnotationObject? projected, PerspectiveSnapTargets allowedTargets = PerspectiveSnapTargets.All)
     {
         projected = null;
-        if (original.Kind != AnnotationKind.Vector || original.Vector is null) return false;
+        if (original.Kind != AnnotationKind.Vector || original.Vector is null || original.Style.PerspectiveTargets == PerspectiveSnapTargets.None) return false;
         try
         {
             if (!ReadDocument(original.Vector.Svg, out var document, out var path, out var box, out var matrix)) return false;
+            var targets = original.Style.PerspectiveTargets & PerspectiveTargetFilter.FromSvg(path) & allowedTargets;
+            if (targets == PerspectiveSnapTargets.None) return false;
             Binding? binding;
             if (path.Attribute("data-perspective-tool") is not null)
             {
@@ -92,7 +95,7 @@ public static class PerspectiveObjectBinding
             bool curvedFamily = binding.Family == PerspectiveLineFamily.CurvedVertical
                 && normalized.Mode is CanvasGridMode.FourPoint or CanvasGridMode.FivePoint
                 || binding.Family == PerspectiveLineFamily.CurvedHorizontal && normalized.Mode == CanvasGridMode.FivePoint;
-            if (binding.Tool == "line" && curvedFamily)
+            if (binding.Tool == "line" && curvedFamily && binding.Family is { } existingFamily && targets.Allows(existingFamily, normalized.Mode))
             {
                 double cx = view.X + view.Width * normalized.CenterX / 100, cy = view.Y + view.Height * normalized.Horizon / 100;
                 double radius = Math.Min(view.Width, view.Height) * normalized.Radius / 100;
@@ -108,14 +111,14 @@ public static class PerspectiveObjectBinding
             }
             else
             {
-                var line = PerspectiveCurveDrawing.Draw(start, end, view, settings, scaleX, scaleY, binding.Family);
+                var line = PerspectiveCurveDrawing.Draw(start, end, view, settings, scaleX, scaleY, binding.Family, targets);
                 if (line.Points.Count < 2 || Length(line.Points) < 1e-6) return true;
                 generated = line.ToAnnotation(paintBounds);
             }
             // Preserve the existing SVG paints and definitions, including colors edited in the SVG designer.
             var replacement = Parse(generated.Vector!.Svg);
             var nextPath = replacement.Root!.Elements().Single(e => e.Name.LocalName == "path");
-            if (binding.Tool == "line" && binding.Family is {} family)
+            if (binding.Tool == "line" && binding.Family is { } family && targets.Allows(family, normalized.Mode))
                 nextPath.SetAttributeValue("data-perspective-family", (int)family);
             foreach (var attribute in path.Attributes().Where(a => a.Name.LocalName.StartsWith("data-perspective-", StringComparison.Ordinal)).ToArray()) attribute.Remove();
             path.SetAttributeValue("d", (string?)nextPath.Attribute("d"));

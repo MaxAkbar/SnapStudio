@@ -11,8 +11,8 @@ namespace SnapStudio.App.ViewModels.Items;
 public sealed class AnnotationLayerItem : INotifyPropertyChanged
 {
     private sealed record State(string Name, bool IsVisible, LayerColorLabel ColorLabel, ColorRgba? CustomColor,
-        bool IsActive, bool CanMoveSelectedHere, bool IsExpanded, bool CanMoveUp, bool CanMoveDown, bool CanDelete);
-    private State _state = new(string.Empty, true, LayerColorLabel.None, null, false, false, true, false, false, false);
+        bool IsActive, bool CanMoveSelectedHere, bool IsExpanded, bool CanMoveUp, bool CanMoveDown, bool CanDelete, LayerMask? Mask, RectD? Crop);
+    private State _state = new(string.Empty, true, LayerColorLabel.None, null, false, false, true, false, false, false, null, null);
     private readonly SolidColorBrush _indicatorBrush = new();
 
     public AnnotationLayerItem(AnnotationLayer layer) => Id = layer.Id;
@@ -25,7 +25,7 @@ public sealed class AnnotationLayerItem : INotifyPropertyChanged
         bool canMoveSelectedHere, bool isExpanded, bool canMoveUp, bool canMoveDown, bool canDelete)
     {
         var next = new State(layer.Name, layer.IsVisible, layer.ColorLabel, layer.CustomColor,
-            isActive, canMoveSelectedHere, isExpanded, canMoveUp, canMoveDown, canDelete);
+            isActive, canMoveSelectedHere, isExpanded, canMoveUp, canMoveDown, canDelete, layer.Mask, layer.CropBounds);
         bool changed = next != _state || Objects.Count != objects.Count;
         _state = next;
         CollectionUpdates.Synchronize(Objects, objects);
@@ -33,7 +33,10 @@ public sealed class AnnotationLayerItem : INotifyPropertyChanged
         if (changed) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
 
-    public string ObjectCount => $"{Objects.Count} object{(Objects.Count == 1 ? string.Empty : "s")}";
+    public bool HasLayerMask => _state.Mask is not null;
+    public bool HasLayerCrop => _state.Crop is not null;
+    public string MaskToggleText => _state.Mask is { IsEnabled: true } ? "Disable layer mask" : "Enable layer mask";
+    public string ObjectCount => $"{Objects.Count} object{(Objects.Count == 1 ? string.Empty : "s")}" + (_state.Mask is { } mask ? (mask.IsEnabled ? " · Mask" : " · Mask off") : "") + (HasLayerCrop ? " · Cropped" : "");
 
     public string SelectionAutomationName => $"Select {Name} layer";
 

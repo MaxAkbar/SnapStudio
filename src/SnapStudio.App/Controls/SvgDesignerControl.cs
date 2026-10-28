@@ -29,6 +29,9 @@ public sealed class SvgDesignerControl : Grid, IDisposable
     private readonly string _initialSvg;
     private readonly string[] _fonts;
     private readonly ElementTheme _theme;
+    private readonly IReadOnlyList<ToolDesign> _strokePatterns;
+    private readonly CustomLinePattern? _initialStroke;
+    private readonly PerspectiveSnapTargets _initialTargets;
     private bool _started;
     public event EventHandler? Ready;
     public event EventHandler? ImportRequested;
@@ -37,9 +40,12 @@ public sealed class SvgDesignerControl : Grid, IDisposable
     public event EventHandler<SvgDesignerGridSettings>? GridSettingsChanged;
     public SvgDesignerGridSettings GridSettings { get; private set; }
 
-    public SvgDesignerControl(string svg, string[] fonts, ElementTheme theme, SvgDesignerGridSettings? grid = null)
+    public SvgDesignerControl(string svg, string[] fonts, ElementTheme theme, SvgDesignerGridSettings? grid = null,
+        IReadOnlyList<ToolDesign>? strokePatterns = null, CustomLinePattern? initialStroke = null, PerspectiveSnapTargets initialTargets = PerspectiveSnapTargets.All)
     {
         _initialSvg = svg; _fonts = fonts; _theme = theme; GridSettings = grid ?? new();
+        _strokePatterns = strokePatterns ?? []; _initialStroke = initialStroke;
+        _initialTargets = initialTargets;
         RowDefinitions.Add(new() { Height = new(1, GridUnitType.Star) }); RowDefinitions.Add(new() { Height = GridLength.Auto });
         Children.Add(_web); SetRow(_error, 1); Children.Add(_error);
         Loaded += Initialize;
@@ -73,6 +79,9 @@ public sealed class SvgDesignerControl : Grid, IDisposable
                             core.PostWebMessageAsJson(JsonSerializer.Serialize(new
                             {
                                 type = "load", svg = _initialSvg, theme = _theme.ToString(), fonts = _fonts,
+                                strokePatterns = _strokePatterns.Select(pattern => new { id = pattern.Id, name = pattern.Name, svg = pattern.Svg }),
+                                initialStroke = _initialStroke,
+                                initialTargets = (int)_initialTargets,
                                 grid = new
                                 {
                                     visible = GridSettings.Visible, spacing = GridSettings.Spacing, snap = GridSettings.Snap,

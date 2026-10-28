@@ -19,14 +19,14 @@ public sealed partial class ShellViewModel
     public Visibility AnnotationPatternControlsVisibility => HasAnnotationProperty(AnnotationProperty.StrokeWidth) && ToolDesigns.SupportsPattern(ActiveOrSelectedAnnotationKind)
         && (HasSelectedAnnotation ? _currentDocument!.Annotations.Where(item => SelectedAnnotationIds.Contains(item.Id)).All(item => ToolDesigns.SupportsPattern(item.Kind)) : !IsSelectionToolActive)
             ? Visibility.Visible : Visibility.Collapsed;
-    public IReadOnlyList<ToolDesign> SavedToolDesigns => _savedToolDesigns;
+    public IReadOnlyList<ToolDesign> SavedToolDesigns => _savedToolDesigns.Where(d => !d.IsStrokePattern).ToArray();
     public ToolDesign? ActiveSvgToolDesign => _chosenToolDesigns.GetValueOrDefault(ActiveToolFamily) is { Svg: not null } chosen ? chosen
         : ActiveToolFamily == AnnotationKind.Vector ? ToolDesigns.BuiltIns.First(item => item.Kind == AnnotationKind.Vector) : null;
     public bool CanEditSelectedVector => SelectedAnnotationCount == 1 && GetSelectedAnnotation()?.Vector is not null;
     public Visibility SelectedVectorControlsVisibility => CanEditSelectedVector && !IsMarqueeToolActive ? Visibility.Visible : Visibility.Collapsed;
     public AnnotationVector? SelectedVector => CanEditSelectedVector ? GetSelectedAnnotation()?.Vector : null;
     public IEnumerable<ToolDesign> GetToolDesigns(AnnotationKind kind) => ToolDesigns.BuiltIns.Concat(_savedToolDesigns)
-        .Where(item => item.Kind == kind).OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase);
+        .Where(item => !item.IsStrokePattern && item.Kind == kind).OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase);
     public StrokePattern GetToolPattern(AnnotationKind kind) => _chosenToolDesigns.GetValueOrDefault(kind)?.Style.Pattern ?? StrokePattern.Solid;
     public bool IsBuiltInDesign(Guid id) => ToolDesigns.BuiltIns.Any(item => item.Id == id);
 
@@ -66,6 +66,7 @@ public sealed partial class ShellViewModel
     public void UseDefaultToolDesign(AnnotationKind kind)
     {
         _chosenToolDesigns.Remove(kind); AnnotationStrokeIndex = 0;
+        _customStrokeDefaults.Remove(kind);
         AnnotationStrokeThickness = kind == AnnotationKind.Text ? 24 : 2; AnnotationCornerRadius = 0;
         SetAnnotationFontFamily(AnnotationStyle.DefaultFontFamily); UpdateAnnotationTool(ToolIndex(kind));
     }
@@ -73,8 +74,13 @@ public sealed partial class ShellViewModel
     private void ApplyRememberedToolDesign()
     {
         AnnotationPattern = StrokePattern.Solid;
+        _annotationCustomPattern = null;
         _annotationDesignFill = SnapStudio.Core.Primitives.ColorRgba.Transparent;
-        if (!_chosenToolDesigns.TryGetValue(ActiveToolFamily, out ToolDesign? design)) return;
+        if (!_chosenToolDesigns.TryGetValue(ActiveToolFamily, out ToolDesign? design))
+        {
+            if (_customStrokeDefaults.TryGetValue(ActiveToolFamily, out var pattern)) { _annotationCustomPattern = pattern; AnnotationPattern = StrokePattern.Custom; }
+            return;
+        }
         AnnotationStyle style = design.Style;
         SelectAnnotationColor(design.Kind switch
         {
@@ -84,6 +90,7 @@ public sealed partial class ShellViewModel
         });
         AnnotationStrokeThickness = style.StrokeThickness; AnnotationOpacity = style.Opacity;
         AnnotationCornerRadius = style.CornerRadius; AnnotationPattern = style.Pattern;
+        _annotationCustomPattern = style.CustomPattern;
         _annotationDesignFill = style.Fill;
         SetAnnotationFontFamily(style.FontFamily);
     }
@@ -91,15 +98,21 @@ public sealed partial class ShellViewModel
     public async Task UpdateAnnotationPatternAsync(int index, CancellationToken token)
     {
         if (!Enum.IsDefined((StrokePattern)index) || AnnotationPatternControlsVisibility != Visibility.Visible) return;
+        if ((StrokePattern)index == StrokePattern.Custom)
+        {
+            if (_annotationCustomPattern is { } pattern) await SetCustomStrokeAsync(pattern, token);
+            return;
+        }
+        if (!HasSelectedAnnotation) _customStrokeDefaults.Remove(ActiveToolFamily);
         MarkAnnotationPresetCustom();
         AnnotationPattern = (StrokePattern)index;
         if (SelectedAnnotationCount > 1)
             await EditSelectionAsync((editor, document, ids) => editor.SetStylesAsync(document,
                 document.Annotations.Where(item => ids.Contains(item.Id)).ToDictionary(item => item.Id,
-                    item => item.Style with { Pattern = AnnotationPattern }), token), "Stroke pattern updated.", token).ConfigureAwait(true);
+                    item => item.Style with { Pattern = AnnotationPattern, CustomPattern = null }), token), "Stroke pattern updated.", token).ConfigureAwait(true);
         else if (GetSelectedAnnotation() is { } annotation && _annotationEditor is not null && _currentDocument is not null)
         {
-            await _annotationEditor.SetStyleAsync(_currentDocument, annotation, annotation.Style with { Pattern = AnnotationPattern }, "Change stroke pattern", token).ConfigureAwait(true);
+            await _annotationEditor.SetStyleAsync(_currentDocument, annotation, annotation.Style with { Pattern = AnnotationPattern, CustomPattern = null }, "Change stroke pattern", token).ConfigureAwait(true);
             await SaveCurrentDocumentAsync("Stroke pattern updated.", token).ConfigureAwait(true);
         }
         NotifyAnnotationStyleControlsChanged();
@@ -162,7 +175,7 @@ public sealed partial class ShellViewModel
                 ToolDesign design = source with { Id = next.Any(item => item.Id == source.Id) || IsBuiltInDesign(source.Id) ? Guid.NewGuid() : source.Id };
                 string stem = design.Name.Length > 65 ? design.Name[..65] : design.Name;
                 int suffix = 2;
-                while (next.Any(item => item.Kind == design.Kind && item.Name.Equals(design.Name, StringComparison.OrdinalIgnoreCase)))
+                while (next.Any(item => item.IsStrokePattern == design.IsStrokePattern && item.Kind == design.Kind && item.Name.Equals(design.Name, StringComparison.OrdinalIgnoreCase)))
                     design = design with { Name = $"{stem} ({suffix++})" };
                 next.Add(design);
             }
@@ -198,7 +211,13 @@ public sealed partial class ShellViewModel
             throw new InvalidOperationException("The SVG object is no longer open. Reopen it before editing.");
         var after = item.Vector with { Svg = SvgShape.Normalize(svg) };
         if (after == item.Vector) return;
-        await _editCommandStack.ExecuteAsync(_currentDocument, new UpdateAnnotationVectorCommand(item.Id, item.Vector, after), token).ConfigureAwait(true);
+        IEditCommand command = new UpdateAnnotationVectorCommand(item.Id, item.Vector, after);
+        if (item.Style.Pattern == StrokePattern.Custom)
+        {
+            command = new CompositeEditCommand("Edit SVG object", [command, new UpdateAnnotationStyleCommand(item.Id, item.Style, item.Style with { Pattern = StrokePattern.Solid, CustomPattern = null })]);
+            AnnotationPattern = StrokePattern.Solid; _annotationCustomPattern = null;
+        }
+        await _editCommandStack.ExecuteAsync(_currentDocument, command, token).ConfigureAwait(true);
         RefreshAnnotationOverlays(); NotifyEditorStateChanged();
         await SaveCurrentDocumentAsync("SVG object updated.", token).ConfigureAwait(true);
     }

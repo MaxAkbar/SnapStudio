@@ -2,9 +2,9 @@
  'use strict';
  const P=window.snapPerspective;
  const inside=(p,v)=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=v.x-1e-7&&p.x<=v.x+v.width+1e-7&&p.y>=v.y-1e-7&&p.y<=v.y+v.height+1e-7;
- function curveLine(start,end,view,settings,scaleX=1,scaleY=1,locked=null){
+ function curveLine(start,end,view,settings,scaleX=1,scaleY=1,locked=null,targets=63){
   if(![start.x,start.y,end.x,end.y,view.x,view.y,view.x+view.width,view.y+view.height,scaleX,scaleY].every(Number.isFinite)||view.width<=0||view.height<=0||scaleX<=0||scaleY<=0||!inside(start,view))return{points:[],stroke:null,direction:null};
-  const ruler=P.constrainLine(start,end,view,settings,scaleX,scaleY,locked),straight={points:[ruler.start,ruler.end],stroke:ruler.stroke,direction:ruler.direction};
+  const ruler=P.constrainLine(start,end,view,settings,scaleX,scaleY,locked,targets),straight={points:[ruler.start,ruler.end],stroke:ruler.stroke,direction:ruler.direction};
   if(![5,6].includes(ruler.direction))return straight;
   const s=P.normalize(settings),cx=view.x+view.width*s.centerX/100,cy=view.y+view.height*s.horizon/100,radius=Math.min(view.width,view.height)*s.radius/100,horizontal=ruler.direction===5;
   let u=(start.x-cx)/radius,v=(start.y-cy)/radius,uMin=(view.x-cx)/radius,uMax=(view.x+view.width-cx)/radius,vMin=(view.y-cy)/radius,vMax=(view.y+view.height-cy)/radius;

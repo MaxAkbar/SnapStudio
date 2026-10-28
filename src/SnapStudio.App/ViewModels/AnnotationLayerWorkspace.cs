@@ -284,6 +284,7 @@ internal sealed class AnnotationLayerWorkspace
         }
 
         var itemsByLayer = new Dictionary<Guid, List<AnnotationOverlayItem>>();
+        var clips = document.Layers.ToDictionary(layer => layer.Id, layer => LayerClipping.GetRectangles(layer, document.SourceImage.Width, document.SourceImage.Height));
         var overlays = new List<AnnotationOverlayItem>();
         AnnotationObject[] annotations = DocumentLayers.InPaintOrder(document).ToArray();
         var retainedIds = annotations.Select(annotation => annotation.Id).ToHashSet();
@@ -297,7 +298,7 @@ internal sealed class AnnotationLayerWorkspace
                 selectedAnnotationIds.Contains(annotation.Id) ? annotation.Id : null,
                 index < annotations.Length - 1 && annotations[index + 1].LayerId == annotation.LayerId,
                 index > 0 && annotations[index - 1].LayerId == annotation.LayerId,
-                showTransformHandles);
+                showTransformHandles, annotation.LayerId is Guid clipLayer ? clips.GetValueOrDefault(clipLayer) : null);
             if (!_objects.TryGetValue(annotation.Id, out AnnotationOverlayItem? item))
                 _objects[annotation.Id] = item = next;
             else item.UpdateFrom(next);

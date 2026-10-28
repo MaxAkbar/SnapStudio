@@ -11,6 +11,8 @@ public sealed class UpdateDocumentRasterCommand : IEditCommand
     private readonly List<DestructiveEditOperation> _beforeOperations;
     private readonly ImageAsset _beforeSourceImage;
     private readonly string _displayName;
+    private readonly List<AnnotationLayer>? _beforeLayers;
+    private readonly List<AnnotationLayer>? _afterLayers;
 
     public UpdateDocumentRasterCommand(
         ImageAsset beforeSourceImage,
@@ -19,7 +21,9 @@ public sealed class UpdateDocumentRasterCommand : IEditCommand
         IReadOnlyCollection<AnnotationObject> afterAnnotations,
         IReadOnlyCollection<DestructiveEditOperation> beforeOperations,
         IReadOnlyCollection<DestructiveEditOperation> afterOperations,
-        string displayName)
+        string displayName,
+        IReadOnlyCollection<AnnotationLayer>? beforeLayers = null,
+        IReadOnlyCollection<AnnotationLayer>? afterLayers = null)
     {
         ArgumentNullException.ThrowIfNull(beforeAnnotations);
         ArgumentNullException.ThrowIfNull(afterAnnotations);
@@ -34,6 +38,8 @@ public sealed class UpdateDocumentRasterCommand : IEditCommand
         _beforeOperations = [.. beforeOperations];
         _afterOperations = [.. afterOperations];
         _displayName = displayName;
+        _beforeLayers = beforeLayers?.Select(LayerClipping.Clone).ToList();
+        _afterLayers = afterLayers?.Select(LayerClipping.Clone).ToList();
     }
 
     public string DisplayName => _displayName;
@@ -44,6 +50,7 @@ public sealed class UpdateDocumentRasterCommand : IEditCommand
         cancellationToken.ThrowIfCancellationRequested();
 
         document.SourceImage = _afterSourceImage;
+        if (_afterLayers is not null) document.Layers = _afterLayers.Select(LayerClipping.Clone).ToList();
         document.Annotations = CloneAnnotations(_afterAnnotations);
         document.DestructiveOperations = [.. _afterOperations];
 
@@ -56,6 +63,7 @@ public sealed class UpdateDocumentRasterCommand : IEditCommand
         cancellationToken.ThrowIfCancellationRequested();
 
         document.SourceImage = _beforeSourceImage;
+        if (_beforeLayers is not null) document.Layers = _beforeLayers.Select(LayerClipping.Clone).ToList();
         document.Annotations = CloneAnnotations(_beforeAnnotations);
         document.DestructiveOperations = [.. _beforeOperations];
 

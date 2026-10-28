@@ -1041,6 +1041,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     public bool IsSelectionToolActive { get; private set; } = true;
     public bool IsMarqueeToolActive => IsSelectionToolActive && _isMarqueeTool;
     public bool IsMoveToolActive => IsSelectionToolActive && !_isMarqueeTool;
+    public bool CanManipulateCanvasObjects => !IsMarqueeToolActive && (IsMoveToolActive || IsStampToolActive || ActiveAnnotationKind != AnnotationKind.Fill);
     private bool _isMarqueeTool = true;
 
     public bool CanAddActiveAnnotation => HasCurrentDocument && !IsSelectionToolActive && !IsStampToolActive && !IsPerspectiveRectangleToolActive && !IsPerspectiveLineToolActive
@@ -3390,12 +3391,12 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         if (IsPerspectiveRectangleToolActive)
         {
             var rectangle = CreatePerspectiveRectangleAnnotation(start, end, bypassPerspectiveSnapping);
-            return rectangle is null ? null : AnnotationOverlayItem.FromAnnotation(rectangle, _canvasViewport.Zoom, null);
+            return rectangle is null ? null : CreateLayerPreview(rectangle);
         }
         AnnotationObject annotation = CreateAnnotation(_currentDocument, ActiveAnnotationKind,
             new RectD(start.X, start.Y, end.X - start.X, end.Y - start.Y));
         if (annotation.Kind == AnnotationKind.Text) placementGuides = SnapNewObjectPlacement(annotation, bypassPerspectiveSnapping);
-        return AnnotationOverlayItem.FromAnnotation(annotation, _canvasViewport.Zoom, null);
+        return CreateLayerPreview(annotation);
     }
 
     public AnnotationOverlayItem? CreateAnnotationEditPreview(Guid annotationId, RectD sourceBounds)
@@ -3415,7 +3416,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
         if (annotation.Kind == AnnotationKind.Text && TextSizeChanged(annotation.Bounds, sourceBounds))
             (preview.Bounds, preview.Style) = TextAnnotationLayout.Resize(annotation, sourceBounds);
-        return AnnotationOverlayItem.FromAnnotation(preview, _canvasViewport.Zoom, null);
+        return CreateLayerPreview(preview);
     }
 
     public RectD? CreateEditedAnnotationBounds(
@@ -3688,7 +3689,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
+        PixelSelection? pixelSelection = SourcePixelSelection;
         _annotationSelection.Clear();
+        if (pixelSelection is not null) _annotationSelection.SetPixelSelection(pixelSelection);
         ApplyAnnotationToolDefaultsWhenUnselected();
         RefreshAnnotationOverlays();
         NotifyEditorStateChanged();
@@ -4017,7 +4020,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                     afterAnnotations,
                     beforeOperations,
                     afterOperations,
-                    "Crop Document"),
+                    "Crop Document", _currentDocument.Layers,
+                    LayerClipping.Transform(_currentDocument.Layers, -cropBounds.X, -cropBounds.Y, 1, 1, nextImage.Width, nextImage.Height)),
                 cancellationToken)
             .ConfigureAwait(true);
 
@@ -4095,7 +4099,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                     afterAnnotations,
                     beforeOperations,
                     afterOperations,
-                    "Resize Document"),
+                    "Resize Document", _currentDocument.Layers,
+                    LayerClipping.Transform(_currentDocument.Layers, 0, 0, scaleX, scaleY, nextImage.Width, nextImage.Height)),
                 cancellationToken)
             .ConfigureAwait(true);
 
@@ -5491,7 +5496,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             _canvasViewport.Zoom,
             _annotationSelection.SelectedAnnotationIds,
             _canvasViewport.HasSource,
-            showTransformHandles: IsMoveToolActive);
+            showTransformHandles: CanManipulateCanvasObjects);
+
+        OnPropertyChanged(nameof(CanManipulateCanvasObjects));
 
         OnPropertyChanged(nameof(AnnotationOverlays));
         OnPropertyChanged(nameof(AnnotationLayerCount));
@@ -5543,6 +5550,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     private void NotifyEditorStateChanged()
     {
+        NotifyLayerSelectionChanged();
         NotifyAnnotationStyleControlsChanged();
         OnPropertyChanged(nameof(CanAddActiveAnnotation));
         OnPropertyChanged(nameof(CanUndo));
@@ -5575,6 +5583,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         AnnotationCornerRadius = annotation.Style.CornerRadius;
         AnnotationOpacity = annotation.Style.Opacity;
         AnnotationPattern = annotation.Style.Pattern;
+        _annotationCustomPattern = annotation.Style.CustomPattern;
         _annotationDesignFill = annotation.Style.Fill;
         SyncAnnotationFontFromSelection();
         if (annotation.Kind == AnnotationKind.Text)
@@ -5587,7 +5596,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             SelectAnnotationColor(annotation.Style.Fill);
         }
 
-        AnnotationToolIndex = annotation.Kind switch
+        if (IsSelectionToolActive) AnnotationToolIndex = annotation.Kind switch
         {
             AnnotationKind.Ellipse => 1,
             AnnotationKind.Line => 2,
@@ -6111,7 +6120,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         ColorRgba color = ResolveStyleColor();
         double opacity = ResolveAnnotationOpacity(annotationKind);
 
-        return annotationKind switch
+        var style = annotationKind switch
         {
             AnnotationKind.Vector => new AnnotationStyle(ColorRgba.Transparent, ColorRgba.Transparent, ColorRgba.Black, 1, opacity),
             AnnotationKind.Fill => new AnnotationStyle(ColorRgba.Transparent, color, ColorRgba.Black, 1, opacity),
@@ -6141,8 +6150,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 AnnotationStrokeThickness,
                 opacity,
                 annotationKind == AnnotationKind.Rectangle ? AnnotationCornerRadius : 0)
-            { Pattern = AnnotationPattern }
+            { Pattern = AnnotationPattern, CustomPattern = AnnotationPattern == StrokePattern.Custom ? _annotationCustomPattern : null }
         };
+        return style with { PerspectiveTargets = _defaultPerspectiveTargets };
     }
 
     private AnnotationStyle CreateUpdatedStyle(
@@ -6175,6 +6185,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             {
                 Stroke = color,
                 Pattern = AnnotationPattern,
+                CustomPattern = AnnotationPattern == StrokePattern.Custom ? _annotationCustomPattern : null,
                 StrokeThickness = AnnotationStrokeThickness,
                 Opacity = AnnotationOpacity,
                 CornerRadius = annotationKind == AnnotationKind.Rectangle

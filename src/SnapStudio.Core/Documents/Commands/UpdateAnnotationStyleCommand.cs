@@ -28,6 +28,8 @@ public sealed class UpdateAnnotationStyleCommand : IEditCommand
         ArgumentNullException.ThrowIfNull(document);
         cancellationToken.ThrowIfCancellationRequested();
 
+        CustomLinePattern.ValidateStyle(_after);
+        PerspectiveTargetFilter.Validate(_after.PerspectiveTargets);
         FindAnnotation(document).Style = _after;
         return ValueTask.CompletedTask;
     }

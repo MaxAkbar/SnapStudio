@@ -153,6 +153,7 @@ public sealed partial class ShellViewModel
         StampDefinition selected = _activeStamp;
         AnnotationObject stamp = StampCatalog.Place(selected, _canvasViewport.ToSourcePoint(displayPoint),
             new(document.SourceImage.Width, document.SourceImage.Height), StampSize);
+        stamp.Style = stamp.Style with { PerspectiveTargets = _defaultPerspectiveTargets };
         SnapNewObjectPlacement(stamp, bypassPerspectiveSnapping);
         if (!_layerWorkspace.TryAssignActiveLayer(document, stamp)) { StatusText = "Show the selected layer before placing stamps."; return; }
         await _annotationEditor.AddAsync(document, stamp, token);

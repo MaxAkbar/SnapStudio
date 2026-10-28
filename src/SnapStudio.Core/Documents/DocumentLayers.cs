@@ -56,7 +56,7 @@ public static class DocumentLayers
             }
         }
 
-        if (document.SchemaVersion is 2 or 3 or 4 or 5 or 6 or 7)
+        if (document.SchemaVersion is 2 or 3 or 4 or 5 or 6 or 7 or 8 or 9 or 10)
         {
             document.SchemaVersion = CaptureDocument.CurrentSchemaVersion;
         }
@@ -86,6 +86,7 @@ public static class DocumentLayers
             {
                 throw new InvalidDataException("The document contains a missing, empty, or duplicate layer ID.");
             }
+            LayerClipping.Validate(layer, document.SourceImage.Width, document.SourceImage.Height);
         }
 
         var annotationIds = new HashSet<Guid>();
@@ -98,6 +99,8 @@ public static class DocumentLayers
 
             if (annotation.Style is null || !Enum.IsDefined(annotation.Style.Pattern))
                 throw new InvalidDataException("The annotation stroke pattern is invalid.");
+            CustomLinePattern.ValidateStyle(annotation.Style);
+            PerspectiveTargetFilter.Validate(annotation.Style.PerspectiveTargets);
 
             if (annotation.LayerId is not Guid layerId || !layerIds.Contains(layerId))
             {

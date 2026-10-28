@@ -46,6 +46,8 @@ public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(annotation);
+        CustomLinePattern.ValidateStyle(annotation.Style);
+        PerspectiveTargetFilter.Validate(annotation.Style.PerspectiveTargets);
         if (annotation.Id == Guid.Empty)
         {
             throw new InvalidDataException("The annotation ID cannot be empty.");

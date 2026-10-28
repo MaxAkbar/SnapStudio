@@ -42,14 +42,7 @@ public static class CaptureDocumentWorkspaceEditor
             SourceImage = source.SourceImage,
             Metadata = new DocumentMetadata(default, default, properties),
             Annotations = CloneAnnotations(source.Annotations),
-            Layers = source.Layers.Select(layer => new AnnotationLayer
-            {
-                Id = layer.Id,
-                Name = layer.Name,
-                ColorLabel = layer.ColorLabel,
-                CustomColor = layer.CustomColor,
-                IsVisible = layer.IsVisible
-            }).ToList(),
+            Layers = source.Layers.Select(LayerClipping.Clone).ToList(),
             DestructiveOperations = CloneDestructiveOperations(source.DestructiveOperations),
             ExportSettings = source.ExportSettings
         };

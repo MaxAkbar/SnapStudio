@@ -50,6 +50,11 @@ public sealed partial class MainPage
         var defaults = new Button { Content = kind == AnnotationKind.Vector ? "Default shape" : "Default / solid", HorizontalAlignment = HorizontalAlignment.Stretch };
         defaults.Click += (_, _) => { HideToolDesignDrawer(); ViewModel.UseDefaultToolDesign(kind); ShowActiveToolInspector(); UpdateBindingsFromViewModel(); CanvasScrollViewer.Focus(FocusState.Programmatic); };
         content.Children.Add(defaults);
+        if (ToolDesigns.SupportsPattern(kind))
+        {
+            var patterns = new Button { Content = "Custom line patterns…", HorizontalAlignment = HorizontalAlignment.Stretch };
+            patterns.Click += (_, _) => { HideToolDesignDrawer(); SelectCanvasTool(ViewModels.ShellViewModel.ToolIndex(kind)); ShowStrokePatternPicker(anchor); }; content.Children.Add(patterns);
+        }
         if (kind == AnnotationKind.Line)
         {
             var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
@@ -193,7 +198,7 @@ public sealed partial class MainPage
                 initial = initial with { StrokeThickness = 24, Text = initial.Stroke };
             var name = new TextBox { Header = "Design name", Text = existing?.Name ?? $"{ToolName(kind)} design", MaxLength = 80 };
             var tool = new ComboBox { Header = "Base tool", ItemsSource = DesignKinds.Where(item => item != AnnotationKind.Vector).Select(ToolName).ToArray(), SelectedIndex = ViewModels.ShellViewModel.ToolIndex(kind), HorizontalAlignment = HorizontalAlignment.Stretch };
-            var pattern = new ComboBox { Header = "Line style", ItemsSource = new[] { "Solid", "Dashed", "Dotted", "Dash dot" }, SelectedIndex = (int)initial.Pattern, HorizontalAlignment = HorizontalAlignment.Stretch };
+            var pattern = new ComboBox { Header = "Line style", ItemsSource = new[] { "Solid", "Dashed", "Dotted", "Dash dot", "Custom SVG" }, SelectedIndex = (int)initial.Pattern, HorizontalAlignment = HorizontalAlignment.Stretch };
             var width = new TextBox { Header = "Stroke width", Text = initial.StrokeThickness.ToString(CultureInfo.CurrentCulture), InputScope = new InputScope { Names = { new InputScopeName(InputScopeNameValue.Number) } } };
             var corners = new TextBox { Header = "Corner radius", Text = initial.CornerRadius.ToString(CultureInfo.CurrentCulture) };
             var opacity = new Slider { Header = "Opacity", Minimum = 0.1, Maximum = 1, StepFrequency = 0.05, Value = initial.Opacity };
@@ -225,7 +230,7 @@ public sealed partial class MainPage
                     ColorRgba foreground = hasColor ? ParseDesignColor(color.Text) : ColorRgba.Transparent;
                     var style = new AnnotationStyle(stroked ? foreground : ColorRgba.Transparent, shape ? ParseDesignColor(fill.Text) : selected is AnnotationKind.Fill or AnnotationKind.Highlight ? foreground : ColorRgba.Transparent,
                         text ? foreground : ColorRgba.Black, size, opacity.Value, radius)
-                    { Pattern = (StrokePattern)pattern.SelectedIndex, FontFamily = font.SelectedItem as string ?? AnnotationStyle.DefaultFontFamily };
+                    { Pattern = (StrokePattern)pattern.SelectedIndex, CustomPattern = pattern.SelectedIndex == (int)StrokePattern.Custom ? initial.CustomPattern : null, FontFamily = font.SelectedItem as string ?? AnnotationStyle.DefaultFontFamily };
                     result = ToolDesigns.Validate(new(id, name.Text, selected, style));
                     string proposedName = result.Name;
                     if (ViewModel.SavedToolDesigns.Any(item => item.Id != id && item.Kind == selected && item.Name.Equals(proposedName, StringComparison.OrdinalIgnoreCase))) throw new InvalidDataException("A design with this name already exists for this tool.");
@@ -316,6 +321,7 @@ public sealed partial class MainPage
     private async void AnnotationPattern_SelectionChanged(object sender, SelectionChangedEventArgs args)
     {
         if (ShouldIgnoreControlEvent() || sender is not ComboBox { SelectedIndex: >= 0 } combo || combo.SelectedIndex == ViewModel.AnnotationPatternIndex) return;
+        if (combo.SelectedIndex == (int)StrokePattern.Custom) { ShowStrokePatternPicker(combo); return; }
         await ViewModel.UpdateAnnotationPatternAsync(combo.SelectedIndex, CancellationToken.None); UpdateBindingsFromViewModel();
     }
 }

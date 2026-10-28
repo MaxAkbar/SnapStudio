@@ -51,6 +51,12 @@ public sealed partial class MainPage
     private void ShowPixelSelectionContextMenu(Point position)
     {
         var menu = new MenuFlyout();
+        menu.Items.Add(new MenuFlyoutItem { Text = ViewModel.SelectionLayerLabel, IsEnabled = false });
+        var mask = new MenuFlyoutItem { Text = "Add layer mask", Tag = "Mask", IsEnabled = ViewModel.CanApplyLayerSelection };
+        mask.Click += LayerSelectionAction_Click; menu.Items.Add(mask);
+        var crop = new MenuFlyoutItem { Text = "Crop layer to selection", Tag = "Crop", IsEnabled = ViewModel.CanApplyLayerSelection };
+        crop.Click += LayerSelectionAction_Click; menu.Items.Add(crop);
+        menu.Items.Add(new MenuFlyoutSeparator());
         var copy = new MenuFlyoutItem { Text = "Copy selection", KeyboardAcceleratorTextOverride = "Ctrl+C" };
         copy.Click += async (_, _) => await CopyCurrentDocumentAsync(CancellationToken.None);
         menu.Items.Add(copy);

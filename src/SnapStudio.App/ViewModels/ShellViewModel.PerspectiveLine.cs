@@ -29,7 +29,7 @@ public sealed partial class ShellViewModel
         if (_currentDocument is null || !ObjectSnappingEnabled || !IsPerspectiveGridSnapEnabled || bypass)
             return new([start, end], []);
         return PerspectiveCurveDrawing.Draw(start, end, new(0, 0, _currentDocument.SourceImage.Width, _currentDocument.SourceImage.Height),
-            CanvasGridPerspective, CanvasZoom, CanvasZoom, direction);
+            CanvasGridPerspective, CanvasZoom, CanvasZoom, direction, _defaultPerspectiveTargets);
     }
 
     private AnnotationObject? CreatePerspectiveLineAnnotation(PerspectiveCurveDrawingResult drawing)
@@ -45,7 +45,7 @@ public sealed partial class ShellViewModel
     {
         if (_currentDocument is null || !_canvasViewport.HasSource) return null;
         var annotation = CreatePerspectiveLineAnnotation(drawing);
-        return annotation is null ? null : AnnotationOverlayItem.FromAnnotation(annotation, CanvasZoom, null);
+        return annotation is null ? null : CreateLayerPreview(annotation);
     }
 
     public async Task AddPerspectiveLineAsync(PerspectiveCurveDrawingResult drawing, CancellationToken cancellationToken)

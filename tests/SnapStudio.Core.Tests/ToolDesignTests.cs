@@ -39,7 +39,7 @@ public sealed class ToolDesignTests
     {
         using var workspace = TemporaryWorkspace.Create();
         string path = Path.Combine(workspace.Path, "designs.json");
-        foreach (string json in new[] { "{\"schemaVersion\":3,\"designs\":[]}", "{\"schemaVersion\":1,\"designs\":null}" })
+        foreach (string json in new[] { JsonSerializer.Serialize(new { schemaVersion = ToolDesignPack.CurrentSchemaVersion + 1, designs = Array.Empty<ToolDesign>() }), "{\"schemaVersion\":1,\"designs\":null}" })
         {
             File.WriteAllText(path, json);
             await Assert.ThrowsExactlyAsync<InvalidDataException>(() => JsonToolDesignStore.ReadPackAsync(path, CancellationToken.None));

@@ -49,6 +49,8 @@ The release runs on **Windows 11 x64** and includes .NET and the Windows App SDK
 
 **Copy only part of an image:** make a pixel selection first. Areas outside the selected shape stay transparent. To copy the whole edited image, clear the selection with **Ctrl+D**.
 
+In source builds, right-click a pixel selection for **Add layer mask**, **Crop layer to selection**, or **Fill selection** (**Shift+F5**). Masks keep the selected shape; layer crops keep its bounding rectangle. They affect the active annotation or pasted image layer and preserve the canvas size and original artwork. Right-click a layer to manage its mask or reset its crop. Drag inside a selection to move only its outline.
+
 In source builds, SnapStudio minimizes before region selection or screen capture so its window stays out of the screenshot. Window and display choices remain visible until you choose a target. The workspace returns after the capture completes, is cancelled, or fails.
 
 ## A workspace that grows with your work
@@ -63,9 +65,12 @@ When you need more than a quick arrow:
 - Place reusable symbols, status labels, and your own SVG artwork with **Stamps** (**S**).
 - Add tags such as `Design` or `Bug` and find them later with searches like `#Design`.
 - Choose **Dark**, **Light**, or **Use system setting** in **Settings → Appearance**.
+- In source builds, drawing tools can also edit existing objects: hover to see an outline, click or drag to select and move, and drag the selected object's handles to resize. This works for shapes, text, strokes, images, stamps, and perspective objects in both editors. Your drawing tool stays active. Hold **Ctrl** to draw or place an object over another. On the main canvas, **M** keeps pixel selection and **Fill** keeps its fill action.
 - In source builds, use **Snap** beside the zoom controls to align moving objects by their edges or centers. Magenta guides show the match. Hold **Alt** to bypass snapping, or turn Snap off for free positioning.
 - In source builds, turn on **Grid** beside Snap for an editing grid. Its arrow opens settings for **4–512 px** cell spacing and **Snap to grid**. Dense grids use wider visible spacing at low zoom, and snapping follows those lines. The grid stays out of copied and exported images.
 - In source builds, use **Grid** in the SVG designer too, with **4–512 SVG units** of cell spacing and optional grid snapping. The guide stays out of saved and exported SVG artwork.
+- In source builds, **Snap** in the SVG designer aligns edges and centers while moving or resizing objects, groups, and multi-selections. Magenta guides show the match; hold **Alt** for free positioning.
+- In source builds, choose **Custom SVG** under Line style to design a repeating motif in the SVG editor. Reuse it on rectangles, ellipses, lines, arrows, and pen strokes; repeats rotate with curves, with adjustable scale and spacing.
 - Open the **Guides** inspector for **1-, 2-, and 3-point perspective**, **4-point curved**, and **5-point fisheye**, each with its own icon. Right-click the canvas and choose **Grid and perspective…**, or use the grid settings arrow. Settings are shared with the SVG designer.
 - The compact **Guide families** list shows each VP and the base grid, with their color, opacity, density, and visibility. Select a row to edit just that family. Use **Edit points on canvas** to drag the horizon or VPs; off-canvas points stay reachable at the image edges. Exact values and sliders are available too. These controls work in both editors.
 - With perspective snapping on, **lines and arrows follow a perspective direction anywhere**, including between visible guides, while staying straight. Your click fixes the start; the initial drag chooses a direction and locks it for that stroke. Shapes, text, SVG objects, and stamps snap to nearby guides. Turn **Snap** off or hold **Alt** for free drawing and placement.
@@ -78,7 +83,7 @@ When you need more than a quick arrow:
 
 Stamps are available in source builds; they are not included in the 1.0.0 download yet.
 
-Press **S**, choose a stamp, then click the image to place it. Keep clicking for more copies. Search the gallery or filter by category, and set the longest edge in image pixels under **Properties → Stamp size**. Press **V** to move or resize a placed stamp. Each placement supports undo and redo.
+Press **S**, choose a stamp, then click the image to place it. Keep clicking for more copies. Search the gallery or filter by category, and set the longest edge in image pixels under **Properties → Stamp size**. Hover a placed stamp, then click or drag to select, move, or resize it; **V** is still available for Move. Hold **Ctrl** to place overlapping stamps. Each placement supports undo and redo.
 
 The gallery includes 16 symbols and labels. Choose **Import SVG** to add a local SVG file to your saved library. You can also select an SVG object and choose **Save as stamp** in Properties or its right-click menu. Right-click a custom gallery item to rename it, change its category, or remove it. Placed copies keep their artwork even after the library item changes or is removed.
 

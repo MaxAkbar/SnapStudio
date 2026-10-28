@@ -36,11 +36,11 @@ public static class PerspectiveCurveDrawing
     // Follow the continuous guide through the clicked point, including curves between displayed guides.
     // The end is the closest screen-space point on the connected visible guide; the start never moves.
     public static PerspectiveCurveDrawingResult Draw(PointD start, PointD end, RectD view, PerspectiveGridSettings settings,
-        double scaleX = 1, double scaleY = 1, PerspectiveLineFamily? locked = null)
+        double scaleX = 1, double scaleY = 1, PerspectiveLineFamily? locked = null, PerspectiveSnapTargets targets = PerspectiveSnapTargets.All)
     {
         if (!new[] { start.X, start.Y, end.X, end.Y, view.X, view.Y, view.Right, view.Bottom, scaleX, scaleY }.All(double.IsFinite)
             || view.Width <= 0 || view.Height <= 0 || scaleX <= 0 || scaleY <= 0 || !Inside(start, view)) return new([], []);
-        var ruler = PerspectiveLineDrawing.Constrain(start, end, view, settings, scaleX, scaleY, locked);
+        var ruler = PerspectiveLineDrawing.Constrain(start, end, view, settings, scaleX, scaleY, locked, targets);
         var straight = new PerspectiveCurveDrawingResult([ruler.Start, ruler.End], ruler.Guides, ruler.Direction);
         if (ruler.Direction is not (PerspectiveLineFamily.CurvedHorizontal or PerspectiveLineFamily.CurvedVertical)) return straight;
         var s = settings.Normalize();

@@ -79,14 +79,15 @@
  function reproject(snapshots,delta,state,rootMatrix,enabled){
   let stroke=null,valid=0,invalid=0;
   for(const item of snapshots.paths){
-   if(!enabled){item.el.setAttribute('d',item.d);attach(item.el,item.binding);continue;}
+   const targets=(P.targets?.read(item.el)??63)&(state.targets??63);
+   if(!enabled||targets===0){item.el.setAttribute('d',item.d);attach(item.el,item.binding);continue;}
    const start={x:item.worldStart.x+delta.x,y:item.worldStart.y+delta.y},end={x:item.worldEnd.x+delta.x,y:item.worldEnd.y+delta.y};
    let shape=null,list=null,worldStart=null,worldEnd=null,family=item.binding.family,closed=item.binding.kind==='rectangle';
    if(closed){shape=P.rectangle(start,end,state.view,state,item.binding.plane);if(shape){list=shape.outline.slice(0,-1);worldStart=shape.corners[0];worldEnd=shape.corners[2];}}
    else{
     const settings=P.normalize(state),cx=state.view.x+state.view.width*settings.centerX/100,cy=state.view.y+state.view.height*settings.horizon/100,radius=Math.min(state.view.width,state.view.height)*settings.radius/100;
-    const fixedCurve=family===6&&(settings.mode===4||settings.mode===5)||family===5&&settings.mode===5,outside=((start.x-cx)/radius)**2+((start.y-cy)/radius)**2>1+1e-8;
-    if(!fixedCurve||!outside){shape=P.curveLine(start,end,state.view,state,state.scale.x,state.scale.y,family<0?null:family);list=shape.points;worldStart=list[0];worldEnd=list.at(-1);if(family<0)family=shape.direction??family;}
+    const fixedCurve=(family===6&&(settings.mode===4||settings.mode===5)||family===5&&settings.mode===5)&&(P.targets?.allows(targets,family,settings.mode)??true),outside=((start.x-cx)/radius)**2+((start.y-cy)/radius)**2>1+1e-8;
+    if(!fixedCurve||!outside){const retain=family>=0&&(P.targets?.allows(targets,family,settings.mode)??true);shape=P.curveLine(start,end,state.view,state,state.scale.x,state.scale.y,family<0?null:family,targets);list=shape.points;worldStart=list[0];worldEnd=list.at(-1);if(!retain)family=shape.direction??-1;}
    }
    let length=0;if(list)for(let i=1;i<list.length;i++)length+=Math.hypot(list[i].x-list[i-1].x,list[i].y-list[i-1].y);
    const xs=list?.map(p=>p.x)||[],ys=list?.map(p=>p.y)||[];

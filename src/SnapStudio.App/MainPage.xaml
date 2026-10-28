@@ -1113,6 +1113,7 @@
                                 IsTabStop="True"
                                 ContextRequested="CanvasObject_ContextRequested"
                                 PreviewKeyDown="CanvasScrollViewer_PreviewKeyDown"
+                                KeyUp="CanvasScrollViewer_KeyUp"
                                 HorizontalScrollBarVisibility="Auto"
                                 HorizontalScrollMode="Enabled"
                                 SizeChanged="CanvasScrollViewer_SizeChanged"
@@ -1133,6 +1134,7 @@
                                         PointerCanceled="CanvasSurface_PointerCanceled"
                                         PointerCaptureLost="CanvasSurface_PointerCaptureLost"
                                         PointerMoved="CanvasSurface_PointerMoved"
+                                        PointerExited="CanvasSurface_PointerExited"
                                         PointerPressed="CanvasSurface_PointerPressed"
                                         PointerReleased="CanvasSurface_PointerReleased">
                                         <controls:TransparencyBackground/>
@@ -1149,6 +1151,7 @@
                                             Visibility="{x:Bind ViewModel.CanvasGridVisibility, Mode=OneWay}" IsHitTestVisible="False" AutomationProperties.Name="Canvas grid"/>
                                         <Canvas Width="{x:Bind ViewModel.CanvasDisplayWidth, Mode=OneWay}" Height="{x:Bind ViewModel.CanvasDisplayHeight, Mode=OneWay}" IsHitTestVisible="False">
                                             <Canvas x:Name="AnnotationDragPreview"/>
+                                            <Rectangle x:Name="ObjectHoverOutline" Stroke="#4CC2FF" StrokeThickness="1" StrokeDashArray="4,2" Visibility="Collapsed" IsHitTestVisible="False"/>
                                             <Canvas x:Name="ObjectSnapGuides" IsHitTestVisible="False"/>
                                             <Path x:Name="SelectionMarqueeUnderlay" Stroke="White" StrokeThickness="1" Visibility="Collapsed"/>
                                             <Path
@@ -1468,7 +1471,7 @@
                             <controls:AnnotationToolIcon Kind="{x:Bind WorkspaceToolKind, Mode=OneWay}" Width="15" Height="15"/>
                             <TextBlock Text="{x:Bind ViewModel.ActiveAnnotationToolLabel, Mode=OneWay}" FontSize="10" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <TextBlock x:Name="CanvasToolHint"
+                        <TextBlock x:Name="CanvasToolHint" ToolTipService.ToolTip="{x:Bind WorkspaceToolHint, Mode=OneWay}"
                             Text="{x:Bind WorkspaceToolHint, Mode=OneWay}"
                             FontSize="10"
                             VerticalAlignment="Center"
@@ -1630,7 +1633,13 @@
                                             <Button Content="Choose stamp…" Click="StampToolButton_Click" HorizontalAlignment="Stretch"/>
                                             <Button Content="Import SVG stamp…" Click="ImportStamp_Click" HorizontalAlignment="Stretch"/>
                                         </StackPanel>
-                                        <Button Content="Crop selected area" Click="CropButton_Click" HorizontalAlignment="Stretch"
+                                        <StackPanel Spacing="6" Margin="0,4,0,8" Visibility="{x:Bind ViewModel.PixelSelectionActionsVisibility, Mode=OneWay}">
+                                            <TextBlock Text="{x:Bind ViewModel.SelectionLayerLabel, Mode=OneWay}" FontSize="11" TextWrapping="Wrap"/>
+                                            <Button Content="Add layer mask" Tag="Mask" Click="LayerSelectionAction_Click" IsEnabled="{x:Bind ViewModel.CanApplyLayerSelection, Mode=OneWay}" HorizontalAlignment="Stretch"/>
+                                            <Button Content="Crop layer to selection" Tag="Crop" Click="LayerSelectionAction_Click" IsEnabled="{x:Bind ViewModel.CanApplyLayerSelection, Mode=OneWay}" HorizontalAlignment="Stretch"/>
+                                            <TextBlock Text="Mask keeps the selected shape. Layer crop keeps its bounding rectangle. Original artwork stays editable." FontSize="10" TextWrapping="Wrap" Foreground="{ThemeResource SnapMutedBrush}"/>
+                                        </StackPanel>
+                                        <Button Content="Crop whole image to selection" Click="CropButton_Click" HorizontalAlignment="Stretch"
                                             IsEnabled="{x:Bind ViewModel.CanCropToSelection, Mode=OneWay}"
                                             Visibility="{x:Bind ViewModel.AnnotationSelectionCropVisibility, Mode=OneWay}"/>
                                         <StackPanel Spacing="8" Margin="0,6,0,8" Visibility="{x:Bind ViewModel.PixelSelectionControlsVisibility, Mode=OneWay}">
@@ -1836,6 +1845,7 @@
                                                 TextAlignment="Right"
                                                 Grid.Column="2" />
                                         </Grid>
+                                        <Button Click="PerspectiveTargets_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" ToolTipService.ToolTip="Choose vanishing points for selected objects, or set the default for new drawings"><TextBlock Text="{x:Bind ViewModel.PerspectiveTargetsSummary, Mode=OneWay}" TextWrapping="Wrap" FontSize="11"/></Button>
                                         <Grid ColumnSpacing="8" MinHeight="38" Visibility="{x:Bind ViewModel.AnnotationCornerStyleControlsVisibility, Mode=OneWay}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
@@ -1932,8 +1942,14 @@
                                                     SelectedIndex="{x:Bind ViewModel.AnnotationPatternIndex, Mode=OneWay}"
                                                     SelectionChanged="AnnotationPattern_SelectionChanged"
                                                     Visibility="{x:Bind ViewModel.AnnotationPatternControlsVisibility, Mode=OneWay}">
-                                                    <ComboBoxItem Content="Solid"/><ComboBoxItem Content="Dashed"/><ComboBoxItem Content="Dotted"/><ComboBoxItem Content="Dash dot"/>
+                                                    <ComboBoxItem Content="Solid"/><ComboBoxItem Content="Dashed"/><ComboBoxItem Content="Dotted"/><ComboBoxItem Content="Dash dot"/><ComboBoxItem Content="Custom SVG"/>
                                                 </ComboBox>
+                                                <Button Content="Choose / design SVG pattern…" Click="CustomStrokePicker_Click" HorizontalAlignment="Stretch" Visibility="{x:Bind ViewModel.AnnotationPatternControlsVisibility, Mode=OneWay}"/>
+                                                <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.CustomStrokeSettingsVisibility, Mode=OneWay}">
+                                                    <TextBlock Text="{x:Bind ViewModel.CustomStrokeName, Mode=OneWay}" TextWrapping="Wrap"/>
+                                                    <NumberBox Header="Pattern scale (%)" Tag="Scale" Minimum="10" Maximum="1000" Value="{x:Bind ViewModel.CustomStrokeScalePercent, Mode=OneWay}" ValueChanged="CustomStrokeSettings_ValueChanged"/>
+                                                    <NumberBox Header="Pattern spacing (%)" Tag="Spacing" Minimum="10" Maximum="1000" Value="{x:Bind ViewModel.CustomStrokeSpacingPercent, Mode=OneWay}" ValueChanged="CustomStrokeSettings_ValueChanged"/>
+                                                </StackPanel>
                                                 <ComboBox
                                                     AutomationProperties.HelpText="Choose whether rectangle annotations use sharp or rounded corners."
                                                     AutomationProperties.Name="Rectangle corner style"
@@ -2250,6 +2266,9 @@
                                                                     <SymbolIcon Symbol="Edit"/>
                                                                 </MenuFlyoutItem.Icon>
                                                             </MenuFlyoutItem>
+                                                            <MenuFlyoutItem Text="{x:Bind MaskToggleText, Mode=OneWay}" Tag="ToggleMask" DataContext="{x:Bind}" IsEnabled="{x:Bind HasLayerMask, Mode=OneWay}" Click="LayerSelectionAction_Click"/>
+                                                            <MenuFlyoutItem Text="Remove layer mask" Tag="RemoveMask" DataContext="{x:Bind}" IsEnabled="{x:Bind HasLayerMask, Mode=OneWay}" Click="LayerSelectionAction_Click"/>
+                                                            <MenuFlyoutItem Text="Reset layer crop" Tag="ResetCrop" DataContext="{x:Bind}" IsEnabled="{x:Bind HasLayerCrop, Mode=OneWay}" Click="LayerSelectionAction_Click"/>
                                                             <MenuFlyoutItem
                                                                 Text="Move up"
                                                                 DataContext="{x:Bind}"
