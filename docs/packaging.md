@@ -22,7 +22,7 @@ The script:
 Default output:
 
 ```text
-artifacts\packages\SnapStudio_1.0.0.0_x64.msix
+artifacts\packages\SnapStudio_1.1.0.0_x64.msix
 artifacts\msix\layout\x64\
 artifacts\msix\verify\x64\
 ```
@@ -47,10 +47,10 @@ portable publish, and MSIX output. Keep `index.html`, `help.css`, and `help.js`
 together. The Help viewer and SVG designer require the Microsoft Edge WebView2
 Runtime on the destination PC; it is not bundled in the portable ZIP.
 
-Include `LICENSE` and `docs\privacy.md` in the distribution, then ZIP the entire publish directory as `SnapStudio-1.0.0-win-x64-portable.zip`. Users must extract all files before running `SnapStudio.App.exe`. This release is unsigned and uses the normal local Windows profile for captures and settings. OCR, scrolling capture, and screen recording remain experimental and disabled by default.
+Include `LICENSE` and `docs\privacy.md` in the distribution, then ZIP the entire publish directory as `SnapStudio-1.1.0-win-x64-portable.zip`. Users must extract all files before running `SnapStudio.App.exe`. This release is unsigned and uses the normal local Windows profile for captures and settings. OCR, scrolling capture, and screen recording remain experimental and disabled by default.
 
-The stable GitHub release is tagged `v1.0.0` and is published with the prerelease
-flag off. The additional `SnapStudio_1.0.0.0_x64.msix` is an unsigned,
+The stable GitHub release is tagged `v1.1.0` and is published with the prerelease
+flag off. The additional `SnapStudio_1.1.0.0_x64.msix` is an unsigned,
 framework-dependent package for packaging evaluation; it needs a trusted signing
 certificate and the matching runtimes before installation. The portable ZIP is
 the normal download. Microsoft Store certification and signed distribution are
@@ -92,7 +92,7 @@ For a Store-identity package smoke after reserving the app in Partner Center:
   -Configuration Release `
   -PackageIdentityName "<Partner Center package identity name>" `
   -PackagePublisher "<Partner Center package publisher>" `
-  -PackageVersion "1.0.0.0" `
+  -PackageVersion "1.1.0.0" `
   -RequireStoreIdentity
 ```
 
@@ -136,7 +136,7 @@ The signing certificate subject must match the package publisher. The default pu
 Install a signed package:
 
 ```powershell
-Add-AppxPackage -Path .\artifacts\packages\SnapStudio_1.0.0.0_x64.msix
+Add-AppxPackage -Path .\artifacts\packages\SnapStudio_1.1.0.0_x64.msix
 ```
 
 If a self-signed development certificate is used, import the public certificate into `Cert:\CurrentUser\TrustedPeople` before installing the package.
