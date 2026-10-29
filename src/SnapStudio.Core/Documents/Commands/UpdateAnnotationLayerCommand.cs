@@ -6,6 +6,7 @@ public sealed class UpdateAnnotationLayerCommand(
     Guid afterLayerId) : IEditCommand
 {
     private int _originalIndex = -1;
+    private Guid? _originalGroup;
 
     public string DisplayName => "Move Object to Layer";
 
@@ -29,7 +30,7 @@ public sealed class UpdateAnnotationLayerCommand(
     {
         ArgumentNullException.ThrowIfNull(document);
         cancellationToken.ThrowIfCancellationRequested();
-        if (document.Layers.All(layer => layer.Id != layerId))
+        if (document.Layers.All(layer => layer.Id != layerId || layer.IsFolder))
         {
             throw new InvalidOperationException("The target layer could not be found.");
         }
@@ -44,10 +45,12 @@ public sealed class UpdateAnnotationLayerCommand(
         if (moveToFront)
         {
             _originalIndex = currentIndex;
+            _originalGroup = annotation.GroupId;
         }
 
         document.Annotations.RemoveAt(currentIndex);
         annotation.LayerId = layerId;
+        annotation.GroupId = moveToFront ? null : _originalGroup;
         int insertIndex = moveToFront
             ? document.Annotations.Count
             : Math.Min(_originalIndex, document.Annotations.Count);

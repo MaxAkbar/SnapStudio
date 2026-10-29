@@ -71,8 +71,9 @@ public sealed partial class ShellViewModel
             copies.Add(copy);
         }
         if (!boundObject) return false;
+        var groups = LayerStructure.DuplicateGroups(document, originals, copies);
         await _editCommandStack.ExecuteAsync(document, new CompositeEditCommand("Duplicate Objects",
-            copies.Select(a => (IEditCommand)new AddAnnotationCommand(a)).ToArray()), token).ConfigureAwait(true);
+            groups.Select(group => (IEditCommand)new AddObjectGroupCommand(group)).Concat(copies.Select(a => (IEditCommand)new AddAnnotationCommand(a))).ToArray()), token).ConfigureAwait(true);
         _annotationSelection.SelectMany(document, copies.Select(a => a.Id));
         RefreshSelection();
         await SaveCurrentDocumentAsync("Objects duplicated.", token).ConfigureAwait(true);

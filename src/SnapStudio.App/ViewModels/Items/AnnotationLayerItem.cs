@@ -18,12 +18,15 @@ public sealed class AnnotationLayerItem : INotifyPropertyChanged
     public AnnotationLayerItem(AnnotationLayer layer) => Id = layer.Id;
     public event PropertyChangedEventHandler? PropertyChanged;
     public Guid Id { get; }
+    public bool IsFolder { get; private set; }
+    public Guid? FolderId { get; private set; }
     public string Name => _state.Name;
     public ObservableCollection<AnnotationOverlayItem> Objects { get; } = [];
 
     internal void Update(AnnotationLayer layer, IReadOnlyList<AnnotationOverlayItem> objects, bool isActive,
         bool canMoveSelectedHere, bool isExpanded, bool canMoveUp, bool canMoveDown, bool canDelete)
     {
+        IsFolder = layer.IsFolder; FolderId = layer.FolderId;
         var next = new State(layer.Name, layer.IsVisible, layer.ColorLabel, layer.CustomColor,
             isActive, canMoveSelectedHere, isExpanded, canMoveUp, canMoveDown, canDelete, layer.Mask, layer.CropBounds);
         bool changed = next != _state || Objects.Count != objects.Count;
@@ -83,7 +86,7 @@ public sealed class AnnotationLayerItem : INotifyPropertyChanged
 
     public string MoveAutomationName => $"Move selected object to {Name}";
 
-    public bool CanMoveSelectedHere => _state.CanMoveSelectedHere && _state.IsVisible;
+    public bool CanMoveSelectedHere => !IsFolder && _state.CanMoveSelectedHere && _state.IsVisible;
 
     public Visibility MoveVisibility => CanMoveSelectedHere
         ? Visibility.Visible

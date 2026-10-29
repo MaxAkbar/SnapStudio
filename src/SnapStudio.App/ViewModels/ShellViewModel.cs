@@ -291,11 +291,10 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public ObservableCollection<AnnotationLayerItem> AnnotationLayers => _layerWorkspace.Layers;
 
-    public string AnnotationLayerCount => AnnotationLayers.Count.ToString(CultureInfo.InvariantCulture);
+    public string AnnotationLayerCount => AnnotationLayers.Count(layer => !layer.IsFolder).ToString(CultureInfo.InvariantCulture);
 
-    public bool CanDeleteActiveLayer => _currentDocument is { Layers.Count: > 1 }
-        && _layerWorkspace.ActiveLayerId is Guid activeLayerId
-        && _currentDocument.Layers.Any(layer => layer.Id == activeLayerId);
+    public bool CanDeleteActiveLayer => _selectedLayerIds.Count <= 1
+        && TryGetActiveLayerForRemoval(out _, out _, out _);
 
     public Visibility AnnotationLayersEmptyVisibility => AnnotationLayers.Count == 0
         ? Visibility.Visible
@@ -3567,9 +3566,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
+        _selectedLayerIds.Clear();
         if (_annotationSelection.Select(_currentDocument, annotationId))
         {
             _layerWorkspace.SelectAnnotation(GetSelectedAnnotation());
+            RevealTreeObject(GetSelectedAnnotation());
             SyncStyleControlsFromSelectedAnnotation();
             RefreshAnnotationOverlays();
             NotifyEditorStateChanged();
@@ -3580,11 +3581,12 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
     public void ClearAnnotationSelection()
     {
         _pixelSelectionRequestVersion++;
-        if (!HasCanvasSelection)
+        if (!HasCanvasSelection && _selectedLayerIds.Count == 0 && _selectedObjectGroupId is null)
         {
             return;
         }
 
+        _selectedLayerIds.Clear(); _selectedObjectGroupId = null; _treeObjectSelection.Clear();
         _annotationSelection.Clear();
         ApplyAnnotationToolDefaultsWhenUnselected();
         RefreshAnnotationOverlays();
@@ -3690,6 +3692,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         PixelSelection? pixelSelection = SourcePixelSelection;
+        _selectedLayerIds.Clear(); _selectedLayerIds.Add(layerId); _selectedObjectGroupId = null;
         _annotationSelection.Clear();
         if (pixelSelection is not null) _annotationSelection.SetPixelSelection(pixelSelection);
         ApplyAnnotationToolDefaultsWhenUnselected();
@@ -3711,7 +3714,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         layerId = Guid.Empty;
         layerName = string.Empty;
         objectCount = 0;
-        if (_layerWorkspace.ActiveLayerId is not Guid activeLayerId
+        Guid? preferred = _selectedLayerIds.Count == 1 ? _selectedLayerIds.Single() : _layerWorkspace.ActiveLayerId;
+        if (_selectedLayerIds.Count > 1 || preferred is not Guid activeLayerId
             || !TryGetLayerForRemoval(activeLayerId, out layerName, out objectCount))
         {
             return false;
@@ -3731,13 +3735,14 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
 
         AnnotationLayer? layer = _currentDocument.Layers.FirstOrDefault(candidate => candidate.Id == layerId);
-        if (layer is null)
+        if (layer is null || !_currentDocument.Layers.Any(other => !other.IsFolder && other.Id != layerId && other.FolderId != layerId))
         {
             return false;
         }
 
         layerName = layer.Name;
-        objectCount = _currentDocument.Annotations.Count(annotation => annotation.LayerId == layer.Id);
+        var descendants = _currentDocument.Layers.Where(other => other.Id == layerId || other.FolderId == layerId).Select(other => other.Id).ToHashSet();
+        objectCount = _currentDocument.Annotations.Count(annotation => annotation.LayerId is Guid id && descendants.Contains(id));
         return true;
     }
 
@@ -3748,10 +3753,16 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
+        if (_selectedLayerIds.Count == 1 && _currentDocument.Layers.Any(layer => layer.Id == _selectedLayerIds.Single() && layer.IsFolder))
+        {
+            await AddTreeLayerAsync(_selectedLayerIds.Single(), cancellationToken); return;
+        }
+
         AnnotationLayer layer = await _layerWorkspace.AddLayerAsync(
             _currentDocument,
             _editCommandStack,
             cancellationToken).ConfigureAwait(true);
+        _selectedLayerIds.Clear(); _selectedLayerIds.Add(layer.Id); _selectedObjectGroupId = null;
         _annotationSelection.Clear();
         await SaveCurrentDocumentAsync($"{layer.Name} added.", cancellationToken).ConfigureAwait(true);
     }
@@ -3824,7 +3835,8 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             return;
         }
 
-        int objectCount = _currentDocument.Annotations.Count(annotation => annotation.LayerId == layerId);
+        var descendants = _currentDocument.Layers.Where(layer => layer.Id == layerId || layer.FolderId == layerId).Select(layer => layer.Id).ToHashSet();
+        int objectCount = _currentDocument.Annotations.Count(annotation => annotation.LayerId is Guid id && descendants.Contains(id));
         bool hadSelection = _annotationSelection.HasSelection;
         bool removed = await _layerWorkspace.RemoveLayerAsync(
             _currentDocument,
@@ -3850,7 +3862,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
 
     public async Task MoveAnnotationInLayerAsync(Guid annotationId, int direction, CancellationToken cancellationToken)
     {
-        if (SelectedAnnotationCount > 1 && SelectedAnnotationIds.Contains(annotationId))
+        if ((SelectedAnnotationCount > 1 || _currentDocument?.ObjectGroups.Count > 0) && SelectedAnnotationIds.Contains(annotationId))
         {
             await ArrangeSelectionAsync(direction, false, cancellationToken);
             return;
@@ -3874,36 +3886,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             .ConfigureAwait(true);
     }
 
-    public async Task MoveSelectedAnnotationToLayerAsync(
-        Guid layerId,
-        CancellationToken cancellationToken)
-    {
-        if (SelectedAnnotationCount > 1)
-        {
-            await EditSelectionAsync((editor, document, ids) => editor.MoveToLayerAsync(document, ids, layerId, cancellationToken), "Objects moved to layer.", cancellationToken);
-            return;
-        }
-        if (_currentDocument is null
-            || _documentRepository is null
-            || _editCommandStack is null
-            || !_annotationSelection.HasSelection)
-        {
-            return;
-        }
-
-        AnnotationLayer? layer = await _layerWorkspace.MoveAnnotationAsync(
-            _currentDocument,
-            GetSelectedAnnotation(),
-            layerId,
-            _editCommandStack,
-            cancellationToken).ConfigureAwait(true);
-        if (layer is null)
-        {
-            return;
-        }
-
-        await SaveCurrentDocumentAsync($"Object moved to {layer.Name}.", cancellationToken).ConfigureAwait(true);
-    }
+    public Task MoveSelectedAnnotationToLayerAsync(Guid layerId, CancellationToken cancellationToken) => MoveTreeObjectsAsync(layerId, cancellationToken);
 
     public async Task ToggleLayerVisibilityAsync(Guid layerId, CancellationToken cancellationToken)
     {
@@ -3925,7 +3908,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         if (nextVisibility == false)
         {
             _annotationSelection.SelectMany(_currentDocument, _currentDocument.Annotations
-                .Where(annotation => SelectedAnnotationIds.Contains(annotation.Id) && annotation.LayerId != layerId).Select(annotation => annotation.Id));
+                .Where(annotation => SelectedAnnotationIds.Contains(annotation.Id) && DocumentLayers.IsEffectivelyVisible(_currentDocument, annotation)).Select(annotation => annotation.Id));
         }
 
         await SaveCurrentDocumentAsync(
@@ -5497,6 +5480,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             _annotationSelection.SelectedAnnotationIds,
             _canvasViewport.HasSource,
             showTransformHandles: CanManipulateCanvasObjects);
+        RefreshLayerTree();
 
         OnPropertyChanged(nameof(CanManipulateCanvasObjects));
 
@@ -5854,6 +5838,12 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         AnnotationObject annotation,
         RectD cropBounds)
     {
+        if (annotation.ClipRegions is not null)
+        {
+            var extent = Normalize(annotation.Bounds);
+            if (extent.Right < cropBounds.X || extent.X > cropBounds.Right || extent.Bottom < cropBounds.Y || extent.Y > cropBounds.Bottom) return null;
+            return CloneAnnotation(annotation, annotation.Bounds with { X = annotation.Bounds.X - cropBounds.X, Y = annotation.Bounds.Y - cropBounds.Y });
+        }
         if (annotation.Kind is AnnotationKind.Pen or AnnotationKind.Fill or AnnotationKind.Image)
         {
             // Keep image, fill and stroke geometry intact; the cropped canvas clips the visible portion.
@@ -5928,6 +5918,7 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
             Id = annotation.Id,
             Kind = annotation.Kind,
             LayerId = annotation.LayerId,
+            GroupId = annotation.GroupId, ClipRegions = annotation.ClipRegions?.ToList(),
             IsVisible = annotation.IsVisible,
             Bounds = bounds,
             Text = annotation.Text,

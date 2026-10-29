@@ -42,7 +42,7 @@ public sealed partial class MainPage
         }
         // Escape first dismisses an open menu, retaining its selected object.
         if (_objectContextMenu is not null || _canvasDragMode != CanvasDragMode.None
-            || !TryHandleApplicationShortcut(args, ViewModel.HasCanvasSelection)) return;
+            || !TryHandleApplicationShortcut(args, ViewModel.HasCanvasSelection || ViewModel.SelectedLayerIds.Count > 0)) return;
         ViewModel.ClearAnnotationSelection();
         UpdateBindingsFromViewModel();
     }
@@ -185,6 +185,10 @@ public sealed partial class MainPage
                 menu.Items.Add(source);
             }
         }
+        AddStructureMenuActions(menu);
+        AddLayerAction(menu, "Cut objects", () => { ViewModel.CutTreeObjects(); return Task.CompletedTask; });
+        var objectGroups = ViewModel.LayerTreeRows.Where(row => row.Kind == LayerTreeRowKind.ObjectGroup && row.IsSelected).ToArray();
+        if (objectGroups.Length == 1) AddLayerAction(menu, "Ungroup objects", () => ViewModel.UngroupTreeRowAsync(objectGroups[0], CancellationToken.None));
         menu.Items.Add(CreateObjectMenuAction("Duplicate", "Ctrl+J", ObjectAction.Duplicate));
         menu.Items.Add(CreateObjectMenuAction(selectedItems.All(candidate => candidate.IsVisible) ? (multiple ? "Hide objects" : "Hide object") : (multiple ? "Show objects" : "Show object"), "Ctrl+H", ObjectAction.ToggleVisibility));
         var arrange = new MenuFlyoutSubItem { Text = "Arrange within layer" };
@@ -194,7 +198,7 @@ public sealed partial class MainPage
         arrange.Items.Add(CreateObjectMenuAction("Send to back", "Ctrl+Shift+PgDn", ObjectAction.Back, selectedItems.Any(candidate => candidate.CanMoveDown)));
         menu.Items.Add(arrange);
         var layers = new MenuFlyoutSubItem { Text = "Move to layer" };
-        foreach (AnnotationLayerItem layer in ViewModel.AnnotationLayers)
+        foreach (AnnotationLayerItem layer in ViewModel.ObjectDestinationLayers)
         {
             var move = new MenuFlyoutItem { Text = layer.Name, IsEnabled = layer.CanMoveSelectedHere };
             Guid id = layer.Id;

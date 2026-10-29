@@ -28,7 +28,7 @@ public sealed class AnnotationSelectionState
         _marqueeBounds = selection.Bounds;
     }
 
-    public bool Select(CaptureDocument document, Guid annotationId)
+    public bool Select(CaptureDocument document, Guid annotationId, bool expandGroup = true)
     {
         ArgumentNullException.ThrowIfNull(document);
 
@@ -39,7 +39,7 @@ public sealed class AnnotationSelectionState
         }
 
         Clear();
-        _selectedIds.Add(annotationId);
+        foreach (var id in expandGroup ? LayerStructure.ExpandObjectGroups(document, [annotationId]) : [annotationId]) _selectedIds.Add(id);
         SelectedAnnotationId = annotationId;
         return true;
     }

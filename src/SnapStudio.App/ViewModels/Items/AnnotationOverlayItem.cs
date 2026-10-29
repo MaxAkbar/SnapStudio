@@ -196,6 +196,7 @@ public sealed class AnnotationOverlayItem : INotifyPropertyChanged
         IReadOnlyList<RectD>? layerClip = null)
     {
         ArgumentNullException.ThrowIfNull(annotation);
+        layerClip = ObjectClipping.Combine(layerClip, ObjectClipping.GetRectangles(annotation));
 
         RectD bounds = annotation.Kind is AnnotationKind.Line or AnnotationKind.Arrow
             ? CreateDirectedDisplayBounds(annotation.Bounds, zoom)

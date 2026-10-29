@@ -131,7 +131,7 @@ public static class PerspectiveObjectBinding
             if (document.Root.Attribute("height") is not null) document.Root.SetAttributeValue("height", N(generated.Bounds.Height));
             projected = new()
             {
-                Id = original.Id, Kind = original.Kind, LayerId = original.LayerId, IsVisible = original.IsVisible,
+                Id = original.Id, Kind = original.Kind, LayerId = original.LayerId, GroupId = original.GroupId, ClipRegions = original.ClipRegions?.ToList(), IsVisible = original.IsVisible,
                 Bounds = generated.Bounds, Text = original.Text, Style = original.Style, Image = original.Image,
                 StrokePoints = [.. original.StrokePoints], FillRectangles = [.. original.FillRectangles],
                 Vector = original.Vector with { Svg = document.ToString(SaveOptions.DisableFormatting) }

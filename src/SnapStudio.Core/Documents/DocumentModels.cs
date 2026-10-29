@@ -28,7 +28,7 @@ public enum DestructiveOperationKind
 
 public sealed class CaptureDocument
 {
-    public const int CurrentSchemaVersion = 11;
+    public const int CurrentSchemaVersion = 12;
 
     public DocumentId Id { get; set; } = DocumentId.New();
 
@@ -41,6 +41,7 @@ public sealed class CaptureDocument
     public List<AnnotationObject> Annotations { get; set; } = [];
 
     public List<AnnotationLayer> Layers { get; set; } = [new AnnotationLayer()];
+    public List<AnnotationObjectGroup> ObjectGroups { get; set; } = [];
 
     public List<DestructiveEditOperation> DestructiveOperations { get; set; } = [];
 
@@ -62,6 +63,9 @@ public sealed class AnnotationObject
     public AnnotationKind Kind { get; set; }
 
     public Guid? LayerId { get; set; }
+    public Guid? GroupId { get; set; }
+    // Relative to the normalized object bounds; retained clips move and resize with merged artwork.
+    public List<RectD>? ClipRegions { get; set; }
 
     public bool IsVisible { get; set; } = true;
 
@@ -109,6 +113,8 @@ public sealed class AnnotationLayer
     public Guid Id { get; set; } = Guid.NewGuid();
 
     public string Name { get; set; } = "Layer 1";
+    public bool IsFolder { get; set; }
+    public Guid? FolderId { get; set; }
 
     public LayerColorLabel ColorLabel { get; set; }
 
@@ -118,6 +124,14 @@ public sealed class AnnotationLayer
 
     public LayerMask? Mask { get; set; }
     public RectD? CropBounds { get; set; }
+}
+
+public sealed class AnnotationObjectGroup
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid LayerId { get; set; }
+    public string Name { get; set; } = "Object group";
+    public bool IsVisible { get; set; } = true;
 }
 
 // Source-coordinate rectangles preserve disjoint selections and holes without rasterizing artwork.

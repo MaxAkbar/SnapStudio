@@ -37,7 +37,7 @@ public static class LayerClipping
 
     public static AnnotationLayer Clone(AnnotationLayer layer) => new()
     {
-        Id = layer.Id, Name = layer.Name, ColorLabel = layer.ColorLabel, CustomColor = layer.CustomColor,
+        Id = layer.Id, Name = layer.Name, IsFolder = layer.IsFolder, FolderId = layer.FolderId, ColorLabel = layer.ColorLabel, CustomColor = layer.CustomColor,
         IsVisible = layer.IsVisible, Mask = layer.Mask?.DeepCopy(), CropBounds = layer.CropBounds
     };
 

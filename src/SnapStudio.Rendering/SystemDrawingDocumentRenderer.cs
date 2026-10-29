@@ -91,7 +91,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             {
                 ConfigureGraphics(graphics);
 
-                foreach (AnnotationLayer layer in document.Layers.Where(layer => layer.IsVisible))
+                foreach (AnnotationLayer layer in LayerStructure.PaintLayers(document).Where(layer => LayerStructure.IsVisible(document, layer)))
                 {
                     GraphicsState state = graphics.Save();
                     try
@@ -104,7 +104,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
                                     (float)(region.Width * scale), (float)(region.Height * scale)));
                             graphics.SetClip(clip, CombineMode.Intersect);
                         }
-                        foreach (AnnotationObject annotation in document.Annotations.Where(item => item.LayerId == layer.Id && item.IsVisible))
+                        foreach (AnnotationObject annotation in LayerStructure.PaintObjects(document, layer.Id).Where(item => DocumentLayers.IsEffectivelyVisible(document, item)))
                         {
                             cancellationToken.ThrowIfCancellationRequested();
                             DrawAnnotation(graphics, outputBitmap, TransformAnnotationForRender(annotation, viewport, scale), scale);
@@ -230,6 +230,7 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             Id = annotation.Id,
             Kind = annotation.Kind,
             LayerId = annotation.LayerId,
+            GroupId = annotation.GroupId, ClipRegions = annotation.ClipRegions?.ToList(),
             IsVisible = annotation.IsVisible,
             Bounds = new RectD(
                 (annotation.Bounds.X - viewport.X) * scale,
@@ -255,6 +256,19 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
         AnnotationObject annotation,
         double scale)
     {
+        if (ObjectClipping.GetRectangles(annotation) is { } regions)
+        {
+            var state = graphics.Save();
+            try
+            {
+                using var clip = new Region(); clip.MakeEmpty();
+                foreach (var r in regions) clip.Union(new RectangleF((float)r.X, (float)r.Y, (float)r.Width, (float)r.Height));
+                graphics.SetClip(clip, CombineMode.Intersect);
+                var unclipped = LayerStructure.Clone(annotation); unclipped.ClipRegions = null; DrawAnnotation(graphics, bitmap, unclipped, scale);
+            }
+            finally { graphics.Restore(state); }
+            return;
+        }
         if (annotation.Style is { Pattern: StrokePattern.Custom, CustomPattern: not null } && (ToolDesigns.SupportsPattern(annotation.Kind) || annotation.Kind == AnnotationKind.Vector))
         {
             var plain = TransformAnnotationForRender(annotation, new(0, 0, 1, 1), 1);

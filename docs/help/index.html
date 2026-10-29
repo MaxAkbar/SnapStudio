@@ -171,14 +171,18 @@
 
     <section id="layers" aria-labelledby="layers-title">
       <h2 id="layers-title">Work with layers</h2>
-      <p>Layers keep groups of objects together. Select a layer to work in it, and use the add button to create another. Expand a layer to select its objects.</p>
+      <p>Layers keep objects together. Select a layer to draw in it, and use the add button to create another. Expand folders, layers, and object groups with the arrow beside their name. Ctrl-click rows to select several; Shift-click selects a range of the same type.</p>
       <ul>
         <li>Right-click a layer to rename it, move it up or down, choose a color label, or delete it. These actions apply to the layer you clicked. Custom color opens a picker with a hex entry.</li>
-        <li>Right-click an object to change its order within the layer or move it to another visible layer.</li>
+        <li><strong>Group selected layers</strong> puts selected layers into one folder. Layers can come from different folders, but folders cannot be grouped or nested. Right-click a folder to add a layer or ungroup it; right-click layers to move them into an existing folder.</li>
+        <li><strong>Group selected objects</strong> creates an object group within one layer. Object groups cannot be nested. Selecting a grouped object on the canvas selects the group; expand the group and select a child row to edit that object individually.</li>
+        <li><strong>Merge selection (keep editable)</strong> combines selected layers, or a mixture of layers and objects, into one editable layer. Objects selected within the same layer merge into one object group. Shapes, text, images, and SVG artwork remain editable; visibility, masks, and crops are retained.</li>
+        <li>Right-click an object or object group to change its order, choose <strong>Move objects to layer</strong>, or <strong>Cut objects</strong>. After cutting, right-click a destination layer and choose <strong>Paste objects here</strong>. Cutting keeps the artwork in place until pasted; moving a child alone removes it from its previous group.</li>
         <li>Hide objects when you want to leave them out of the rendered image without deleting them.</li>
         <li>Use the delete-layer action to remove a selected layer. SnapStudio asks for confirmation if it contains objects; the last remaining layer cannot be deleted.</li>
       </ul>
       <p>Layer changes, object edits, and deleting a layer can be undone with <kbd>Ctrl+Z</kbd> and redone with <kbd>Ctrl+Y</kbd>. Duplicating or deleting several selected objects is one undo step.</p>
+      <p>With the Layers panel focused, use <kbd>Ctrl+G</kbd> to group, <kbd>Ctrl+Shift+G</kbd> to ungroup, <kbd>Ctrl+E</kbd> to merge, and <kbd>Ctrl+X</kbd> / <kbd>Ctrl+V</kbd> to cut and paste objects between layers. Text fields keep their normal shortcuts.</p>
     </section>
 
     <section id="designs" aria-labelledby="designs-title">

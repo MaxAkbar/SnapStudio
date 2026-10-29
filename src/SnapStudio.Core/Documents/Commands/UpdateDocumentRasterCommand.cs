@@ -79,6 +79,8 @@ public sealed class UpdateDocumentRasterCommand : IEditCommand
                 Id = annotation.Id,
                 Kind = annotation.Kind,
                 LayerId = annotation.LayerId,
+                GroupId = annotation.GroupId,
+                ClipRegions = annotation.ClipRegions?.ToList(),
                 IsVisible = annotation.IsVisible,
                 Bounds = annotation.Bounds,
                 Text = annotation.Text,

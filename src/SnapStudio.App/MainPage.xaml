@@ -2230,6 +2230,9 @@
                                         ToolTipService.ToolTip="Delete selected layer">
                                         <controls:WorkspaceIcon Kind="Trash" Width="16" Height="16"/>
                                     </Button>
+                                    <Button Grid.Column="3" Click="LayerTreeActions_Click" AutomationProperties.Name="Layer grouping and merge options" Style="{StaticResource SidebarIconButtonStyle}" ToolTipService.ToolTip="Group, merge, and move selections">
+                                        <FontIcon Glyph="&#xE712;" FontSize="14"/>
+                                    </Button>
                                 </Grid>
                                 <Grid x:Name="LayersSectionContent" Grid.Row="1" MinHeight="0" Margin="10,0,10,8">
                                     <Grid.RowDefinitions>
@@ -2239,12 +2242,15 @@
                                     <ListView
                                         AutomationProperties.Name="Annotation layers"
                                         HorizontalAlignment="Stretch"
-                                        ItemsSource="{x:Bind ViewModel.AnnotationLayers}"
+                                        ItemsSource="{x:Bind ViewModel.LayerTreeRows}"
                                         Padding="0"
                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                         ScrollViewer.HorizontalScrollMode="Disabled"
                                         SelectionMode="None"
-                                        x:Name="WorkspaceLayerList">
+                                        x:Name="WorkspaceLayerList" KeyDown="LayerTree_KeyDown">
+                                        <ListView.ItemContainerTransitions>
+                                            <TransitionCollection/>
+                                        </ListView.ItemContainerTransitions>
                                         <ListView.Resources>
                                             <Thickness x:Key="ExpanderHeaderPadding">0</Thickness>
                                             <Thickness x:Key="ExpanderChevronMargin">0</Thickness>
@@ -2266,246 +2272,20 @@
                                             </Style>
                                         </ListView.ItemContainerStyle>
                                         <ListView.ItemTemplate>
-                                            <DataTemplate x:DataType="items:AnnotationLayerItem">
-                                                <Grid>
-                                                    <Grid.ContextFlyout>
-                                                        <MenuFlyout>
-                                                            <MenuFlyoutItem Text="{x:Bind Name, Mode=OneWay}" IsEnabled="False"/>
-                                                            <MenuFlyoutSeparator/>
-                                                            <MenuFlyoutItem Text="Rename layer…" DataContext="{x:Bind}" Click="RenameLayerMenuItem_Click">
-                                                                <MenuFlyoutItem.Icon>
-                                                                    <SymbolIcon Symbol="Edit"/>
-                                                                </MenuFlyoutItem.Icon>
-                                                            </MenuFlyoutItem>
-                                                            <MenuFlyoutItem Text="{x:Bind MaskToggleText, Mode=OneWay}" Tag="ToggleMask" DataContext="{x:Bind}" IsEnabled="{x:Bind HasLayerMask, Mode=OneWay}" Click="LayerSelectionAction_Click"/>
-                                                            <MenuFlyoutItem Text="Remove layer mask" Tag="RemoveMask" DataContext="{x:Bind}" IsEnabled="{x:Bind HasLayerMask, Mode=OneWay}" Click="LayerSelectionAction_Click"/>
-                                                            <MenuFlyoutItem Text="Reset layer crop" Tag="ResetCrop" DataContext="{x:Bind}" IsEnabled="{x:Bind HasLayerCrop, Mode=OneWay}" Click="LayerSelectionAction_Click"/>
-                                                            <MenuFlyoutItem
-                                                                Text="Move up"
-                                                                DataContext="{x:Bind}"
-                                                                Tag="1"
-                                                                IsEnabled="{x:Bind CanMoveUp, Mode=OneWay}"
-                                                                Click="MoveLayerMenuItem_Click">
-                                                                <MenuFlyoutItem.Icon>
-                                                                    <FontIcon Glyph=""/>
-                                                                </MenuFlyoutItem.Icon>
-                                                            </MenuFlyoutItem>
-                                                            <MenuFlyoutItem
-                                                                Text="Move down"
-                                                                DataContext="{x:Bind}"
-                                                                Tag="-1"
-                                                                IsEnabled="{x:Bind CanMoveDown, Mode=OneWay}"
-                                                                Click="MoveLayerMenuItem_Click">
-                                                                <MenuFlyoutItem.Icon>
-                                                                    <FontIcon Glyph=""/>
-                                                                </MenuFlyoutItem.Icon>
-                                                            </MenuFlyoutItem>
-                                                            <MenuFlyoutSeparator/>
-                                                            <MenuFlyoutSubItem Text="{x:Bind ColorMenuText, Mode=OneWay}">
-                                                                <MenuFlyoutItem Text="None" DataContext="{x:Bind}" Tag="None" Click="LayerColorMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon>
-                                                                        <SymbolIcon Symbol="Clear"/>
-                                                                    </MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                                <MenuFlyoutItem Text="Red" DataContext="{x:Bind}" Tag="Red" Click="LayerColorMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon>
-                                                                        <FontIcon Glyph="" Foreground="#EF7070"/>
-                                                                    </MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                                <MenuFlyoutItem Text="Orange" DataContext="{x:Bind}" Tag="Orange" Click="LayerColorMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon>
-                                                                        <FontIcon Glyph="" Foreground="#F5A95B"/>
-                                                                    </MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                                <MenuFlyoutItem Text="Yellow" DataContext="{x:Bind}" Tag="Yellow" Click="LayerColorMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon>
-                                                                        <FontIcon Glyph="" Foreground="#F0D05D"/>
-                                                                    </MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                                <MenuFlyoutItem Text="Green" DataContext="{x:Bind}" Tag="Green" Click="LayerColorMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon>
-                                                                        <FontIcon Glyph="" Foreground="#71CA96"/>
-                                                                    </MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                                <MenuFlyoutItem Text="Blue" DataContext="{x:Bind}" Tag="Blue" Click="LayerColorMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon>
-                                                                        <FontIcon Glyph="" Foreground="#69AEF5"/>
-                                                                    </MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                                <MenuFlyoutItem Text="Purple" DataContext="{x:Bind}" Tag="Purple" Click="LayerColorMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon>
-                                                                        <FontIcon Glyph="" Foreground="#BA8FEB"/>
-                                                                    </MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                                <MenuFlyoutItem Text="Gray" DataContext="{x:Bind}" Tag="Gray" Click="LayerColorMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon>
-                                                                        <FontIcon Glyph="" Foreground="#A9B2BE"/>
-                                                                    </MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                                <MenuFlyoutSeparator/>
-                                                                <MenuFlyoutItem Text="Custom color…" DataContext="{x:Bind}" Click="LayerCustomColorMenuItem_Click">
-                                                                    <MenuFlyoutItem.Icon>
-                                                                        <FontIcon Glyph=""/>
-                                                                    </MenuFlyoutItem.Icon>
-                                                                </MenuFlyoutItem>
-                                                            </MenuFlyoutSubItem>
-                                                            <MenuFlyoutSeparator/>
-                                                            <MenuFlyoutItem
-                                                                Text="Delete layer"
-                                                                DataContext="{x:Bind}"
-                                                                IsEnabled="{x:Bind CanDelete, Mode=OneWay}"
-                                                                Click="DeleteLayer_Click">
-                                                                <MenuFlyoutItem.Icon>
-                                                                    <SymbolIcon Symbol="Delete"/>
-                                                                </MenuFlyoutItem.Icon>
-                                                            </MenuFlyoutItem>
-                                                        </MenuFlyout>
-                                                    </Grid.ContextFlyout>
-                                                    <controls:WorkspaceSelectionFrame
-                                                        IsSelected="{x:Bind IsActive, Mode=OneWay}"
-                                                        NormalBackground="{ThemeResource WorkspaceLayerBrush}"
-                                                        SelectedBackground="{ThemeResource WorkspaceLayerSelectedBrush}"
-                                                        NormalBorderBrush="{ThemeResource WorkspaceLayerBorderBrush}"
-                                                        SelectedBorderBrush="{ThemeResource WorkspaceLayerSelectedBorderBrush}"
-                                                        Height="46"
-                                                        VerticalAlignment="Top"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4" />
-                                                    <Border
-                                                        Width="3"
-                                                        Height="30"
-                                                        Margin="0,7,0,0"
-                                                        HorizontalAlignment="Left"
-                                                        VerticalAlignment="Top"
-                                                        Background="{x:Bind IndicatorBrush, Mode=OneWay}"
-                                                        CornerRadius="2"
-                                                        Visibility="{x:Bind IndicatorVisibility, Mode=OneWay}" />
-                                                    <Expander
-                                                        AutomationProperties.Name="{x:Bind TreeAutomationName, Mode=OneWay}"
-                                                        Background="Transparent"
-                                                        BorderThickness="0"
-                                                        Collapsed="AnnotationLayer_Collapsed"
-                                                        Expanding="AnnotationLayer_Expanding"
-                                                        HorizontalAlignment="Stretch"
-                                                        HorizontalContentAlignment="Stretch"
-                                                        IsExpanded="{x:Bind IsExpanded, Mode=OneWay}"
-                                                        MinHeight="0"
-                                                        MinWidth="0"
-                                                        Padding="0"
-                                                        Style="{StaticResource WorkspaceLayerExpanderStyle}">
-                                                        <Expander.Header>
-                                                            <Grid Height="46" Padding="4,0,0,0">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="26"/>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="26"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <Button AutomationProperties.Name="{x:Bind VisibilityAutomationName, Mode=OneWay}" Click="AnnotationLayerVisibility_Click" Style="{StaticResource LayerRowIconButtonStyle}" ToolTipService.ToolTip="{x:Bind VisibilityAutomationName, Mode=OneWay}">
-                                                                    <Grid Width="18" Height="18">
-                                                                        <controls:WorkspaceIcon Kind="Eye" Width="16" Height="16"/>
-                                                                        <Path Data="M 1,1 L 17,17" Stroke="{ThemeResource SnapMutedBrush}" StrokeThickness="2" Visibility="{x:Bind HiddenVisibility, Mode=OneWay}"/>
-                                                                    </Grid>
-                                                                </Button>
-                                                                <Button
-                                                                    Grid.Column="1"
-                                                                    AutomationProperties.HelpText="{x:Bind SelectionHelpText, Mode=OneWay}"
-                                                                    AutomationProperties.Name="{x:Bind SelectionAutomationName, Mode=OneWay}"
-                                                                    Click="AnnotationLayer_Click"
-                                                                    Style="{StaticResource LayerRowButtonStyle}"
-                                                                    ToolTipService.ToolTip="{x:Bind SelectionHelpText, Mode=OneWay}">
-                                                                    <Grid ColumnSpacing="6">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="28"/>
-                                                                            <ColumnDefinition Width="*"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <Border
-                                                                            Height="28"
-                                                                            VerticalAlignment="Center"
-                                                                            Background="{ThemeResource SnapSurfaceBrush}"
-                                                                            BorderBrush="{ThemeResource WorkspaceLayerBorderBrush}"
-                                                                            BorderThickness="1"
-                                                                            CornerRadius="3">
-                                                                            <controls:WorkspaceIcon Kind="Folder" Width="16" Height="16" Foreground="{x:Bind IndicatorBrush, Mode=OneWay}"/>
-                                                                        </Border>
-                                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                                            <TextBlock
-                                                                                FontSize="10"
-                                                                                FontWeight="SemiBold"
-                                                                                Text="{x:Bind Name, Mode=OneWay}"
-                                                                                TextTrimming="CharacterEllipsis"
-                                                                                TextWrapping="NoWrap" />
-                                                                            <TextBlock FontSize="8" Foreground="{ThemeResource SnapMutedBrush}" Text="{x:Bind ObjectCount, Mode=OneWay}"/>
-                                                                        </StackPanel>
-                                                                    </Grid>
-                                                                </Button>
-                                                                <Button
-                                                                    Grid.Column="2"
-                                                                    AutomationProperties.Name="{x:Bind MoveAutomationName, Mode=OneWay}"
-                                                                    Click="MoveSelectedObjectToLayer_Click"
-                                                                    IsEnabled="{x:Bind CanMoveSelectedHere, Mode=OneWay}"
-                                                                    Style="{StaticResource LayerRowIconButtonStyle}"
-                                                                    ToolTipService.ToolTip="{x:Bind MoveAutomationName, Mode=OneWay}"
-                                                                    Visibility="{x:Bind MoveVisibility, Mode=OneWay}">
-                                                                    <SymbolIcon Symbol="Forward"/>
-                                                                </Button>
-                                                            </Grid>
-                                                        </Expander.Header>
-                                                        <ItemsControl HorizontalAlignment="Stretch" ItemsSource="{x:Bind Objects, Mode=OneWay}" Margin="0,2,0,0">
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate x:DataType="items:AnnotationOverlayItem">
-                                                                    <Grid Height="36" Margin="12,0,0,2" ContextRequested="AnnotationObject_ContextRequested">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="30"/>
-                                                                            <ColumnDefinition Width="*"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <controls:WorkspaceSelectionFrame
-                                                                            Grid.ColumnSpan="2"
-                                                                            IsSelected="{x:Bind IsSelected, Mode=OneWay}"
-                                                                            NormalBackground="Transparent"
-                                                                            SelectedBackground="{ThemeResource WorkspaceObjectSelectedBrush}"
-                                                                            NormalBorderBrush="{ThemeResource WorkspaceLayerBorderBrush}"
-                                                                            SelectedBorderBrush="{ThemeResource WorkspaceLayerSelectedBorderBrush}"
-                                                                            BorderThickness="1"
-                                                                            CornerRadius="3" />
-                                                                        <Border
-                                                                            Width="3"
-                                                                            Height="24"
-                                                                            HorizontalAlignment="Left"
-                                                                            Background="{ThemeResource SnapAccentBrush}"
-                                                                            CornerRadius="2"
-                                                                            Visibility="{x:Bind SelectionVisibility, Mode=OneWay}" />
-                                                                        <Button AutomationProperties.Name="{x:Bind ObjectVisibilityAutomationName, Mode=OneWay}" Click="AnnotationObjectVisibility_Click" Style="{StaticResource LayerRowIconButtonStyle}" ToolTipService.ToolTip="{x:Bind ObjectVisibilityAutomationName, Mode=OneWay}">
-                                                                            <Grid Width="18" Height="18">
-                                                                                <controls:WorkspaceIcon Kind="Eye" Width="16" Height="16"/>
-                                                                                <Path Data="M 1,1 L 17,17" Stroke="{ThemeResource SnapMutedBrush}" StrokeThickness="2" Visibility="{x:Bind HiddenVisibility, Mode=OneWay}"/>
-                                                                            </Grid>
-                                                                        </Button>
-                                                                        <Button
-                                                                            Grid.Column="1"
-                                                                            AutomationProperties.Name="{x:Bind ObjectAutomationName, Mode=OneWay}"
-                                                                            AutomationProperties.HelpText="{x:Bind ObjectSelectionHelpText, Mode=OneWay}"
-                                                                            Click="AnnotationObject_Click"
-                                                                            Style="{StaticResource LayerRowButtonStyle}"
-                                                                            ToolTipService.ToolTip="{x:Bind ObjectSelectionHelpText, Mode=OneWay}">
-                                                                            <Grid ColumnSpacing="6">
-                                                                                <Grid.ColumnDefinitions>
-                                                                                    <ColumnDefinition Width="24"/>
-                                                                                    <ColumnDefinition Width="*"/>
-                                                                                </Grid.ColumnDefinitions>
-                                                                                <TextBlock Foreground="{ThemeResource SnapAccentBrush}" Text="{x:Bind LayerGlyph, Mode=OneWay}"/>
-                                                                                <TextBlock
-                                                                                    Grid.Column="1"
-                                                                                    FontSize="10"
-                                                                                    Text="{x:Bind LayerLabel, Mode=OneWay}"
-                                                                                    TextTrimming="CharacterEllipsis"
-                                                                                    TextWrapping="NoWrap" />
-                                                                            </Grid>
-                                                                        </Button>
-                                                                    </Grid>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                    </Expander>
+                                            <DataTemplate x:DataType="items:LayerTreeRow">
+                                                <Grid Height="42" Margin="{x:Bind Indent, Mode=OneWay}" ContextRequested="LayerTreeRow_ContextRequested">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <controls:WorkspaceSelectionFrame Grid.ColumnSpan="3" IsSelected="{x:Bind IsSelected, Mode=OneWay}" NormalBackground="{ThemeResource WorkspaceLayerBrush}" SelectedBackground="{ThemeResource WorkspaceLayerSelectedBrush}" NormalBorderBrush="{ThemeResource WorkspaceLayerBorderBrush}" SelectedBorderBrush="{ThemeResource WorkspaceLayerSelectedBorderBrush}" BorderThickness="1" CornerRadius="4"/>
+                                                    <Border Grid.ColumnSpan="3" Width="3" HorizontalAlignment="Left" Background="{x:Bind IndicatorBrush, Mode=OneWay}" Visibility="{x:Bind IndicatorVisibility, Mode=OneWay}" CornerRadius="2" IsHitTestVisible="False"/>
+                                                    <Button AutomationProperties.Name="{x:Bind ExpandName, Mode=OneWay}" Click="LayerTreeExpand_Click" Style="{StaticResource LayerRowIconButtonStyle}" Visibility="{x:Bind ChevronVisibility, Mode=OneWay}"><FontIcon Glyph="{x:Bind Chevron, Mode=OneWay}" FontSize="9"/></Button>
+                                                    <Button Grid.Column="1" AutomationProperties.Name="{x:Bind VisibilityName, Mode=OneWay}" Click="LayerTreeVisibility_Click" Style="{StaticResource LayerRowIconButtonStyle}"><Grid><controls:WorkspaceIcon Kind="Eye" Width="15" Height="15"/><Path Data="M1 1L15 15" Stroke="{ThemeResource SnapMutedBrush}" StrokeThickness="2" Visibility="{x:Bind HiddenVisibility, Mode=OneWay}"/></Grid></Button>
+                                                    <Button Grid.Column="2" AutomationProperties.Name="{x:Bind AutomationName, Mode=OneWay}" AutomationProperties.HelpText="{x:Bind Help, Mode=OneWay}" Click="LayerTreeSelect_Click" Style="{StaticResource LayerRowButtonStyle}" ToolTipService.ToolTip="{x:Bind Name, Mode=OneWay}">
+                                                        <Grid ColumnSpacing="5"><Grid.ColumnDefinitions><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                            <controls:WorkspaceIcon Kind="{x:Bind Icon, Mode=OneWay}" Width="16" Height="16" Visibility="{x:Bind ContainerIconVisibility, Mode=OneWay}"/>
+                                                            <controls:AnnotationToolIcon Kind="{x:Bind ObjectKind, Mode=OneWay}" Width="16" Height="16" Visibility="{x:Bind ObjectIconVisibility, Mode=OneWay}"/>
+                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="{x:Bind Name, Mode=OneWay}" FontSize="10" TextTrimming="CharacterEllipsis"/><TextBlock Text="{x:Bind Detail, Mode=OneWay}" FontSize="8" Foreground="{ThemeResource SnapMutedBrush}" TextTrimming="CharacterEllipsis"/></StackPanel>
+                                                        </Grid>
+                                                    </Button>
                                                 </Grid>
                                             </DataTemplate>
                                         </ListView.ItemTemplate>

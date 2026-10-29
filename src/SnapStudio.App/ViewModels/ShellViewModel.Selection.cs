@@ -62,7 +62,8 @@ public sealed partial class ShellViewModel
     public void ToggleAnnotationSelection(Guid id)
     {
         if (_currentDocument is null) return;
-        _annotationSelection.SelectMany(_currentDocument, [id], AnnotationSelectionMode.Toggle);
+        _selectedLayerIds.Clear();
+        _annotationSelection.SelectMany(_currentDocument, LayerStructure.ExpandObjectGroups(_currentDocument, [id]), AnnotationSelectionMode.Toggle);
         RefreshSelection();
     }
 

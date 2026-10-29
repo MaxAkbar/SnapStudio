@@ -43,6 +43,7 @@ public static class CaptureDocumentWorkspaceEditor
             Metadata = new DocumentMetadata(default, default, properties),
             Annotations = CloneAnnotations(source.Annotations),
             Layers = source.Layers.Select(LayerClipping.Clone).ToList(),
+            ObjectGroups = source.ObjectGroups.Select(LayerStructure.Clone).ToList(),
             DestructiveOperations = CloneDestructiveOperations(source.DestructiveOperations),
             ExportSettings = source.ExportSettings
         };
@@ -64,6 +65,7 @@ public static class CaptureDocumentWorkspaceEditor
                 Id = annotation.Id,
                 Kind = annotation.Kind,
                 LayerId = annotation.LayerId,
+                GroupId = annotation.GroupId, ClipRegions = annotation.ClipRegions?.ToList(),
                 IsVisible = annotation.IsVisible,
                 Bounds = annotation.Bounds,
                 Text = annotation.Text,

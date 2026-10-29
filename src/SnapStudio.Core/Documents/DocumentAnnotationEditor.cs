@@ -54,7 +54,7 @@ public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
         }
 
         if (annotation.LayerId is not Guid layerId
-            || document.Layers.All(layer => layer.Id != layerId))
+            || document.Layers.All(layer => layer.Id != layerId || layer.IsFolder))
         {
             throw new InvalidDataException("The annotation must belong to an existing layer.");
         }
@@ -124,6 +124,7 @@ public sealed class DocumentAnnotationEditor(IEditCommandStack editStack)
         {
             Kind = annotation.Kind,
             LayerId = annotation.LayerId,
+            ClipRegions = annotation.ClipRegions?.ToList(),
             IsVisible = annotation.IsVisible,
             Bounds = AnnotationBoundsEditor.Move(annotation.Bounds, 10, 10,
                 new SizeD(document.SourceImage.Width, document.SourceImage.Height)),

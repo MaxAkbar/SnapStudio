@@ -8,7 +8,7 @@ public sealed partial class ShellViewModel
 {
     private AnnotationLayer? ActiveSelectionLayer => _currentDocument?.Layers.FirstOrDefault(layer => layer.Id == _layerWorkspace.ActiveLayerId);
     public string SelectionLayerLabel => $"Active layer: {ActiveSelectionLayer?.Name ?? "None"}";
-    public bool CanApplyLayerSelection => SourcePixelSelection is { IsEmpty: false } && ActiveSelectionLayer is { IsVisible: true };
+    public bool CanApplyLayerSelection => SourcePixelSelection is { IsEmpty: false } && ActiveSelectionLayer is { IsVisible: true, IsFolder: false };
     public bool CanRemoveLayerMask => ActiveSelectionLayer?.Mask is not null;
     public bool CanResetLayerCrop => ActiveSelectionLayer?.CropBounds is not null;
 
@@ -16,7 +16,7 @@ public sealed partial class ShellViewModel
     {
         if (_currentDocument is not { } document || _editCommandStack is null) return;
         AnnotationLayer? layer = document.Layers.FirstOrDefault(layer => layer.Id == (layerId ?? _layerWorkspace.ActiveLayerId));
-        if (layer is null) return;
+        if (layer is null || layer.IsFolder) return;
         LayerMask? mask = layer.Mask; RectD? crop = layer.CropBounds; string label;
         switch (action)
         {
@@ -43,7 +43,7 @@ public sealed partial class ShellViewModel
     private AnnotationOverlayItem CreateLayerPreview(AnnotationObject annotation) => AnnotationOverlayItem.FromAnnotation(annotation, CanvasZoom, null, layerClip: GetLayerClip(annotation.LayerId));
 
     public bool IsAnnotationPointVisible(Guid id, PointD point) => _currentDocument?.Annotations.FirstOrDefault(item => item.Id == id) is not { } annotation
-        || GetLayerClip(annotation.LayerId) is not { } regions || regions.Any(r => point.X >= r.X && point.X < r.Right && point.Y >= r.Y && point.Y < r.Bottom);
+        || ObjectClipping.Combine(GetLayerClip(annotation.LayerId), ObjectClipping.GetRectangles(annotation)) is not { } regions || regions.Any(r => point.X >= r.X && point.X < r.Right && point.Y >= r.Y && point.Y < r.Bottom);
 
     private void NotifyLayerSelectionChanged()
     {

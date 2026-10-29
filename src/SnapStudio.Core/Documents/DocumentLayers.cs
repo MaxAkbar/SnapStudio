@@ -56,7 +56,7 @@ public static class DocumentLayers
             }
         }
 
-        if (document.SchemaVersion is 2 or 3 or 4 or 5 or 6 or 7 or 8 or 9 or 10)
+        if (document.SchemaVersion is 2 or 3 or 4 or 5 or 6 or 7 or 8 or 9 or 10 or 11)
         {
             document.SchemaVersion = CaptureDocument.CurrentSchemaVersion;
         }
@@ -131,6 +131,7 @@ public static class DocumentLayers
                     throw new InvalidDataException("An image object must contain PNG data and valid bounds.");
             }
         }
+        LayerStructure.Validate(document);
     }
 
     private static void EnsureDefaultLayer(CaptureDocument document)
@@ -172,7 +173,7 @@ public static class DocumentLayers
 
         for (int neighbor = index + direction; neighbor >= 0 && neighbor < document.Annotations.Count; neighbor += direction)
         {
-            if (document.Annotations[neighbor].LayerId == layerId)
+            if (document.Annotations[neighbor].LayerId == layerId && document.Annotations[neighbor].GroupId == document.Annotations[index].GroupId)
             {
                 return neighbor;
             }
@@ -190,13 +191,7 @@ public static class DocumentLayers
             return document.Annotations;
         }
 
-        var layerOrder = document.Layers
-            .Select((layer, index) => (layer.Id, index))
-            .ToDictionary(item => item.Id, item => item.index);
-        return document.Annotations
-            .OrderBy(annotation => annotation.LayerId is Guid id && layerOrder.TryGetValue(id, out int index)
-                ? index
-                : 0);
+        return LayerStructure.PaintLayers(document).SelectMany(layer => LayerStructure.PaintObjects(document, layer.Id));
     }
 
     public static bool IsEffectivelyVisible(CaptureDocument document, AnnotationObject annotation)
@@ -206,6 +201,7 @@ public static class DocumentLayers
 
         return annotation.IsVisible
             && annotation.LayerId is Guid layerId
-            && document.Layers.Any(layer => layer.Id == layerId && layer.IsVisible);
+            && document.Layers.Any(layer => layer.Id == layerId && !layer.IsFolder && LayerStructure.IsVisible(document, layer))
+            && (annotation.GroupId is null || document.ObjectGroups.Any(group => group.Id == annotation.GroupId && group.IsVisible));
     }
 }

@@ -24,6 +24,7 @@ public sealed class DocumentSelectionEditor(IEditCommandStack editStack)
         {
             Kind = item.Kind,
             LayerId = item.LayerId,
+            ClipRegions = item.ClipRegions?.ToList(),
             IsVisible = item.IsVisible,
             Bounds = shifted[item.Id],
             Text = item.Text,
@@ -33,7 +34,9 @@ public sealed class DocumentSelectionEditor(IEditCommandStack editStack)
             StrokePoints = [.. item.StrokePoints],
             FillRectangles = [.. item.FillRectangles]
         }).ToArray();
-        await ExecuteAsync(document, copies.Select(item => (IEditCommand)new AddAnnotationCommand(item)).ToArray(), "Duplicate Objects", token).ConfigureAwait(false);
+        var groups = LayerStructure.DuplicateGroups(document, selected, copies);
+        await ExecuteAsync(document, groups.Select(group => (IEditCommand)new AddObjectGroupCommand(group))
+            .Concat(copies.Select(item => (IEditCommand)new AddAnnotationCommand(item))).ToArray(), "Duplicate Objects", token).ConfigureAwait(false);
         return copies;
     }
 
@@ -64,9 +67,10 @@ public sealed class DocumentSelectionEditor(IEditCommandStack editStack)
     public ValueTask<bool> MoveToLayerAsync(CaptureDocument document, IEnumerable<Guid> ids, Guid layerId, CancellationToken token)
     {
         AnnotationLayer layer = document.Layers.FirstOrDefault(item => item.Id == layerId) ?? throw new InvalidDataException("The target layer is missing.");
-        if (!layer.IsVisible) return ValueTask.FromResult(false);
-        return ExecuteAsync(document, Resolve(document, ids).Where(item => item.LayerId != layerId)
-            .Select(item => (IEditCommand)new UpdateAnnotationLayerCommand(item.Id, item.LayerId!.Value, layerId)).ToArray(), "Move Objects to Layer", token);
+        if (layer.IsFolder || !LayerStructure.IsVisible(document, layer)) return ValueTask.FromResult(false);
+        var selection = ids.ToArray();
+        if (Resolve(document, selection).All(item => item.LayerId == layerId)) return ValueTask.FromResult(false);
+        return ExecuteAsync(document, [new LayerStructureCommand("Move Objects to Layer", planned => LayerStructureEditor.MoveObjects(planned, selection, layerId))], "Move Objects to Layer", token);
     }
 
     public ValueTask<bool> ArrangeAsync(CaptureDocument document, IEnumerable<Guid> ids, int direction, bool toEdge, CancellationToken token)
@@ -76,23 +80,38 @@ public sealed class DocumentSelectionEditor(IEditCommandStack editStack)
         foreach (AnnotationLayer layer in document.Layers)
         {
             Guid[] before = document.Annotations.Where(item => item.LayerId == layer.Id).Select(item => item.Id).ToArray();
-            Guid[] after = [.. before];
-            if (toEdge)
-                after = (direction > 0 ? before.Where(id => !selected.Contains(id)).Concat(before.Where(selected.Contains))
-                    : before.Where(selected.Contains).Concat(before.Where(id => !selected.Contains(id)))).ToArray();
-            else if (direction > 0)
+            var blocks = new List<Guid[]>(); var groups = new HashSet<Guid>();
+            foreach (var item in LayerStructure.PaintObjects(document, layer.Id))
             {
-                for (int index = after.Length - 2; index >= 0; index--)
-                    if (selected.Contains(after[index]) && !selected.Contains(after[index + 1])) (after[index], after[index + 1]) = (after[index + 1], after[index]);
+                if (item.GroupId is not Guid group) blocks.Add([item.Id]);
+                else if (groups.Add(group))
+                {
+                    var members = LayerStructure.PaintObjects(document, layer.Id).Where(member => member.GroupId == group).Select(member => member.Id).ToArray();
+                    blocks.Add(Arrange(members, selected.Contains, direction, toEdge));
+                }
             }
-            else
-            {
-                for (int index = 1; index < after.Length; index++)
-                    if (selected.Contains(after[index]) && !selected.Contains(after[index - 1])) (after[index], after[index - 1]) = (after[index - 1], after[index]);
-            }
+            Guid[] after = Arrange(blocks.ToArray(), block => block.All(selected.Contains), direction, toEdge).SelectMany(block => block).ToArray();
             if (!before.SequenceEqual(after)) commands.Add(new ReorderSelectionCommand(layer.Id, before, after));
         }
         return ExecuteAsync(document, commands, "Arrange Objects", token);
+    }
+
+    private static T[] Arrange<T>(T[] before, Func<T, bool> selected, int direction, bool toEdge)
+    {
+        if (toEdge) return (direction > 0 ? before.Where(item => !selected(item)).Concat(before.Where(selected))
+            : before.Where(selected).Concat(before.Where(item => !selected(item)))).ToArray();
+        T[] after = [.. before];
+        if (direction > 0)
+        {
+            for (int index = after.Length - 2; index >= 0; index--)
+                if (selected(after[index]) && !selected(after[index + 1])) (after[index], after[index + 1]) = (after[index + 1], after[index]);
+        }
+        else
+        {
+            for (int index = 1; index < after.Length; index++)
+                if (selected(after[index]) && !selected(after[index - 1])) (after[index], after[index - 1]) = (after[index - 1], after[index]);
+        }
+        return after;
     }
 
     private async ValueTask<bool> ExecuteAsync(CaptureDocument document, IReadOnlyList<IEditCommand> commands, string name, CancellationToken token)

@@ -23,7 +23,7 @@ internal sealed class AnnotationLayerWorkspace
     public void OpenDocument(CaptureDocument document)
     {
         ArgumentNullException.ThrowIfNull(document);
-        ActiveLayerId = document.Layers.LastOrDefault()?.Id;
+        ActiveLayerId = document.Layers.LastOrDefault(layer => !layer.IsFolder)?.Id;
     }
 
     public void ClearDocument()
@@ -45,7 +45,7 @@ internal sealed class AnnotationLayerWorkspace
 
     public bool SelectLayer(CaptureDocument? document, Guid layerId)
     {
-        if (document?.Layers.Any(layer => layer.Id == layerId) != true)
+        if (document?.Layers.Any(layer => layer.Id == layerId && !layer.IsFolder) != true)
         {
             return false;
         }
@@ -80,11 +80,11 @@ internal sealed class AnnotationLayerWorkspace
         if (layer is null)
         {
             DocumentLayers.EnsureInitialized(document);
-            layer = document.Layers[^1];
+            layer = document.Layers.Last(item => !item.IsFolder);
             ActiveLayerId = layer.Id;
         }
 
-        if (!layer.IsVisible)
+        if (layer.IsFolder || !LayerStructure.IsVisible(document, layer))
         {
             return false;
         }
@@ -128,7 +128,7 @@ internal sealed class AnnotationLayerWorkspace
 
         await editStack.ExecuteAsync(document, new RenameAnnotationLayerCommand(layerId, name), cancellationToken)
             .ConfigureAwait(false);
-        ActiveLayerId = layerId;
+        if (!layer.IsFolder) ActiveLayerId = layerId;
         return true;
     }
 
@@ -136,15 +136,17 @@ internal sealed class AnnotationLayerWorkspace
         CaptureDocument document, Guid layerId, int direction,
         IEditCommandStack editStack, CancellationToken cancellationToken)
     {
-        int index = document.Layers.FindIndex(layer => layer.Id == layerId);
-        if (index < 0 || index + direction < 0 || index + direction >= document.Layers.Count)
+        var layer = document.Layers.FirstOrDefault(layer => layer.Id == layerId);
+        var siblings = document.Layers.Where(item => item.FolderId == layer?.FolderId).ToArray();
+        int index = Array.IndexOf(siblings, layer);
+        if (index < 0 || index + direction < 0 || index + direction >= siblings.Length)
         {
             return false;
         }
 
-        await editStack.ExecuteAsync(document, new MoveAnnotationLayerCommand(layerId, direction), cancellationToken)
+        await editStack.ExecuteAsync(document, new LayerStructureCommand("Arrange Layer", planned => LayerStructureEditor.MoveLayer(planned, layerId, direction)), cancellationToken)
             .ConfigureAwait(false);
-        ActiveLayerId = layerId;
+        if (!layer!.IsFolder) ActiveLayerId = layerId;
         return true;
     }
 
@@ -160,7 +162,7 @@ internal sealed class AnnotationLayerWorkspace
 
         await editStack.ExecuteAsync(document, new SetLayerColorCommand(layerId, color), cancellationToken)
             .ConfigureAwait(false);
-        ActiveLayerId = layerId;
+        if (!layer.IsFolder) ActiveLayerId = layerId;
         return true;
     }
 
@@ -177,7 +179,7 @@ internal sealed class AnnotationLayerWorkspace
 
         await editStack.ExecuteAsync(document, new SetLayerColorCommand(layerId, opaqueColor), cancellationToken)
             .ConfigureAwait(false);
-        ActiveLayerId = layerId;
+        if (!layer.IsFolder) ActiveLayerId = layerId;
         return true;
     }
 
@@ -191,7 +193,7 @@ internal sealed class AnnotationLayerWorkspace
         ArgumentNullException.ThrowIfNull(editStack);
 
         int index = document.Layers.FindIndex(layer => layer.Id == layerId);
-        if (index < 0 || document.Layers.Count <= 1)
+        if (index < 0 || !document.Layers.Any(layer => !layer.IsFolder && layer.Id != layerId && layer.FolderId != layerId))
         {
             return false;
         }
@@ -201,9 +203,9 @@ internal sealed class AnnotationLayerWorkspace
             new RemoveAnnotationLayerCommand(layerId),
             cancellationToken).ConfigureAwait(false);
         _collapsedLayerIds.Remove(layerId);
-        if (ActiveLayerId == layerId)
+        if (!document.Layers.Any(layer => layer.Id == ActiveLayerId && !layer.IsFolder))
         {
-            ActiveLayerId = document.Layers[Math.Min(index, document.Layers.Count - 1)].Id;
+            ActiveLayerId = document.Layers.Last(layer => !layer.IsFolder).Id;
         }
 
         return true;
@@ -220,7 +222,7 @@ internal sealed class AnnotationLayerWorkspace
         ArgumentNullException.ThrowIfNull(editStack);
 
         AnnotationLayer? layer = document.Layers.FirstOrDefault(candidate => candidate.Id == targetLayerId);
-        if (layer is null || !layer.IsVisible || annotation?.LayerId is not Guid sourceLayerId
+        if (layer is null || layer.IsFolder || !LayerStructure.IsVisible(document, layer) || annotation?.LayerId is not Guid sourceLayerId
             || sourceLayerId == targetLayerId)
         {
             return null;
@@ -262,9 +264,9 @@ internal sealed class AnnotationLayerWorkspace
     {
         ArgumentNullException.ThrowIfNull(document);
         ActiveLayerId = selectedAnnotation?.LayerId
-            ?? (document.Layers.Any(layer => layer.Id == ActiveLayerId)
+            ?? (document.Layers.Any(layer => layer.Id == ActiveLayerId && !layer.IsFolder)
                 ? ActiveLayerId
-                : document.Layers.LastOrDefault()?.Id);
+                : document.Layers.LastOrDefault(layer => !layer.IsFolder)?.Id);
     }
 
     public void Refresh(
@@ -332,9 +334,9 @@ internal sealed class AnnotationLayerWorkspace
                 document.Annotations.Any(annotation => selectedAnnotationIds.Contains(annotation.Id)
                         && annotation.LayerId != layer.Id),
                 !_collapsedLayerIds.Contains(layer.Id),
-                index < document.Layers.Count - 1,
-                index > 0,
-                document.Layers.Count > 1);
+                document.Layers.Where(other => other.FolderId == layer.FolderId).SkipWhile(other => other.Id != layer.Id).Skip(1).Any(),
+                document.Layers.Where(other => other.FolderId == layer.FolderId).TakeWhile(other => other.Id != layer.Id).Any(),
+                layer.IsFolder ? document.Layers.Any(other => !other.IsFolder && other.FolderId != layer.Id) : document.Layers.Count(other => !other.IsFolder) > 1);
             layers.Add(item);
         }
         CollectionUpdates.Synchronize(Layers, layers);

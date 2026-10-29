@@ -60,6 +60,7 @@ The **Library** on the left keeps your images within reach. The canvas is in the
 When you need more than a quick arrow:
 
 - Start a transparent canvas with **New** (**Ctrl+N**), or paste another image as an editable layer.
+- In source builds, organize layers into folders, group objects within a layer, merge selections while keeping objects editable, and cut or move objects between layers.
 - Save your favorite tool styles in **Design** (**D**) so your annotations look consistent.
 - Create reusable SVG artwork in the built-in designer, then edit an individual object's artwork whenever needed.
 - Place reusable symbols, status labels, and your own SVG artwork with **Stamps** (**S**).

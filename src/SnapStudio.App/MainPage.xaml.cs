@@ -197,6 +197,14 @@ public sealed partial class MainPage : Page
         KeyboardAccelerator sender,
         KeyboardAcceleratorInvokedEventArgs args)
     {
+        if (!sender.Modifiers.HasFlag(VirtualKeyModifiers.Shift) && ViewModel.CanPasteCutObjects
+            && ViewModel.LayerTreeRows.LastOrDefault(row => row.IsSelected && row.Kind == ViewModels.Items.LayerTreeRowKind.Layer) is { } target
+            && !ShouldIgnoreApplicationShortcut())
+        {
+            args.Handled = true;
+            await RunLayerTreeActionAsync(() => ViewModel.PasteTreeObjectsAsync(target.Id, CancellationToken.None));
+            return;
+        }
         if (TryHandleApplicationShortcut(args, ViewModel.CanCreateImage))
         {
             if (sender.Modifiers.HasFlag(VirtualKeyModifiers.Shift))
