@@ -12,5 +12,6 @@ coverage/
 
 # Local design experiments and documentation media.
 /docs/branding/
-/docs/media/
+/docs/media/*
+!/docs/media/snapstudio-workflow.gif
 /prototypes/
