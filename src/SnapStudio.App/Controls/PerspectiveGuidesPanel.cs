@@ -122,9 +122,12 @@ public sealed class PerspectiveGuidesPanel : StackPanel
     private void ChooseTool(int index) { PointEditingEnabled = false; ToolRequested?.Invoke(this, new(index, Plane)); }
     private void SetFamily(GridGuideFamily family, GridGuideSettings value) => Families = family switch
     {
-        GridGuideFamily.Grid => Styles with { Grid = value }, GridGuideFamily.Center => Styles with { Center = value },
-        GridGuideFamily.Left => Styles with { Left = value }, GridGuideFamily.Right => Styles with { Right = value },
-        GridGuideFamily.Top => Styles with { Top = value }, _ => Styles with { Bottom = value }
+        GridGuideFamily.Grid => Styles with { Grid = value },
+        GridGuideFamily.Center => Styles with { Center = value },
+        GridGuideFamily.Left => Styles with { Left = value },
+        GridGuideFamily.Right => Styles with { Right = value },
+        GridGuideFamily.Top => Styles with { Top = value },
+        _ => Styles with { Bottom = value }
     };
     private static StackPanel ToolContent(string name, string icon)
     {

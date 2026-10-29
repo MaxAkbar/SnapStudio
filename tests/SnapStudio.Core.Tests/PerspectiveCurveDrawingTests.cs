@@ -39,7 +39,8 @@ public sealed class PerspectiveCurveDrawingTests
     }
 
     [TestMethod]
-    [DataRow(CanvasGridMode.FourPoint)] [DataRow(CanvasGridMode.FivePoint)]
+    [DataRow(CanvasGridMode.FourPoint)]
+    [DataRow(CanvasGridMode.FivePoint)]
     public void AVerticalPerspectiveStrokeActuallyBendsAlongTheCircleThroughItsClickedStart(CanvasGridMode mode)
     {
         var settings = new PerspectiveGridSettings(mode);
@@ -64,7 +65,9 @@ public sealed class PerspectiveCurveDrawingTests
     }
 
     [TestMethod]
-    [DataRow(4)] [DataRow(12)] [DataRow(32)]
+    [DataRow(4)]
+    [DataRow(12)]
+    [DataRow(32)]
     public void CurvesBetweenDisplayedGuidesAreIndependentOfGuideDensity(int density)
     {
         var expected = PerspectiveCurveDrawing.Draw(Start, new(110, 210), View, new(CanvasGridMode.FourPoint, Density: 4), locked: PerspectiveLineFamily.CurvedVertical);
@@ -74,7 +77,9 @@ public sealed class PerspectiveCurveDrawingTests
     }
 
     [TestMethod]
-    [DataRow(.25)] [DataRow(1.0)] [DataRow(4.0)]
+    [DataRow(.25)]
+    [DataRow(1.0)]
+    [DataRow(4.0)]
     public void ZoomChangesNeitherTheClickedPointNorTheCircularFamily(double zoom)
     {
         var settings = new PerspectiveGridSettings(CanvasGridMode.FivePoint);
@@ -142,7 +147,9 @@ public sealed class PerspectiveCurveDrawingTests
     }
 
     [TestMethod]
-    [DataRow(CanvasGridMode.OnePoint)] [DataRow(CanvasGridMode.TwoPoint)] [DataRow(CanvasGridMode.ThreePoint)]
+    [DataRow(CanvasGridMode.OnePoint)]
+    [DataRow(CanvasGridMode.TwoPoint)]
+    [DataRow(CanvasGridMode.ThreePoint)]
     public void StraightPerspectiveModesKeepTheExistingRulerGeometry(CanvasGridMode mode)
     {
         var settings = new PerspectiveGridSettings(mode); PointD end = new(180, 90);

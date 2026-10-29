@@ -25,7 +25,9 @@ public sealed class PerspectiveLineDirectionTests
     }
 
     [TestMethod]
-    [DataRow(4)] [DataRow(12)] [DataRow(32)]
+    [DataRow(4)]
+    [DataRow(12)]
+    [DataRow(32)]
     public void GuideDensityNeverChangesTheDirectionOrClickedPosition(int density)
     {
         var expected = PerspectiveLineDrawing.Constrain(Start, new(26, 83), View, new(CanvasGridMode.TwoPoint, Density: 4));
@@ -34,7 +36,9 @@ public sealed class PerspectiveLineDirectionTests
     }
 
     [TestMethod]
-    [DataRow(.25)] [DataRow(1.0)] [DataRow(4.0)]
+    [DataRow(.25)]
+    [DataRow(1.0)]
+    [DataRow(4.0)]
     public void AStrokeFollowsPerspectiveWithoutAProximityLimitAtEveryZoom(double zoom)
     {
         var result = PerspectiveLineDrawing.Constrain(Start, new(26, 83), View, new(CanvasGridMode.TwoPoint), zoom, zoom);
@@ -96,7 +100,8 @@ public sealed class PerspectiveLineDirectionTests
     }
 
     [TestMethod]
-    [DataRow(CanvasGridMode.FourPoint)] [DataRow(CanvasGridMode.FivePoint)]
+    [DataRow(CanvasGridMode.FourPoint)]
+    [DataRow(CanvasGridMode.FivePoint)]
     public void StraightToolsUseTheLocalCurvedPerspectiveDirectionWithoutJumpingToAGridLine(CanvasGridMode mode)
     {
         PointD start = new(120, 90);

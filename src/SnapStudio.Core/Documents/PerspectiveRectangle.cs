@@ -44,7 +44,7 @@ public static class PerspectiveRectangle
         end = new(Math.Clamp(end.X, view.X, view.Right), Math.Clamp(end.Y, view.Y, view.Bottom));
         var s = settings.Normalize();
         if (!Enum.IsDefined(plane)) plane = PerspectiveRectanglePlane.Side;
-        if (s.Mode == CanvasGridMode.Rectangular) return Flat(start, end) is {} flat ? flat with { Plane = plane } : null;
+        if (s.Mode == CanvasGridMode.Rectangular) return Flat(start, end) is { } flat ? flat with { Plane = plane } : null;
         double cx = view.X + view.Width * s.CenterX / 100, cy = view.Y + view.Height * s.Horizon / 100;
         double radius = Math.Min(view.Width, view.Height) * s.Radius / 100;
         PointD Local(PointD p) => new((p.X - cx) / radius, (p.Y - cy) / radius);

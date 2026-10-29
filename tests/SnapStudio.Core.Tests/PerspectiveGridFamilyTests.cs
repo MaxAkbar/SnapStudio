@@ -9,7 +9,11 @@ public sealed class PerspectiveGridFamilyTests
     private static readonly RectD View = new(0, 0, 400, 400);
 
     [TestMethod]
-    [DataRow(1)] [DataRow(2)] [DataRow(3)] [DataRow(4)] [DataRow(5)]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
+    [DataRow(4)]
+    [DataRow(5)]
     public void EachModeHasOneBaseGridAndOneFamilyPerVanishingPoint(int mode)
     {
         var guides = PerspectiveGrid.Create(View, new((CanvasGridMode)mode, Radius: 40));
@@ -20,8 +24,12 @@ public sealed class PerspectiveGridFamilyTests
     }
 
     [TestMethod]
-    [DataRow(GridGuideFamily.Grid)] [DataRow(GridGuideFamily.Left)] [DataRow(GridGuideFamily.Right)]
-    [DataRow(GridGuideFamily.Top)] [DataRow(GridGuideFamily.Bottom)] [DataRow(GridGuideFamily.Center)]
+    [DataRow(GridGuideFamily.Grid)]
+    [DataRow(GridGuideFamily.Left)]
+    [DataRow(GridGuideFamily.Right)]
+    [DataRow(GridGuideFamily.Top)]
+    [DataRow(GridGuideFamily.Bottom)]
+    [DataRow(GridGuideFamily.Center)]
     public void ChangingOneDensityChangesOnlyThatFamilyAndItsSnapTargets(GridGuideFamily family)
     {
         var sparse = With(new CanvasGridFamilies(), family, new("#123456", 70, 4));
@@ -37,7 +45,8 @@ public sealed class PerspectiveGridFamilyTests
     }
 
     [TestMethod]
-    [DataRow(4)] [DataRow(5)]
+    [DataRow(4)]
+    [DataRow(5)]
     public void CurvedGuidesSplitAtTheCenterIntoTheCorrectVanishingPointFamilies(int mode)
     {
         var guides = PerspectiveGrid.Create(View, new((CanvasGridMode)mode, Radius: 40));
@@ -62,8 +71,11 @@ public sealed class PerspectiveGridFamilyTests
 
     private static CanvasGridFamilies With(CanvasGridFamilies settings, GridGuideFamily family, GridGuideSettings value) => family switch
     {
-        GridGuideFamily.Grid => settings with { Grid = value }, GridGuideFamily.Left => settings with { Left = value },
-        GridGuideFamily.Right => settings with { Right = value }, GridGuideFamily.Top => settings with { Top = value },
-        GridGuideFamily.Bottom => settings with { Bottom = value }, _ => settings with { Center = value }
+        GridGuideFamily.Grid => settings with { Grid = value },
+        GridGuideFamily.Left => settings with { Left = value },
+        GridGuideFamily.Right => settings with { Right = value },
+        GridGuideFamily.Top => settings with { Top = value },
+        GridGuideFamily.Bottom => settings with { Bottom = value },
+        _ => settings with { Center = value }
     };
 }

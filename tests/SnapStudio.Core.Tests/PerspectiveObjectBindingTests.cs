@@ -59,7 +59,9 @@ public sealed class PerspectiveObjectBindingTests
     }
 
     [TestMethod]
-    [DataRow(1)] [DataRow(2)] [DataRow(3)]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
     public void MovingAStraightPerspectiveLineStillConvergesToTheSameGridFamily(int mode)
     {
         var family = mode == 1 ? PerspectiveLineFamily.FirstVanishingPoint : PerspectiveLineFamily.SecondVanishingPoint;
@@ -71,11 +73,21 @@ public sealed class PerspectiveObjectBindingTests
     }
 
     [TestMethod]
-    [DataRow(1, 0)] [DataRow(1, 1)] [DataRow(1, 2)]
-    [DataRow(2, 0)] [DataRow(2, 1)] [DataRow(2, 2)]
-    [DataRow(3, 0)] [DataRow(3, 1)] [DataRow(3, 2)]
-    [DataRow(4, 0)] [DataRow(4, 1)] [DataRow(4, 2)]
-    [DataRow(5, 0)] [DataRow(5, 1)] [DataRow(5, 2)]
+    [DataRow(1, 0)]
+    [DataRow(1, 1)]
+    [DataRow(1, 2)]
+    [DataRow(2, 0)]
+    [DataRow(2, 1)]
+    [DataRow(2, 2)]
+    [DataRow(3, 0)]
+    [DataRow(3, 1)]
+    [DataRow(3, 2)]
+    [DataRow(4, 0)]
+    [DataRow(4, 1)]
+    [DataRow(4, 2)]
+    [DataRow(5, 0)]
+    [DataRow(5, 1)]
+    [DataRow(5, 2)]
     public void RectangleMovesRetainTheSelectedPlaneAndRecreateItsEdges(int mode, int plane)
     {
         PointD a = new(45, 45), c = plane == 2 && mode is >= 2 and <= 4 ? new(160, 100) : new(95, 85);
@@ -133,7 +145,8 @@ public sealed class PerspectiveObjectBindingTests
     }
 
     [TestMethod]
-    [DataRow("line")] [DataRow("rectangle")]
+    [DataRow("line")]
+    [DataRow("rectangle")]
     public void LegacyGeneratedObjectsAcquireBindingsEvenAfterAnEarlierAffineMove(string tool)
     {
         var original = tool == "line" ? Line() : PerspectiveRectangle.Create(new(70, 70), new(120, 100), View, new(CanvasGridMode.FivePoint), PerspectiveRectanglePlane.Front)!.ToAnnotation(AnnotationStyle.Default);

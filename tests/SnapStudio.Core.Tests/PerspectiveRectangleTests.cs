@@ -13,11 +13,21 @@ public sealed class PerspectiveRectangleTests
     private static readonly RectD View = new(0, 0, 256, 256);
 
     [TestMethod]
-    [DataRow(1, 0)] [DataRow(1, 1)] [DataRow(1, 2)]
-    [DataRow(2, 0)] [DataRow(2, 1)] [DataRow(2, 2)]
-    [DataRow(3, 0)] [DataRow(3, 1)] [DataRow(3, 2)]
-    [DataRow(4, 0)] [DataRow(4, 1)] [DataRow(4, 2)]
-    [DataRow(5, 0)] [DataRow(5, 1)] [DataRow(5, 2)]
+    [DataRow(1, 0)]
+    [DataRow(1, 1)]
+    [DataRow(1, 2)]
+    [DataRow(2, 0)]
+    [DataRow(2, 1)]
+    [DataRow(2, 2)]
+    [DataRow(3, 0)]
+    [DataRow(3, 1)]
+    [DataRow(3, 2)]
+    [DataRow(4, 0)]
+    [DataRow(4, 1)]
+    [DataRow(4, 2)]
+    [DataRow(5, 0)]
+    [DataRow(5, 1)]
+    [DataRow(5, 2)]
     public void EveryPlaneFollowsItsStraightOrCurvedGuideFamilies(int mode, int plane)
     {
         PointD start = new(45, 45), end = plane == 2 && mode is >= 2 and <= 4 ? new(160, 100) : new(95, 85);
@@ -66,7 +76,10 @@ public sealed class PerspectiveRectangleTests
     }
 
     [TestMethod]
-    [DataRow(45, 45, 95, 85)] [DataRow(95, 85, 45, 45)] [DataRow(45, 85, 95, 45)] [DataRow(95, 45, 45, 85)]
+    [DataRow(45, 45, 95, 85)]
+    [DataRow(95, 85, 45, 45)]
+    [DataRow(45, 85, 95, 45)]
+    [DataRow(95, 45, 45, 85)]
     public void DrawingInEveryQuadrantKeepsTheClickedCorner(int x, int y, int cx, int cy)
     {
         var shape = PerspectiveRectangle.Create(new(x, y), new(cx, cy), View, new(CanvasGridMode.TwoPoint));
@@ -98,13 +111,13 @@ public sealed class PerspectiveRectangleTests
     public void CurvedFacesCannotExtendPastTheGridRimWhenTheDraggedCornerIsOutsideIt()
     {
         foreach (var mode in new[] { CanvasGridMode.FourPoint, CanvasGridMode.FivePoint })
-        foreach (var plane in Enum.GetValues<PerspectiveRectanglePlane>())
-        {
-            if (mode == CanvasGridMode.FourPoint && plane == PerspectiveRectanglePlane.Ground) continue;
-            var shape = PerspectiveRectangle.Create(new(110, 110), new(220, 210), View, new(mode, Radius: 20), plane);
-            Assert.IsNotNull(shape);
-            Assert.IsTrue(shape.Outline.All(p => Math.Pow((p.X - 128) / 51.2, 2) + Math.Pow((p.Y - 128) / 51.2, 2) <= 1 + 1e-7));
-        }
+            foreach (var plane in Enum.GetValues<PerspectiveRectanglePlane>())
+            {
+                if (mode == CanvasGridMode.FourPoint && plane == PerspectiveRectanglePlane.Ground) continue;
+                var shape = PerspectiveRectangle.Create(new(110, 110), new(220, 210), View, new(mode, Radius: 20), plane);
+                Assert.IsNotNull(shape);
+                Assert.IsTrue(shape.Outline.All(p => Math.Pow((p.X - 128) / 51.2, 2) + Math.Pow((p.Y - 128) / 51.2, 2) <= 1 + 1e-7));
+            }
     }
 
     [TestMethod]

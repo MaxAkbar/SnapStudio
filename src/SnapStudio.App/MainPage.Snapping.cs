@@ -46,8 +46,10 @@ public sealed partial class MainPage
             {
                 var path = new Microsoft.UI.Xaml.Shapes.Polyline
                 {
-                    Stroke = new SolidColorBrush(Color.FromArgb(255, 213, 63, 181)), StrokeThickness = 1,
-                    StrokeDashArray = new DoubleCollection { 4, 3 }, IsHitTestVisible = false
+                    Stroke = new SolidColorBrush(Color.FromArgb(255, 213, 63, 181)),
+                    StrokeThickness = 1,
+                    StrokeDashArray = new DoubleCollection { 4, 3 },
+                    IsHitTestVisible = false
                 };
                 foreach (var point in points) path.Points.Add(new(point.X * zoom, point.Y * zoom));
                 AutomationProperties.SetName(path, "Perspective alignment guide"); ObjectSnapGuides.Children.Add(path); continue;

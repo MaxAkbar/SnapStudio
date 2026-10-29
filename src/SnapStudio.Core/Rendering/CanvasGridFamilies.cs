@@ -27,7 +27,8 @@ public sealed record GridGuideSettings(string Color, double Opacity = 75, int De
     {
         var color = GetColor();
         return (299 * color.R + 587 * color.G + 114 * color.B >= 150000 ? ColorRgba.Black : ColorRgba.White)
-            with { A = (byte)Math.Round(color.A * .55, MidpointRounding.AwayFromZero) };
+            with
+        { A = (byte)Math.Round(color.A * .55, MidpointRounding.AwayFromZero) };
     }
 }
 
@@ -47,8 +48,12 @@ public sealed record CanvasGridFamilies(GridGuideSettings? Grid = null, GridGuid
         };
         return ((family switch
         {
-            GridGuideFamily.Center => Center, GridGuideFamily.Left => Left, GridGuideFamily.Right => Right,
-            GridGuideFamily.Top => Top, GridGuideFamily.Bottom => Bottom, _ => Grid
+            GridGuideFamily.Center => Center,
+            GridGuideFamily.Left => Left,
+            GridGuideFamily.Right => Right,
+            GridGuideFamily.Top => Top,
+            GridGuideFamily.Bottom => Bottom,
+            _ => Grid
         }) ?? fallback).Normalize(fallback);
     }
 

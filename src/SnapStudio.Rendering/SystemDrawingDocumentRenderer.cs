@@ -230,7 +230,8 @@ public sealed class SystemDrawingDocumentRenderer : IDocumentRenderer
             Id = annotation.Id,
             Kind = annotation.Kind,
             LayerId = annotation.LayerId,
-            GroupId = annotation.GroupId, ClipRegions = annotation.ClipRegions?.ToList(),
+            GroupId = annotation.GroupId,
+            ClipRegions = annotation.ClipRegions?.ToList(),
             IsVisible = annotation.IsVisible,
             Bounds = new RectD(
                 (annotation.Bounds.X - viewport.X) * scale,

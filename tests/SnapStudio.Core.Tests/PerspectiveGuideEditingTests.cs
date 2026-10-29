@@ -9,7 +9,11 @@ public sealed class PerspectiveGuideEditingTests
     private static readonly SizeD Image = new(800, 400);
 
     [TestMethod]
-    [DataRow(1)] [DataRow(2)] [DataRow(3)] [DataRow(4)] [DataRow(5)]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
+    [DataRow(4)]
+    [DataRow(5)]
     public void EveryModeExposesItsActualVanishingPoints(int mode)
     {
         var s = new PerspectiveGridSettings((CanvasGridMode)mode);

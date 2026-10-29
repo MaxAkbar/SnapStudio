@@ -4,9 +4,19 @@ public static class LayerStructure
 {
     public static AnnotationObject Clone(AnnotationObject item) => new()
     {
-        Id = item.Id, Kind = item.Kind, LayerId = item.LayerId, GroupId = item.GroupId, ClipRegions = item.ClipRegions?.ToList(),
-        IsVisible = item.IsVisible, Bounds = item.Bounds, Text = item.Text, StrokePoints = [.. item.StrokePoints],
-        FillRectangles = [.. item.FillRectangles], Image = item.Image, Vector = item.Vector, Style = item.Style
+        Id = item.Id,
+        Kind = item.Kind,
+        LayerId = item.LayerId,
+        GroupId = item.GroupId,
+        ClipRegions = item.ClipRegions?.ToList(),
+        IsVisible = item.IsVisible,
+        Bounds = item.Bounds,
+        Text = item.Text,
+        StrokePoints = [.. item.StrokePoints],
+        FillRectangles = [.. item.FillRectangles],
+        Image = item.Image,
+        Vector = item.Vector,
+        Style = item.Style
     };
     public static AnnotationObjectGroup Clone(AnnotationObjectGroup group) => new() { Id = group.Id, LayerId = group.LayerId, Name = group.Name, IsVisible = group.IsVisible };
 

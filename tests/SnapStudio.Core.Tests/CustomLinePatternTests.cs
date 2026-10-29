@@ -45,14 +45,24 @@ public sealed class CustomLinePatternTests
     }
 
     [TestMethod]
-    [DataRow(AnnotationKind.Line)] [DataRow(AnnotationKind.Arrow)] [DataRow(AnnotationKind.Rectangle)]
-    [DataRow(AnnotationKind.Ellipse)] [DataRow(AnnotationKind.Pen)] [DataRow(AnnotationKind.Vector)]
+    [DataRow(AnnotationKind.Line)]
+    [DataRow(AnnotationKind.Arrow)]
+    [DataRow(AnnotationKind.Rectangle)]
+    [DataRow(AnnotationKind.Ellipse)]
+    [DataRow(AnnotationKind.Pen)]
+    [DataRow(AnnotationKind.Vector)]
     public async Task EveryStrokeFamilyRendersSvgMotifsAndRespectsLayerMasks(AnnotationKind kind)
     {
         using var workspace = TemporaryWorkspace.Create(); var document = CreateDocument(workspace.Path);
-        var annotation = new AnnotationObject { Kind = kind, LayerId = document.Layers[0].Id, Bounds = new(20, 25, 80, 40), Style = Style,
+        var annotation = new AnnotationObject
+        {
+            Kind = kind,
+            LayerId = document.Layers[0].Id,
+            Bounds = new(20, 25, 80, 40),
+            Style = Style,
             StrokePoints = [new(0, 0), new(.3, 1), new(.7, 0), new(1, 1)],
-            Vector = kind == AnnotationKind.Vector ? new("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 50\"><g transform=\"translate(5 5)\"><path d=\"M0 0C30 50 70 50 90 0\" fill=\"none\" stroke=\"blue\" stroke-width=\"2\"/></g></svg>") : null };
+            Vector = kind == AnnotationKind.Vector ? new("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 50\"><g transform=\"translate(5 5)\"><path d=\"M0 0C30 50 70 50 90 0\" fill=\"none\" stroke=\"blue\" stroke-width=\"2\"/></g></svg>") : null
+        };
         document.Annotations.Add(annotation); document.Layers[0].Mask = new([new(0, 0, 64, 96)]);
         var result = await new SystemDrawingDocumentRenderer(new Repository(document)).RenderAsync(new(document.Id, 1, null), default);
         Assert.IsTrue(result.Succeeded, result.ErrorMessage); using var stream = new MemoryStream(result.Image!.Pixels); using var bitmap = new Bitmap(stream);

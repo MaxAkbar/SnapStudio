@@ -23,7 +23,8 @@ public sealed class PerspectiveToolDrawingTests
     }
 
     [TestMethod]
-    [DataRow(AnnotationKind.Line)] [DataRow(AnnotationKind.Arrow)]
+    [DataRow(AnnotationKind.Line)]
+    [DataRow(AnnotationKind.Arrow)]
     public void ReverseLineAndArrowDrawsKeepTheirDirectedEndpoints(AnnotationKind kind)
     {
         var drawing = PerspectiveSnapping.Draw(new(148, 162), new(37, 102), kind, [Horizontal, Vertical], Canvas, 1);
@@ -32,7 +33,8 @@ public sealed class PerspectiveToolDrawingTests
     }
 
     [TestMethod]
-    [DataRow(AnnotationKind.Rectangle)] [DataRow(AnnotationKind.Ellipse)]
+    [DataRow(AnnotationKind.Rectangle)]
+    [DataRow(AnnotationKind.Ellipse)]
     public void ShiftDrawingKeepsEqualSidesWhenTheEndSnaps(AnnotationKind kind)
     {
         PerspectiveGridStroke grid = new([new(100, 0), new(100, 256)], false);
@@ -51,7 +53,9 @@ public sealed class PerspectiveToolDrawingTests
     }
 
     [TestMethod]
-    [DataRow(.25)] [DataRow(1.0)] [DataRow(4.0)]
+    [DataRow(.25)]
+    [DataRow(1.0)]
+    [DataRow(4.0)]
     public void ToolDrawingToleranceStaysTheSameAtDifferentZoomLevels(double zoom)
     {
         var drawing = PerspectiveSnapping.Draw(new(37, 100 + 2 / zoom), new(150 - 2 / zoom, 162), AnnotationKind.Rectangle,
@@ -70,7 +74,8 @@ public sealed class PerspectiveToolDrawingTests
     }
 
     [TestMethod]
-    [DataRow(AnnotationKind.Line)] [DataRow(AnnotationKind.Arrow)]
+    [DataRow(AnnotationKind.Line)]
+    [DataRow(AnnotationKind.Arrow)]
     public void LinesPreferOneStraightGuideWhenTheStartIsNearAnotherGuideCrossing(AnnotationKind kind)
     {
         PerspectiveGridStroke diagonal = new([new(0, 0), new(256, 256)], false);

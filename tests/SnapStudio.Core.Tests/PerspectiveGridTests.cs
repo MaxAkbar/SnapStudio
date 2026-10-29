@@ -8,7 +8,11 @@ namespace SnapStudio.Core.Tests;
 public sealed class PerspectiveGridTests
 {
     [TestMethod]
-    [DataRow(1)] [DataRow(2)] [DataRow(3)] [DataRow(4)] [DataRow(5)]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
+    [DataRow(4)]
+    [DataRow(5)]
     public void EveryPerspectiveModeProducesFiniteClippedGuidesAtNonzeroOrigins(int mode)
     {
         var view = new RectD(-70, 40, 400, 300);
@@ -50,7 +54,9 @@ public sealed class PerspectiveGridTests
     }
 
     [TestMethod]
-    [DataRow(0.25)] [DataRow(1.0)] [DataRow(4.0)]
+    [DataRow(0.25)]
+    [DataRow(1.0)]
+    [DataRow(4.0)]
     public void AngledGuidesUseCoupledCoordinatesAndScreenSpaceTolerance(double zoom)
     {
         PerspectiveGridStroke stroke = new([new(0, 0), new(100, 100)], false);

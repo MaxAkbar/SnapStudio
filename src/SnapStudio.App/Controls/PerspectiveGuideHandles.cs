@@ -48,8 +48,17 @@ public sealed class PerspectiveGuideHandles : Canvas
             var dot = new Border { Width = 9, Height = 9, CornerRadius = new(5), VerticalAlignment = VerticalAlignment.Center };
             var label = new TextBlock { FontSize = 10, VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false };
             var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 }; content.Children.Add(dot); content.Children.Add(label);
-            var button = new Button { Content = content, Padding = new(5, 3, 5, 3), MinHeight = 24, MinWidth = 0, Tag = kind,
-                Background = new SolidColorBrush(Color.FromArgb(235, 248, 250, 253)), BorderThickness = new(1), BorderBrush = new SolidColorBrush(Color.FromArgb(180, 148, 163, 184)) };
+            var button = new Button
+            {
+                Content = content,
+                Padding = new(5, 3, 5, 3),
+                MinHeight = 24,
+                MinWidth = 0,
+                Tag = kind,
+                Background = new SolidColorBrush(Color.FromArgb(235, 248, 250, 253)),
+                BorderThickness = new(1),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(180, 148, 163, 184))
+            };
             if (kind != PerspectiveGuideHandleKind.Horizon) { content.Children.Remove(dot); content.Children.Remove(label); button.Content = dot; button.Width = button.Height = 24; button.Padding = new(4); Children.Add(label); }
             button.KeyDown += HandleKey; _buttons.Add(kind, (button, dot, label)); Children.Add(button);
         }

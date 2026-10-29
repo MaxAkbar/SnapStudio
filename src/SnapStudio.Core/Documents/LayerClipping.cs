@@ -37,8 +37,15 @@ public static class LayerClipping
 
     public static AnnotationLayer Clone(AnnotationLayer layer) => new()
     {
-        Id = layer.Id, Name = layer.Name, IsFolder = layer.IsFolder, FolderId = layer.FolderId, ColorLabel = layer.ColorLabel, CustomColor = layer.CustomColor,
-        IsVisible = layer.IsVisible, Mask = layer.Mask?.DeepCopy(), CropBounds = layer.CropBounds
+        Id = layer.Id,
+        Name = layer.Name,
+        IsFolder = layer.IsFolder,
+        FolderId = layer.FolderId,
+        ColorLabel = layer.ColorLabel,
+        CustomColor = layer.CustomColor,
+        IsVisible = layer.IsVisible,
+        Mask = layer.Mask?.DeepCopy(),
+        CropBounds = layer.CropBounds
     };
 
     public static List<AnnotationLayer> Transform(IEnumerable<AnnotationLayer> layers, double offsetX, double offsetY, double scaleX, double scaleY, int width, int height)

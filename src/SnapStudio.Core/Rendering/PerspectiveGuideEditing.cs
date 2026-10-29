@@ -19,7 +19,8 @@ public static class PerspectiveGuideEditing
                 GridGuideFamily.Left => new(s.Mode == CanvasGridMode.FivePoint ? x - radius : image.Width * s.Left / 100, y),
                 GridGuideFamily.Right => new(s.Mode == CanvasGridMode.FivePoint ? x + radius : image.Width * s.Right / 100, y),
                 GridGuideFamily.Top => new(x, s.Mode == CanvasGridMode.ThreePoint ? image.Height * s.Vertical / 100 : y - radius),
-                GridGuideFamily.Bottom => new(x, y + radius), _ => new(x, y)
+                GridGuideFamily.Bottom => new(x, y + radius),
+                _ => new(x, y)
             })).ToArray();
     }
 
@@ -41,14 +42,17 @@ public static class PerspectiveGuideEditing
             PerspectiveGuideHandleKind.Right => s with { Right = s.Right + x },
             PerspectiveGuideHandleKind.Top when s.Mode == CanvasGridMode.ThreePoint => s with { CenterX = s.CenterX + x, Vertical = s.Vertical + y },
             PerspectiveGuideHandleKind.Top => s with { Radius = s.Radius - ry },
-            PerspectiveGuideHandleKind.Bottom => s with { Radius = s.Radius + ry }, _ => s
+            PerspectiveGuideHandleKind.Bottom => s with { Radius = s.Radius + ry },
+            _ => s
         }).Normalize();
     }
 
     public static string Title(GridGuideFamily family, CanvasGridMode mode) => family switch
     {
-        GridGuideFamily.Grid => "Base grid", GridGuideFamily.Center => mode == CanvasGridMode.OnePoint ? "VP 1" : "Center VP",
-        GridGuideFamily.Top => mode == CanvasGridMode.ThreePoint ? "Third VP" : "Top VP", _ => family + " VP"
+        GridGuideFamily.Grid => "Base grid",
+        GridGuideFamily.Center => mode == CanvasGridMode.OnePoint ? "VP 1" : "Center VP",
+        GridGuideFamily.Top => mode == CanvasGridMode.ThreePoint ? "Third VP" : "Top VP",
+        _ => family + " VP"
     };
 
     private static bool Valid(SizeD size) => double.IsFinite(size.Width) && double.IsFinite(size.Height) && size.Width > 0 && size.Height > 0;

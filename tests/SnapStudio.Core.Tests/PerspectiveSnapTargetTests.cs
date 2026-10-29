@@ -12,7 +12,11 @@ public sealed class PerspectiveSnapTargetTests
     private static readonly RectD View = new(0, 0, 400, 400);
 
     [TestMethod]
-    [DataRow(1)] [DataRow(2)] [DataRow(3)] [DataRow(4)] [DataRow(5)]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
+    [DataRow(4)]
+    [DataRow(5)]
     public void FilteringRestrictsFamiliesWithoutChangingDisplayedGuides(int mode)
     {
         var settings = new PerspectiveGridSettings((CanvasGridMode)mode, Radius: 40);

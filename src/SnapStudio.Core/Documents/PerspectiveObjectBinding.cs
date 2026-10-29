@@ -131,9 +131,18 @@ public static class PerspectiveObjectBinding
             if (document.Root.Attribute("height") is not null) document.Root.SetAttributeValue("height", N(generated.Bounds.Height));
             projected = new()
             {
-                Id = original.Id, Kind = original.Kind, LayerId = original.LayerId, GroupId = original.GroupId, ClipRegions = original.ClipRegions?.ToList(), IsVisible = original.IsVisible,
-                Bounds = generated.Bounds, Text = original.Text, Style = original.Style, Image = original.Image,
-                StrokePoints = [.. original.StrokePoints], FillRectangles = [.. original.FillRectangles],
+                Id = original.Id,
+                Kind = original.Kind,
+                LayerId = original.LayerId,
+                GroupId = original.GroupId,
+                ClipRegions = original.ClipRegions?.ToList(),
+                IsVisible = original.IsVisible,
+                Bounds = generated.Bounds,
+                Text = original.Text,
+                Style = original.Style,
+                Image = original.Image,
+                StrokePoints = [.. original.StrokePoints],
+                FillRectangles = [.. original.FillRectangles],
                 Vector = original.Vector with { Svg = document.ToString(SaveOptions.DisableFormatting) }
             };
             return true;
@@ -162,7 +171,7 @@ public static class PerspectiveObjectBinding
         path.SetAttributeValue("data-perspective-tool", binding.Tool);
         path.SetAttributeValue("data-perspective-start", N(binding.Start.X) + "," + N(binding.Start.Y));
         path.SetAttributeValue("data-perspective-end", N(binding.End.X) + "," + N(binding.End.Y));
-        path.SetAttributeValue("data-perspective-family", binding.Family is {} family ? (int)family : -1);
+        path.SetAttributeValue("data-perspective-family", binding.Family is { } family ? (int)family : -1);
         path.SetAttributeValue("data-perspective-plane", (int)binding.Plane);
         path.SetAttributeValue("data-perspective-path", (string?)path.Attribute("d"));
     }
@@ -221,14 +230,14 @@ public static class PerspectiveObjectBinding
         var indices = Enumerable.Range(1, points.Count - 1).OrderByDescending(i => Turn(points, i)).ToArray();
         Binding? result = null; double resultScore = double.PositiveInfinity;
         foreach (int i in indices)
-        foreach (var plane in Enum.GetValues<PerspectiveRectanglePlane>())
-        {
-            var candidate = PerspectiveRectangle.Create(points[0], points[i], view, settings, plane);
-            if (candidate is null) continue;
-            double error = Compare(outline, candidate.Outline, tolerance);
-            if (error < resultScore) { resultScore = error; result = new("rectangle", points[0], points[i], null, plane); }
-            if (error <= tolerance * .1) return result;
-        }
+            foreach (var plane in Enum.GetValues<PerspectiveRectanglePlane>())
+            {
+                var candidate = PerspectiveRectangle.Create(points[0], points[i], view, settings, plane);
+                if (candidate is null) continue;
+                double error = Compare(outline, candidate.Outline, tolerance);
+                if (error < resultScore) { resultScore = error; result = new("rectangle", points[0], points[i], null, plane); }
+                if (error <= tolerance * .1) return result;
+            }
         return resultScore <= tolerance ? result : null;
     }
 

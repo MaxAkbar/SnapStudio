@@ -7,7 +7,8 @@ public sealed class LayerStructureCommand(string name, Action<CaptureDocument> e
     public string DisplayName => name;
     private static CaptureDocument Copy(CaptureDocument document) => new()
     {
-        SchemaVersion = document.SchemaVersion, SourceImage = document.SourceImage,
+        SchemaVersion = document.SchemaVersion,
+        SourceImage = document.SourceImage,
         Layers = document.Layers.Select(LayerClipping.Clone).ToList(),
         Annotations = document.Annotations.Select(LayerStructure.Clone).ToList(),
         ObjectGroups = document.ObjectGroups.Select(LayerStructure.Clone).ToList()
