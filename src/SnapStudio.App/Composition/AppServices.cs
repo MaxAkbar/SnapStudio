@@ -62,6 +62,8 @@ public sealed record AppServices(
     public IToolDesignFilePicker? ToolDesignFilePicker { get; init; }
     public IStampStore? StampStore { get; init; }
     public IOnlineStampCatalog? OnlineStampCatalog { get; init; }
+    public Func<SnapStudio.Core.Primitives.RectD, ICaptureWorkflow>? ExternalCaptureFactory { get; init; }
+    public Action? ActivateWorkspace { get; init; }
     private static readonly HttpClient IconifyHttpClient = new(new HttpClientHandler { AllowAutoRedirect = false })
     {
         Timeout = TimeSpan.FromSeconds(15)
@@ -207,7 +209,9 @@ public sealed record AppServices(
             ToolDesignStore = new JsonToolDesignStore(Path.Combine(appDataRoot, "tool-designs.json")),
             ToolDesignFilePicker = new WindowsToolDesignFilePicker(ownerWindowHandle),
             StampStore = new JsonStampStore(Path.Combine(appDataRoot, "stamps.json")),
-            OnlineStampCatalog = new IconifyStampCatalog(IconifyHttpClient)
+            OnlineStampCatalog = new IconifyStampCatalog(IconifyHttpClient),
+            ExternalCaptureFactory = bounds => new CaptureWorkflow(new WindowsFixedRegionCaptureTargetSelector(bounds, captureItemRegistry),
+                stillCapture, documentRepository, new NoOpEditorMessageClient(), captureWindow)
         };
     }
 

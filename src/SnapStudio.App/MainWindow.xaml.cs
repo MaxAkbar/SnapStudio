@@ -28,7 +28,14 @@ public sealed partial class MainWindow : Window
             app?.CrashRecoveryJournal,
             app?.RecoverySessionId,
             new CaptureTargetPicker(() => RootFrame.XamlRoot),
-            new CaptureWindowController(this));
+            new CaptureWindowController(this)) with
+        {
+            ActivateWorkspace = () =>
+            {
+                if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter { State: Microsoft.UI.Windowing.OverlappedPresenterState.Minimized } presenter) presenter.Restore();
+                AppWindow.Show(); Activate();
+            }
+        };
         Closed += MainWindow_Closed;
         RootFrame.Navigate(typeof(MainPage), _services);
     }
@@ -50,7 +57,7 @@ public sealed partial class MainWindow : Window
 
     private async void MainWindow_Closed(object sender, WindowEventArgs args)
     {
-        if (RootFrame.Content is MainPage page) page.CloseHelp();
+        if (RootFrame.Content is MainPage page) { page.StopExternalCapture(); page.CloseHelp(); }
 
         await _services.CrashRecoveryJournal
             .WriteAsync(

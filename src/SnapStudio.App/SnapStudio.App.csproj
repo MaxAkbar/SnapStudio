@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Content Include="Assets\AppIcon.ico" />
+    <Content Include="SnapStudio.integration.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\SvgDesigner\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\docs\help\**\*" Link="Assets\Help\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />

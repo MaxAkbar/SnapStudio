@@ -157,6 +157,7 @@ public sealed partial class MainPage : Page
         RefreshAnnotationCanvas();
         FitCurrentCanvas();
         _isReadyForControlEvents = true;
+        StartExternalCapture(services);
     }
 
     private async void CaptureRegionKeyboardAccelerator_Invoked(

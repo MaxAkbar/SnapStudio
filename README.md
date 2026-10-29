@@ -57,6 +57,15 @@ Optional online icon search sends your search words and requested icon IDs to Ic
 ## More when you need it
 
 <details>
+<summary><strong>Capture an ExactFrame region</strong></summary>
+
+In an integration-enabled [ExactFrame](https://github.com/MaxAkbar/ExactFrame) build, choose the main frame or an additional guide, then select **Capture in SnapStudio**. Choose **SnapStudio.App.exe** once. Both app windows and ExactFrame's overlays hide during capture; the exact screen pixels open as an editable SnapStudio document.
+
+This connection is available in source builds of both apps. The published SnapStudio **1.1.0** and ExactFrame **2.1.1** packages do not include it. Build both projects before trying it. See the [setup and compatibility guide](docs/exactframe-integration.md).
+
+</details>
+
+<details>
 <summary><strong>Layers, selections, and a comfortable workspace</strong></summary>
 
 - Expand a layer to work with its objects. Ctrl-click rows to select several, then right-click to group, merge, cut, or move them. Merges keep objects editable; folders and object groups cannot be nested.
