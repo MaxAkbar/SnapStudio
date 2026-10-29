@@ -867,12 +867,12 @@
                         BorderBrush="{ThemeResource SnapStrokeBrush}"
                         BorderThickness="0,1,0,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Button
                             x:Name="HistorySettingsButton"
-                            VerticalAlignment="Bottom"
+                            VerticalAlignment="Center"
                             AutomationProperties.Name="Settings"
                             Click="SettingsButton_Click"
                             HorizontalAlignment="Left"
@@ -884,12 +884,23 @@
                                 <TextBlock Text="Settings" FontSize="10"/>
                             </StackPanel>
                         </Button>
-                        <TextBlock
-                            Text="Local workspace"
-                            FontSize="8"
-                            VerticalAlignment="Center"
+                        <Button
+                            x:Name="QuickThemeButton"
                             Grid.Column="1"
-                            Foreground="{ThemeResource WorkspaceMutedBrush}" />
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource TopCommandButtonStyle}"
+                            Padding="4,0"
+                            AutomationProperties.Name="Theme"
+                            AutomationProperties.HelpText="{x:Bind ViewModel.QuickThemeHelpText, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind ViewModel.QuickThemeHelpText, Mode=OneWay}"
+                            Click="QuickThemeButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <controls:WorkspaceIcon Kind="{x:Bind ViewModel.QuickThemeIcon, Mode=OneWay}" Width="16" Height="16"/>
+                                <TextBlock Text="Theme" FontSize="10"/>
+                            </StackPanel>
+                        </Button>
                     </Grid>
                 </Grid>
                 <Grid x:Name="HistoryCollapsedView" Padding="8,18" Visibility="Collapsed">

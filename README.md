@@ -65,6 +65,7 @@ When you need more than a quick arrow:
 - Place reusable symbols, status labels, and your own SVG artwork with **Stamps** (**S**).
 - Add tags such as `Design` or `Bug` and find them later with searches like `#Design`.
 - Choose **Dark**, **Light**, or **Use system setting** in **Settings → Appearance**.
+- In source builds, **Theme** beside Settings switches the appearance immediately and remembers your choice.
 - In source builds, drawing tools can also edit existing objects: hover to see an outline, click or drag to select and move, and drag the selected object's handles to resize. This works for shapes, text, strokes, images, stamps, and perspective objects in both editors. Your drawing tool stays active. Hold **Ctrl** to draw or place an object over another. On the main canvas, **M** keeps pixel selection and **Fill** keeps its fill action.
 - In source builds, use **Snap** beside the zoom controls to align moving objects by their edges or centers. Magenta guides show the match. Hold **Alt** to bypass snapping, or turn Snap off for free positioning.
 - In source builds, turn on **Grid** beside Snap for an editing grid. Its arrow opens settings for **4–512 px** cell spacing and **Snap to grid**. Dense grids use wider visible spacing at low zoom, and snapping follows those lines. The grid stays out of copied and exported images.
