@@ -12,8 +12,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MaxAkbar/SnapStudio/releases/download/v1.1.0/SnapStudio-1.1.0-win-x64-portable.zip"><strong>Download for Windows</strong></a> ·
-  <a href="https://github.com/MaxAkbar/SnapStudio/releases/tag/v1.1.0">What's new in 1.1</a> ·
+  <a href="https://github.com/MaxAkbar/SnapStudio/releases/download/v1.2.0/SnapStudio-1.2.0-win-x64-portable.zip"><strong>Download for Windows</strong></a> ·
+  <a href="https://github.com/MaxAkbar/SnapStudio/releases/tag/v1.2.0">What's new in 1.2</a> ·
   <a href="docs/help/index.html">User guide</a>
 </p>
 
@@ -40,13 +40,13 @@ Explain a bug, mark up a design, or show someone what to click. Your annotations
 
 ## Get started in a minute
 
-1. **Download and open.** Get the [1.1.0 portable ZIP](https://github.com/MaxAkbar/SnapStudio/releases/download/v1.1.0/SnapStudio-1.1.0-win-x64-portable.zip), extract the **entire archive**, and run **`SnapStudio.App.exe`**.
+1. **Download and open.** Get the [1.2.0 portable ZIP](https://github.com/MaxAkbar/SnapStudio/releases/download/v1.2.0/SnapStudio-1.2.0-win-x64-portable.zip), extract the **entire archive**, and run **`SnapStudio.App.exe`**.
 2. **Capture and annotate.** Press **Ctrl+R** for a region capture, **Ctrl+O** to open an image, or **Ctrl+V** to paste. Choose **Arrow (A)**, **Text (T)**, or **Rectangle (U)** and mark up the image.
 3. **Adjust and share.** Use **Move (V)** to reposition objects, change their appearance in Properties, then choose **Copy** or **Export**.
 
 The ZIP includes .NET and the Windows App SDK runtime; Visual Studio and the .NET SDK are not required. Help and the SVG designer need the Microsoft Edge WebView2 Runtime. The download is unsigned, so Windows may show an unrecognized-app warning.
 
-**Need a hand?** Press **F1** for the searchable, offline user guide. See the [release notes](docs/releases/v1.1.0.md) for package details and current limits. OCR, scrolling capture, and screen recording remain experimental and disabled by default.
+**Need a hand?** Press **F1** for the searchable, offline user guide. See the [release notes](docs/releases/v1.2.0.md) for package details and current limits. OCR, scrolling capture, and screen recording remain experimental and disabled by default.
 
 ## Your work stays on your PC
 
@@ -59,9 +59,9 @@ Optional online icon search sends your search words and requested icon IDs to Ic
 <details>
 <summary><strong>Capture an ExactFrame region</strong></summary>
 
-In an integration-enabled [ExactFrame](https://github.com/MaxAkbar/ExactFrame) build, choose the main frame or an additional guide, then select **Capture in SnapStudio**. Choose **SnapStudio.App.exe** once. Both app windows and ExactFrame's overlays hide during capture; the exact screen pixels open as an editable SnapStudio document.
+In [ExactFrame 2.2.0 or newer](https://github.com/MaxAkbar/ExactFrame/releases/tag/v2.2.0), choose the main frame or an additional guide, then select **Capture in SnapStudio**. Choose **SnapStudio.App.exe** once. Both app windows and ExactFrame's overlays hide during capture; the exact screen pixels open as an editable SnapStudio document.
 
-This connection is available in source builds of both apps. The published SnapStudio **1.1.0** and ExactFrame **2.1.1** packages do not include it. Build both projects before trying it. See the [setup and compatibility guide](docs/exactframe-integration.md).
+Use **SnapStudio 1.2.0 or newer** with **ExactFrame 2.2.0 or newer**. See the [setup and compatibility guide](docs/exactframe-integration.md).
 
 </details>
 

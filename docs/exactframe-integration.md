@@ -4,7 +4,7 @@ Use [ExactFrame](https://github.com/MaxAkbar/ExactFrame) to position a region, t
 
 ## Set up
 
-This feature requires **integration-enabled builds of both apps**. The published SnapStudio **1.1.0** and ExactFrame **2.1.1** packages do not support it. Build both projects from source. Keep the entire SnapStudio output folder together, including `SnapStudio.integration.json`.
+Install [SnapStudio 1.2.0 or newer](https://github.com/MaxAkbar/SnapStudio/releases/tag/v1.2.0) and [ExactFrame 2.2.0 or newer](https://github.com/MaxAkbar/ExactFrame/releases/tag/v2.2.0). Extract both portable ZIPs. Keep the entire SnapStudio folder together, including `SnapStudio.integration.json`. Older releases do not support this connection.
 
 1. Open SnapStudio and finish first-run setup. Keep still capture enabled.
 2. In ExactFrame, select **Outline area** and position the main frame. You can also add a nested recording guide.
@@ -20,7 +20,7 @@ SnapStudio starts automatically when needed. ExactFrame hides its windows, HUD, 
 - The full region must fit on one connected display. A spanning or off-screen region is rejected rather than clipped.
 - Each side must be 4–20,000 pixels, and the image must contain at most 40 million pixels.
 - Finish modal dialogs or active edits in SnapStudio before capturing. Capture is unavailable while SnapStudio is already capturing or recording.
-- Close an older running SnapStudio copy before starting the integration-enabled build. Both apps should run with matching permissions in the same Windows session.
+- Close an older running SnapStudio copy before starting the updated app. Both apps should run with matching permissions in the same Windows session.
 
 If startup takes over 20 seconds, open SnapStudio, finish setup, and retry. A capture has a bounded deadline; disconnecting or closing either app cancels the request and ExactFrame restores its windows. Display changes can require repositioning the frame and retrying.
 
