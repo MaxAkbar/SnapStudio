@@ -36,6 +36,10 @@ Captures stay local to SnapStudio unless the user explicitly:
 
 After a capture is copied, exported, or opened outside SnapStudio, the destination application or folder controls that copy.
 
+**Use clipboard color** reads clipboard text only when selected and accepts RGB hex colors. It does not watch clipboard changes and does not require PowerToys.
+
+The optional, separately installed PowerToys Command Palette companion sends local capture, clipboard-image, or most-recent-image commands over a current-user-only Windows named pipe. Responses contain status and a document ID, not screenshot pixels or library contents. The editor records its last compatible executable location locally in `workspace-app.json` for optional launcher discovery. No data is sent online by this integration. See [setup and local protocol details](powertoys-integration.md).
+
 ## Settings
 
 Settings are stored locally in `%LOCALAPPDATA%\SnapStudio\settings.json`.

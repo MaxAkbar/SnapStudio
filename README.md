@@ -12,8 +12,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MaxAkbar/SnapStudio/releases/download/v1.2.0/SnapStudio-1.2.0-win-x64-portable.zip"><strong>Download for Windows</strong></a> ·
-  <a href="https://github.com/MaxAkbar/SnapStudio/releases/tag/v1.2.0">What's new in 1.2</a> ·
+  <a href="https://github.com/MaxAkbar/SnapStudio/releases/download/v1.3.0/SnapStudio-1.3.0-win-x64-portable.zip"><strong>Download for Windows</strong></a> ·
+  <a href="https://github.com/MaxAkbar/SnapStudio/releases/tag/v1.3.0">What's new in 1.3</a> ·
   <a href="docs/help/index.html">User guide</a>
 </p>
 
@@ -40,13 +40,13 @@ Explain a bug, mark up a design, or show someone what to click. Your annotations
 
 ## Get started in a minute
 
-1. **Download and open.** Get the [1.2.0 portable ZIP](https://github.com/MaxAkbar/SnapStudio/releases/download/v1.2.0/SnapStudio-1.2.0-win-x64-portable.zip), extract the **entire archive**, and run **`SnapStudio.App.exe`**.
+1. **Download and open.** Get the [1.3.0 portable ZIP](https://github.com/MaxAkbar/SnapStudio/releases/download/v1.3.0/SnapStudio-1.3.0-win-x64-portable.zip), extract the **entire archive**, and run **`SnapStudio.App.exe`**.
 2. **Capture and annotate.** Press **Ctrl+R** for a region capture, **Ctrl+O** to open an image, or **Ctrl+V** to paste. Choose **Arrow (A)**, **Text (T)**, or **Rectangle (U)** and mark up the image.
 3. **Adjust and share.** Use **Move (V)** to reposition objects, change their appearance in Properties, then choose **Copy** or **Export**.
 
 The ZIP includes .NET and the Windows App SDK runtime; Visual Studio and the .NET SDK are not required. Help and the SVG designer need the Microsoft Edge WebView2 Runtime. The download is unsigned, so Windows may show an unrecognized-app warning.
 
-**Need a hand?** Press **F1** for the searchable, offline user guide. See the [release notes](docs/releases/v1.2.0.md) for package details and current limits. OCR, scrolling capture, and screen recording remain experimental and disabled by default.
+**Need a hand?** Press **F1** for the searchable, offline user guide. See the [release notes](docs/releases/v1.3.0.md) for package details and current limits. OCR, scrolling capture, and screen recording remain experimental and disabled by default.
 
 ## Your work stays on your PC
 
@@ -66,12 +66,22 @@ Use **SnapStudio 1.2.0 or newer** with **ExactFrame 2.2.0 or newer**. See the [s
 </details>
 
 <details>
+<summary><strong>Optional PowerToys commands and clipboard colors</strong></summary>
+
+SnapStudio works normally without PowerToys. In the annotation color picker, choose **Use clipboard color** to apply a copied RGB hex color from any app.
+
+The separate **SnapStudio for Command Palette** companion preview adds **Capture a region**, **Edit clipboard image**, and **Open most recent image** to PowerToys Command Palette. The unsigned companion requires Windows Developer Mode and is installed separately from its development ZIP. See the [setup guide](docs/powertoys-integration.md) for installation, removal, and validation limits.
+
+</details>
+
+<details>
 <summary><strong>Layers, selections, and a comfortable workspace</strong></summary>
 
 - Expand a layer to work with its objects. Ctrl-click rows to select several, then right-click to group, merge, cut, or move them. Merges keep objects editable; folders and object groups cannot be nested.
 - Use **Marquee (M)** to isolate pixels. Add or subtract selection areas, move the outline, copy with transparency, fill with **Shift+F5**, add a layer mask, or crop a single layer. **Ctrl+D** clears the selection.
 - Switch between **Properties**, **Image details**, **Capture options**, and **Guides** in the Inspector. Layers stay available underneath.
 - Resize or collapse either side pane, or press **F8** for Focus mode. The **Theme** button beside Settings switches between light, dark, and system appearance.
+- In the annotation color picker, choose **Use clipboard color** to apply a copied hex color from any app, including PowerToys Color Picker.
 - SnapStudio minimizes during screen capture and restores the workspace afterward.
 
 </details>
@@ -117,6 +127,7 @@ In Visual Studio, open **`SnapStudio.sln`**, select **x64**, and set **SnapStudi
 
 - [Development setup](docs/development-setup.md)
 - [Packaging and portable builds](docs/packaging.md)
+- [Optional PowerToys companion and clipboard colors](docs/powertoys-integration.md)
 - [Project plan and release gates](docs/project-plan.md)
 - [Microsoft Store submission](docs/store-submission.md)
 - [SVG designer](docs/svg-tools.md) and [example tool designs](docs/tool-designs.sample.json)

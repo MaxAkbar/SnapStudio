@@ -23,11 +23,20 @@ jobs:
       - name: Restore
         run: dotnet restore SnapStudio.sln -p:Configuration=Release -p:Platform=x64
 
+      - name: Restore optional companion
+        run: dotnet restore integrations/SnapStudio.CommandPalette/SnapStudio.CommandPalette.csproj -p:Configuration=Release -p:Platform=x64
+
       - name: Verify formatting
         run: dotnet format SnapStudio.sln --verify-no-changes --no-restore
 
+      - name: Verify companion formatting
+        run: dotnet format integrations/SnapStudio.CommandPalette/SnapStudio.CommandPalette.csproj --verify-no-changes --no-restore
+
       - name: Build
         run: dotnet build SnapStudio.sln --configuration Release --no-restore -p:Platform=x64
+
+      - name: Build optional companion
+        run: dotnet build integrations/SnapStudio.CommandPalette/SnapStudio.CommandPalette.csproj --configuration Release --no-restore -p:Platform=x64
 
       - name: Test
         run: dotnet test SnapStudio.sln --configuration Release --no-build --no-restore -p:Platform=x64
@@ -35,8 +44,19 @@ jobs:
       - name: Package smoke
         run: .\eng\run-release-smoke.ps1 -Configuration Release -Platform x64
 
+      - name: Package optional companion
+        run: .\eng\package-command-palette.ps1 -Configuration Release -Platform x64
+
       - name: Upload unsigned MSIX
         uses: actions/upload-artifact@v4
         with:
           name: snapstudio-msix-x64
           path: artifacts/packages/*.msix
+
+      - name: Upload optional companion preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapstudio-command-palette-x64-preview
+          path: |
+            artifacts/command-palette/x64/Release/*.msix
+            artifacts/command-palette/x64/Release/*.zip

@@ -22,7 +22,7 @@ The script:
 Default output:
 
 ```text
-artifacts\packages\SnapStudio_1.2.0.0_x64.msix
+artifacts\packages\SnapStudio_1.3.0.0_x64.msix
 artifacts\msix\layout\x64\
 artifacts\msix\verify\x64\
 ```
@@ -47,16 +47,24 @@ portable publish, and MSIX output. Keep `index.html`, `help.css`, and `help.js`
 together. The Help viewer and SVG designer require the Microsoft Edge WebView2
 Runtime on the destination PC; it is not bundled in the portable ZIP.
 
-Include `LICENSE` and `docs\privacy.md` in the distribution, then ZIP the entire publish directory as `SnapStudio-1.2.0-win-x64-portable.zip`. Users must extract all files before running `SnapStudio.App.exe`. This release is unsigned and uses the normal local Windows profile for captures and settings. OCR, scrolling capture, and screen recording remain experimental and disabled by default.
+Include `LICENSE` and `docs\privacy.md` in the distribution, then ZIP the entire publish directory as `SnapStudio-1.3.0-win-x64-portable.zip`. Users must extract all files before running `SnapStudio.App.exe`. This release is unsigned and uses the normal local Windows profile for captures and settings. OCR, scrolling capture, and screen recording remain experimental and disabled by default.
 
-The stable GitHub release is tagged `v1.2.0` and is published with the prerelease
-flag off. The additional `SnapStudio_1.2.0.0_x64.msix` is an unsigned,
+The stable GitHub release is tagged `v1.3.0` and is published with the prerelease
+flag off. The additional `SnapStudio_1.3.0.0_x64.msix` is an unsigned,
 framework-dependent package for packaging evaluation; it needs a trusted signing
 certificate and the matching runtimes before installation. The portable ZIP is
 the normal download. Microsoft Store certification and signed distribution are
 separate release paths.
 
 ## Release Package Smoke
+
+The optional PowerToys companion is packaged independently:
+
+```powershell
+.\eng\package-command-palette.ps1 -Platform x64 -Configuration Release
+```
+
+This produces a self-contained, unsigned companion MSIX and a development ZIP with `Install.ps1`, `Uninstall.ps1`, and instructions. Only users who explicitly choose the preview register it with Windows Developer Mode already enabled. The main portable ZIP and MSIX contain no Command Palette SDK assemblies and never install PowerToys or the companion. See [the optional integration guide](powertoys-integration.md). CI builds and packages this companion separately from the editor.
 
 Use the Release smoke before handing a package to testers:
 
@@ -92,7 +100,7 @@ For a Store-identity package smoke after reserving the app in Partner Center:
   -Configuration Release `
   -PackageIdentityName "<Partner Center package identity name>" `
   -PackagePublisher "<Partner Center package publisher>" `
-  -PackageVersion "1.2.0.0" `
+  -PackageVersion "1.3.0.0" `
   -RequireStoreIdentity
 ```
 
@@ -136,7 +144,7 @@ The signing certificate subject must match the package publisher. The default pu
 Install a signed package:
 
 ```powershell
-Add-AppxPackage -Path .\artifacts\packages\SnapStudio_1.2.0.0_x64.msix
+Add-AppxPackage -Path .\artifacts\packages\SnapStudio_1.3.0.0_x64.msix
 ```
 
 If a self-signed development certificate is used, import the public certificate into `Cert:\CurrentUser\TrustedPeople` before installing the package.

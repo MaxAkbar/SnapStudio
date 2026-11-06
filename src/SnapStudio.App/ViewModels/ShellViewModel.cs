@@ -2155,7 +2155,9 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                     cancellationToken)
                 .ConfigureAwait(true);
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        // Windows capture can report a COM/invalid-operation error while a cancelled
+        // preview is being torn down. An explicit cancellation still means no capture.
+        catch (Exception) when (cancellationToken.IsCancellationRequested)
         {
             StatusText = "Capture cancelled.";
             ShowCaptureNotice(
@@ -5205,11 +5207,11 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         }
     }
 
-    private async Task OpenDocumentAsync(DocumentId documentId, CancellationToken cancellationToken)
+    private async Task<bool> OpenDocumentAsync(DocumentId documentId, CancellationToken cancellationToken)
     {
         if (_documentRepository is null)
         {
-            return;
+            return false;
         }
 
         CaptureDocument? document;
@@ -5230,13 +5232,13 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
                 : "This document has invalid layer data and could not be opened.";
             StatusText = message;
             ShowCaptureNotice("Open failed", message, InfoBarSeverity.Error);
-            return;
+            return false;
         }
 
         if (document is null)
         {
             StatusText = "Document could not be opened.";
-            return;
+            return false;
         }
 
         // Replace the old fixed text rectangles with their intrinsic content bounds in the workspace.
@@ -5271,11 +5273,12 @@ public sealed partial class ShellViewModel : IEditorMessageHandler, INotifyPrope
         {
             CanvasImageSource = new BitmapImage(new Uri(document.SourceImage.Path));
             StatusText = $"Opened {CurrentDocumentTitle}.";
-            return;
+            return true;
         }
 
         CanvasImageSource = null;
         CurrentDocumentDetail = "Capture image is not available yet";
+        return false;
     }
 
     private async Task SaveCurrentDocumentAsync(

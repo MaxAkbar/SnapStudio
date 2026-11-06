@@ -109,8 +109,13 @@ internal sealed class RegionSelectionWindow : Window
 
     public async Task<RectD?> SelectAsync(CancellationToken cancellationToken)
     {
+        var dispatcherQueue = DispatcherQueue;
         await using CancellationTokenRegistration registration = cancellationToken.Register(
-            () => Complete(null));
+            () =>
+            {
+                if (dispatcherQueue.HasThreadAccess) Complete(null);
+                else if (!dispatcherQueue.TryEnqueue(() => Complete(null))) _completion.TrySetResult(null);
+            });
 
         Activate();
         _surface.Focus(FocusState.Programmatic);

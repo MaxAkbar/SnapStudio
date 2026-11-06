@@ -1,0 +1,1 @@
+SnapStudio for Command Palette: optional local capture and editing commands.

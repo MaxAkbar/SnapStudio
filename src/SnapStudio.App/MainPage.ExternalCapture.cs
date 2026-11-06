@@ -33,10 +33,7 @@ public sealed partial class MainPage
                 try
                 {
                     token.ThrowIfCancellationRequested();
-                    if (!_isReadyForControlEvents || _canvasDragMode != CanvasDragMode.None || ViewModel.FirstRunSetupIsOpen
-                        || _newImageDialogIsOpen || _pasteImageDialogIsOpen || _layerRenameDialogIsOpen || _layerColorDialogIsOpen
-                        || _historyFolderDialogIsOpen || _captureDeleteDialogIsOpen || _captureRenameDialogIsOpen || _captureTagsDialogIsOpen
-                        || _toolDesignDialogIsOpen || _selectionFillDialogIsOpen || _stampDialogIsOpen)
+                    if (ExternalWorkspaceIsBlocked)
                         completion.TrySetResult(new(1, request.RequestId, false, "Finish the current SnapStudio dialog or edit, then try again."));
                     else
                     {

@@ -1739,7 +1739,10 @@
                                                 Grid.Column="1">
                                                 <Button.Flyout>
                                                     <Flyout>
-                                                        <ColorPicker AutomationProperties.HelpText="Choose a custom annotation color." AutomationProperties.Name="Custom annotation color picker" Color="{x:Bind WorkspaceAnnotationColor, Mode=OneWay}" ColorChanged="AnnotationCustomColor_ColorChanged" IsAlphaEnabled="False"/>
+                                                        <StackPanel Spacing="8">
+                                                            <ColorPicker AutomationProperties.HelpText="Choose a custom annotation color." AutomationProperties.Name="Custom annotation color picker" Color="{x:Bind WorkspaceAnnotationColor, Mode=OneWay}" ColorChanged="AnnotationCustomColor_ColorChanged" IsAlphaEnabled="False"/>
+                                                            <Button Content="Use clipboard color" Click="UseClipboardColor_Click" HorizontalAlignment="Stretch" AutomationProperties.HelpText="Apply a copied RGB hex color, for example #4CC2FF."/>
+                                                        </StackPanel>
                                                     </Flyout>
                                                 </Button.Flyout>
                                                 <StackPanel Orientation="Horizontal" Spacing="7">

@@ -158,6 +158,7 @@ public sealed partial class MainPage : Page
         FitCurrentCanvas();
         _isReadyForControlEvents = true;
         StartExternalCapture(services);
+        StartWorkspaceCommands(services);
     }
 
     private async void CaptureRegionKeyboardAccelerator_Invoked(

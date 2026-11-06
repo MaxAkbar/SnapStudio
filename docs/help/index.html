@@ -31,6 +31,7 @@
       <a href="#stamps">Place stamps</a>
       <a href="#library">Organize your library</a>
       <a href="#export">Copy, paste, and export</a>
+      <a href="#powertoys">Optional PowerToys integration</a>
       <a href="#settings">Settings and local data</a>
       <a href="#shortcuts">Keyboard shortcuts</a>
       <a href="#troubleshooting">Troubleshooting</a>
@@ -170,6 +171,14 @@
       <p>The fill bucket preserves a shape's outline. On an image area, adjust tolerance to include similar colors. Fill changes support undo and redo.</p>
       <p>Right-click the image background with no object selected to switch tools. Right-click an object to duplicate, hide/show, arrange, move to a visible layer, or delete it. Mixed object selections show only shared Properties.</p>
       <div class="note">Blur remains editable in your workspace. Before sharing, export or copy the result and check that sensitive details are sufficiently obscured.</div>
+      <h3>Apply a copied color</h3>
+      <ol>
+        <li>Copy an RGB hex color, such as <code>#4CC2FF</code>, from another app.</li>
+        <li>Select an object to recolor it, or choose a drawing tool to set the color for new objects.</li>
+        <li>In <strong>Properties</strong>, open the color swatch and choose <strong>Use clipboard color</strong>.</li>
+      </ol>
+      <p>Supported formats are <code>#RRGGBB</code>, <code>RRGGBB</code>, <code>#RGB</code>, and <code>RGB</code>. Spaces around the value are allowed. The copied color is opaque RGB; adjust <strong>Opacity</strong> separately. Changes to selected objects use the normal undo and redo controls.</p>
+      <p>If the clipboard does not contain a supported hex color, the current color stays unchanged. SnapStudio reads the clipboard only when you choose this action. It works with any app that copies hex colors, including the optional <a href="#powertoys">PowerToys Color Picker</a>.</p>
     </section>
 
     <section id="layers" aria-labelledby="layers-title">
@@ -252,6 +261,34 @@
       <p>Choose <strong>Export → PNG, JPEG, or PDF</strong> and select a destination. Export renders the edited document with its visible objects. PNG preserves transparency. Keep the local editable document if you want to change objects later; exported images do not retain editable layers.</p>
     </section>
 
+    <section id="powertoys" aria-labelledby="powertoys-title">
+      <h2 id="powertoys-title">Optional PowerToys integration</h2>
+      <div class="note">PowerToys is optional. Capture, editing, clipboard colors, your library, and export work without it. SnapStudio does not install or start PowerToys, and does not show startup reminders when it is missing.</div>
+      <h3>Set up Command Palette</h3>
+      <ol>
+        <li>Install PowerToys and the separate <strong>SnapStudio for Command Palette</strong> companion. Use SnapStudio 1.3.0 or newer. The companion is an unsigned preview: extract its entire development ZIP to a permanent folder and run <strong>Install.ps1</strong> in PowerShell. Windows Developer Mode must already be enabled by you; the installer does not change it. The standard SnapStudio package does not install the companion or PowerToys.</li>
+        <li>Enable <strong>Command Palette</strong> in PowerToys settings.</li>
+        <li>Open the updated SnapStudio once and finish first-run setup.</li>
+        <li>Open Command Palette using its configured activation shortcut, type <strong>SnapStudio</strong>, and choose a command.</li>
+      </ol>
+      <div class="table-wrap"><table>
+        <caption>SnapStudio commands in PowerToys Command Palette</caption>
+        <thead><tr><th scope="col">Command</th><th scope="col">What it does</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">SnapStudio: Capture a region</th><td>Opens the normal region selector and uses your capture preferences. Adjust the area, then choose Capture or press Enter. Esc cancels.</td></tr>
+          <tr><th scope="row">SnapStudio: Edit clipboard image</th><td>Opens the clipboard image as a new editable document. It does not paste over your current image.</td></tr>
+          <tr><th scope="row">SnapStudio: Open most recent image</th><td>Reopens the most recently updated image across all folders and tags, regardless of the current library filter.</td></tr>
+        </tbody>
+      </table></div>
+      <p>The companion reuses a running SnapStudio or starts it when needed. It normally finds the last compatible SnapStudio you opened. If you move the portable app, open it from the new folder once. To choose a different copy, enter the full path to <strong>SnapStudio.App.exe</strong> in the extension's <strong>SnapStudio application path (optional)</strong> setting.</p>
+      <h3>Use PowerToys Color Picker</h3>
+      <p>In PowerToys Color Picker, choose HEX as the copied color format, then pick a color anywhere on screen. Return to SnapStudio and follow <a href="#annotations">Apply a copied color</a> in Draw and annotate. PowerToys is not required for this clipboard action.</p>
+      <h3>If a command is unavailable</h3>
+      <p>If the commands do not appear, check that the companion is installed and Command Palette is enabled, then reload Command Palette extensions. Close any older SnapStudio copy before opening the updated app. Update both SnapStudio and the companion if they cannot communicate.</p>
+      <p>Finish setup, close open dialogs, and complete active edits before trying again. Commands are rejected while SnapStudio is capturing or recording. Edit clipboard image needs an image on the clipboard; Open most recent image needs a saved image whose source file is still available. If a command times out, check SnapStudio before retrying because it may already have completed.</p>
+      <p>The companion reports command failures in Command Palette. Keep its extracted folder in place while it is registered; run <strong>Uninstall.ps1</strong> before moving or deleting that folder. Uninstalling it leaves SnapStudio and your saved captures available. The connection stays on your PC: the companion sends a command and receives status, without receiving screenshot pixels or your library contents.</p>
+    </section>
+
     <section id="settings" aria-labelledby="settings-title">
       <h2 id="settings-title">Settings and local data</h2>
       <p>Open <strong>Settings</strong> in the Library pane. Review the capture hotkey, Include cursor, clipboard preference, document storage, and feature switches, then save.</p>
@@ -263,6 +300,7 @@
       <p>Settings are kept in <code>%LOCALAPPDATA%\SnapStudio\settings.json</code>. Import and export settings through JSON files. Storage location, storage backend, and feature-switch changes require restarting SnapStudio; save your work before restarting.</p>
       <h3>Privacy and diagnostics</h3>
       <p>SnapStudio has no cloud account, sync, telemetry upload, or remote capture processing. Captures, recordings, settings, and logs stay local. Copying, exporting, or opening a file in another application puts that copy under the destination's control.</p>
+      <p><strong>Use clipboard color</strong> reads clipboard text only when selected. The optional <a href="#powertoys">PowerToys companion</a> sends commands locally and does not receive screenshots or library contents.</p>
       <p>Local diagnostic and recovery logs are in <code>%LOCALAPPDATA%\SnapStudio\Logs</code>. Help loads its bundled HTML on your PC and keeps its WebView2 cache in <code>%LOCALAPPDATA%\SnapStudio\HelpBrowser</code>. It does not need an internet connection.</p>
     </section>
 
@@ -303,6 +341,8 @@
       <h2 id="troubleshooting-title">Troubleshooting</h2>
       <h3>A feature or shortcut seems unavailable</h3>
       <p>OCR, scrolling capture, and recording are hidden when their feature switch is off. Save feature changes and restart. Editor shortcuts do not run while a text field or dialog has focus; click the canvas and try again. Some actions also need an open image or a selected object.</p>
+      <h3>PowerToys commands do not appear or cannot connect</h3>
+      <p>Follow <a href="#powertoys">Optional PowerToys integration</a> to check the separate companion, Command Palette settings, and the selected SnapStudio copy. PowerToys is not needed for SnapStudio's normal tools or clipboard colors.</p>
       <h3>Copy contains only part of the image</h3>
       <p>Check for a marquee selection. Press <kbd>Ctrl+D</kbd> to clear it, then copy again for the whole edited image.</p>
       <h3>An imported image does not update</h3>

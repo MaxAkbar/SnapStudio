@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <Version>1.0.0</Version>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <Platforms>x64;ARM64</Platforms>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <CsWinRTAotOptimizerEnabled>true</CsWinRTAotOptimizerEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CommandPalette.Extensions" Version="0.12.260812002" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.1" />
+    <PackageReference Include="Shmuelie.WinRTServer" Version="2.2.1" />
+    <ProjectReference Include="..\..\src\SnapStudio.Ipc\SnapStudio.Ipc.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\src\SnapStudio.App\Assets\Square44x44Logo.scale-200.png" Link="Assets\Square44x44Logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\src\SnapStudio.App\Assets\Square150x150Logo.scale-200.png" Link="Assets\Square150x150Logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\src\SnapStudio.App\Assets\StoreLogo.png" Link="Assets\StoreLogo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Public\extension.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
